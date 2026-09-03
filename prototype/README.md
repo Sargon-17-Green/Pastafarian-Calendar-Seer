@@ -40,8 +40,8 @@ process startup) and the engine's internal conversion time.
 ## Linux / WSL
 
 ```bash
-./scripts/build.sh
-./scripts/run_benchmark.sh 3
+bash ./scripts/build.sh
+bash ./scripts/run_benchmark.sh 3
 ```
 
 ## Fixed benchmark cases
