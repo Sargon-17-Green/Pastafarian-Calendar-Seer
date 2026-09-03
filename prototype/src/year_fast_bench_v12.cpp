@@ -1,0 +1,13 @@
+#include "sauce_fast127_v12.hpp"
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono>
+#include <stdexcept>
+struct FGates{std::vector<uint16_t>g;std::vector<int64_t>p;FGates(const char*fn){std::ifstream f(fn,std::ios::binary);f.seekg(0,std::ios::end);size_t b=f.tellg();f.seekg(0);g.resize(b/2);f.read((char*)g.data(),b);p.resize(g.size()+1);p[0]=-13334246LL;for(size_t i=0;i<g.size();i++)p[i+1]=p[i]+g[i];}int contain(int64_t d)const{auto it=std::lower_bound(p.begin()+1,p.end(),d);if(it==p.end())throw std::runtime_error("beyond");return int(it-p.begin())-1;}int64_t at(int i)const{return p.at(i);}};
+struct FY{long long num;int o,c;int64_t a,b;};
+struct FC{int o,c;int64_t len;};
+static FY fanchor(int64_t calc,const FGates&G,const FStones&S){int k=G.contain(calc);std::vector<FC>v;for(int o=k;o>=0&&calc-G.at(o)<=5778;o--)for(int c=k+1;c<(int)G.p.size()&&G.at(c)-calc<=5778;c++){int64_t len=G.at(c)-G.at(o);if(c-o>=6&&len>=252&&len<=5778)v.push_back({o,c,len});}std::sort(v.begin(),v.end(),[](auto&a,auto&b){return a.len!=b.len?a.len<b.len:a.o<b.o;});auto so=fast_sauce(calc,calc,S);int ix=(int)fast_choose_small(so,1,10,v.size())-1;auto q=v[ix];return{5000,q.o,q.c,G.at(q.o),G.at(q.c)};}
+static FY fadj(int64_t calc,const FGates&G,const FStones&S,const FY&y,bool next){int fixed=next?y.c:y.o;if(next){int first=fixed+6,last=first-1;for(int c=first;c<(int)G.p.size();c++){if(G.at(c)-G.at(fixed)>5778)break;last=c;}int n=last-first+1;if(n<=0)throw std::runtime_error("no next");auto so=fast_sauce(calc,G.at(fixed),S);int rank=fast_choose_small(so,1,11,n);int c=first+rank-1;return{y.num+1,fixed,c,G.at(fixed),G.at(c)};}int first=fixed-6;if(first<0)throw std::runtime_error("no prev table");int last=first+1;for(int o=first;o>=0;o--){if(G.at(fixed)-G.at(o)>5778)break;last=o;}int n=first-last+1;if(n<=0)throw std::runtime_error("no prev");auto so=fast_sauce(calc,G.at(fixed),S);int rank=fast_choose_small(so,1,12,n);int o=first-rank+1;return{y.num-1,o,fixed,G.at(o),G.at(fixed)};}
+int main(int argc,char**argv){int64_t calc=std::stoll(argv[1]),target=std::stoll(argv[2]);int reps=argc>3?atoi(argv[3]):1;FGates G("gates_u16.bin");auto S=fast_stones();for(int r=0;r<reps;r++){auto t0=std::chrono::steady_clock::now();auto y=fanchor(calc,G,S);auto t1=std::chrono::steady_clock::now();int steps=0;while(target<y.a+1){y=fadj(calc,G,S,y,false);steps++;}while(target>y.b){y=fadj(calc,G,S,y,true);steps++;}auto t2=std::chrono::steady_clock::now();std::cout<<"anchor_ms="<<std::chrono::duration<double,std::milli>(t1-t0).count()<<" walk_ms="<<std::chrono::duration<double,std::milli>(t2-t1).count()<<" steps="<<steps<<" year="<<y.num<<" open="<<y.o<<" close="<<y.c<<" a="<<y.a<<" b="<<y.b<<"\n";}}
