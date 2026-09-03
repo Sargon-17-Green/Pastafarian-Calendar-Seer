@@ -63,16 +63,21 @@ approximation.
 
 ## Weave counting and unranking
 
-The expensive weave count/unrank path uses RNS with fixed primes, AVX-512IFMA, and exact
-CRT certification. A floating predictor may guide work, but certification remains exact.
+The expensive weave count/unrank path uses RNS with fixed primes and exact CRT certification. A floating predictor may guide work, but certification remains exact.
+
+Two execution backends now exist for the same RNS state machine:
+
+- the preserved AVX-512IFMA eight-lane baseline;
+- a portable eight-lane scalar representation used when IFMA is unavailable.
+
+The portable source preserves the same prime lanes and exact transitions rather than replacing them with a different counting algorithm.
 
 Only the prefix needed to identify the target day's month is materialized. The rest of
 the year's weave is not generated when it cannot affect the requested date.
 
-## Current hardware assumption
+## Hardware backends
 
-The baseline requires AVX-512F, DQ, BW, VL, and AVX-512IFMA. A portable backend is a
-future requirement, not part of this baseline.
+The original baseline requires AVX-512F, DQ, BW, VL, and AVX-512IFMA. The portable backend removes that requirement while preserving the IFMA source unchanged. The portable implementation is currently a correctness-first fallback; further AVX2-specific tuning can follow hosted measurements.
 
 ## Non-goals of the current prototype
 
@@ -82,5 +87,4 @@ The current baseline is not yet:
 - a stable C/C++ API;
 - a web service;
 - a localization layer;
-- a portable CPU implementation;
 - a complete replacement for every domain supported by the normative project.

@@ -46,14 +46,16 @@ The current prototype includes:
 - a fixed 720-permutation bowl-order table;
 - exact 320-bit month-length dynamic programming;
 - RNS/CRT weave counting and prefix unranking;
-- AVX-512IFMA acceleration;
+- AVX-512IFMA acceleration in the original baseline;
+- a separate portable scalar RNS backend for hosts without IFMA;
 - no memoization or predictive precomputation across separate queries.
 
 Known prototype limitations include:
 
 - the bundled gate corpus does not include negative gate indices;
 - output uses numeric cutlet/month canonical indices rather than localized names;
-- the present backend requires AVX-512F/DQ/BW/VL + AVX-512IFMA;
+- the original high-performance backend requires AVX-512F/DQ/BW/VL + AVX-512IFMA;
+- the portable backend is correct but has not yet received an AVX2-specific optimization pass;
 - difficult weave-edge ranks can still cause many predictor splits;
 - there is no stable library ABI/API yet.
 
@@ -61,10 +63,18 @@ See [`prototype/STATUS.md`](prototype/STATUS.md) and [`ROADMAP.md`](ROADMAP.md).
 
 ## Build the current prototype
 
+The IFMA baseline and the portable backend are built separately.
+
 ### Linux / WSL
 
 ```bash
 cd prototype
+bash ./scripts/build_portable.sh
+bash ./scripts/run_portable_selftest.sh 1
+bash ./scripts/check_portable_vectors.sh
+bash ./scripts/run_benchmark_portable.sh 3
+
+# On an AVX-512IFMA machine, the preserved baseline remains available:
 bash ./scripts/build.sh
 bash ./scripts/run_benchmark.sh 3
 ```
@@ -73,12 +83,17 @@ bash ./scripts/run_benchmark.sh 3
 
 ```powershell
 cd prototype
+.\scripts\build_portable.ps1
+.\scripts\run_benchmark_portable.ps1 -Repetitions 3 -Threads 4 -Superblock 512
+
+# On an AVX-512IFMA machine, the preserved baseline remains available:
 .\scripts\build.ps1
 .\scripts\run_benchmark.ps1 -Repetitions 3 -Threads 5 -Superblock 512
 ```
 
-The prototype currently requires a GCC-compatible C++20 environment with OpenMP,
-GMP/GMPXX, Boost headers, and the AVX-512 feature set listed above.
+Both backends require a GCC-compatible C++20 environment with OpenMP, GMP/GMPXX, and Boost headers. The IFMA baseline additionally requires the AVX-512 feature set listed above.
+
+See [`docs/PORTABLE_BACKEND.md`](docs/PORTABLE_BACKEND.md).
 
 ## Repository map
 

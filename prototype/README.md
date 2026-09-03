@@ -11,8 +11,8 @@ public API.
 - Fixed 40,000-gap positive canonical gate dataset (`data/gates_u16.bin`).
 - Fixed 720-permutation table for bowl ordering.
 - Exact month-length DP in 5×64 bits (320 bits) rather than general big integers.
-- RNS weave counter/unrank with AVX-512IFMA, fixed primes, a `long double` predictor,
-  micro-reset every 8 days, and exact CRT certification.
+- RNS weave counter/unrank with fixed primes, a `long double` predictor, micro-reset every 8 days, and exact CRT certification.
+- Two RNS execution backends: the preserved AVX-512IFMA baseline and a portable scalar-lane backend.
 - Default superblock size: 512.
 - Prefix-only unranking up to the target day rather than materializing the entire year.
 - No memoization or predictive precomputation across separate queries.
@@ -20,16 +20,20 @@ public API.
 ## Requirements
 
 - GCC/g++ with C++20 and OpenMP.
-- CPU with AVX-512F, DQ, BW, VL, and AVX-512IFMA.
+- The portable backend has no AVX-512 requirement.
+- The preserved IFMA baseline requires AVX-512F, DQ, BW, VL, and AVX-512IFMA.
 - GMP + GMPXX development headers/libraries.
 - Boost headers (`boost/multiprecision/cpp_int.hpp`).
 
-The build scripts run a CPU probe before building the benchmark. Do not compare timing
-numbers from a build with a different backend as if they were this baseline.
+The IFMA build script runs a CPU probe before building that backend. The portable build does not require the AVX-512 probe. Benchmark logs identify the portable backend explicitly; do not compare timings from different backends without retaining the backend and runner metadata.
 
 ## Windows / PowerShell
 
 ```powershell
+.\scripts\build_portable.ps1
+.\scripts\run_benchmark_portable.ps1 -Repetitions 3 -Threads 4 -Superblock 512
+
+# IFMA baseline, only where supported:
 .\scripts\build.ps1
 .\scripts\run_benchmark.ps1 -Repetitions 3 -Threads 5 -Superblock 512
 ```
@@ -40,6 +44,12 @@ process startup) and the engine's internal conversion time.
 ## Linux / WSL
 
 ```bash
+bash ./scripts/build_portable.sh
+bash ./scripts/run_portable_selftest.sh 1
+bash ./scripts/check_portable_vectors.sh
+bash ./scripts/run_benchmark_portable.sh 3
+
+# IFMA baseline, only where supported:
 bash ./scripts/build.sh
 bash ./scripts/run_benchmark.sh 3
 ```

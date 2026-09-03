@@ -37,3 +37,20 @@
 3. The bundled gate dataset covers gate indices 0..40000; negative-gate support is not packaged here.
 4. Extreme weave ranks just outside the small-edge domain can still trigger many predictor splits. Do not treat this package as final production edge handling.
 5. Absolute timings from the development VM were highly noisy; local-machine measurements are the purpose of this package.
+
+## Portable backend added after the baseline freeze
+
+The original files listed above remain the IFMA baseline. A separate portable RNS backend
+now mirrors the same eight-prime pack semantics with scalar `uint64_t` lanes. It is built
+from `src/rns_micro8_portable.cpp` and selected by
+`src/pastafarian_cold_bench_portable.cpp`.
+
+Local verification before upload: the standalone portable RNS self-test reconstructed the
+extreme 47-month count exactly (`count_ok=1`), passed fractional reconstruction
+(`frac_ok=1`), and matched exact GMP unranking for the midpoint and a deterministic random
+rank across superblocks 64, 128, 256, and 512. The five bundled benchmark vectors also
+matched their documented structural witnesses; both independently oracle-checked numeric
+tuples matched exactly.
+
+This portable backend is a correctness-first fallback. Its performance is now to be
+measured on GitHub-hosted machines that do not expose AVX-512IFMA.

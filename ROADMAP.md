@@ -18,10 +18,11 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - keep benchmark instrumentation outside the semantic core;
    - return canonical numeric indices, not localized strings, from the core.
 
-4. **Add a portable backend**
-   - preserve the AVX-512IFMA backend;
-   - add a correct scalar/portable implementation for machines without IFMA;
-   - verify backend parity before comparing performance.
+4. **Portable backend — initial implementation present**
+   - preserve the AVX-512IFMA backend unchanged;
+   - maintain the scalar/portable RNS implementation for machines without IFMA;
+   - run exact self-tests and bundled vector checks on GitHub-hosted runners;
+   - use hosted measurements to decide whether a dedicated AVX2 layer is worthwhile.
 
 5. **Automate conformance**
    - differential tests against an independent exact reference;
