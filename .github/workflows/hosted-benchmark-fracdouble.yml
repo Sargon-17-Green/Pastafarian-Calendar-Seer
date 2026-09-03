@@ -1,0 +1,54 @@
+name: Seer AVX2 certified-frac reset A-B
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: Cold interleaved repetitions
+        required: false
+        default: '7'
+      cooldown:
+        description: Seconds between cold processes
+        required: false
+        default: '2'
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: bash --noprofile --norc -e -o pipefail {0}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU and commit
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/fracdouble-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Verify adopted defaults
+        run: |
+          bash ./prototype/scripts/check_v12_default_adoption.sh
+          bash ./prototype/scripts/check_pascal_adaptive_default_adoption.sh
+      - name: Build A-B
+        run: bash ./prototype/scripts/build_fracdouble_ab.sh
+      - name: Full-vector exactness
+        run: bash ./prototype/scripts/check_fracdouble_vectors.sh
+      - name: Cold interleaved A-B
+        env:
+          COOLDOWN: ${{ inputs.cooldown || '2' }}
+        run: python3 ./prototype/scripts/run_fracdouble_ab.py "${{ inputs.repetitions || '7' }}"
+      - name: Heavy exact self-test and fallback rate after timing
+        run: |
+          (cd prototype/build && ./fracdouble_selftest 4 5) 2>&1 | tee prototype/results/fracdouble-selftest.txt
+          grep -q 'count_validation bad=0 rec_eq=1' prototype/results/fracdouble-selftest.txt
+          grep -q 'frac3_validation' prototype/results/fracdouble-selftest.txt
+          test "$(grep -c ',1,' prototype/results/fracdouble-selftest.txt)" -ge 24
+          grep -q 'fracdouble_fast=' prototype/results/fracdouble-selftest.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seer-fracdouble-${{ github.run_id }}
+          path: prototype/results/
+          retention-days: 30
