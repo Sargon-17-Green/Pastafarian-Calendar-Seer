@@ -1,6 +1,4 @@
-// Default year-walk implementation. Historical filename retained for source compatibility.
-// Sauce v12 is the signed leading implementation; see year_fast_bench_v3_reference.cpp for the preserved v3 reference.
-#include "sauce_fast127_v12.hpp"
+#include "sauce_fast127_v3.hpp"
 #include <fstream>
 #include <iostream>
 #include <vector>
