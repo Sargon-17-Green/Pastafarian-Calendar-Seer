@@ -65,8 +65,8 @@ See [`prototype/STATUS.md`](prototype/STATUS.md) and [`ROADMAP.md`](ROADMAP.md).
 
 ```bash
 cd prototype
-./scripts/build.sh
-./scripts/run_benchmark.sh 3
+bash ./scripts/build.sh
+bash ./scripts/run_benchmark.sh 3
 ```
 
 ### Windows / PowerShell
