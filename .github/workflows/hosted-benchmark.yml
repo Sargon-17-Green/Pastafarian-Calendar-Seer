@@ -1,0 +1,133 @@
+name: Seer hosted benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Repetitions of the benchmark suite"
+        required: true
+        default: "1"
+        type: string
+      threads:
+        description: "OpenMP threads"
+        required: true
+        default: "4"
+        type: string
+      superblock:
+        description: "Superblock size"
+        required: true
+        default: "512"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Record runner environment
+        shell: bash
+        run: |
+          mkdir -p prototype/results
+
+          {
+            echo "utc=$(date -u -Iseconds)"
+            echo "commit=$GITHUB_SHA"
+            echo "runner_name=$RUNNER_NAME"
+            echo "runner_os=$RUNNER_OS"
+            echo "runner_arch=$RUNNER_ARCH"
+            echo "image_os=${ImageOS:-unknown}"
+            echo "image_version=${ImageVersion:-unknown}"
+            echo
+            uname -a
+            echo
+            echo "nproc=$(nproc)"
+            echo
+            lscpu
+            echo
+            grep -m1 '^flags' /proc/cpuinfo || true
+          } | tee prototype/results/runner-info.txt
+
+      - name: Probe required CPU instructions
+        id: cpu
+        shell: bash
+        run: |
+          mkdir -p prototype/build
+
+          g++ -O2 -std=c++20 \
+            prototype/tools/cpu_probe.cpp \
+            -o prototype/build/cpu_probe
+
+          set +e
+          prototype/build/cpu_probe 2>&1 \
+            | tee prototype/results/cpu-probe.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+
+          if [[ "$rc" -eq 0 ]]; then
+            echo "supported=true" >> "$GITHUB_OUTPUT"
+            echo "Required AVX-512 feature set is available."
+          else
+            echo "supported=false" >> "$GITHUB_OUTPUT"
+            echo "The GitHub-hosted CPU does not expose the required AVX-512 feature set."
+          fi
+
+      - name: Install build dependencies
+        if: steps.cpu.outputs.supported == 'true'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgmp-dev \
+            libboost-dev \
+            time
+
+      - name: Build Seer prototype
+        if: steps.cpu.outputs.supported == 'true'
+        shell: bash
+        run: |
+          cd prototype
+          bash ./scripts/build.sh
+
+      - name: Run benchmark
+        if: steps.cpu.outputs.supported == 'true'
+        shell: bash
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: |
+          bash ./prototype/scripts/run_benchmark.sh \
+            "${{ inputs.repetitions }}"
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "# Pastafarian Calendar Seer"
+            echo
+            if [[ "${{ steps.cpu.outputs.supported }}" == "true" ]]; then
+              echo "GitHub-hosted runner supports the required AVX-512 backend."
+              echo
+              echo "Benchmark execution was attempted."
+            else
+              echo "GitHub-hosted runner does **not** expose the complete AVX-512 backend required by the current prototype."
+              echo
+              echo "No benchmark was run."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-hosted-benchmark-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
