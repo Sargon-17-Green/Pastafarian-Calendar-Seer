@@ -1,0 +1,36 @@
+name: Seer adaptive Pascal-ladder default adoption check
+on:
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash --noprofile --norc -e -o pipefail {0}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU and commit
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/pascal-adoption-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Verify Sauce v12 remains default
+        run: bash ./prototype/scripts/check_v12_default_adoption.sh
+      - name: Verify adaptive Pascal ladder is AVX2 default
+        env: { COUNT_THREADS: '4', REPLAY_THREADS: '2', SB: '512' }
+        run: bash ./prototype/scripts/check_pascal_adaptive_default_adoption.sh
+      - name: Rebuild reference-vs-default A-B
+        run: bash ./prototype/scripts/build_pascal_adaptive_ab.sh
+      - name: Heavy exact RNS self-test on adopted default
+        run: |
+          (cd prototype/build && ./pascal_adaptive_selftest 4 1) | tee prototype/results/pascal-adaptive-adopted-selftest.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seer-pascal-adoption-${{ github.run_id }}
+          path: prototype/results/
+          retention-days: 30
