@@ -1,0 +1,54 @@
+name: Seer v12 default adoption check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adoption:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU
+        shell: bash
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; } | tee prototype/results/v12-adoption-runner-info.txt
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Verify v12 is the default across backends
+        shell: bash
+        run: bash ./prototype/scripts/check_v12_default_adoption.sh
+      - name: Build portable default with v12
+        shell: bash
+        env:
+          SEER_PORTABLE_CXXFLAGS: -march=native
+        run: bash ./prototype/scripts/build_portable.sh
+      - name: Portable canonical vectors with v12
+        shell: bash
+        env:
+          THREADS: "4"
+          SB: "512"
+        run: bash ./prototype/scripts/check_portable_vectors.sh
+      - name: Re-run signed Sauce v12 equivalence checks
+        shell: bash
+        run: bash ./prototype/scripts/check_sauce_v12.sh
+      - name: Existing AVX2 exact RNS self-test
+        shell: bash
+        env:
+          THREADS: "4"
+        run: bash ./prototype/scripts/run_avx2_selftest.sh 1
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-v12-adoption-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
