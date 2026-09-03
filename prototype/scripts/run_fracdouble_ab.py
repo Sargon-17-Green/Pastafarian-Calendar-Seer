@@ -22,7 +22,7 @@ for name,c,t in cases:
         order=['base','candidate'] if r%2 else ['candidate','base']
         pair={}
         for tag in order:
-            vals,sem=one(tag,c,t); pair[tag]=(vals,sem); time.sleep(cooldown)
+            vals,sem=one(tag,c,t); pair[tag]=(vals,sem); time.sleep(cool)
         if pair['base'][1]!=pair['candidate'][1]: raise SystemExit(f'semantic mismatch {name} rep {r}')
         for tag in ('base','candidate'):
             v=pair[tag][0]
