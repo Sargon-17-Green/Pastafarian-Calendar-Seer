@@ -1,0 +1,51 @@
+name: Seer AVX2 mul-small A-B
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: Cold interleaved repetitions
+        required: false
+        default: '5'
+      cooldown:
+        description: Seconds between cold processes
+        required: false
+        default: '2'
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash --noprofile --norc -e -o pipefail {0}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/mulsmall-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Verify adopted v12 default
+        run: bash ./prototype/scripts/check_v12_default_adoption.sh
+      - name: Build A-B
+        run: bash ./prototype/scripts/build_mulsmall_ab.sh
+      - name: Exact primitive and full vectors
+        env: { COUNT_THREADS: '4', REPLAY_THREADS: '2', SB: '512' }
+        run: bash ./prototype/scripts/check_mulsmall_exact.sh
+      - name: Cold interleaved benchmark
+        env:
+          COUNT_THREADS: '4'
+          REPLAY_THREADS: '2'
+          SB: '512'
+          COOLDOWN: ${{ inputs.cooldown || '2' }}
+        run: python3 ./prototype/scripts/run_mulsmall_ab.py "${{ inputs.repetitions || '5' }}"
+      - name: Heavy exact RNS self-test after timing
+        run: ./prototype/build/mulsmall_selftest 4 1 | tee prototype/results/mulsmall-selftest.csv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seer-mulsmall-${{ github.run_id }}
+          path: prototype/results/
+          retention-days: 30
