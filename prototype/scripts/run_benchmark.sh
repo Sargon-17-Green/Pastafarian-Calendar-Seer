@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+mkdir -p "$ROOT/results"
 EXE="$ROOT/build/pastafarian_cold_bench"
 REPS="${1:-3}"
 THREADS="${THREADS:-5}"
 SB="${SB:-512}"
-[[ -x "$EXE" ]] || "$ROOT/scripts/build.sh"
+[[ -x "$EXE" ]] || bash "$ROOT/scripts/build.sh"
 export OMP_NUM_THREADS="$THREADS" OMP_PROC_BIND=close OMP_PLACES=cores
 STAMP="$(date +%Y%m%d-%H%M%S)"
 LOG="$ROOT/results/benchmark-$STAMP.log"
