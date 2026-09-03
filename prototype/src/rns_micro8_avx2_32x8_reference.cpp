@@ -23,10 +23,6 @@
 #include <vector>
 #include "rns_primes32.hpp"
 
-#ifndef WC_LADDER_GAP
-#define WC_LADDER_GAP 3
-#endif
-
 using Clock=std::chrono::steady_clock;
 static double ms(Clock::time_point a,Clock::time_point b){return std::chrono::duration<double,std::milli>(b-a).count();}
 static constexpr uint64_t B52=1ULL<<32;
@@ -201,28 +197,7 @@ struct RnsEngine{
         auto &st=initPacks[pk];st.H[m-1]=vsmall(1);st.B[m-1]=vzero();
         int cn=commonN;std::array<int,124> freq{},maxrByN{};for(int h=0;h<m-1;h++){int n=len[h+1];freq[n]++;maxrByN[n]=std::max(maxrByN[n],pref[h]);}
         std::array<std::vector<V8>,124> wc;
-#if WC_LADDER_GAP==0
         for(int n=1;n<=123;n++)if(freq[n]>1){int mr=maxrByN[n];wc[n].resize(mr+1);wc[n][0]=vsmall(1);for(int r=0;r<mr;r++){auto w=VMod::mul_small(wc[n][r],n+r-1,q.vp,q.vc);wc[n][r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}}
-#else
-        std::vector<int> need; for(int n=1;n<=123;n++)if(freq[n]>1)need.push_back(n);
-        auto build_direct=[&](int n){int mr=maxrByN[n];wc[n].resize(mr+1);wc[n][0]=vsmall(1);for(int r=0;r<mr;r++){auto w=VMod::mul_small(wc[n][r],n+r-1,q.vp,q.vc);wc[n][r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}};
-        for(size_t gi=0;gi<need.size();){
-            size_t gj=gi+1; while(gj<need.size() && need[gj]-need[gj-1]<=WC_LADDER_GAP)gj++;
-            int n0=need[gi], nlast=need[gj-1], mr=0; long long sumMr=0;
-            for(size_t z=gi;z<gj;z++){mr=std::max(mr,maxrByN[need[z]]);sumMr+=maxrByN[need[z]];}
-            long long prefixAdds=(long long)(nlast-n0)*(mr+1);
-            long long savedMulOps=2LL*(sumMr-mr);
-            // A VMod::add is much cheaper than a modular multiply, but not free.
-            // Require at least one saved multiply per two prefix additions.
-            bool useLadder=(gj-gi)>=2 && 2LL*savedMulOps>=prefixAdds;
-            if(!useLadder){for(size_t z=gi;z<gj;z++)build_direct(need[z]);gi=gj;continue;}
-            std::vector<V8> row(mr+1); row[0]=vsmall(1); for(int r=0;r<mr;r++){auto w=VMod::mul_small(row[r],n0+r-1,q.vp,q.vc);row[r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}
-            wc[n0].assign(row.begin(),row.begin()+maxrByN[n0]+1);
-            size_t want=gi+1;
-            for(int n=n0+1;n<=nlast;n++){V8 cum=vzero();for(int r=0;r<=mr;r++){cum=VMod::add(cum,row[r],q.vp);row[r]=cum;}if(want<gj&&need[want]==n){wc[n].assign(row.begin(),row.begin()+maxrByN[n]+1);want++;}}
-            gi=gj;
-        }
-#endif
         std::vector<V8> following(pref.back()+2,vsmall(1)),current;
         for(int h=m-2;h>=0;--h){int qmax=pref[h]+1,n=len[h+1];current.assign(qmax+1,vzero());V8 cum=vzero(),w=vsmall(1),Blast=vsmall(1);bool cached=freq[n]>1;for(int qq=1;qq<=qmax;qq++){int r=qq-1;V8 ww=cached?wc[n][r]:w;auto term=VMod::mul(ww,following[n+r],q.vp,q.vc);cum=VMod::add(cum,term,q.vp);current[qq]=cum;if(qq==qmax)Blast=ww;if(!cached){w=VMod::mul_small(w,n+r-1,q.vp,q.vc);w=VMod::mul(w,q.inv[qq],q.vp,q.vc);}}st.H[h]=current[qmax];st.B[h]=Blast;following.swap(current);}
         q.bcommon=std::move(wc[cn]);
