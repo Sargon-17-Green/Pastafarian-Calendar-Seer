@@ -1,0 +1,75 @@
+name: Seer AVX2 candidate benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Repetitions per backend"
+        required: true
+        default: "3"
+        type: string
+      threads:
+        description: "OpenMP threads"
+        required: true
+        default: "4"
+        type: string
+      superblock:
+        description: "Superblock size"
+        required: true
+        default: "512"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU
+        run: |
+          mkdir -p prototype/results
+          lscpu | tee prototype/results/avx2-runner-lscpu.txt
+          grep -m1 '^flags' /proc/cpuinfo | tee -a prototype/results/avx2-runner-lscpu.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo 'AVX2 unavailable'; exit 3; }
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Build scalar portable baseline
+        env:
+          SEER_PORTABLE_CXXFLAGS: -march=native
+        run: bash ./prototype/scripts/build_portable.sh
+      - name: Build AVX2 RNS32x8 candidate
+        env:
+          SEER_AVX2_CXXFLAGS: -march=native
+        run: bash ./prototype/scripts/build_avx2.sh
+      - name: Candidate exact RNS self-test
+        env:
+          THREADS: ${{ inputs.threads }}
+        run: bash ./prototype/scripts/run_avx2_selftest.sh 3
+      - name: Candidate calendar vectors
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: bash ./prototype/scripts/check_avx2_vectors.sh
+      - name: Benchmark scalar portable baseline
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: bash ./prototype/scripts/run_benchmark_portable.sh "${{ inputs.repetitions }}"
+      - name: Benchmark AVX2 candidate
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: bash ./prototype/scripts/run_benchmark_avx2.sh "${{ inputs.repetitions }}"
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-avx2-compare-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
