@@ -35,7 +35,6 @@ jobs:
         shell: bash
         run: |
           mkdir -p prototype/results
-
           {
             echo "utc=$(date -u -Iseconds)"
             echo "commit=$GITHUB_SHA"
@@ -54,56 +53,73 @@ jobs:
             grep -m1 '^flags' /proc/cpuinfo || true
           } | tee prototype/results/runner-info.txt
 
-      - name: Probe required CPU instructions
+      - name: Probe IFMA backend
         id: cpu
         shell: bash
         run: |
           mkdir -p prototype/build
-
-          g++ -O2 -std=c++20 \
-            prototype/tools/cpu_probe.cpp \
-            -o prototype/build/cpu_probe
-
+          g++ -O2 -std=c++20 prototype/tools/cpu_probe.cpp -o prototype/build/cpu_probe
           set +e
-          prototype/build/cpu_probe 2>&1 \
-            | tee prototype/results/cpu-probe.txt
+          prototype/build/cpu_probe 2>&1 | tee prototype/results/cpu-probe.txt
           rc=${PIPESTATUS[0]}
           set -e
-
           if [[ "$rc" -eq 0 ]]; then
-            echo "supported=true" >> "$GITHUB_OUTPUT"
-            echo "Required AVX-512 feature set is available."
+            echo "ifma=true" >> "$GITHUB_OUTPUT"
           else
-            echo "supported=false" >> "$GITHUB_OUTPUT"
-            echo "The GitHub-hosted CPU does not expose the required AVX-512 feature set."
+            echo "ifma=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install build dependencies
-        if: steps.cpu.outputs.supported == 'true'
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libgmp-dev \
-            libboost-dev \
-            time
+          sudo apt-get install -y libgmp-dev libboost-dev time
 
-      - name: Build Seer prototype
-        if: steps.cpu.outputs.supported == 'true'
+      - name: Build portable backend
         shell: bash
+        env:
+          SEER_PORTABLE_CXXFLAGS: -march=native
         run: |
-          cd prototype
-          bash ./scripts/build.sh
+          bash ./prototype/scripts/build_portable.sh
 
-      - name: Run benchmark
-        if: steps.cpu.outputs.supported == 'true'
+      - name: Portable exact RNS self-test
+        shell: bash
+        env:
+          THREADS: ${{ inputs.threads }}
+        run: |
+          bash ./prototype/scripts/run_portable_selftest.sh 1
+
+      - name: Portable calendar vector checks
         shell: bash
         env:
           THREADS: ${{ inputs.threads }}
           SB: ${{ inputs.superblock }}
         run: |
-          bash ./prototype/scripts/run_benchmark.sh \
-            "${{ inputs.repetitions }}"
+          bash ./prototype/scripts/check_portable_vectors.sh
+
+      - name: Run portable benchmark
+        shell: bash
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: |
+          bash ./prototype/scripts/run_benchmark_portable.sh "${{ inputs.repetitions }}"
+
+      - name: Build preserved IFMA baseline
+        if: steps.cpu.outputs.ifma == 'true'
+        shell: bash
+        run: |
+          cd prototype
+          bash ./scripts/build.sh
+
+      - name: Run preserved IFMA benchmark
+        if: steps.cpu.outputs.ifma == 'true'
+        shell: bash
+        env:
+          THREADS: ${{ inputs.threads }}
+          SB: ${{ inputs.superblock }}
+        run: |
+          bash ./prototype/scripts/run_benchmark.sh "${{ inputs.repetitions }}"
 
       - name: Write job summary
         if: always()
@@ -112,14 +128,12 @@ jobs:
           {
             echo "# Pastafarian Calendar Seer"
             echo
-            if [[ "${{ steps.cpu.outputs.supported }}" == "true" ]]; then
-              echo "GitHub-hosted runner supports the required AVX-512 backend."
-              echo
-              echo "Benchmark execution was attempted."
+            echo "Portable backend was built and scheduled for exact self-test, vector checks, and benchmark."
+            echo
+            if [[ "${{ steps.cpu.outputs.ifma }}" == "true" ]]; then
+              echo "The runner also exposes the complete IFMA feature set; the preserved baseline was scheduled too."
             else
-              echo "GitHub-hosted runner does **not** expose the complete AVX-512 backend required by the current prototype."
-              echo
-              echo "No benchmark was run."
+              echo "The runner does not expose the complete IFMA feature set; the preserved IFMA baseline was not run."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
