@@ -1,0 +1,59 @@
+name: Seer replay-cache A-B-C
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Fresh-process repetitions per backend/case"
+        required: false
+        default: "3"
+
+permissions:
+  contents: read
+
+jobs:
+  replay-cache:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU
+        shell: bash
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/replay-cache-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Verify adopted v12 default first
+        shell: bash
+        run: bash ./prototype/scripts/check_v12_default_adoption.sh
+      - name: Build baseline and replay-cache candidates
+        shell: bash
+        run: bash ./prototype/scripts/build_replay_cache_ab.sh
+      - name: Exact validation
+        shell: bash
+        env:
+          THREADS: "4"
+          REPLAY_THREADS: "2"
+          SB: "512"
+        run: bash ./prototype/scripts/check_replay_cache_exact.sh
+      - name: Benchmark baseline vs top2 vs all repeated caches
+        shell: bash
+        env:
+          COUNT_THREADS: "4"
+          REPLAY_THREADS: "2"
+          SB: "512"
+          COOLDOWN: "2"
+        run: python3 ./prototype/scripts/run_replay_cache_ab.py "${{ inputs.repetitions || '3' }}"
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-replay-cache-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
