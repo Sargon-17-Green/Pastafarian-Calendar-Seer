@@ -1,0 +1,65 @@
+name: Seer Sauce v12 A/B benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Interleaved A/B repetitions"
+        required: true
+        default: "3"
+        type: string
+      cooldown_seconds:
+        description: "Cooldown between cold processes"
+        required: true
+        default: "2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record CPU
+        shell: bash
+        run: |
+          mkdir -p prototype/results
+          { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/sauce-v12-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+      - name: Build v3 and v12
+        shell: bash
+        run: bash ./prototype/scripts/build_sauce_v12.sh
+      - name: Interleaved cold A/B benchmark
+        shell: bash
+        env:
+          COUNT_THREADS: "4"
+          REPLAY_THREADS: "2"
+          SB: "512"
+          COOLDOWN: ${{ inputs.cooldown_seconds }}
+        run: bash ./prototype/scripts/run_sauce_v12_compare.sh "${{ inputs.repetitions }}"
+      - name: Sauce and calendar exact validation
+        if: always()
+        shell: bash
+        run: bash ./prototype/scripts/check_sauce_v12.sh
+      - name: Existing AVX2 exact RNS self-test
+        if: always()
+        shell: bash
+        env:
+          THREADS: "4"
+        run: bash ./prototype/scripts/run_avx2_selftest.sh 1
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-sauce-v12-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
