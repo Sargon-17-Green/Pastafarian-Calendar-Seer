@@ -1,0 +1,102 @@
+name: Seer interleaved cold benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      repetitions:
+        description: "Interleaved A/B repetitions"
+        required: true
+        default: "3"
+        type: string
+      count_threads:
+        description: "RNS constructor/count threads"
+        required: true
+        default: "4"
+        type: string
+      superblock:
+        description: "Superblock size"
+        required: true
+        default: "512"
+        type: string
+      cooldown_seconds:
+        description: "Cooldown between isolated cold measurements"
+        required: true
+        default: "2"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Record CPU topology
+        shell: bash
+        run: |
+          mkdir -p prototype/results
+          {
+            date -u -Iseconds
+            echo "commit=$GITHUB_SHA"
+            lscpu
+            echo
+            lscpu -e=CPU,CORE,SOCKET,NODE,ONLINE
+            echo
+            grep -m1 '^flags' /proc/cpuinfo || true
+          } | tee prototype/results/interleaved-runner-info.txt
+          grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgmp-dev libboost-dev time
+
+      - name: Build split-thread benchmark binaries
+        shell: bash
+        run: bash ./prototype/scripts/build_split_bench.sh
+
+      # Deliberately benchmark before the expensive oracle/self-test.
+      - name: Interleaved isolated-cold benchmark
+        shell: bash
+        env:
+          COUNT_THREADS: ${{ inputs.count_threads }}
+          SB: ${{ inputs.superblock }}
+          COOLDOWN: ${{ inputs.cooldown_seconds }}
+        run: |
+          bash ./prototype/scripts/run_interleaved_split.sh "${{ inputs.repetitions }}"
+
+      # Correctness work happens after timing so it cannot heat/throttle the benchmark.
+      - name: Build existing AVX2 validation binaries
+        if: always()
+        shell: bash
+        env:
+          SEER_AVX2_CXXFLAGS: -march=native
+        run: bash ./prototype/scripts/build_avx2.sh
+
+      - name: Canonical AVX2 calendar vectors
+        if: always()
+        shell: bash
+        env:
+          THREADS: ${{ inputs.count_threads }}
+          SB: ${{ inputs.superblock }}
+        run: bash ./prototype/scripts/check_avx2_vectors.sh
+
+      - name: AVX2 exact RNS self-test
+        if: always()
+        shell: bash
+        env:
+          THREADS: ${{ inputs.count_threads }}
+        run: bash ./prototype/scripts/run_avx2_selftest.sh 1
+
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seer-interleaved-cold-${{ github.run_id }}
+          path: prototype/results/
+          if-no-files-found: error
+          retention-days: 30
