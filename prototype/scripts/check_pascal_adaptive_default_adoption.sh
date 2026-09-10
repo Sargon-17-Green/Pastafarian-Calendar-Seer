@@ -25,6 +25,6 @@ LOG="$ROOT/results/pascal-adaptive-default-adoption.txt"
 : > "$LOG"
 for exe in pascal_adopt_default pascal_adopt_explicit pascal_adopt_reference; do
   echo "=== canonical vectors: $exe ===" | tee -a "$LOG"
-  "$ROOT/scripts/check_canonical_vectors.sh" "$BUILD/$exe" "$THREADS" "$SB" "$REPLAY_THREADS" | tee -a "$LOG"
+  bash "$ROOT/scripts/check_canonical_vectors.sh" "$BUILD/$exe" "$THREADS" "$SB" "$REPLAY_THREADS" | tee -a "$LOG"
 done
 echo "Adaptive Pascal-ladder default adoption: PASS against independent saved-sum vectors" | tee -a "$LOG"

@@ -27,7 +27,7 @@ LOG="$ROOT/results/v12-default-adoption.txt"
 : > "$LOG"
 for exe in seer_default_avx2 seer_explicit_v12 seer_reference_v3; do
   echo "=== canonical vectors: $exe ===" | tee -a "$LOG"
-  "$ROOT/scripts/check_canonical_vectors.sh" "$ROOT/build/$exe" 4 512 2 | tee -a "$LOG"
+  bash "$ROOT/scripts/check_canonical_vectors.sh" "$ROOT/build/$exe" 4 512 2 | tee -a "$LOG"
 done
 
 echo "v12 default adoption: PASS against independent saved-sum vectors" | tee -a "$LOG"

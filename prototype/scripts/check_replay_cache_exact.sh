@@ -21,6 +21,6 @@ grep -q '^rnd1,512,1,' "$ROOT/results/replay-cache-all-selftest.csv"
 grep -q 'count_validation bad=0 rec_eq=1' "$ROOT/results/replay-cache-top2-selftest.log"
 grep -q 'count_validation bad=0 rec_eq=1' "$ROOT/results/replay-cache-all-selftest.log"
 for exe in replay_cache_base replay_cache_top2 replay_cache_all; do
-  "$ROOT/scripts/check_canonical_vectors.sh" "$BUILD/$exe" "$THREADS" "$SB" "$REPLAY_THREADS"
+  bash "$ROOT/scripts/check_canonical_vectors.sh" "$BUILD/$exe" "$THREADS" "$SB" "$REPLAY_THREADS"
 done
 echo "Replay-cache exact + canonical saved-sum validation: PASS"
