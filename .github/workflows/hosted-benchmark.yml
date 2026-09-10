@@ -26,11 +26,9 @@ jobs:
   benchmark:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Record runner environment
         shell: bash
         run: |
@@ -43,16 +41,9 @@ jobs:
             echo "runner_arch=$RUNNER_ARCH"
             echo "image_os=${ImageOS:-unknown}"
             echo "image_version=${ImageVersion:-unknown}"
-            echo
-            uname -a
-            echo
-            echo "nproc=$(nproc)"
-            echo
-            lscpu
-            echo
+            echo; uname -a; echo; echo "nproc=$(nproc)"; echo; lscpu; echo
             grep -m1 '^flags' /proc/cpuinfo || true
           } | tee prototype/results/runner-info.txt
-
       - name: Probe IFMA backend
         id: cpu
         shell: bash
@@ -61,82 +52,64 @@ jobs:
           g++ -O2 -std=c++20 prototype/tools/cpu_probe.cpp -o prototype/build/cpu_probe
           set +e
           prototype/build/cpu_probe 2>&1 | tee prototype/results/cpu-probe.txt
-          rc=${PIPESTATUS[0]}
-          set -e
-          if [[ "$rc" -eq 0 ]]; then
-            echo "ifma=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ifma=false" >> "$GITHUB_OUTPUT"
-          fi
-
+          rc=${PIPESTATUS[0]}; set -e
+          if [[ "$rc" -eq 0 ]]; then echo "ifma=true" >> "$GITHUB_OUTPUT"; else echo "ifma=false" >> "$GITHUB_OUTPUT"; fi
       - name: Install build dependencies
         shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y libgmp-dev libboost-dev time
-
+      - name: Canonical saved-sum conformance
+        shell: bash
+        run: bash ./prototype/scripts/check_saved_sum_conformance.sh
       - name: Build portable backend
         shell: bash
         env:
           SEER_PORTABLE_CXXFLAGS: -march=native
-        run: |
-          bash ./prototype/scripts/build_portable.sh
-
+        run: bash ./prototype/scripts/build_portable.sh
       - name: Portable exact RNS self-test
         shell: bash
         env:
           THREADS: ${{ inputs.threads }}
-        run: |
-          bash ./prototype/scripts/run_portable_selftest.sh 1
-
+        run: bash ./prototype/scripts/run_portable_selftest.sh 1
       - name: Portable calendar vector checks
         shell: bash
         env:
           THREADS: ${{ inputs.threads }}
           SB: ${{ inputs.superblock }}
-        run: |
-          bash ./prototype/scripts/check_portable_vectors.sh
-
+        run: bash ./prototype/scripts/check_portable_vectors.sh
       - name: Run portable benchmark
         shell: bash
         env:
           THREADS: ${{ inputs.threads }}
           SB: ${{ inputs.superblock }}
-        run: |
-          bash ./prototype/scripts/run_benchmark_portable.sh "${{ inputs.repetitions }}"
-
+        run: bash ./prototype/scripts/run_benchmark_portable.sh "${{ inputs.repetitions }}"
       - name: Build preserved IFMA baseline
         if: steps.cpu.outputs.ifma == 'true'
         shell: bash
         run: |
           cd prototype
           bash ./scripts/build.sh
-
       - name: Run preserved IFMA benchmark
         if: steps.cpu.outputs.ifma == 'true'
         shell: bash
         env:
           THREADS: ${{ inputs.threads }}
           SB: ${{ inputs.superblock }}
-        run: |
-          bash ./prototype/scripts/run_benchmark.sh "${{ inputs.repetitions }}"
-
+        run: bash ./prototype/scripts/run_benchmark.sh "${{ inputs.repetitions }}"
       - name: Write job summary
         if: always()
         shell: bash
         run: |
           {
-            echo "# Pastafarian Calendar Seer"
-            echo
-            echo "Portable backend was built and scheduled for exact self-test, vector checks, and benchmark."
-            echo
+            echo "# Pastafarian Calendar Seer"; echo
+            echo "Canonical saved-sum conformance is scheduled before backend validation and timing."; echo
             if [[ "${{ steps.cpu.outputs.ifma }}" == "true" ]]; then
               echo "The runner also exposes the complete IFMA feature set; the preserved baseline was scheduled too."
             else
               echo "The runner does not expose the complete IFMA feature set; the preserved IFMA baseline was not run."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-
       - name: Upload benchmark evidence
         if: always()
         uses: actions/upload-artifact@v4

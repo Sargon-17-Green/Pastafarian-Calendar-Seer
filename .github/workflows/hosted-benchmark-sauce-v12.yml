@@ -37,6 +37,9 @@ jobs:
       - name: Build v3 and v12
         shell: bash
         run: bash ./prototype/scripts/build_sauce_v12.sh
+      - name: Canonical saved-sum validation
+        shell: bash
+        run: bash ./prototype/scripts/check_sauce_v12.sh
       - name: Interleaved cold A/B benchmark
         shell: bash
         env:
@@ -45,10 +48,6 @@ jobs:
           SB: "512"
           COOLDOWN: ${{ inputs.cooldown_seconds }}
         run: bash ./prototype/scripts/run_sauce_v12_compare.sh "${{ inputs.repetitions }}"
-      - name: Sauce and calendar exact validation
-        if: always()
-        shell: bash
-        run: bash ./prototype/scripts/check_sauce_v12.sh
       - name: Existing AVX2 exact RNS self-test
         if: always()
         shell: bash
