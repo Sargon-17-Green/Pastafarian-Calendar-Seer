@@ -5,7 +5,7 @@ reps=int(sys.argv[1]) if len(sys.argv)>1 else 7
 root=Path(__file__).resolve().parents[2]
 build=root/'prototype'/'build'; results=root/'prototype'/'results'; results.mkdir(exist_ok=True)
 cool=float(os.environ.get('COOLDOWN','2'))
-cases=[('same-query',2461290,2461290),('same-end',2461290,2464579),('far-past-3576y',2461290,-12829630),('forward-1002y',2461290,6788193)]
+cases=[('same-query',2461290,2461290),('same-end',2461290,2463007),('far-past-3540y',2461290,-12829630),('forward-994y',2461290,6700000)]
 num=re.compile(r'(\w+)=([0-9.]+)')
 def one(tag,c,t):
     exe=build/('fracdouble_base' if tag=='base' else 'fracdouble_candidate')

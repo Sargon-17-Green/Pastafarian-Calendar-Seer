@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]; BUILD=ROOT/'build'; RESULTS=ROOT/'resu
 reps=int(sys.argv[1]) if len(sys.argv)>1 else 5
 threads=int(os.getenv('COUNT_THREADS','4')); replay_threads=int(os.getenv('REPLAY_THREADS','2')); sb=int(os.getenv('SB','512')); cooldown=float(os.getenv('COOLDOWN','2'))
 backs={'base':'mulsmall_base','cand':'mulsmall_candidate'}
-cases=[('same-query',2461290,2461290),('same-end',2461290,2464579),('far-past-3576y',2461290,-12829630),('forward-1002y',2461290,6788193)]
+cases=[('same-query',2461290,2461290),('same-end',2461290,2463007),('far-past-3540y',2461290,-12829630),('forward-994y',2461290,6700000)]
 rx=re.compile(r'(\w+)=([0-9.]+)'); rows=[]
 for rep in range(1,reps+1):
     jobs=[(b,c) for c in cases for b in backs]; random.Random(0xA52B0000+rep).shuffle(jobs)

@@ -1,5 +1,10 @@
 # Sauce v12 candidate delta
 
+> **HISTORICAL — SUPERSEDED SEMANTIC VALIDATION.** This report predates the 2026-09-10 saved-sum correction.
+> Any claim below that old Seer-to-Seer equality, the old gate corpus, or the old full-date vectors established
+> canonical correctness is superseded. Historical performance/source-layout observations are retained unchanged.
+> Current semantic evidence is described in `HISTORICAL_VALIDATION_NOTICE.md` and `docs/CONFORMANCE.md`.
+
 This delta keeps the canonical Sauce semantics and the AVX2 RNS32x8 backend unchanged except for the Sauce arithmetic source used by the v12 comparison binary.
 
 v12 performs two exact algebraic rewrites inside the 7 hidden and 11 visible grinds:

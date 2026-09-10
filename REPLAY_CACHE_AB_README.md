@@ -1,5 +1,10 @@
 # Seer replay-cache A/B/C delta
 
+> **HISTORICAL — SUPERSEDED SEMANTIC VALIDATION.** This report predates the 2026-09-10 saved-sum correction.
+> Any claim below that old Seer-to-Seer equality, the old gate corpus, or the old full-date vectors established
+> canonical correctness is superseded. Historical performance/source-layout observations are retained unchanged.
+> Current semantic evidence is described in `HISTORICAL_VALIDATION_NOTICE.md` and `docs/CONFORMANCE.md`.
+
 This is an experimental overlay for `Sargon-17-Green/Pastafarian-Calendar-Seer` after Sauce v12 adoption.
 It does **not** change the default engine.
 

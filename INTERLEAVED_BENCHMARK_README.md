@@ -1,5 +1,10 @@
 # Seer interleaved/split-thread benchmark delta
 
+> **HISTORICAL — SUPERSEDED SEMANTIC VALIDATION.** This report predates the 2026-09-10 saved-sum correction.
+> Any claim below that old Seer-to-Seer equality, the old gate corpus, or the old full-date vectors established
+> canonical correctness is superseded. Historical performance/source-layout observations are retained unchanged.
+> Current semantic evidence is described in `HISTORICAL_VALIDATION_NOTICE.md` and `docs/CONFORMANCE.md`.
+
 This delta does **not** change the calendar formulas or either RNS core.
 
 It adds two benchmark entry points that allow RNS construction/count and replay to

@@ -15,9 +15,9 @@ LOG="$ROOT/results/sauce-v12-ab-$STAMP.log"
 cd "$ROOT/data"
 CASES=(
   'same-query 2461290 2461290'
-  'same-end 2461290 2464579'
-  'far-past-3576y 2461290 -12829630'
-  'forward-1002y 2461290 6788193'
+  'same-end 2461290 2463007'
+  'far-past-3540y 2461290 -12829630'
+  'forward-994y 2461290 6700000'
 )
 run_one(){ local backend="$1" name="$2" calc="$3" target="$4" rep="$5" exe; [[ "$backend" == v3 ]] && exe="$A" || exe="$B"; echo "=== backend=$backend rep=$rep case=$name calc=$calc target=$target count_threads=$COUNT_THREADS replay_threads=$REPLAY_THREADS sb=$SB ===" | tee -a "$LOG"; /usr/bin/time -f 'external_wall_s=%e' "$exe" "$calc" "$target" "$COUNT_THREADS" "$SB" "$REPLAY_THREADS" 2>&1 | tee -a "$LOG"; sleep "$COOLDOWN"; }
 for ((rep=1;rep<=REPS;rep++)); do

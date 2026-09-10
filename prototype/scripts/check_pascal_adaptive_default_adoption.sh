@@ -21,16 +21,10 @@ PY
 "$CXX" "${COMMON[@]}" "$EXP" -lgmpxx -lgmp -o "$BUILD/pascal_adopt_explicit"
 ln -sf ../data/gates_u16.bin "$BUILD/gates_u16.bin"
 THREADS="${COUNT_THREADS:-4}"; REPLAY_THREADS="${REPLAY_THREADS:-2}"; SB="${SB:-512}"
-: > "$ROOT/results/pascal-adaptive-default-adoption.txt"
-(
- cd "$BUILD"
- for t in 2461247 2461290 2462913 2464579 -12829630 6788193; do
-   d=$(./pascal_adopt_default 2461290 "$t" "$THREADS" "$SB" "$REPLAY_THREADS" | head -n1)
-   e=$(./pascal_adopt_explicit 2461290 "$t" "$THREADS" "$SB" "$REPLAY_THREADS" | head -n1)
-   r=$(./pascal_adopt_reference 2461290 "$t" "$THREADS" "$SB" "$REPLAY_THREADS" | head -n1)
-   [[ "$d" == "$e" ]] || { echo "target=$t default_explicit=NO"; exit 1; }
-   [[ "$d" == "$r" ]] || { echo "target=$t semantic_reference=NO"; exit 1; }
-   echo "target=$t default_explicit=YES semantic_reference=YES"
- done
-) | tee "$ROOT/results/pascal-adaptive-default-adoption.txt"
-echo "Adaptive Pascal-ladder default adoption: PASS" | tee -a "$ROOT/results/pascal-adaptive-default-adoption.txt"
+LOG="$ROOT/results/pascal-adaptive-default-adoption.txt"
+: > "$LOG"
+for exe in pascal_adopt_default pascal_adopt_explicit pascal_adopt_reference; do
+  echo "=== canonical vectors: $exe ===" | tee -a "$LOG"
+  "$ROOT/scripts/check_canonical_vectors.sh" "$BUILD/$exe" "$THREADS" "$SB" "$REPLAY_THREADS" | tee -a "$LOG"
+done
+echo "Adaptive Pascal-ladder default adoption: PASS against independent saved-sum vectors" | tee -a "$LOG"

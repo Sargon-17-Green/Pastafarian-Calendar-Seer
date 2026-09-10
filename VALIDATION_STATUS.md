@@ -1,5 +1,10 @@
 # Validation status — AVX2 RNS32x8 candidate
 
+> **HISTORICAL — SUPERSEDED SEMANTIC VALIDATION.** This report predates the 2026-09-10 saved-sum correction.
+> Any claim below that old Seer-to-Seer equality, the old gate corpus, or the old full-date vectors established
+> canonical correctness is superseded. Historical performance/source-layout observations are retained unchanged.
+> Current semantic evidence is described in `HISTORICAL_VALIDATION_NOTICE.md` and `docs/CONFORMANCE.md`.
+
 Locally verified before packaging:
 
 - Worst weave vector `[123 x 46, 120]`: count/CRT exact; `frac3` exact tolerance unchanged.

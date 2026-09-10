@@ -7,11 +7,11 @@ $env:OMP_NUM_THREADS = "$Threads"
 $env:OMP_PROC_BIND = 'close'
 $env:OMP_PLACES = 'cores'
 $Cases = @(
-  @{Name='same-start'; Calc='2461290'; Target='2461247'},
+  @{Name='same-start'; Calc='2461290'; Target='2458961'},
   @{Name='same-query'; Calc='2461290'; Target='2461290'},
-  @{Name='same-mid'; Calc='2461290'; Target='2462913'},
-  @{Name='same-end'; Calc='2461290'; Target='2464579'},
-  @{Name='far-past-3576y'; Calc='2461290'; Target='-12829630'}
+  @{Name='same-mid'; Calc='2461290'; Target='2460984'},
+  @{Name='same-end'; Calc='2461290'; Target='2463007'},
+  @{Name='far-past-3540y'; Calc='2461290'; Target='-12829630'}
 )
 $Stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $Csv = Join-Path $Root "results/benchmark-$Stamp.csv"

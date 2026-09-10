@@ -1,5 +1,10 @@
 # AVX2 Pascal-ladder A/B delta
 
+> **HISTORICAL — SUPERSEDED SEMANTIC VALIDATION.** This report predates the 2026-09-10 saved-sum correction.
+> Any claim below that old Seer-to-Seer equality, the old gate corpus, or the old full-date vectors established
+> canonical correctness is superseded. Historical performance/source-layout observations are retained unchanged.
+> Current semantic evidence is described in `HISTORICAL_VALIDATION_NOTICE.md` and `docs/CONFORMANCE.md`.
+
 Target repository: `Sargon-17-Green/Pastafarian-Calendar-Seer`
 HEAD re-verified before packaging: `28cd1c7398d875027f9b5bf38c40954a55055d10`.
 

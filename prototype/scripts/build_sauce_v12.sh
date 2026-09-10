@@ -11,4 +11,7 @@ grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable" >&2; exit 3; }
 "$CXX" -O3 -DNDEBUG -std=c++20 -march=native -I"$ROOT/src" -DSAUCE_HEADER='"sauce_fast127_v3.hpp"' "$ROOT/tools/sauce_equivalence_dump.cpp" -o "$ROOT/build/sauce_dump_v3"
 "$CXX" -O3 -DNDEBUG -std=c++20 -march=native -I"$ROOT/src" -DSAUCE_HEADER='"sauce_fast127_v12.hpp"' "$ROOT/tools/sauce_equivalence_dump.cpp" -o "$ROOT/build/sauce_dump_v12"
 "$CXX" -O3 -DNDEBUG -std=c++20 -march=native -I"$ROOT/src" "$ROOT/tools/gate_validate_v12.cpp" -o "$ROOT/build/gate_validate_v12"
-echo "Built Sauce v3/v12 A/B binaries and validators."
+"$CXX" -O2 -std=c++20 -I"$ROOT/src" -I"$ROOT/tools" -DSAUCE_HEADER='"sauce_fast127_v3.hpp"' "$ROOT/tools/saved_sum_conformance.cpp" -o "$ROOT/build/saved_sum_conformance_v3"
+"$CXX" -O2 -std=c++20 -I"$ROOT/src" -I"$ROOT/tools" -DSAUCE_HEADER='"sauce_fast127_v12.hpp"' "$ROOT/tools/saved_sum_conformance.cpp" -o "$ROOT/build/saved_sum_conformance_v12"
+"$CXX" -O2 -std=c++20 -I"$ROOT/tools" "$ROOT/tools/canonical_vector_oracle.cpp" -o "$ROOT/build/canonical_vector_oracle"
+echo "Built Sauce v3/v12 A/B binaries, saved-sum conformance tools, and validators."

@@ -20,80 +20,57 @@ the Pastafarian Calendar specification.
 
 The Seer is **not normative**.
 
-- The calendar specification (the **Scroll**) defines what is true.
+- The current Scroll defines what is true.
 - The historical spaghetti implementation (the **Monster**) performs the prescribed work.
-- The **Seer** is an accelerated implementation that predicts the same answer without
-  reproducing the same computational history.
-- Test-only normative/reference oracles are verification tools, not the Seer itself.
+- The **Seer** is an accelerated implementation that predicts the same answer without reproducing the same computational history.
+- Test-only exact/reference oracles are verification tools, not authorities over the Scroll.
+- Agreement between multiple Seer implementations is not enough when they may share a common bug.
 
 If the Seer disagrees with the normative calendar, **the Seer is wrong**.
 
-The Seer must never become a hidden dependency of the Monster or of independent
-language implementations merely so that they can pass their own conformance tests.
-Differential comparison is welcome; semantic dependence is not.
+### Canonical saved-sum correction — 2026-09-10
+
+The 12 final Sauce post-stirs use `R = SAVE(sum(oldBowls) + 149*r)` both to choose the bowl permutation
+and as the additive sum term inside `u`. All six new bowls in a stir read one common old-bowl snapshot.
+The former v3/v12 paths incorrectly used the raw old-bowl sum inside `u`; that common-mode error and
+all derived semantic witnesses are superseded. See `docs/CONFORMANCE.md`, `docs/DATA_PROVENANCE.md`,
+and `HISTORICAL_VALIDATION_NOTICE.md`.
+
+The corrected positive 40,000-gap corpus has SHA-256
+`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`.
 
 ## Current state
 
-The repository currently contains the **2026-09-03 cold-conversion performance
-prototype** under [`prototype/`](prototype/). It is a benchmark baseline, not yet a
-stable library or public API.
+The repository contains the **2026-09-03 cold-conversion performance prototype** under `prototype/`,
+with the saved-sum semantic correction layered onto that latest prototype state. This is a benchmark
+baseline, not yet a stable library or public API.
 
-The current prototype includes:
+The current prototype includes C++20, specialized arithmetic for `M = 2^127 - 1`, a generated corpus
+of 40,000 positive canonical gate gaps, a fixed 720-permutation bowl-order table, exact 320-bit
+month-length dynamic programming, RNS/CRT weave counting and prefix unranking, AVX-512IFMA and portable
+backends, and no memoization or predictive precomputation across separate queries.
 
-- C++20;
-- specialized arithmetic for `M = 2^127 - 1`;
-- a fixed corpus of 40,000 positive canonical gate gaps;
-- a fixed 720-permutation bowl-order table;
-- exact 320-bit month-length dynamic programming;
-- RNS/CRT weave counting and prefix unranking;
-- AVX-512IFMA acceleration in the original baseline;
-- a separate portable scalar RNS backend for hosts without IFMA;
-- no memoization or predictive precomputation across separate queries.
+Known prototype limitations include the positive-only bundled gate corpus, numeric cutlet/month indices
+rather than localized names, hardware requirements for the original IFMA backend, difficult weave-edge
+ranks, and absence of a stable ABI/API.
 
-Known prototype limitations include:
+## Build and conformance
 
-- the bundled gate corpus does not include negative gate indices;
-- output uses numeric cutlet/month canonical indices rather than localized names;
-- the original high-performance backend requires AVX-512F/DQ/BW/VL + AVX-512IFMA;
-- the portable backend is correct but has not yet received an AVX2-specific optimization pass;
-- difficult weave-edge ranks can still cause many predictor splits;
-- there is no stable library ABI/API yet.
-
-See [`prototype/STATUS.md`](prototype/STATUS.md) and [`ROADMAP.md`](ROADMAP.md).
-
-## Build the current prototype
-
-The IFMA baseline and the portable backend are built separately.
-
-### Linux / WSL
+On Linux/WSL, run the semantic gate before treating benchmark output as meaningful:
 
 ```bash
 cd prototype
+bash ./scripts/check_saved_sum_conformance.sh
 bash ./scripts/build_portable.sh
 bash ./scripts/run_portable_selftest.sh 1
 bash ./scripts/check_portable_vectors.sh
 bash ./scripts/run_benchmark_portable.sh 3
-
-# On an AVX-512IFMA machine, the preserved baseline remains available:
-bash ./scripts/build.sh
-bash ./scripts/run_benchmark.sh 3
 ```
 
-### Windows / PowerShell
+The portable and IFMA backends require a GCC-compatible C++20 environment with OpenMP, GMP/GMPXX, and
+Boost headers. The IFMA baseline additionally requires AVX-512F/DQ/BW/VL + AVX-512IFMA.
 
-```powershell
-cd prototype
-.\scripts\build_portable.ps1
-.\scripts\run_benchmark_portable.ps1 -Repetitions 3 -Threads 4 -Superblock 512
-
-# On an AVX-512IFMA machine, the preserved baseline remains available:
-.\scripts\build.ps1
-.\scripts\run_benchmark.ps1 -Repetitions 3 -Threads 5 -Superblock 512
-```
-
-Both backends require a GCC-compatible C++20 environment with OpenMP, GMP/GMPXX, and Boost headers. The IFMA baseline additionally requires the AVX-512 feature set listed above.
-
-See [`docs/PORTABLE_BACKEND.md`](docs/PORTABLE_BACKEND.md).
+See `prototype/STATUS.md`, `prototype/README.md`, `docs/PORTABLE_BACKEND.md`, and `ROADMAP.md`.
 
 ## Repository map
 
@@ -101,10 +78,10 @@ See [`docs/PORTABLE_BACKEND.md`](docs/PORTABLE_BACKEND.md).
 docs/                 identity, architecture, conformance, and data provenance
 prototype/            current experimental cold-conversion engine
   src/                C++20 benchmark engine
-  data/               fixed algorithm data used by the prototype
-  scripts/            build and benchmark runners
-  tools/              CPU capability probe
-  results/            generated benchmark output (ignored by Git)
+  data/               generated/fixed algorithm data and canonical vectors
+  scripts/            build, conformance, and benchmark runners
+  tools/              CPU probe and independent conformance/oracle tools
+  results/            generated output (ignored by Git)
 ROADMAP.md             path from benchmark prototype to usable Seer engine
 LICENSE                MIT license granted by Sargon-17-Green
 NOTICE.md              explicit liturgical non-authorization by the Monster
@@ -113,15 +90,8 @@ NOTICE.md              explicit liturgical non-authorization by the Monster
 ## Related project
 
 The Seer exists beside, not inside, the Pastafarian Calendar's spaghetti history:
-
-- `Sargon17-Green/Pastafarian-Calendar` — specification, historical/liturgical
-  implementations, and independent language branches.
-
-The separation is intentional. Optimizing the Seer must not clean up, rewrite, or
-silently bypass the liturgical history preserved by the Monster.
-
-The software license is granted by **Sargon-17-Green**. That legal permission to use the
-code does not constitute, imply, or substitute for authorization from the Flying
-Spaghetti Monster. See [`NOTICE.md`](NOTICE.md).
+`Sargon17-Green/Pastafarian-Calendar` contains the specification/historical implementations and
+independent language branches. The separation is intentional. Optimizing the Seer must not clean up,
+rewrite, or silently bypass the liturgical history preserved by the Monster.
 
 R’amen.

@@ -3,54 +3,44 @@
 ## Included baseline
 
 - C++20.
-- Sauce fast field backend v3 (`2^127-1`, no old KMAC/SHAKE/SHA3 code).
-- fixed gate dataset, 40,000 positive gaps.
-- fixed 720-permutation table.
-- K=8 predictor micro-reset.
-- SB=512 default.
-- static RNS primes.
-- exact RNS/CRT certification.
-- 320-bit exact month-length DP.
-- prefix-only weave unranking.
+- Canonical saved-sum Sauce fast field backend v12 (`2^127-1`), with v3 retained as an explicit regression implementation.
+- Generated fixed gate dataset, 40,000 positive gaps.
+- Fixed 720-permutation table.
+- K=8 predictor micro-reset and SB=512 default.
+- Static RNS primes and exact RNS/CRT certification.
+- 320-bit exact month-length DP and prefix-only weave unranking.
 
-## Correctness evidence already obtained during development
+## Current correctness evidence
 
-- Sauce v3: 5,000 random `(calculation,target)` pairs matched the previous exact implementation for all six bowls, drop-46 order, and descriptors for relevant seals.
-- The complete 40,000 canonical gate-gap corpus matched using the fast Sauce path.
-- Gate dataset matches the canonical metadata; raw `gates_u16.bin` SHA-256 is `57d20ac6653e9cbd1d33a5e591bb6b65a39bc0c6ec90b3af1b978d3f7ec6fdbc`.
-- Same-year and far-past five-field numeric outputs were checked against the independent BigInt oracle during development.
-- RNS count/reconstruction and the unknown-unrank path were repeatedly checked against GMP/exact oracle states.
+The 2026-09-10 correction is validated independently of v3/v12 mutual agreement:
 
-## Deliberately NOT included
+- 266 Sauce `(calculation,target)` cases per header, including Foundation vicinity, `c=t`, both directions,
+  negative-axis inputs, and 256 deterministic random cases.
+- 3,458 bowl checkpoints per header: immediately after visible drop 46 and after each of all 12 final post-stirs.
+- 17,556 descriptor comparisons per header.
+- A targeted raw-sum mutant is killed at the first post-stir for the discriminator witness.
+- v3 and v12 corrected 5,000-case dumps are byte-identical, SHA-256
+  `4d9f799a284e15c7dd8abe340ef8b9cde4fce7d9dfb757c7adf67d22d7b7a3e6`.
+- The complete regenerated 40,000-gap corpus passes the fast validator; SHA-256
+  `2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`.
+- Independent reference machinery reproduces the complete old gate corpus when deliberately switched to
+  raw-mutant mode; the independent full-date oracle verifies the new saved-sum canonical vector corpus in
+  `data/canonical_saved_sum_vectors.tsv`.
 
-- Sauce v5 (the proposed reuse of `v^2` and reference-return cleanup): not benchmarked/validated yet.
-- Pascal multi-weight cache: exact experiment, but no stable end-to-end win.
-- K6/K7/K10/K12/K16 variants: K8 retained.
-- ratio regroup experiment: slower.
-- scaled-coordinate / small-CRT edge experiments: not a general fix.
-- 128-bit/saturated-big edge backends: verified experiments, not merged into this baseline.
+### HISTORICAL — SUPERSEDED
+
+The old claims that v3 matched a previous exact implementation, that v3 and v12 matched each other, and
+that the former 40,000-gap corpus/hash was canonical were affected by a shared raw-sum error. The former
+gate SHA-256 `57d20ac6653e9cbd1d33a5e591bb6b65a39bc0c6ec90b3af1b978d3f7ec6fdbc`
+and old Year-5000/far/forward tuples are archival only. See `../HISTORICAL_VALIDATION_NOTICE.md`.
 
 ## Known limitations
 
 1. This is a benchmark prototype, not the complete public calendar API.
 2. It prints numeric cutlet/month name indices rather than localized names.
-3. The bundled gate dataset covers gate indices 0..40000; negative-gate support is not packaged here.
-4. Extreme weave ranks just outside the small-edge domain can still trigger many predictor splits. Do not treat this package as final production edge handling.
-5. Absolute timings from the development VM were highly noisy; local-machine measurements are the purpose of this package.
+3. The bundled gate dataset covers gate indices `0..40000`; negative-gate calendar support is not packaged.
+4. Extreme weave ranks can still trigger many predictor splits.
+5. Absolute benchmark timing is machine-dependent.
 
-## Portable backend added after the baseline freeze
-
-The original files listed above remain the IFMA baseline. A separate portable RNS backend
-now mirrors the same eight-prime pack semantics with scalar `uint64_t` lanes. It is built
-from `src/rns_micro8_portable.cpp` and selected by
-`src/pastafarian_cold_bench_portable.cpp`.
-
-Local verification before upload: the standalone portable RNS self-test reconstructed the
-extreme 47-month count exactly (`count_ok=1`), passed fractional reconstruction
-(`frac_ok=1`), and matched exact GMP unranking for the midpoint and a deterministic random
-rank across superblocks 64, 128, 256, and 512. The five bundled benchmark vectors also
-matched their documented structural witnesses; both independently oracle-checked numeric
-tuples matched exactly.
-
-This portable backend is a correctness-first fallback. Its performance is now to be
-measured on GitHub-hosted machines that do not expose AVX-512IFMA.
+The saved-sum correction changes semantics only; it does not advance unrelated development stages or
+roll back later performance work.
