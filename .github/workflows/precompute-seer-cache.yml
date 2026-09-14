@@ -63,7 +63,7 @@ jobs:
       - name: Commit atomically published cache and next Venus triggers
         shell: bash
         run: |
-          if git diff --quiet -- .github/workflows/precompute-seer-cache.yml generated; then
+          if [[ -z "$(git status --porcelain --untracked-files=all -- .github/workflows/precompute-seer-cache.yml generated)" ]]; then
             echo "No cache/schedule changes to publish."
             exit 0
           fi
