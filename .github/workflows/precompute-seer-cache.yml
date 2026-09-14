@@ -1,0 +1,76 @@
+name: Seer rolling-year Venus cache
+
+on:
+  workflow_dispatch:
+  schedule:
+    # BEGIN GENERATED VENUS BOUNDARIES
+    - cron: '18 23 14 9 *' # calc 2461299 begins 2026-09-14T23:17:18.094Z
+    - cron: '16 23 15 9 *' # calc 2461300 begins 2026-09-15T23:15:19.799Z
+    # END GENERATED VENUS BOUNDARIES
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seer-venus-cache
+  cancel-in-progress: false
+
+jobs:
+  precompute:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      SEER_AUTOMATION_TOKEN: ${{ secrets.SEER_AUTOMATION_TOKEN }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Require workflow-capable automation token
+        shell: bash
+        run: |
+          if [[ -z "${SEER_AUTOMATION_TOKEN}" ]]; then
+            echo "SEER_AUTOMATION_TOKEN is required because this job commits a changed file under .github/workflows/." >&2
+            echo "Use a fine-grained PAT/GitHub App token with repository Contents write and Workflows write." >&2
+            exit 2
+          fi
+
+      - name: Install native dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+
+      - name: Unit-test astronomical boundary and cache switching
+        run: node --test precompute/test/*.test.mjs
+
+      - name: Build rolling-year Seer batch backend
+        run: prototype/scripts/build_year_batch.sh
+
+      - name: Check one canonical saved-sum vector through the batch backend
+        run: prototype/scripts/check_year_batch_vector.sh
+
+      - name: Precompute current day plus two future calculation days
+        run: node precompute/generate-cache.mjs
+
+      - name: Validate generated cache, checksums, boundaries, and next schedules
+        run: node precompute/validate-generated.mjs
+
+      - name: Commit atomically published cache and next Venus triggers
+        shell: bash
+        run: |
+          if git diff --quiet -- .github/workflows/precompute-seer-cache.yml generated; then
+            echo "No cache/schedule changes to publish."
+            exit 0
+          fi
+          git config user.name "Pastafarian Seer cache bot"
+          git config user.email "seer-cache-bot@users.noreply.github.com"
+          git add .github/workflows/precompute-seer-cache.yml generated
+          git commit -m "cache: precompute Seer rolling year at Venus boundary [skip ci]"
+          git remote set-url origin "https://x-access-token:${SEER_AUTOMATION_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push origin "HEAD:${DEFAULT_BRANCH}"
+          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
