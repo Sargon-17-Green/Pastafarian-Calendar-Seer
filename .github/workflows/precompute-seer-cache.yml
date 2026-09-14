@@ -49,10 +49,10 @@ jobs:
         run: node --test precompute/test/*.test.mjs
 
       - name: Build rolling-year Seer batch backend
-        run: prototype/scripts/build_year_batch.sh
+        run: bash prototype/scripts/build_year_batch.sh
 
       - name: Check one canonical saved-sum vector through the batch backend
-        run: prototype/scripts/check_year_batch_vector.sh
+        run: bash prototype/scripts/check_year_batch_vector.sh
 
       - name: Precompute current day plus two future calculation days
         run: node precompute/generate-cache.mjs

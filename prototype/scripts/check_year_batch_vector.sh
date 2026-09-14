@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BIN="$ROOT/build/seer_year_batch"
-[[ -x "$BIN" ]] || "$ROOT/scripts/build_year_batch.sh"
+[[ -x "$BIN" ]] || bash "$ROOT/scripts/build_year_batch.sh"
 OUT="$(cd "$ROOT/data" && "$BIN" 2461290 2461290 1)"
 node -e '
 const x=JSON.parse(process.argv[1]);
