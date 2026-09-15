@@ -37,11 +37,12 @@ export function createPrecomputedProvider({
   dataDir,
   exactTimeoutMs,
   exactMaxBuffer,
+  execFileRunner,
   cacheContext,
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
-  const exact = createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer });
+  const exact = createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer, execFileRunner });
 
   let queue = [];
   let flushScheduled = false;

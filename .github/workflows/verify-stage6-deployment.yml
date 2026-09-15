@@ -172,6 +172,10 @@ jobs:
         run: |
           echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
           cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Cross-platform exact-engine fixture tests
+        shell: pwsh
+        run: |
+          node --test query/test/provider-bulk-coalescing.test.mjs query/test/provider-exact-fallback.test.mjs query/test/year-structure-fastpath.test.mjs
       - name: Pack and install on native Windows
         shell: pwsh
         run: |

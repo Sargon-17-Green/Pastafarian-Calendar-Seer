@@ -202,9 +202,9 @@ function safeCount(value) {
   return count;
 }
 
-async function runJson(binary, args, { cwd, timeoutMs, maxBuffer }) {
+async function runJson(binary, args, { cwd, timeoutMs, maxBuffer, execFileRunner = execFileAsync }) {
   try {
-    const { stdout } = await execFileAsync(binary, args, { cwd, encoding: 'utf8', timeout: timeoutMs, maxBuffer, windowsHide: true });
+    const { stdout } = await execFileRunner(binary, args, { cwd, encoding: 'utf8', timeout: timeoutMs, maxBuffer, windowsHide: true });
     return JSON.parse(stdout);
   } catch (error) {
     if (error?.code === 'ENOENT') throw queryError('SEER_UNAVAILABLE', 'Exact Seer engine executable could not be started.', { cause: error });
@@ -311,7 +311,7 @@ function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) 
   };
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER } = {}) {
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
@@ -357,7 +357,7 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     const serviceParsed = await serviceRequest(['R', String(calc), String(start), String(size)]);
     const parsed = serviceParsed
       ? ensureBatch(serviceParsed, { calc, start, count: size })
-      : ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer }), { calc, start, count: size });
+      : ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer, execFileRunner }), { calc, start, count: size });
     return {
       records: parsed.records,
       provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
@@ -384,14 +384,14 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       }
       const structureBinary = await optionalStructureBinary();
       if (structureBinary) {
-        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer });
+        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer, execFileRunner });
         return {
           year: yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }),
           provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
         };
       }
       // Compatibility fallback while older build environments have not yet built seer_year_structure.
-      const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer });
+      const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer, execFileRunner });
       if (!located || located.schema !== 1 || located.calcJdn !== calc || located.year !== requestedYear || !Number.isInteger(located.startJdn) || !Number.isInteger(located.endJdn) || !Number.isInteger(located.lengthDays)) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned an unexpected payload.');
       if (located.lengthDays < 1 || located.lengthDays > MAX_BATCH_COUNT || located.endJdn - located.startJdn + 1 !== located.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned invalid boundaries.');
       const supplied = await queryRange({ calculationJdn: calc, targetStartJdn: located.startJdn, count: located.lengthDays });

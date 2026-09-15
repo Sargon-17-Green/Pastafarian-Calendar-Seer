@@ -1,16 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { chmod, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createExactEngine } from '../exact-engine.mjs';
-
-async function executable(dir, name, body) {
-  const file = path.join(dir, name);
-  await writeFile(file, `#!/usr/bin/env node\n${body}\n`, 'utf8');
-  await chmod(file, 0o755);
-  return file;
-}
+import { fakeNodeExecutable, nodeScriptExecFile } from './helpers/fake-node-executable.mjs';
 
 function structureProgram(callLog) {
   return `
@@ -34,10 +28,10 @@ test('year structure fast path bypasses locator and batch when days are not requ
   const generatedDir=path.join(root,'generated'), dataDir=path.join(root,'prototype','data');
   await mkdir(generatedDir,{recursive:true}); await mkdir(dataDir,{recursive:true});
   const calls=path.join(root,'structure.log'), old=path.join(root,'old.log');
-  const structure=await executable(root,'structure',structureProgram(calls));
-  const batch=await executable(root,'batch',`require('fs').appendFileSync(${JSON.stringify(old)},'batch\\n');process.exit(9);`);
-  const locator=await executable(root,'locator',`require('fs').appendFileSync(${JSON.stringify(old)},'locator\\n');process.exit(9);`);
-  const engine=createExactEngine({generatedDir,dataDir,yearBatchBinary:batch,yearLocatorBinary:locator,yearStructureBinary:structure});
+  const structure=await fakeNodeExecutable(root,'structure',structureProgram(calls));
+  const batch=await fakeNodeExecutable(root,'batch',`require('fs').appendFileSync(${JSON.stringify(old)},'batch\\n');process.exit(9);`);
+  const locator=await fakeNodeExecutable(root,'locator',`require('fs').appendFileSync(${JSON.stringify(old)},'locator\\n');process.exit(9);`);
+  const engine=createExactEngine({generatedDir,dataDir,yearBatchBinary:batch,yearLocatorBinary:locator,yearStructureBinary:structure,execFileRunner:nodeScriptExecFile});
   const result=await engine.year({calculationJdn:900n,year:5000n,includeDays:false});
   assert.equal(result.year.lengthDays,8); assert.equal(result.year.cutlets.length,5); assert.equal(result.year.months.length,2); assert.equal(result.year.days,undefined);
   assert.equal((await readFile(calls,'utf8')).trim(),'{"calc":900,"year":5000,"include":0}');
@@ -49,9 +43,9 @@ test('year structure fast path can continue from the same structure to full days
   const generatedDir=path.join(root,'generated'), dataDir=path.join(root,'prototype','data');
   await mkdir(generatedDir,{recursive:true}); await mkdir(dataDir,{recursive:true});
   const calls=path.join(root,'structure.log');
-  const structure=await executable(root,'structure',structureProgram(calls));
-  const dead=await executable(root,'dead','process.exit(9);');
-  const engine=createExactEngine({generatedDir,dataDir,yearBatchBinary:dead,yearLocatorBinary:dead,yearStructureBinary:structure});
+  const structure=await fakeNodeExecutable(root,'structure',structureProgram(calls));
+  const dead=await fakeNodeExecutable(root,'dead','process.exit(9);');
+  const engine=createExactEngine({generatedDir,dataDir,yearBatchBinary:dead,yearLocatorBinary:dead,yearStructureBinary:structure,execFileRunner:nodeScriptExecFile});
   const result=await engine.year({calculationJdn:900n,year:5000n,includeDays:true});
   assert.equal(result.year.days.length,8); assert.equal(result.year.days[7].targetJdn,107);
   assert.equal((await readFile(calls,'utf8')).trim(),'{"calc":900,"year":5000,"include":1}');
