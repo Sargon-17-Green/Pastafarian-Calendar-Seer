@@ -48,7 +48,7 @@ jobs:
               "provider-exact-fallback.test.mjs": "242ccee4ea85e38a9fca90e1d32349a89a7283d70d3ab441076d8bdd512ad2a7",
               "verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
               "README_STAGE5.md": "7730978c0ad6b1eb451c5ce4509c2d6ef5c38f941b1d1f69fc3349f6ac027d5c",
-              ".github/workflows/verify-stage5-exact-provider.yml": "13818fabf4589e002a255909d6371355af0ac9e117672e7b94504db28356739e",
+              ".github/workflows/verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
           }
           for rel, want in expected.items():
               p = pathlib.Path(rel)
@@ -115,7 +115,7 @@ jobs:
               "query/exact-engine.mjs": "87c0535c7e8d83771018f416814c48929ae826d0d28d28ce33e67b5914d19c22",
               "query/provider-precomputed.mjs": "8ec99f1df7029f0a2ff7e832795ac5cca893e8fda7751537180fc9e4ca9fb1be",
               "query/test/provider-exact-fallback.test.mjs": "242ccee4ea85e38a9fca90e1d32349a89a7283d70d3ab441076d8bdd512ad2a7",
-              ".github/workflows/verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
+              ".github/workflows/verify-stage5-exact-provider.yml": "13818fabf4589e002a255909d6371355af0ac9e117672e7b94504db28356739e",
           }
           for rel, want in expected.items():
               got = hashlib.sha256(pathlib.Path(rel).read_bytes()).hexdigest()
