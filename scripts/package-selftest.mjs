@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { queryDate } from '../index.mjs';
+import { queryCalculationDay, queryDate } from '../index.mjs';
 import { listen } from '../http/index.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -19,6 +19,14 @@ const request = {
 
 const direct = await queryDate(request);
 assert.equal(direct.targetDay.jdn, String(targetJdn));
+
+const boundary = await queryCalculationDay({
+  at: index.generatedForInstantUtc,
+  include: ['boundaries'],
+});
+assert.equal(boundary.jdn, String(index.activeCalcJdn));
+assert.equal(typeof boundary.boundaries?.startsAt, 'string');
+assert.equal(typeof boundary.boundaries?.endsAt, 'string');
 
 const server = await listen({ host: '127.0.0.1', port: 0 });
 try {
@@ -37,5 +45,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['cache-query', 'http-loopback'],
+  checks: ['cache-query', 'venus-boundary', 'http-loopback'],
 }));

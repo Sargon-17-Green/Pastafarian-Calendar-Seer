@@ -1,27 +1,29 @@
-# Pastafarian Calendar Seer ג€” API Stage 6
+# Pastafarian Calendar Seer — API Stage 6
 
 Stage 6 turns the verified query/HTTP stack into an installable Node ESM deployment package.
 It does not add calendar rules, routes, response fields, locales, or reverse conversion.
 
 Stable package entry points:
 
-- `pastafarian-calendar-seer` ג€” shared query API;
-- `pastafarian-calendar-seer/http` ג€” HTTP handler/server/listener;
-- `pastafarian-seer` ג€” existing query CLI;
-- `pastafarian-seer-http` ג€” existing HTTP v1 server.
+- `pastafarian-calendar-seer` — shared query API;
+- `pastafarian-calendar-seer/http` — HTTP handler/server/listener;
+- `pastafarian-seer` — existing query CLI;
+- `pastafarian-seer-http` — existing HTTP v1 server.
 
-The package has zero npm runtime dependencies. Exact out-of-cache operation still requires the
-native C++ runtime and its existing GMP/GMPXX, Boost and AVX2 requirements. Build it after install
-with `npm run build:native` inside the installed package (or before deployment in an image).
-The command dispatches to Bash on Linux/WSL and PowerShell on native Windows; Windows builds use a
-matching MSYS2/MinGW GCC + GMP/GMPXX + Boost toolchain and require AVX2.
+The package has zero npm runtime dependencies and declares Node `>=20`, x64 Linux and x64 Windows as
+its supported npm platforms. Exact out-of-cache operation still requires the native C++ runtime and its
+existing GMP/GMPXX, Boost and AVX2 requirements. Build it after install with `npm run build:native`.
+The command dispatches to Bash on Linux/WSL and PowerShell on native Windows.
 
-Production deployments that require the persistent OPT-06 service rather than compatibility
-fallbacks should set `SEER_REQUIRE_ENGINE_SERVICE=1`.
+`npm test` verifies a bundled-cache query, the packaged Venus day-boundary model, and an HTTP loopback.
+`npm run validate:cache` verifies the bundled rolling-cache payload and checksums; in a source checkout it
+also verifies the scheduled cache workflow. CI additionally invokes both installed command shims.
 
-The Stage 6 verifier packs the repository, installs that tarball into a clean consumer directory,
-builds the native runtime there, imports the public package entry points, performs out-of-cache
-query and HTTP requests with the persistent service required, and proves repeated requests reuse
-one service process. Full repository and API-contract regressions then run unchanged.
+Production deployments that require the persistent OPT-06 service rather than compatibility fallbacks
+should set `SEER_REQUIRE_ENGINE_SERVICE=1`.
+
+The Stage 6 verifier packs the repository, installs that tarball into clean Linux and Windows consumers,
+runs package validation, builds the native runtime, exercises the public package/CLI/HTTP entry points,
+and proves repeated exact requests reuse one persistent service process.
 
 See `docs/DEPLOYMENT_STAGE6.md` for examples and deployment details.

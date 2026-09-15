@@ -29,8 +29,15 @@ for (const descriptor of index.caches) {
 }
 const numericCacheFiles = (await readdir(path.join(generatedDir, 'calc'))).filter((name) => /^-?\d+\.json$/.test(name));
 if (numericCacheFiles.length !== 3) throw new Error(`expected exactly 3 current cache files, got ${numericCacheFiles.length}`);
-const workflow = await readFile(path.join(root, '.github', 'workflows', 'precompute-seer-cache.yml'), 'utf8');
-for (const boundary of index.boundaries.slice(1, 3)) {
-  if (!workflow.includes(`cron: '${cronForBoundary(boundary.utc)}'`)) throw new Error(`workflow missing cron for ${boundary.utc}`);
+let workflow = null;
+try {
+  workflow = await readFile(path.join(root, '.github', 'workflows', 'precompute-seer-cache.yml'), 'utf8');
+} catch (error) {
+  if (error?.code !== 'ENOENT') throw error;
+}
+if (workflow !== null) {
+  for (const boundary of index.boundaries.slice(1, 3)) {
+    if (!workflow.includes(`cron: '${cronForBoundary(boundary.utc)}'`)) throw new Error(`workflow missing cron for ${boundary.utc}`);
+  }
 }
 console.log('Generated cache validation: PASS');

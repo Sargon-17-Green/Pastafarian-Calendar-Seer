@@ -1,7 +1,9 @@
-# API Stage 6 ׳’ג‚¬ג€ deployment and application integration
+# API Stage 6 ׳³ֲ³׳’ג‚¬ג„¢׳³ג€™׳’ג‚¬ֲײ²ֲ¬׳³ג€™׳’ג€ֲ¬ײ²ֲ deployment and application integration
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
+Its npm metadata declares Node `>=20` on x64 Linux or x64 Windows. AVX2 cannot be expressed in npm
+metadata, so `npm run build:native` performs the final CPU capability check.
 
 ## Node application API
 
@@ -77,10 +79,11 @@ The build does not download runtime JavaScript dependencies and does not alter A
 
 ## Installed-package self-test
 
-`npm test` is intentionally a package self-test: it exercises a bundled-cache `queryDate()` call and an
-HTTP loopback without requiring the native toolchain. Repository maintainers use `npm run test:repo` for
-the full source-tree suites. CI also invokes both installed command shims from `node_modules/.bin`, so the
-CLI and standalone HTTP executable are verified as consumer-facing entry points rather than metadata only.
+`npm test` is intentionally a package self-test: it exercises a bundled-cache `queryDate()` call, the
+packaged Venus day-boundary model, and an HTTP loopback without requiring the native toolchain.
+`npm run validate:cache` verifies bundled cache shape/checksums; in a source checkout it additionally checks
+the scheduled cache workflow. Repository maintainers use `npm run test:repo` for the full source-tree suites.
+CI also invokes both installed command shims from `node_modules/.bin`.
 
 ## Persistent service policy
 
@@ -102,10 +105,11 @@ default, so `gates_u16.bin` is resolved with the same semantics verified by OPT-
 
 ## Packaging boundary
 
-`npm pack` intentionally includes the query/HTTP runtime, API contract, generated rolling cache,
-precompute loader, the exact eight-file native runtime source closure, `gates_u16.bin`, and the
-exact-runtime build scripts. It excludes research/benchmark source variants, verification-only data, GitHub
-workflows, benchmark result directories, repository repair artifacts, and every `HANDOFF_*` file.
+`npm pack` intentionally includes the query/HTTP runtime, the two published OpenAPI documents, the
+three rolling cache files plus their index, the cache loader/validator and Venus boundary model, the exact
+eight-file native runtime source closure, `gates_u16.bin`, and the exact-runtime build scripts. It excludes
+API schemas/examples/tests, cache-generation helpers, research/benchmark source variants, GitHub workflows,
+repository repair artifacts, benchmark result directories, and every `HANDOFF_*` file.
 
 The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches
 missing package files and deep relative-import assumptions that repository-local tests cannot catch.
