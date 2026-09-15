@@ -93,6 +93,24 @@ jobs:
             echo 'repository-only material leaked into npm package' >&2
             exit 1
           fi
+      - name: npm publish dry-run preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm publish --dry-run --json >/tmp/seer-publish.json 2>/tmp/seer-publish.err
+          cat /tmp/seer-publish.err
+          if grep -Eqi 'auto-corrected|errors corrected' /tmp/seer-publish.err; then
+            echo 'npm would rewrite package metadata during publish' >&2
+            exit 1
+          fi
+          node -e "const x=require('/tmp/seer-publish.json'); const p=x['pastafarian-calendar-seer']; if(!p||p.id!=='pastafarian-calendar-seer@0.1.0') process.exit(1)"
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/seer-publish.json',encoding='utf-8'))['pastafarian-calendar-seer']
+          modes={f['path']:f['mode'] for f in x['files']}
+          assert modes['query/cli.mjs'] & 0o111
+          assert modes['http/server.mjs'] & 0o111
+          PY
       - name: Install packed tarball into clean consumer
         shell: bash
         run: |
