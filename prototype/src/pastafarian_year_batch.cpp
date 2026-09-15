@@ -6,6 +6,8 @@
 #undef main
 
 #include <boost/multiprecision/cpp_int.hpp>
+#include <cstdlib>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <limits>
@@ -108,6 +110,34 @@ template<class Stones>
 static std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last,const FGates&G,const Stones&S,const FY&y,int threads,int sb,int replayThreads){
     if(first<y.a+1||last>y.b||first>last)throw std::runtime_error("invalid year segment");
     FSauce structSauce=fast_sauce(calc,y.a+1,S);YBStructResult st=yb_build_nonweave(calc,G,y,structSauce);
+    const bool ybEdgeShortcutDisabled=[](){
+        const char*v=std::getenv("SEER_DISABLE_EDGE_SHORTCUT");
+        return v&&*v&&std::string(v)!="0";
+    }();
+    if(first==last&&!ybEdgeShortcutDisabled&&(first==y.a+1||first==y.b)){
+        BatchRecord r;
+        r.targetJdn=first;
+        r.year=(long long)y.num;
+        r.cutletCount=st.cutletCount;
+        r.monthCount=st.monthCount;
+        if(first==y.a+1){
+            r.cutletIndex=st.cutName.front();
+            r.dayInCutlet=1;
+            r.monthIndex=st.monthName.front();
+            r.dayInMonth=1;
+        }else{
+            const int ci=st.cutletCount-1,mi=st.monthCount-1;
+            r.cutletIndex=st.cutName[ci];
+            r.dayInCutlet=st.cutEnd[ci]-st.cutStart[ci]+1;
+            r.monthIndex=st.monthName[mi];
+            r.dayInMonth=st.monthLen[mi];
+        }
+        return std::vector<BatchRecord>{r};
+    }
+    if(const char*counter=std::getenv("SEER_TEST_WEAVE_COUNTER_FILE")){
+        std::ofstream out(counter,std::ios::app);
+        if(out)out<<"year_batch_weave\n";
+    }
     int maxOffset=(int)(last-(y.a+1));
     int npr=yb_conservative_npr(st.monthLen);RnsEngine eng(st.monthLen,npr,threads);mpz_class N=eng.crt(eng.Nres,eng.npr);
     int initk=eng.basis_for(N,eng.npr);auto coeff=init_coeff(eng,initk);int width=0;mpz_class rank=yb_fast_choose_mpz(structSauce,4,32,N,&width);
