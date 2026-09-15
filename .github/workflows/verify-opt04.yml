@@ -38,7 +38,10 @@ jobs:
         run: |
           set -euo pipefail
           CALC="$(node -e "const x=require('./generated/index.json');process.stdout.write(String(x.caches[0].calcJdn))")"
-          prototype/build/seer_year_structure "$CALC" 5000 1 > /tmp/structure.json
+          (
+            cd prototype/data
+            ../build/seer_year_structure "$CALC" 5000 1 > /tmp/structure.json
+          )
           START="$(node -e "const x=require('/tmp/structure.json');process.stdout.write(String(x.startJdn))")"
           COUNT="$(node -e "const x=require('/tmp/structure.json');process.stdout.write(String(x.lengthDays))")"
           (cd prototype/data && ../build/seer_year_batch "$CALC" "$START" "$COUNT") > /tmp/batch.json
