@@ -1,0 +1,54 @@
+{
+  "name": "pastafarian-calendar-seer",
+  "version": "0.1.0",
+  "description": "Exact high-performance query and HTTP runtime for the Pastafarian Calendar Seer",
+  "type": "module",
+  "main": "./index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./query": "./query/index.mjs",
+    "./http": "./http/index.mjs",
+    "./http/server": "./http/server.mjs",
+    "./openapi.json": "./api/openapi.json",
+    "./openapi.yaml": "./api/openapi.yaml",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "pastafarian-seer": "./query/cli.mjs",
+    "pastafarian-seer-http": "./http/server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "index.mjs",
+    "query/*.mjs",
+    "query/locales/*.mjs",
+    "http/*.mjs",
+    "api",
+    "precompute/*.mjs",
+    "precompute/lib/*.mjs",
+    "generated",
+    "prototype/src",
+    "prototype/data",
+    "prototype/scripts/build_year_batch.sh",
+    "prototype/scripts/build_year_locator.sh",
+    "prototype/scripts/build_year_structure.sh",
+    "prototype/scripts/build_engine_service.sh",
+    "scripts/build-runtime.sh",
+    "docs/DEPLOYMENT_STAGE6.md",
+    "README_STAGE6.md",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md"
+  ],
+  "scripts": {
+    "build:native": "bash ./scripts/build-runtime.sh",
+    "start": "node ./http/server.mjs",
+    "cli": "node ./query/cli.mjs",
+    "test": "node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
+    "validate:cache": "node ./precompute/validate-generated.mjs"
+  },
+  "keywords": ["pastafarian", "calendar", "http", "api"],
+  "license": "MIT"
+}

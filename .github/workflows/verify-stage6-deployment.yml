@@ -1,0 +1,128 @@
+name: Verify API Stage 6 deployment package
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package.json'
+      - 'index.mjs'
+      - 'query/**'
+      - 'http/**'
+      - 'api/**'
+      - 'precompute/**'
+      - 'generated/**'
+      - 'prototype/src/**'
+      - 'prototype/data/**'
+      - 'prototype/scripts/build_year_*.sh'
+      - 'prototype/scripts/build_engine_service.sh'
+      - 'scripts/build-runtime.sh'
+      - 'deployment/test/**'
+      - 'docs/DEPLOYMENT_STAGE6.md'
+      - 'README_STAGE6.md'
+      - 'README.md'
+      - 'ROADMAP.md'
+      - '.github/workflows/verify-stage6-deployment.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Package entry-point checks
+        run: |
+          node --check index.mjs
+          node --check http/index.mjs
+          node --check http/server.mjs
+          node --check deployment/test/package-entrypoints.test.mjs
+          node --test deployment/test/package-entrypoints.test.mjs
+      - name: Pack runtime boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/seer-pack
+          NAME="$(npm pack --pack-destination /tmp/seer-pack --silent)"
+          TGZ="/tmp/seer-pack/$NAME"
+          echo "SEER_TGZ=$TGZ" >> "$GITHUB_ENV"
+          tar -tzf "$TGZ" | tee /tmp/seer-package-files.txt
+          grep -qx 'package/index.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/http/index.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/generated/index.json' /tmp/seer-package-files.txt
+          grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-package-files.txt
+          grep -qx 'package/scripts/build-runtime.sh' /tmp/seer-package-files.txt
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/' /tmp/seer-package-files.txt; then
+            echo 'repository-only material leaked into npm package' >&2
+            exit 1
+          fi
+      - name: Install packed tarball into clean consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/seer-consumer
+          mkdir -p /tmp/seer-consumer
+          cd /tmp/seer-consumer
+          npm init -y >/dev/null
+          npm install --ignore-scripts "$SEER_TGZ"
+          test -f node_modules/pastafarian-calendar-seer/package.json
+          cd node_modules/pastafarian-calendar-seer
+          npm run build:native
+      - name: Packed application and HTTP persistent-service smoke
+        shell: bash
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+          SEER_TEST_SERVICE_SPAWN_COUNTER_FILE: /tmp/seer-stage6-spawns.txt
+        run: |
+          set -euo pipefail
+          cd /tmp/seer-consumer
+          rm -f "$SEER_TEST_SERVICE_SPAWN_COUNTER_FILE"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import path from 'node:path';
+          import { fileURLToPath } from 'node:url';
+
+          const packageJson = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/package.json'));
+          const packageRoot = path.dirname(packageJson);
+          const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
+          const cache = index.caches[0];
+          const calculationJdn = cache.calcJdn;
+          const targetJdn = cache.targetStartJdn + cache.targetCount + 25;
+          const queryApi = await import('pastafarian-calendar-seer');
+          const httpApi = await import('pastafarian-calendar-seer/http');
+          const request = (target) => ({
+            calculation: { jdn: calculationJdn },
+            target: { jdn: target },
+            presentation: 'canonical',
+          });
+
+          const first = await queryApi.queryDate(request(targetJdn));
+          const second = await queryApi.queryDate(request(targetJdn + 1));
+          if (first.targetDay.jdn !== String(targetJdn)) throw new Error('packed query target mismatch');
+          if (second.targetDay.jdn !== String(targetJdn + 1)) throw new Error('packed repeated query target mismatch');
+
+          const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
+          try {
+            const port = server.address().port;
+            const url = `http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn + 2}&presentation=canonical`;
+            const response = await fetch(url);
+            if (response.status !== 200) throw new Error(`packed HTTP status ${response.status}: ${await response.text()}`);
+            const body = await response.json();
+            if (body.targetDay.jdn !== String(targetJdn + 2)) throw new Error('packed HTTP target mismatch');
+          } finally {
+            await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+          }
+
+          const spawnLines = (await readFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, 'utf8'))
+            .split(/\r?\n/).filter(Boolean);
+          if (spawnLines.length !== 1) throw new Error(`expected one persistent service spawn, got ${spawnLines.length}`);
+          console.log({ calculationJdn, targetJdn, persistentServiceSpawns: spawnLines.length });
+          NODE
+      - name: Full repository regressions
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
+          node precompute/validate-generated.mjs
+          python -m venv .contract-venv
+          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+          .contract-venv/bin/python api/tests/test_contract.py

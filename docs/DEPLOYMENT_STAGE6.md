@@ -1,0 +1,97 @@
+# API Stage 6 — deployment and application integration
+
+Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
+The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
+
+## Node application API
+
+```js
+import {
+  queryDate,
+  queryNow,
+  queryBatch,
+  queryRange,
+  queryCalculationDay,
+  queryYear,
+} from 'pastafarian-calendar-seer';
+
+const answer = await queryDate({
+  target: { gregorian: '2026-09-15' },
+});
+```
+
+The same functions remain available from `pastafarian-calendar-seer/query`. The root export is the
+stable application-facing path; consumers do not need to import repository-internal files.
+
+## Embedded HTTP server
+
+```js
+import { listen } from 'pastafarian-calendar-seer/http';
+
+const server = await listen({ host: '127.0.0.1', port: 8080 });
+```
+
+`createSeerHttpHandler()` and `createSeerHttpServer()` are exported from the same subpath for hosts
+that own their HTTP lifecycle. All routes and errors are still the frozen v1 contract implemented by
+`http/app.mjs`; Stage 6 adds no transport semantics.
+## Command line
+
+After installation, npm exposes two executables:
+
+```text
+pastafarian-seer [date|now|calculation-day|range|year|batch] ...
+pastafarian-seer-http
+```
+
+The first executable is the existing Stage 3 CLI. The second launches the existing Stage 4 HTTP
+server. `HOST` defaults to `127.0.0.1`; `PORT` defaults to `8080`.
+
+## Exact native runtime
+
+The rolling generated cache is bundled, but public semantics are not limited to its 366-target-day
+window. Exact cache misses and complete years use the native engines introduced by Stage 5 and the
+persistent service adopted in OPT-06.
+
+On a supported Linux/WSL deployment install a C++20 compiler, GMP/GMPXX and Boost headers, then run:
+
+```bash
+npm run build:native
+```
+
+This builds, in the package's `prototype/build/` directory:
+
+- `seer_year_batch`;
+- `seer_year_locator`;
+- `seer_year_structure`;
+- `seer_engine_service`.
+
+The build does not download runtime JavaScript dependencies and does not alter API data.
+## Persistent service policy
+
+By default `query/exact-engine.mjs` prefers `seer_engine_service` and retains the Stage 5 process
+fallbacks for compatibility. A deployment that must prove it is exercising the OPT-06 persistent
+runtime should set:
+
+```text
+SEER_REQUIRE_ENGINE_SERVICE=1
+```
+
+With that flag, absence or failure of the persistent service is `SEER_UNAVAILABLE`; the runtime will
+not silently fall back to one-process-per-call exact executables.
+
+Advanced deployments may override binary locations with the existing environment variables
+`SEER_ENGINE_SERVICE_BIN`, `SEER_YEAR_BATCH_BIN`, `SEER_YEAR_LOCATOR_BIN`, and
+`SEER_YEAR_STRUCTURE_BIN`. The native data directory remains the packaged `prototype/data` by
+default, so `gates_u16.bin` is resolved with the same semantics verified by OPT-03 through OPT-07.
+
+## Packaging boundary
+
+`npm pack` intentionally includes the query/HTTP runtime, API contract, generated rolling cache,
+precompute loader, native sources/data, and the exact-runtime build scripts. It excludes GitHub
+workflows, benchmark result directories, repository repair artifacts, and every `HANDOFF_*` file.
+
+The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches
+missing package files and deep relative-import assumptions that repository-local tests cannot catch.
+
+Reverse conversion remains `TBC`. Localization beyond the existing English presentation is not added
+by this stage. Those are separate product capabilities, not deployment prerequisites.

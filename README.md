@@ -1,4 +1,4 @@
-# Pastafarian Calendar — Seer
+# Pastafarian Calendar ג€” Seer
 
 > **The Monster performs. The Seer sees.**
 
@@ -28,7 +28,7 @@ The Seer is **not normative**.
 
 If the Seer disagrees with the normative calendar, **the Seer is wrong**.
 
-### Canonical saved-sum correction — 2026-09-10
+### Canonical saved-sum correction ג€” 2026-09-10
 
 The 12 final Sauce post-stirs use `R = SAVE(sum(oldBowls) + 149*r)` both to choose the bowl permutation
 and as the additive sum term inside `u`. All six new bowls in a stir read one common old-bowl snapshot.
@@ -41,18 +41,30 @@ The corrected positive 40,000-gap corpus has SHA-256
 
 ## Current state
 
-The repository contains the **2026-09-03 cold-conversion performance prototype** under `prototype/`,
-with the saved-sum semantic correction layered onto that latest prototype state. This is a benchmark
-baseline, not yet a stable library or public API.
+The repository retains the **2026-09-03 cold-conversion performance prototype** under `prototype/`,
+with the saved-sum semantic correction layered onto that prototype state. Above it, the repository now
+has a verified shared query API, CLI, HTTP v1 adapter, exact cache-miss/year provider, and the persistent
+OPT-06 native engine service. API Stage 6 packages those existing layers for stable Node application and
+service deployment without changing calendar semantics.
 
 The current prototype includes C++20, specialized arithmetic for `M = 2^127 - 1`, a generated corpus
 of 40,000 positive canonical gate gaps, a fixed 720-permutation bowl-order table, exact 320-bit
 month-length dynamic programming, RNS/CRT weave counting and prefix unranking, AVX-512IFMA and portable
 backends, and no memoization or predictive precomputation across separate queries.
 
-Known prototype limitations include the positive-only bundled gate corpus, numeric cutlet/month indices
-rather than localized names, hardware requirements for the original IFMA backend, difficult weave-edge
-ranks, and absence of a stable ABI/API.
+Known limitations include the positive-only bundled gate corpus, English-only presentation, the native
+build/toolchain requirements for exact out-of-cache computation, and reverse conversion remaining TBC.
+The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
+
+## Application and HTTP API
+
+API Stage 6 exposes stable ESM package entry points: import `pastafarian-calendar-seer` for the shared
+query API or `pastafarian-calendar-seer/http` for the HTTP handler/server. The package also installs the
+`pastafarian-seer` and `pastafarian-seer-http` commands. It has no npm runtime dependencies.
+
+Exact out-of-cache operation requires the native runtime. On a supported Linux/WSL deployment run
+`npm run build:native`; set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard
+deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
 
 ## Build and conformance
 
@@ -94,4 +106,4 @@ The Seer exists beside, not inside, the Pastafarian Calendar's spaghetti history
 independent language branches. The separation is intentional. Optimizing the Seer must not clean up,
 rewrite, or silently bypass the liturgical history preserved by the Monster.
 
-R’amen.
+Rג€™amen.

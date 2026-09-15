@@ -18,7 +18,7 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - keep benchmark instrumentation outside the semantic core;
    - return canonical numeric indices, not localized strings, from the core.
 
-4. **Portable backend — initial implementation present**
+4. **Portable backend ג€” initial implementation present**
    - preserve the AVX-512IFMA backend unchanged;
    - maintain the scalar/portable RNS implementation for machines without IFMA;
    - run exact self-tests and bundled vector checks on GitHub-hosted runners;
@@ -29,10 +29,10 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - fixed witnesses plus randomized/adversarial cases;
    - no semantic dependency from the reference back into the Seer.
 
-6. **Add presentation and service layers only after the core contract stabilizes**
-   - localization by canonical index;
-   - CLI suitable for ordinary users;
-   - optional HTTP API;
-   - website/application integration.
+6. **Presentation and service layers — v1 implemented**
+   - shared query API and CLI;
+   - dependency-free HTTP v1 service;
+   - installable Node package and persistent-service deployment path (API Stage 6);
+   - remaining product work: additional locales and website integration.
 
 A faster answer is useful only if it remains the same answer.

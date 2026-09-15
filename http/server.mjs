@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import http from 'node:http';
 import { pathToFileURL } from 'node:url';
 import { createSeerHttpHandler } from './app.mjs';
