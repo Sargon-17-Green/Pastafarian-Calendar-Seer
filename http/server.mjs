@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs';
 import http from 'node:http';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { createSeerHttpHandler } from './app.mjs';
 
 export function createSeerHttpServer(options = {}) {
@@ -23,7 +24,16 @@ export async function listen(options = {}) {
   return server;
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+function isMainModule() {
+  if (!process.argv[1]) return false;
+  try {
+    return realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isMainModule()) {
   const server = await listen();
   const address = server.address();
   const host = typeof address === 'object' && address ? address.address : process.env.HOST ?? '127.0.0.1';
