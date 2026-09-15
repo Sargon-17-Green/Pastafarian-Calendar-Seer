@@ -123,6 +123,64 @@ jobs:
                   raise SystemExit(f"repaired hash mismatch for {rel}: {got} != {want}")
           print("Stage 5 repository paths verified")
 
+      - name: Update tests for Stage 5 exact-provider semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          # The fixture executables used String.raw plus "\\n", which produced
+          # literal backslash+n bytes after the JSON document. JSON.parse()
+          # correctly rejected that trailing non-whitespace. Emit only JSON.
+          fixture = Path('query/test/provider-exact-fallback.test.mjs')
+          s = fixture.read_text(encoding='utf-8')
+          needle = "})+'\\\\n');"
+          if s.count(needle) != 2:
+              raise SystemExit(f'expected exactly two fake-executable newline suffixes, found {s.count(needle)}')
+          fixture.write_text(s.replace(needle, "}));"), encoding='utf-8', newline='\\n')
+
+          # Stage 3 deliberately asserted that the rolling cache could not
+          # provide a whole year. Stage 5 changes that public-provider behavior:
+          # cache first, then canonical exact fallback. Replace only that stale
+          # final test; the two cache-path integration tests stay unchanged.
+          integration = Path('query/test/repository-integration.test.mjs')
+          s = integration.read_text(encoding='utf-8')
+          marker = "test('rolling provider refuses to pretend it contains a complete year'"
+          start = s.find(marker)
+          if start < 0:
+              raise SystemExit('stale Stage 3 year test marker not found')
+
+          replacement = "\n".join([
+              "test('rolling provider falls through to the exact engine for a complete year', async () => {",
+              "  const { descriptor, cache } = await fixture();",
+              "  const requestedYear = String(cache.records[0].year);",
+              "  const result = await queryYear(",
+              "    requestedYear,",
+              "    {",
+              "      calculation: { jdn: String(descriptor.calcJdn) },",
+              "      presentation: 'canonical',",
+              "    },",
+              "    { generatedDir },",
+              "  );",
+              "  assert.equal(result.year.number, requestedYear);",
+              "  assert.ok(Number.isInteger(result.year.lengthDays));",
+              "  assert.ok(result.year.lengthDays >= 1);",
+              "  assert.equal(",
+              "    BigInt(result.year.endJdn) - BigInt(result.year.startJdn) + 1n,",
+              "    BigInt(result.year.lengthDays),",
+              "  );",
+              "  assert.ok(Array.isArray(result.year.cutlets) && result.year.cutlets.length >= 1);",
+              "  assert.ok(Array.isArray(result.year.months) && result.year.months.length >= 1);",
+              "});",
+              "",
+          ])
+          integration.write_text(s[:start] + replacement, encoding='utf-8', newline='\\n')
+          PY
+
+          node --check query/test/provider-exact-fallback.test.mjs
+          node --check query/test/repository-integration.test.mjs
+
       - name: Install native dependencies
         run: |
           sudo apt-get update
