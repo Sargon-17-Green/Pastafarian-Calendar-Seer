@@ -14,6 +14,7 @@ on:
       - 'prototype/data/**'
       - 'prototype/scripts/build_year_*.sh'
       - 'prototype/scripts/build_engine_service.sh'
+      - 'scripts/package-selftest.mjs'
       - 'scripts/build-runtime.mjs'
       - 'scripts/build-runtime.ps1'
       - 'scripts/build-runtime.sh'
@@ -39,6 +40,8 @@ jobs:
           node --check index.mjs
           node --check http/index.mjs
           node --check http/server.mjs
+          node --check scripts/package-selftest.mjs
+          node --check deployment/test/installed-bins.mjs
           node --check deployment/test/package-entrypoints.test.mjs
           node --test deployment/test/package-entrypoints.test.mjs
       - name: Pack runtime boundary
@@ -69,6 +72,7 @@ jobs:
           grep '^package/prototype/src/' /tmp/seer-package-files.txt | sort > /tmp/seer-actual-runtime-sources.txt
           sort -o /tmp/seer-expected-runtime-sources.txt /tmp/seer-expected-runtime-sources.txt
           diff -u /tmp/seer-expected-runtime-sources.txt /tmp/seer-actual-runtime-sources.txt
+          grep -qx 'package/scripts/package-selftest.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.ps1' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.sh' /tmp/seer-package-files.txt
@@ -87,7 +91,11 @@ jobs:
           npm install --ignore-scripts "$SEER_TGZ"
           test -f node_modules/pastafarian-calendar-seer/package.json
           cd node_modules/pastafarian-calendar-seer
+          npm test
           npm run build:native
+      - name: Installed command shims smoke
+        shell: bash
+        run: node deployment/test/installed-bins.mjs /tmp/seer-consumer
       - name: Packed application and HTTP persistent-service smoke
         shell: bash
         env:
@@ -179,11 +187,17 @@ jobs:
           $packageRoot = Join-Path $consumer 'node_modules\pastafarian-calendar-seer'
           if (-not (Test-Path (Join-Path $packageRoot 'package.json'))) { throw 'installed package missing' }
           Set-Location $packageRoot
+          npm test
           npm run build:native
           foreach ($bin in @('seer_year_batch.exe','seer_year_locator.exe','seer_year_structure.exe','seer_engine_service.exe')) {
             if (-not (Test-Path (Join-Path $packageRoot "prototype\build\$bin"))) { throw "missing $bin" }
           }
           "SEER_WIN_CONSUMER=$consumer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Installed Windows command shims smoke
+        shell: pwsh
+        run: |
+          node deployment/test/installed-bins.mjs $env:SEER_WIN_CONSUMER
+          if ($LASTEXITCODE -ne 0) { throw "Windows installed-bin smoke failed with exit code $LASTEXITCODE" }
       - name: Native Windows query and HTTP persistent-service smoke
         shell: pwsh
         env:

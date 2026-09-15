@@ -74,6 +74,14 @@ This builds, in the package's `prototype/build/` directory (`.exe` suffix on Win
 - `seer_engine_service`.
 
 The build does not download runtime JavaScript dependencies and does not alter API data.
+
+## Installed-package self-test
+
+`npm test` is intentionally a package self-test: it exercises a bundled-cache `queryDate()` call and an
+HTTP loopback without requiring the native toolchain. Repository maintainers use `npm run test:repo` for
+the full source-tree suites. CI also invokes both installed command shims from `node_modules/.bin`, so the
+CLI and standalone HTTP executable are verified as consumer-facing entry points rather than metadata only.
+
 ## Persistent service policy
 
 By default `query/exact-engine.mjs` prefers `seer_engine_service` and retains the Stage 5 process

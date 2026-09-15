@@ -49,6 +49,8 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.bin['pastafarian-seer'], './query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], './http/server.mjs');
   assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
+  assert.equal(pkg.scripts.test, 'node ./scripts/package-selftest.mjs');
+  assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
   assert.deepEqual(pkg.dependencies ?? {}, {});
   assert.deepEqual(pkg.optionalDependencies ?? {}, {});
 });
@@ -63,6 +65,7 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.equal(files.includes('prototype/src/opt07_transition_research.cpp'), false);
   assert.equal(files.includes('prototype/src/month_count_table_bench.cpp'), false);
   assert.equal(files.includes('prototype/data/canonical_saved_sum_vectors.tsv'), false);
+  assert.ok(files.includes('scripts/package-selftest.mjs'));
   assert.ok(files.includes('scripts/build-runtime.mjs'));
   assert.ok(files.includes('scripts/build-runtime.ps1'));
   assert.ok(files.includes('scripts/build-runtime.sh'));

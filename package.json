@@ -42,6 +42,7 @@
     "prototype/scripts/build_year_locator.sh",
     "prototype/scripts/build_year_structure.sh",
     "prototype/scripts/build_engine_service.sh",
+    "scripts/package-selftest.mjs",
     "scripts/build-runtime.mjs",
     "scripts/build-runtime.ps1",
     "scripts/build-runtime.sh",
@@ -55,8 +56,9 @@
     "build:native": "node ./scripts/build-runtime.mjs",
     "start": "node ./http/server.mjs",
     "cli": "node ./query/cli.mjs",
-    "test": "node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
-    "validate:cache": "node ./precompute/validate-generated.mjs"
+    "test": "node ./scripts/package-selftest.mjs",
+    "validate:cache": "node ./precompute/validate-generated.mjs",
+    "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs"
   },
   "keywords": [
     "pastafarian",
