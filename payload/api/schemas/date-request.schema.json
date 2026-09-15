@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/date-request.schema.json",
+  "title": "DateRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "observer": {
+      "$ref": "./observer.schema.json"
+    },
+    "calculation": {
+      "$ref": "./calculation.schema.json"
+    },
+    "target": {
+      "$ref": "./target.schema.json"
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "presentation": {
+      "type": "string",
+      "enum": [
+        "full",
+        "canonical"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "structure",
+          "boundaries",
+          "provenance",
+          "resolution"
+        ]
+      }
+    }
+  }
+}

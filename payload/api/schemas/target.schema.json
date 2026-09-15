@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/target.schema.json",
+  "title": "TargetSelector",
+  "type": "object",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "maxProperties": 1,
+  "properties": {
+    "jdn": {
+      "$ref": "./exact-integer.schema.json"
+    },
+    "gregorian": {
+      "$ref": "./gregorian-date.schema.json"
+    },
+    "offsetDays": {
+      "$ref": "./exact-integer.schema.json"
+    }
+  }
+}

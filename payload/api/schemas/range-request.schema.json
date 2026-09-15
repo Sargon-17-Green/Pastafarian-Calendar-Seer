@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/range-request.schema.json",
+  "title": "RangeRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "observer": {
+      "$ref": "./observer.schema.json"
+    },
+    "calculation": {
+      "$ref": "./calculation.schema.json"
+    },
+    "start": {
+      "$ref": "./target.schema.json"
+    },
+    "count": {
+      "$ref": "./positive-exact-integer.schema.json"
+    },
+    "endInclusive": {
+      "$ref": "./target.schema.json"
+    },
+    "stepDays": {
+      "$ref": "./exact-integer.schema.json"
+    },
+    "calculationMode": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "same-as-target"
+      ]
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "presentation": {
+      "type": "string",
+      "enum": [
+        "full",
+        "canonical"
+      ]
+    },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "structure",
+          "boundaries",
+          "provenance",
+          "resolution"
+        ]
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "count"
+      ]
+    },
+    {
+      "required": [
+        "endInclusive"
+      ]
+    }
+  ]
+}

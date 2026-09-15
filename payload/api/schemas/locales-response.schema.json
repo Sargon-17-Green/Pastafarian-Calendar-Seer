@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/locales-response.schema.json",
+  "title": "LocalesResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "locales"
+  ],
+  "properties": {
+    "locales": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tag",
+          "name",
+          "direction"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "ltr",
+              "rtl"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

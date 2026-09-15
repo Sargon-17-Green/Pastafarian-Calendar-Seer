@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/date-response.schema.json",
+  "title": "DateResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "calculationDay",
+    "targetDay",
+    "pastafarianDate"
+  ],
+  "properties": {
+    "calculationAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "calculationDay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jdn"
+      ],
+      "properties": {
+        "jdn": {
+          "$ref": "./exact-integer-string.schema.json"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "longitude"
+      ],
+      "properties": {
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "exclusiveMaximum": 180
+        }
+      }
+    },
+    "targetDay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jdn",
+        "gregorian"
+      ],
+      "properties": {
+        "jdn": {
+          "$ref": "./exact-integer-string.schema.json"
+        },
+        "gregorian": {
+          "$ref": "./gregorian-date-output.schema.json"
+        }
+      }
+    },
+    "pastafarianDate": {
+      "$ref": "./pastafarian-date.schema.json"
+    },
+    "locale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "formatted": {
+      "type": "string"
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dayInYear": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "yearLengthDays": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cutletCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "currentCutletLengthDays": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "monthCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "currentMonthLengthDays": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "startsAt",
+        "endsAt"
+      ],
+      "properties": {
+        "startsAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endsAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "calendarRevision": {
+          "type": "string"
+        },
+        "engineRevision": {
+          "type": "string"
+        },
+        "dataRevision": {
+          "type": "string"
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calculationSource": {
+          "type": "string",
+          "enum": [
+            "request-instant",
+            "explicit-instant",
+            "explicit-jdn"
+          ]
+        },
+        "targetSource": {
+          "type": "string",
+          "enum": [
+            "same-as-calculation",
+            "jdn",
+            "gregorian",
+            "offset"
+          ]
+        },
+        "observerSource": {
+          "type": "string",
+          "enum": [
+            "default-preset",
+            "preset",
+            "longitude"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "locale"
+        ]
+      },
+      "then": {
+        "required": [
+          "formatted"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "formatted"
+        ]
+      },
+      "then": {
+        "required": [
+          "locale"
+        ]
+      }
+    }
+  ]
+}

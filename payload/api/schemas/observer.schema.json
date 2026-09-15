@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/observer.schema.json",
+  "title": "ObserverInput",
+  "description": "Observer selector. Only preset or longitude can affect the calendar. latitude and elevationMeters are documented no-op compatibility fields and are ignored without validation.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "preset": {
+      "description": "Named observer preset. v1 defines kisurra.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "longitude": {
+      "description": "Longitude in degrees east-positive. Semantically validated only when observer is relevant.",
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "latitude": {
+      "description": "No-op compatibility field. Ignored completely.",
+      "type": [
+        "null",
+        "boolean",
+        "number",
+        "string",
+        "array",
+        "object"
+      ]
+    },
+    "elevationMeters": {
+      "description": "No-op compatibility field. Ignored completely.",
+      "type": [
+        "null",
+        "boolean",
+        "number",
+        "string",
+        "array",
+        "object"
+      ]
+    }
+  }
+}

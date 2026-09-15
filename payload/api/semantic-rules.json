@@ -1,0 +1,33 @@
+{
+  "version": "v1-draft",
+  "defaults": {
+    "observerPreset": "kisurra",
+    "locale": "en",
+    "presentation": "full",
+    "target": "same-as-calculation-day",
+    "rangeStepDays": "1",
+    "rangeCalculationMode": "fixed"
+  },
+  "requestInstant": "captured-once-per-request",
+  "dayInterval": "[start,end)",
+  "observer": {
+    "effectiveFields": ["preset", "longitude"],
+    "documentedNoOpFields": ["latitude", "elevationMeters"],
+    "defaultWhenNoEffectiveSelectorRemains": "kisurra",
+    "normalizedLongitudeInterval": "[-180,180)",
+    "eastPositive": true
+  },
+  "validationOrder": [
+    "parse",
+    "determine-mode",
+    "prune-irrelevant",
+    "drop-documented-noops",
+    "validate-selectors",
+    "validate-syntax",
+    "validate-semantics",
+    "resolve-defaults",
+    "calculate",
+    "present"
+  ],
+  "reverse": "TBC"
+}

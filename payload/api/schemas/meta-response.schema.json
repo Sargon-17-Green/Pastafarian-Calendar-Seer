@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/meta-response.schema.json",
+  "title": "MetaResponse",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "apiVersion",
+    "presentations",
+    "includes",
+    "observerPresets",
+    "reverse"
+  ],
+  "properties": {
+    "apiVersion": {
+      "const": "v1"
+    },
+    "presentations": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "full",
+          "canonical"
+        ]
+      }
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "structure",
+          "boundaries",
+          "provenance",
+          "resolution"
+        ]
+      }
+    },
+    "observerPresets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "longitude"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "longitude": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "reverse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "const": "TBC"
+        }
+      }
+    }
+  }
+}

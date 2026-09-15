@@ -1,0 +1,881 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pastafarian Calendar Seer API",
+    "version": "1.0.0-draft",
+    "description": "User-facing v1 contract. The calendar definition itself is normative; implementation details are intentionally absent from ordinary date responses. Reverse conversion is TBC and is not part of v1."
+  },
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "servers": [
+    {
+      "url": "/",
+      "description": "Same-origin deployment"
+    }
+  ],
+  "paths": {
+    "/v1/now": {
+      "get": {
+        "summary": "Current Pastafarian date",
+        "description": "Equivalent to /v1/date with default calculation instant and target t=c.",
+        "parameters": [
+          {
+            "name": "observer",
+            "in": "query",
+            "required": false,
+            "description": "Observer preset. v1 defines kisurra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "description": "Observer longitude, degrees east-positive.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "elevationMeters",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "description": "BCP 47 locale; default en when presentation=full.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "presentation",
+            "in": "query",
+            "required": false,
+            "description": "Output presentation mode.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "full",
+                "canonical"
+              ],
+              "default": "full"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated include values.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current date",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/date-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/date": {
+      "get": {
+        "summary": "Query a Pastafarian date",
+        "parameters": [
+          {
+            "name": "target",
+            "in": "query",
+            "required": false,
+            "description": "Proleptic Gregorian CE date, YYYY-MM-DD.",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          },
+          {
+            "name": "targetJdn",
+            "in": "query",
+            "required": false,
+            "description": "Exact target JDN.",
+            "schema": {
+              "$ref": "./schemas/exact-integer.schema.json"
+            }
+          },
+          {
+            "name": "offsetDays",
+            "in": "query",
+            "required": false,
+            "description": "Target offset from calculation day.",
+            "schema": {
+              "$ref": "./schemas/exact-integer.schema.json"
+            }
+          },
+          {
+            "name": "calculationAt",
+            "in": "query",
+            "required": false,
+            "description": "RFC 3339 instant with explicit timezone.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "calculationJdn",
+            "in": "query",
+            "required": false,
+            "description": "Explicit calculation-day JDN.",
+            "schema": {
+              "$ref": "./schemas/exact-integer.schema.json"
+            }
+          },
+          {
+            "name": "observer",
+            "in": "query",
+            "required": false,
+            "description": "Observer preset. v1 defines kisurra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "description": "Observer longitude, degrees east-positive.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "elevationMeters",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "description": "BCP 47 locale; default en when presentation=full.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "presentation",
+            "in": "query",
+            "required": false,
+            "description": "Output presentation mode.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "full",
+                "canonical"
+              ],
+              "default": "full"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated include values.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolved date",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/date-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Query a Pastafarian date with structured input",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./schemas/date-request.schema.json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resolved date",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/date-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/batch": {
+      "post": {
+        "summary": "Resolve multiple independent date queries using one captured request instant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./schemas/batch-request.schema.json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Per-item success/error results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/batch-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Batch exceeds deployment limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/range": {
+      "post": {
+        "summary": "Resolve a deterministic sequence of target days",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "./schemas/range-request.schema.json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Range results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/range-response.schema.json"
+                }
+              },
+              "application/x-ndjson": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Range exceeds deployment limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/year/{year}": {
+      "get": {
+        "summary": "Get the Pastafarian structure of a year under a resolved calculation day",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "./schemas/exact-integer.schema.json"
+            }
+          },
+          {
+            "name": "calculationAt",
+            "in": "query",
+            "required": false,
+            "description": "RFC 3339 instant with explicit timezone.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "calculationJdn",
+            "in": "query",
+            "required": false,
+            "description": "Explicit calculation-day JDN.",
+            "schema": {
+              "$ref": "./schemas/exact-integer.schema.json"
+            }
+          },
+          {
+            "name": "observer",
+            "in": "query",
+            "required": false,
+            "description": "Observer preset. v1 defines kisurra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "description": "Observer longitude, degrees east-positive.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "elevationMeters",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "locale",
+            "in": "query",
+            "required": false,
+            "description": "BCP 47 locale; default en when presentation=full.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "presentation",
+            "in": "query",
+            "required": false,
+            "description": "Output presentation mode.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "full",
+                "canonical"
+              ],
+              "default": "full"
+            }
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated include values.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Year structure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/year-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/calculation-day": {
+      "get": {
+        "summary": "Resolve the active calculation day",
+        "parameters": [
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "description": "RFC 3339 instant with explicit timezone; defaults to request instant.",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "observer",
+            "in": "query",
+            "required": false,
+            "description": "Observer preset. v1 defines kisurra.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": false,
+            "description": "Observer longitude, degrees east-positive.",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "elevationMeters",
+            "in": "query",
+            "required": false,
+            "description": "Ignored no-op compatibility field.",
+            "schema": {}
+          },
+          {
+            "name": "include",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated include values.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Calculation day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/calculation-day-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested active locale is unsupported",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/locales": {
+      "get": {
+        "summary": "List supported presentation locales",
+        "responses": {
+          "200": {
+            "description": "Locales",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/locales-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/meta": {
+      "get": {
+        "summary": "Describe v1 capabilities",
+        "responses": {
+          "200": {
+            "description": "Capabilities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/meta-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "summary": "Service readiness",
+        "responses": {
+          "200": {
+            "description": "Ready or degraded status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/status-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/status-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "summary": "OpenAPI contract in JSON",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.1 document"
+          }
+        }
+      }
+    },
+    "/openapi.yaml": {
+      "get": {
+        "summary": "OpenAPI contract in YAML",
+        "responses": {
+          "200": {
+            "description": "OpenAPI 3.1 document"
+          }
+        }
+      }
+    }
+  },
+  "x-seer-semantics": {
+    "defaultObserver": "kisurra",
+    "defaultLocale": "en",
+    "defaultTarget": "same-as-calculation-day",
+    "requestInstant": "captured-once-per-request",
+    "boundaryInterval": "[start,end)",
+    "reverse": "TBC",
+    "validationOrder": [
+      "parse",
+      "determine-mode",
+      "prune-irrelevant",
+      "drop-documented-noops",
+      "validate-selectors",
+      "validate-syntax",
+      "validate-semantics",
+      "resolve-defaults",
+      "calculate",
+      "present"
+    ]
+  }
+}

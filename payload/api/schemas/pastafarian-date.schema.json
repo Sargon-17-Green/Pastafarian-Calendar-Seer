@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/pastafarian-date.schema.json",
+  "title": "PastafarianDate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "year",
+    "cutlet",
+    "month"
+  ],
+  "properties": {
+    "year": {
+      "$ref": "./exact-integer-string.schema.json"
+    },
+    "cutlet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalIndex",
+        "day"
+      ],
+      "properties": {
+        "canonicalIndex": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 17
+        },
+        "name": {
+          "type": "string"
+        },
+        "day": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "month": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonicalIndex",
+        "day"
+      ],
+      "properties": {
+        "canonicalIndex": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 47
+        },
+        "name": {
+          "type": "string"
+        },
+        "day": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

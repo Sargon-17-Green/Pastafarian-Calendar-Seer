@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/batch-request.schema.json",
+  "title": "BatchRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "queries"
+  ],
+  "properties": {
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observer": {
+          "$ref": "./observer.schema.json"
+        },
+        "calculation": {
+          "$ref": "./calculation.schema.json"
+        },
+        "locale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "presentation": {
+          "type": "string",
+          "enum": [
+            "full",
+            "canonical"
+          ]
+        },
+        "include": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "structure",
+              "boundaries",
+              "provenance",
+              "resolution"
+            ]
+          }
+        }
+      }
+    },
+    "queries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "observer": {
+            "$ref": "./observer.schema.json"
+          },
+          "calculation": {
+            "$ref": "./calculation.schema.json"
+          },
+          "target": {
+            "$ref": "./target.schema.json"
+          },
+          "locale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "presentation": {
+            "type": "string",
+            "enum": [
+              "full",
+              "canonical"
+            ]
+          },
+          "include": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "structure",
+                "boundaries",
+                "provenance",
+                "resolution"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

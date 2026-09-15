@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/calculation.schema.json",
+  "title": "CalculationSelector",
+  "type": "object",
+  "additionalProperties": false,
+  "minProperties": 1,
+  "maxProperties": 1,
+  "properties": {
+    "jdn": {
+      "$ref": "./exact-integer.schema.json"
+    },
+    "at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC 3339 timestamp with explicit offset or Z; semantic validation rejects offset-less timestamps."
+    }
+  }
+}
