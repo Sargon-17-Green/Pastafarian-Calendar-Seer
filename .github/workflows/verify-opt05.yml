@@ -1,0 +1,95 @@
+name: Verify OPT-05 year-edge fast path
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'prototype/data/canonical_saved_sum_vectors.tsv'
+      - 'query/**'
+      - '.github/workflows/verify-opt05.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build exact engines and prior verification tool
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+          bash prototype/scripts/build_year_structure.sh
+          bash prototype/scripts/build_month_count_tools.sh
+          (cd prototype/data && ../build/month_count_table_verify)
+      - name: Canonical edge vectors — direct equals forced weave and expected TSV
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('fs'),cp=require('child_process'),path=require('path'),os=require('os');
+          const root=process.cwd(), data=path.join(root,'prototype','data'), exe=path.join(root,'prototype','build','seer_year_batch');
+          const lines=fs.readFileSync(path.join(data,'canonical_saved_sum_vectors.tsv'),'utf8').trim().split(/\r?\n/);
+          const head=lines[0].split('\t');
+          const rows=Object.fromEntries(lines.slice(1).map(line=>{const a=line.split('\t'),o={};head.forEach((k,i)=>o[k]=a[i]);return[o.name,o]}));
+          function run(calc,target,extraEnv={}){
+            return JSON.parse(cp.execFileSync(exe,[String(calc),String(target),'1'],{cwd:data,encoding:'utf8',env:{...process.env,...extraEnv}}));
+          }
+          for(const name of ['y5000-start','y5000-end','y5001-start']){
+            const v=rows[name], counter=path.join(os.tmpdir(),`opt05-${name}-${process.pid}`);
+            try{fs.unlinkSync(counter)}catch{}
+            const fast=run(v.calc,v.target,{SEER_TEST_WEAVE_COUNTER_FILE:counter});
+            if(fs.existsSync(counter)&&fs.readFileSync(counter,'utf8').trim())throw new Error(`${name}: edge unexpectedly wove`);
+            const full=run(v.calc,v.target,{SEER_DISABLE_EDGE_SHORTCUT:'1'});
+            if(JSON.stringify(fast.records)!==JSON.stringify(full.records))throw new Error(`${name}: shortcut differs from forced weave`);
+            const r=fast.records[0];
+            for(const [field,want] of [['year',v.year],['cutletIndex',v.cutlet_idx],['dayInCutlet',v.day_cutlet],['monthIndex',v.month_idx],['dayInMonth',v.day_month]]){
+              if(String(r[field])!==String(want))throw new Error(`${name}: ${field}=${r[field]} expected ${want}`);
+            }
+          }
+          // c=t canonical witness is interior and must not take the edge shortcut.
+          {
+            const v=rows['same-query'], counter=path.join(os.tmpdir(),`opt05-same-${process.pid}`);
+            try{fs.unlinkSync(counter)}catch{}
+            run(v.calc,v.target,{SEER_TEST_WEAVE_COUNTER_FILE:counter});
+            if(!fs.existsSync(counter)||!fs.readFileSync(counter,'utf8').trim())throw new Error('same-query interior accidentally bypassed weave');
+          }
+          // Neighbors inside year 5000 must remain on the full path.
+          for(const target of [Number(rows['y5000-start'].target)+1,Number(rows['y5000-end'].target)-1]){
+            const counter=path.join(os.tmpdir(),`opt05-neighbor-${target}-${process.pid}`);try{fs.unlinkSync(counter)}catch{}
+            run(rows['y5000-start'].calc,target,{SEER_TEST_WEAVE_COUNTER_FILE:counter});
+            if(!fs.existsSync(counter)||!fs.readFileSync(counter,'utf8').trim())throw new Error(`neighbor ${target} accidentally bypassed weave`);
+          }
+          console.log('canonical edge vectors and non-edge guards: PASS');
+          NODE
+      - name: Calculation day on a gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          # canonical y5000-start says a=2458960, which is opening gate G.at(31473)
+          CALC=2458960
+          (cd prototype/data && ../build/seer_year_locator "$CALC" 5000) > /tmp/gateyear.json
+          node <<'NODE'
+          const fs=require('fs'),cp=require('child_process'),path=require('path'),os=require('os');
+          const y=JSON.parse(fs.readFileSync('/tmp/gateyear.json','utf8'));
+          const exe=path.join(process.cwd(),'prototype','build','seer_year_batch'),cwd=path.join(process.cwd(),'prototype','data');
+          for(const target of [y.startJdn,y.endJdn]){
+            const c=path.join(os.tmpdir(),`opt05-gate-${target}-${process.pid}`);try{fs.unlinkSync(c)}catch{}
+            const fast=JSON.parse(cp.execFileSync(exe,[String(y.calcJdn),String(target),'1'],{cwd,encoding:'utf8',env:{...process.env,SEER_TEST_WEAVE_COUNTER_FILE:c}}));
+            const full=JSON.parse(cp.execFileSync(exe,[String(y.calcJdn),String(target),'1'],{cwd,encoding:'utf8',env:{...process.env,SEER_DISABLE_EDGE_SHORTCUT:'1'}}));
+            if(JSON.stringify(fast.records)!==JSON.stringify(full.records))throw new Error('gate-c edge mismatch');
+            if(fs.existsSync(c)&&fs.readFileSync(c,'utf8').trim())throw new Error('gate-c edge wove');
+          }
+          console.log('gate calculation day edge cases: PASS');
+          NODE
+      - name: Full regressions
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+          node precompute/validate-generated.mjs
+          python -m venv .contract-venv
+          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+          .contract-venv/bin/python api/tests/test_contract.py
