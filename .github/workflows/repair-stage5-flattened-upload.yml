@@ -90,19 +90,6 @@ jobs:
           rm -f provider-exact-fallback.test.mjs
           rm -f verify-stage5-exact-provider.yml
 
-          # The first repair attempt exposed that the hosted runner needs Boost
-          # headers installed explicitly for boost::multiprecision.
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('.github/workflows/verify-stage5-exact-provider.yml')
-          s = p.read_text(encoding='utf-8')
-          old = 'sudo apt-get install -y g++ libgmp-dev'
-          new = 'sudo apt-get install -y g++ libgmp-dev libboost-dev'
-          if old not in s:
-              raise SystemExit('expected dependency line not found in Stage 5 verifier')
-          p.write_text(s.replace(old, new, 1), encoding='utf-8', newline='\n')
-          PY
-
       - name: Verify repaired Stage 5 hashes
         shell: python
         run: |
@@ -115,7 +102,7 @@ jobs:
               "query/exact-engine.mjs": "87c0535c7e8d83771018f416814c48929ae826d0d28d28ce33e67b5914d19c22",
               "query/provider-precomputed.mjs": "8ec99f1df7029f0a2ff7e832795ac5cca893e8fda7751537180fc9e4ca9fb1be",
               "query/test/provider-exact-fallback.test.mjs": "242ccee4ea85e38a9fca90e1d32349a89a7283d70d3ab441076d8bdd512ad2a7",
-              ".github/workflows/verify-stage5-exact-provider.yml": "13818fabf4589e002a255909d6371355af0ac9e117672e7b94504db28356739e",
+              ".github/workflows/verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
           }
           for rel, want in expected.items():
               got = hashlib.sha256(pathlib.Path(rel).read_bytes()).hexdigest()
@@ -291,7 +278,13 @@ jobs:
           test ! -e verify-stage5-exact-provider.yml
 
           rm -rf .contract-venv prototype/build
-          rm -f .github/workflows/repair-stage5-flattened-upload.yml
+          # GitHub's workflow token cannot push workflow-file changes.
+          # This repair must leave all .github/workflows files untouched.
+          if ! git diff --quiet -- .github/workflows || ! git diff --cached --quiet -- .github/workflows; then
+            echo "Unexpected workflow-file modification detected" >&2
+            git diff -- .github/workflows >&2 || true
+            exit 1
+          fi
           git status --short
 
       - name: Commit repaired Stage 5
