@@ -1,6 +1,6 @@
-#define main seer_year_batch_embedded_main
+#define SEER_YEAR_BATCH_NO_MAIN
 #include "pastafarian_year_batch.cpp"
-#undef main
+#undef SEER_YEAR_BATCH_NO_MAIN
 
 #include <iostream>
 #include <fstream>

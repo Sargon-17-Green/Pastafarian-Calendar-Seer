@@ -82,6 +82,7 @@ static std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64
     return out;
 }
 
+#ifndef SEER_YEAR_BATCH_NO_MAIN
 int main(int argc,char**argv){
     try{
         if(argc<4){std::cerr<<"usage: seer_year_batch <calc_jdn> <target_start_jdn> <count> [threads] [superblock] [replay_threads]\n";return 2;}
@@ -97,3 +98,4 @@ int main(int argc,char**argv){
         std::cout<<"]}\n";return 0;
     }catch(const std::exception&e){std::cerr<<"seer_year_batch: "<<e.what()<<"\n";return 1;}
 }
+#endif
