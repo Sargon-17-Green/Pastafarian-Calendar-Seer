@@ -138,7 +138,7 @@ jobs:
           needle = "})+'\\\\n');"
           if s.count(needle) != 2:
               raise SystemExit(f'expected exactly two fake-executable newline suffixes, found {s.count(needle)}')
-          fixture.write_text(s.replace(needle, "}));"), encoding='utf-8', newline='\\n')
+          fixture.write_text(s.replace(needle, "}));"), encoding='utf-8', newline='\n')
 
           # Stage 3 deliberately asserted that the rolling cache could not
           # provide a whole year. Stage 5 changes that public-provider behavior:
@@ -175,7 +175,7 @@ jobs:
               "});",
               "",
           ])
-          integration.write_text(s[:start] + replacement, encoding='utf-8', newline='\\n')
+          integration.write_text(s[:start] + replacement, encoding='utf-8', newline='\n')
           PY
 
           node --check query/test/provider-exact-fallback.test.mjs
