@@ -1,0 +1,51 @@
+name: Verify OPT-06 persistent engine service
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/seer_engine_service.cpp'
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/scripts/build_engine_service.sh'
+      - 'query/exact-engine.mjs'
+      - 'query/provider-precomputed.mjs'
+      - 'query/test/engine-service.test.mjs'
+      - 'bench/opt06-engine-service.mjs'
+      - 'docs/OPT06_PERSISTENT_ENGINE_SERVICE.md'
+      - '.github/workflows/verify-opt06.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build exact engines and persistent service
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+          bash prototype/scripts/build_year_structure.sh
+          bash prototype/scripts/build_month_count_tools.sh
+          bash prototype/scripts/build_engine_service.sh
+      - name: OPT-06 focused service tests
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          node --check query/exact-engine.mjs
+          node --check query/provider-precomputed.mjs
+          node --check query/test/engine-service.test.mjs
+          node --test query/test/engine-service.test.mjs
+      - name: Persistent-service benchmark and memory diagnostics
+        run: |
+          /usr/bin/time -v node bench/opt06-engine-service.mjs 2>&1 | tee OPT06_BENCH.txt
+      - name: Full regressions
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+          node precompute/validate-generated.mjs
+          python -m venv .contract-venv
+          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+          .contract-venv/bin/python api/tests/test_contract.py
