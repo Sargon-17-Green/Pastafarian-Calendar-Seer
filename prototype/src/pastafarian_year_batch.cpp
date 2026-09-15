@@ -16,7 +16,7 @@
 using BI=boost::multiprecision::cpp_int;
 
 static BI yb_fu_to_bi(U128 x){BI z=(uint64_t)(x>>64);z<<=64;z+=(uint64_t)x;return z;}
-static mpz_class yb_fu_to_mpz(U128 x){mpz_class z=(uint64_t)(x>>64);z<<=64;z+=(uint64_t)x;return z;}
+static mpz_class yb_fu_to_mpz(U128 x){mpz_class z=mpz_from_u64_exact((uint64_t)(x>>64));z<<=64;z+=mpz_from_u64_exact((uint64_t)x);return z;}
 static BI yb_fast_choose_bi(const FSauce&so,int bowl,uint64_t seal,const BI&n,int*widthOut=nullptr){
     if(n<=0)throw std::runtime_error("n<=0");auto d=fast_desc(so,bowl,seal);BI MM=yb_fu_to_bi(F127_M);
     if(n<=MM){BI lim=(MM/n)*n;U128 c=frep(d.first);while(yb_fu_to_bi(c)>lim)c=d.forward?(c==F127_M?1:c+1):(c==1?F127_M:c-1);if(widthOut)*widthOut=1;return (yb_fu_to_bi(c)-1)%n+1;}

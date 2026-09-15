@@ -33,6 +33,16 @@ static constexpr uint64_t B52=1ULL<<32;
 static constexpr uint64_t MASK52=B52-1;
 static constexpr int MAXM=47;
 
+// GMP C++ exposes constructors/operators for unsigned long, but uint64_t is
+// unsigned long long on LLP64 Windows. Split through 32-bit limbs so conversion
+// is exact on both LP64 and LLP64 without relying on an ambiguous overload.
+static inline mpz_class mpz_from_u64_exact(uint64_t x){
+    mpz_class z=(unsigned long)(x>>32);
+    z<<=32;
+    z+=(unsigned long)(x&0xffffffffULL);
+    return z;
+}
+
 static uint64_t inv_mod_u64(uint64_t a,uint64_t p){
     __int128 t=0,newt=1; uint64_t r=p,newr=a;
     while(newr){uint64_t q=r/newr; uint64_t nr=r-q*newr; r=newr;newr=nr; __int128 nt=t-(__int128)q*newt;t=newt;newt=nt;}
@@ -185,7 +195,7 @@ struct RnsEngine{
     std::vector<int> len,pref;int m,total,npr,npacks,threads,commonN=0,commonFreq=0;std::vector<uint64_t> primes;std::vector<long double> invp,logP,logFact;std::vector<mpz_class> Pprefix;std::vector<uint64_t> garnerInv;
     std::vector<PackConst> pc;std::vector<PackState> initPacks;double count_ms=0,fracmeta_ms=0;std::vector<uint64_t> Nres;
     RnsEngine(const std::vector<int>&L,int npr_,int threads_):len(L),m(L.size()),npr(npr_),threads(threads_){total=std::accumulate(len.begin(),len.end(),0);pref.resize(m);int s=0;for(int i=0;i<m;i++){s+=len[i]-1;pref[i]=s;}std::array<int,124> fql{};for(int h=0;h<m-1;h++)fql[len[h+1]]++;for(int n=1;n<=123;n++)if(fql[n]>commonFreq){commonFreq=fql[n];commonN=n;}primes=make_primes(npr);npacks=(npr+7)/8;invp.resize(npr);for(int i=0;i<npr;i++)invp[i]=1.0L/(long double)primes[i];
-        Pprefix.resize(npr+1);Pprefix[0]=1;garnerInv.resize(npr);garnerInv[0]=1;logP.assign(npr+1,0);for(int i=0;i<npr;i++){if(i>0){uint64_t pm=mpz_fdiv_ui(Pprefix[i].get_mpz_t(),primes[i]);garnerInv[i]=inv_mod_u64(pm,primes[i]);}Pprefix[i+1]=Pprefix[i]*primes[i];logP[i+1]=logP[i]+log2l((long double)primes[i]);}
+        Pprefix.resize(npr+1);Pprefix[0]=1;garnerInv.resize(npr);garnerInv[0]=1;logP.assign(npr+1,0);for(int i=0;i<npr;i++){if(i>0){uint64_t pm=mpz_fdiv_ui(Pprefix[i].get_mpz_t(),primes[i]);garnerInv[i]=inv_mod_u64(pm,primes[i]);}Pprefix[i+1]=Pprefix[i]*mpz_from_u64_exact(primes[i]);logP[i+1]=logP[i]+log2l((long double)primes[i]);}
         logFact.assign(total+1,0);for(int i=1;i<=total;i++)logFact[i]=logFact[i-1]+log2l((long double)i);
         fracmeta_ms=0;
         pc.resize(npacks);initPacks.resize(npacks);Nres.resize(npr);
@@ -228,8 +238,8 @@ struct RnsEngine{
         q.bcommon=std::move(wc[cn]);
         st.A=vsmall(1);st.O=vzero();st.rankR=vzero();
     }
-    mpz_class crt(const std::vector<uint64_t>&r,int k) const{mpz_class x=0;for(int i=0;i<k;i++){uint64_t pi=primes[i],xm=mpz_fdiv_ui(x.get_mpz_t(),pi);uint64_t delta=r[i]>=xm?r[i]-xm:pi-(xm-r[i]);uint64_t t=(uint64_t)((__uint128_t)delta*garnerInv[i]%pi);if(t)x+=Pprefix[i]*t;}return x;}
-    void crt2(const std::vector<uint64_t>&a,const std::vector<uint64_t>&b,int k,mpz_class&xa,mpz_class&xb) const{xa=0;xb=0;for(int i=0;i<k;i++){uint64_t p=primes[i];uint64_t am=mpz_fdiv_ui(xa.get_mpz_t(),p),bm=mpz_fdiv_ui(xb.get_mpz_t(),p);uint64_t da=a[i]>=am?a[i]-am:p-(am-a[i]);uint64_t db=b[i]>=bm?b[i]-bm:p-(bm-b[i]);uint64_t ta=(uint64_t)((__uint128_t)da*garnerInv[i]%p),tb=(uint64_t)((__uint128_t)db*garnerInv[i]%p);if(ta)xa+=Pprefix[i]*ta;if(tb)xb+=Pprefix[i]*tb;}}
+    mpz_class crt(const std::vector<uint64_t>&r,int k) const{mpz_class x=0;for(int i=0;i<k;i++){uint64_t pi=primes[i],xm=mpz_fdiv_ui(x.get_mpz_t(),pi);uint64_t delta=r[i]>=xm?r[i]-xm:pi-(xm-r[i]);uint64_t t=(uint64_t)((__uint128_t)delta*garnerInv[i]%pi);if(t)x+=Pprefix[i]*mpz_from_u64_exact(t);}return x;}
+    void crt2(const std::vector<uint64_t>&a,const std::vector<uint64_t>&b,int k,mpz_class&xa,mpz_class&xb) const{xa=0;xb=0;for(int i=0;i<k;i++){uint64_t p=primes[i];uint64_t am=mpz_fdiv_ui(xa.get_mpz_t(),p),bm=mpz_fdiv_ui(xb.get_mpz_t(),p);uint64_t da=a[i]>=am?a[i]-am:p-(am-a[i]);uint64_t db=b[i]>=bm?b[i]-bm:p-(bm-b[i]);uint64_t ta=(uint64_t)((__uint128_t)da*garnerInv[i]%p),tb=(uint64_t)((__uint128_t)db*garnerInv[i]%p);if(ta)xa+=Pprefix[i]*mpz_from_u64_exact(ta);if(tb)xb+=Pprefix[i]*mpz_from_u64_exact(tb);}}
     int basis_for(const mpz_class&x,int maxk) const{int lo=1,hi=maxk;while(lo<hi){int md=(lo+hi)/2;if(Pprefix[md]>x)hi=md;else lo=md+1;}if(Pprefix[lo]<=x)throw std::runtime_error("basis too small");return lo;}
     int predictor_basis(const StructState&s,int maxk) const{int remtot=0;long double lu=0;for(int i=0;i<m;i++){remtot+=s.rem[i];lu-=logFact[s.rem[i]];}lu+=logFact[remtot];long double need=lu+4.0L;int lo=1,hi=maxk;while(lo<hi){int md=(lo+hi)/2;if(logP[md]>need)hi=md;else lo=md+1;}return lo;}
 };
