@@ -1,0 +1,58 @@
+name: Verify OPT-04 shared month count table
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/month_count_table_verify.cpp'
+      - 'prototype/src/month_count_table_bench.cpp'
+      - 'prototype/scripts/build_month_count_tools.sh'
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'query/**'
+      - '.github/workflows/verify-opt04.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build engines and OPT-04 tools
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+          bash prototype/scripts/build_year_structure.sh
+          bash prototype/scripts/build_month_count_tools.sh
+      - name: Independent table and unranking oracle
+        working-directory: prototype/data
+        run: ../build/month_count_table_verify
+      - name: Benchmark first build, reuse and RSS
+        working-directory: prototype/data
+        run: /usr/bin/time -v ../build/month_count_table_bench 2>&1 | tee ../../OPT04_BENCH.txt
+      - name: Canonical year output unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          CALC="$(node -e "const x=require('./generated/index.json');process.stdout.write(String(x.caches[0].calcJdn))")"
+          prototype/build/seer_year_structure "$CALC" 5000 1 > /tmp/structure.json
+          START="$(node -e "const x=require('/tmp/structure.json');process.stdout.write(String(x.startJdn))")"
+          COUNT="$(node -e "const x=require('/tmp/structure.json');process.stdout.write(String(x.lengthDays))")"
+          (cd prototype/data && ../build/seer_year_batch "$CALC" "$START" "$COUNT") > /tmp/batch.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=JSON.parse(fs.readFileSync('/tmp/structure.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('/tmp/batch.json','utf8'));
+          if(JSON.stringify(s.days)!==JSON.stringify(b.records)) throw new Error('OPT-04 changed canonical year-day output');
+          console.log({year:s.year,length:s.lengthDays,cutlets:s.cutlets.length,months:s.months.length});
+          NODE
+      - name: Regressions
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+          node precompute/validate-generated.mjs
+          python -m venv .contract-venv
+          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+          .contract-venv/bin/python api/tests/test_contract.py
