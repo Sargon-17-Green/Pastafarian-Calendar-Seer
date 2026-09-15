@@ -119,6 +119,8 @@ jobs:
           if (spawnLines.length !== 1) throw new Error(`expected one persistent service spawn, got ${spawnLines.length}`);
           console.log({ calculationJdn, targetJdn, persistentServiceSpawns: spawnLines.length });
           NODE
+      - name: Build checkout native runtime for regressions
+        run: npm run build:native
       - name: Full repository regressions
         run: |
           node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
