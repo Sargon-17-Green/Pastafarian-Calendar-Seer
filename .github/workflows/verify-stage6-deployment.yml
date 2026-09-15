@@ -99,8 +99,17 @@ jobs:
           set -euo pipefail
           npm publish --dry-run --json >/tmp/seer-publish.json 2>/tmp/seer-publish.err
           cat /tmp/seer-publish.err
-          if grep -Eqi 'auto-corrected|errors corrected' /tmp/seer-publish.err; then
-            echo 'npm would rewrite package metadata during publish' >&2
+          grep '^npm warn publish "bin\[' /tmp/seer-publish.err | sort > /tmp/seer-publish-corrections.txt || true
+          cat > /tmp/seer-allowed-publish-corrections.txt <<'EOF'
+          npm warn publish "bin[pastafarian-seer-http]" script name was cleaned
+          npm warn publish "bin[pastafarian-seer]" script name was cleaned
+          EOF
+          sed -i 's/^          //' /tmp/seer-allowed-publish-corrections.txt
+          sort -o /tmp/seer-allowed-publish-corrections.txt /tmp/seer-allowed-publish-corrections.txt
+          diff -u /tmp/seer-allowed-publish-corrections.txt /tmp/seer-publish-corrections.txt
+          if grep '^npm warn publish ' /tmp/seer-publish.err | grep -Ev 'npm auto-corrected some errors|errors corrected:|"bin\[(pastafarian-seer|pastafarian-seer-http)\]" script name was cleaned' >/tmp/seer-unexpected-publish-corrections.txt; then
+            cat /tmp/seer-unexpected-publish-corrections.txt >&2
+            echo 'unexpected npm publish metadata correction' >&2
             exit 1
           fi
           node -e "const x=require('/tmp/seer-publish.json'); const p=x['pastafarian-calendar-seer']; if(!p||p.id!=='pastafarian-calendar-seer@0.1.0') process.exit(1)"
