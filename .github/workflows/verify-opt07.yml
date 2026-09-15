@@ -1,0 +1,50 @@
+name: Verify OPT-07 transition-map research
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/opt07_transition_research.cpp'
+      - 'prototype/scripts/build_opt07_transition_research.sh'
+      - 'docs/OPT07_TRANSITION_MAP_RESEARCH.md'
+      - '.github/workflows/verify-opt07.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build OPT-07 research tool and OPT-06 service
+        run: |
+          bash prototype/scripts/build_opt07_transition_research.sh
+          bash prototype/scripts/build_engine_service.sh
+      - name: Weighted transition composition, confluence and break-even
+        shell: bash
+        run: |
+          set -euo pipefail
+          CALC="$(node -e "const x=require('./generated/index.json');process.stdout.write(String(x.caches[0].calcJdn))")"
+          (
+            cd prototype/data
+            ../build/opt07_transition_research "$CALC" 384 500000
+          ) | tee OPT07_RESEARCH.txt
+          grep -qx 'composition=PASS' OPT07_RESEARCH.txt
+          grep -qx 'decision=DO_NOT_ADOPT' OPT07_RESEARCH.txt
+          awk -F= '/^cold_transition_calls_chain=/{a=$2}
+                   /^cold_transition_calls_lift_min=/{b=$2}
+                   END{exit !(a==b && a>0)}' OPT07_RESEARCH.txt
+          awk -F= '/^chain_cells=/{a=$2}
+                   /^lift_cells=/{b=$2}
+                   END{exit !(b>a && a>0)}' OPT07_RESEARCH.txt
+      - name: OPT-06 focused service tests remain green
+        run: node --test query/test/engine-service.test.mjs
+      - name: Full regressions
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+          node precompute/validate-generated.mjs
+          python -m venv .contract-venv
+          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+          .contract-venv/bin/python api/tests/test_contract.py
