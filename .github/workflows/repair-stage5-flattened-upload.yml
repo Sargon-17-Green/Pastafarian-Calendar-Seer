@@ -48,7 +48,7 @@ jobs:
               "provider-exact-fallback.test.mjs": "242ccee4ea85e38a9fca90e1d32349a89a7283d70d3ab441076d8bdd512ad2a7",
               "verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
               "README_STAGE5.md": "7730978c0ad6b1eb451c5ce4509c2d6ef5c38f941b1d1f69fc3349f6ac027d5c",
-              ".github/workflows/verify-stage5-exact-provider.yml": "2d276c1b7611c86bb2c90d54e00a80e38fb5fdcae9658d72b778d456b1934674",
+              ".github/workflows/verify-stage5-exact-provider.yml": "13818fabf4589e002a255909d6371355af0ac9e117672e7b94504db28356739e",
           }
           for rel, want in expected.items():
               p = pathlib.Path(rel)
@@ -90,6 +90,19 @@ jobs:
           rm -f provider-exact-fallback.test.mjs
           rm -f verify-stage5-exact-provider.yml
 
+          # The first repair attempt exposed that the hosted runner needs Boost
+          # headers installed explicitly for boost::multiprecision.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/verify-stage5-exact-provider.yml')
+          s = p.read_text(encoding='utf-8')
+          old = 'sudo apt-get install -y g++ libgmp-dev'
+          new = 'sudo apt-get install -y g++ libgmp-dev libboost-dev'
+          if old not in s:
+              raise SystemExit('expected dependency line not found in Stage 5 verifier')
+          p.write_text(s.replace(old, new, 1), encoding='utf-8', newline='\n')
+          PY
+
       - name: Verify repaired Stage 5 hashes
         shell: python
         run: |
@@ -113,7 +126,7 @@ jobs:
       - name: Install native dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ libgmp-dev
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
 
       - name: Build exact engines
         shell: bash
