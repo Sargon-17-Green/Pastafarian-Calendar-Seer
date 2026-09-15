@@ -99,23 +99,23 @@ jobs:
           set -euo pipefail
           npm publish --dry-run --json >/tmp/seer-publish.json 2>/tmp/seer-publish.err
           cat /tmp/seer-publish.err
-          grep '^npm warn publish "bin\[' /tmp/seer-publish.err | sort > /tmp/seer-publish-corrections.txt || true
-          cat > /tmp/seer-allowed-publish-corrections.txt <<'EOF'
-          npm warn publish "bin[pastafarian-seer-http]" script name was cleaned
-          npm warn publish "bin[pastafarian-seer]" script name was cleaned
-          EOF
-          sed -i 's/^          //' /tmp/seer-allowed-publish-corrections.txt
-          sort -o /tmp/seer-allowed-publish-corrections.txt /tmp/seer-allowed-publish-corrections.txt
-          diff -u /tmp/seer-allowed-publish-corrections.txt /tmp/seer-publish-corrections.txt
-          if grep '^npm warn publish ' /tmp/seer-publish.err | grep -Ev 'npm auto-corrected some errors|errors corrected:|"bin\[(pastafarian-seer|pastafarian-seer-http)\]" script name was cleaned' >/tmp/seer-unexpected-publish-corrections.txt; then
-            cat /tmp/seer-unexpected-publish-corrections.txt >&2
-            echo 'unexpected npm publish metadata correction' >&2
-            exit 1
-          fi
-          node -e "const x=require('/tmp/seer-publish.json'); const p=x['pastafarian-calendar-seer']; if(!p||p.id!=='pastafarian-calendar-seer@0.1.0') process.exit(1)"
           python - <<'PY'
-          import json
+          import json, re
+          err=open('/tmp/seer-publish.err','r',encoding='utf-8',errors='replace').read()
+          err=re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', err)
+          corrections=[]
+          for line in err.splitlines():
+              if 'npm warn publish ' not in line: continue
+              msg=line.split('npm warn publish ',1)[1].strip()
+              if msg.startswith('npm auto-corrected some errors') or msg == 'errors corrected:': continue
+              corrections.append(msg)
+          expected={
+              '"bin[pastafarian-seer]" script name was cleaned',
+              '"bin[pastafarian-seer-http]" script name was cleaned',
+          }
+          assert set(corrections)==expected, corrections
           x=json.load(open('/tmp/seer-publish.json',encoding='utf-8'))['pastafarian-calendar-seer']
+          assert x['id']=='pastafarian-calendar-seer@0.1.0'
           modes={f['path']:f['mode'] for f in x['files']}
           assert modes['query/cli.mjs'] & 0o111
           assert modes['http/server.mjs'] & 0o111
