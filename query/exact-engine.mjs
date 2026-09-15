@@ -1,5 +1,6 @@
-import { execFile } from 'node:child_process';
-import { access } from 'node:fs/promises';
+import { execFile, spawn } from 'node:child_process';
+import { access, appendFile, readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { queryError } from './errors.mjs';
@@ -8,6 +9,165 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_MAX_BUFFER = 32 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 120_000;
 const MAX_BATCH_COUNT = 10_000;
+
+const SERVICE_REGISTRY = new Map();
+const SERVICE_HASH_CACHE = new Map();
+const DEFAULT_SERVICE_REGISTRY_MAX = 4;
+
+function envPositiveInteger(name, fallback, min = 1, max = 64) {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return fallback;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= min && n <= max ? n : fallback;
+}
+
+async function sha256File(file) {
+  const meta = await stat(file);
+  const cacheKey = `${file}\0${meta.size}\0${meta.mtimeMs}`;
+  let pending = SERVICE_HASH_CACHE.get(cacheKey);
+  if (!pending) {
+    pending = readFile(file).then((bytes) => createHash('sha256').update(bytes).digest('hex'));
+    SERVICE_HASH_CACHE.set(cacheKey, pending);
+  }
+  return pending;
+}
+
+async function engineServiceIdentity(binary, cwd) {
+  const gates = path.join(cwd, 'gates_u16.bin');
+  const [binaryHash, gatesHash] = await Promise.all([sha256File(binary), sha256File(gates)]);
+  return `${binaryHash}:${gatesHash}`;
+}
+
+class EngineServiceClient {
+  constructor(binary, cwd, onDead) {
+    this.binary = binary;
+    this.cwd = cwd;
+    this.onDead = onDead;
+    this.pending = [];
+    this.stdoutBuffer = '';
+    this.stderrTail = '';
+    this.dead = false;
+    this.child = spawn(binary, [], {
+      cwd,
+      windowsHide: true,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    this.child.stdout.setEncoding('utf8');
+    this.child.stderr.setEncoding('utf8');
+    this.child.stdout.on('data', (chunk) => this.#onStdout(chunk));
+    this.child.stderr.on('data', (chunk) => {
+      this.stderrTail = (this.stderrTail + chunk).slice(-8192);
+    });
+    this.child.on('error', (error) => this.#fail(error));
+    this.child.on('exit', (code, signal) => {
+      if (!this.dead) {
+        const suffix = this.stderrTail.trim();
+        this.#fail(new Error(`persistent Seer engine service exited (${code ?? 'null'}, ${signal ?? 'none'})${suffix ? `: ${suffix}` : ''}`));
+      }
+    });
+  }
+
+  #setReferenced(value) {
+    const method = value ? 'ref' : 'unref';
+    this.child?.[method]?.();
+    this.child?.stdin?.[method]?.();
+    this.child?.stdout?.[method]?.();
+    this.child?.stderr?.[method]?.();
+  }
+
+  #onStdout(chunk) {
+    this.stdoutBuffer += chunk;
+    for (;;) {
+      const newline = this.stdoutBuffer.indexOf('\n');
+      if (newline < 0) break;
+      const line = this.stdoutBuffer.slice(0, newline).replace(/\r$/, '');
+      this.stdoutBuffer = this.stdoutBuffer.slice(newline + 1);
+      if (!line) continue;
+      const waiter = this.pending.shift();
+      if (!waiter) {
+        this.#fail(new Error('persistent Seer engine service emitted an unsolicited response'));
+        return;
+      }
+      try {
+        const parsed = JSON.parse(line);
+        if (parsed?.ok === false) {
+          waiter.reject(new Error(typeof parsed.error === 'string' ? parsed.error : 'persistent Seer engine service rejected the request'));
+        } else {
+          waiter.resolve(parsed);
+        }
+      } catch (error) {
+        waiter.reject(error);
+      }
+      if (this.pending.length === 0) this.#setReferenced(false);
+    }
+  }
+
+  #fail(error) {
+    if (this.dead) return;
+    this.dead = true;
+    for (const waiter of this.pending.splice(0)) waiter.reject(error);
+    try { this.child.stdin.destroy(); } catch {}
+    try { this.child.kill(); } catch {}
+    this.onDead?.(this);
+  }
+
+  request(fields) {
+    if (this.dead) return Promise.reject(new Error('persistent Seer engine service is unavailable'));
+    this.#setReferenced(true);
+    return new Promise((resolve, reject) => {
+      this.pending.push({ resolve, reject });
+      try {
+        this.child.stdin.write(`${fields.join('\t')}\n`);
+      } catch (error) {
+        this.#fail(error);
+      }
+    });
+  }
+
+  close() {
+    if (this.dead) return;
+    this.dead = true;
+    for (const waiter of this.pending.splice(0)) waiter.reject(new Error('persistent Seer engine service closed'));
+    try { this.child.stdin.end(); } catch {}
+    try { this.child.kill(); } catch {}
+    this.onDead?.(this);
+  }
+}
+
+async function getEngineServiceClient(binary, cwd) {
+  const identity = await engineServiceIdentity(binary, cwd);
+  const existing = SERVICE_REGISTRY.get(identity);
+  if (existing && !existing.client.dead) {
+    SERVICE_REGISTRY.delete(identity);
+    SERVICE_REGISTRY.set(identity, existing);
+    return existing.client;
+  }
+
+  if (process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE) {
+    await appendFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, `${identity}\n`, 'utf8').catch(() => {});
+  }
+
+  let client;
+  client = new EngineServiceClient(binary, cwd, () => {
+    const current = SERVICE_REGISTRY.get(identity);
+    if (current?.client === client) SERVICE_REGISTRY.delete(identity);
+  });
+  SERVICE_REGISTRY.set(identity, { client });
+
+  const maxEntries = envPositiveInteger('SEER_SERVICE_REGISTRY_MAX', DEFAULT_SERVICE_REGISTRY_MAX);
+  while (SERVICE_REGISTRY.size > maxEntries) {
+    const oldestKey = SERVICE_REGISTRY.keys().next().value;
+    const oldest = SERVICE_REGISTRY.get(oldestKey);
+    SERVICE_REGISTRY.delete(oldestKey);
+    oldest?.client.close();
+  }
+  return client;
+}
+
+export function closeExactEngineServicesForTests() {
+  for (const { client } of SERVICE_REGISTRY.values()) client.close();
+  SERVICE_REGISTRY.clear();
+}
 
 async function firstExisting(candidates) {
   for (const candidate of candidates) {
@@ -151,7 +311,7 @@ function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) 
   };
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER } = {}) {
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
@@ -164,11 +324,40 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     return firstExisting(candidates);
   }
 
+  async function optionalServiceBinary() {
+    const candidates = [engineServiceBinary, process.env.SEER_ENGINE_SERVICE_BIN];
+    if (process.platform === 'win32') candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_engine_service.exe'));
+    candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_engine_service'));
+    return firstExisting(candidates);
+  }
+
+  const requireService = process.env.SEER_REQUIRE_ENGINE_SERVICE === '1';
+
+  async function serviceRequest(fields) {
+    const binary = await optionalServiceBinary();
+    if (!binary) {
+      if (requireService) throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service is required but unavailable.');
+      return null;
+    }
+    try {
+      const client = await getEngineServiceClient(binary, cwd);
+      return await client.request(fields);
+    } catch (error) {
+      if (requireService) {
+        throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service failed.', { cause: error });
+      }
+      return null;
+    }
+  }
+
   async function queryRange({ calculationJdn, targetStartJdn, count }) {
     const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
     const start = safeInteger(targetStartJdn, 'target.jdn', 'TARGET_OUT_OF_SUPPORTED_DOMAIN');
     const size = safeCount(count);
-    const parsed = ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer }), { calc, start, count: size });
+    const serviceParsed = await serviceRequest(['R', String(calc), String(start), String(size)]);
+    const parsed = serviceParsed
+      ? ensureBatch(serviceParsed, { calc, start, count: size })
+      : ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer }), { calc, start, count: size });
     return {
       records: parsed.records,
       provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
@@ -186,6 +375,13 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     async year({ calculationJdn, year, includeDays = false }) {
       const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
       const requestedYear = safeInteger(year, 'year', 'YEAR_OUT_OF_SUPPORTED_DOMAIN');
+      const serviceParsed = await serviceRequest(['Y', String(calc), String(requestedYear), includeDays ? '1' : '0']);
+      if (serviceParsed) {
+        return {
+          year: yearFromStructurePayload(serviceParsed, { calc, requestedYear, includeDays }),
+          provenance: { ...(typeof serviceParsed.engine === 'string' ? { engineRevision: serviceParsed.engine } : {}) },
+        };
+      }
       const structureBinary = await optionalStructureBinary();
       if (structureBinary) {
         const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer });

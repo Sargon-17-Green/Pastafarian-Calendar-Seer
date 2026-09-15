@@ -53,6 +53,7 @@ static std::vector<BatchRecord> ys_compute_days(
     return out;
 }
 
+#ifndef SEER_YEAR_STRUCTURE_NO_MAIN
 int main(int argc, char** argv) {
     try {
         if (argc < 4) {
@@ -116,3 +117,4 @@ int main(int argc, char** argv) {
         return 1;
     }
 }
+#endif
