@@ -63,8 +63,17 @@ jobs:
                   raise SystemExit(f"SHA256 mismatch for {p}: {got} != {item['sha256']}")
           print(f"verified {len(manifest['files'])} installed payload files")
 
-      - name: Set up Python contract-test dependencies
-        run: python -m pip install --disable-pip-version-check jsonschema PyYAML
+      - name: Set up isolated Python contract environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv .contract-venv
+          .contract-venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
+          .contract-venv/bin/python -m pip install --disable-pip-version-check \
+            "jsonschema>=4.18,<5" \
+            "referencing>=0.30" \
+            "jsonschema-specifications>=2023.3.6" \
+            PyYAML
 
       - name: Run Node tests
         shell: bash
@@ -80,13 +89,13 @@ jobs:
         run: node precompute/validate-generated.mjs
 
       - name: Run API contract tests
-        run: python api/tests/test_contract.py
+        run: .contract-venv/bin/python api/tests/test_contract.py
 
       - name: CLI smoke test
         shell: bash
         run: |
           set -euo pipefail
-          read -r calc target < <(python - <<'PY'
+          read -r calc target < <(.contract-venv/bin/python - <<'PY'
           import json
           from pathlib import Path
           index = json.loads(Path('generated/index.json').read_text())
@@ -109,6 +118,9 @@ jobs:
           test ! -e PAYLOAD_MANIFEST.json
           test ! -e UPDATE.ps1
           test ! -e RUN_UPDATE.cmd
+
+          # The virtual environment is test-only and must never be committed.
+          rm -rf .contract-venv
 
           # Remove this one-shot workflow from the resulting repository.
           rm -f .github/workflows/repair-stage3-upload.yml
