@@ -241,18 +241,17 @@ export async function queryBatch(request, options = {}) {
   const now = requestNow(options);
   const provider = await providerFromOptions(options);
   const sharedOptions = { ...options, now, provider };
-  const results = [];
-  for (const item of request.queries) {
+  const results = await Promise.all(request.queries.map(async (item) => {
     const { id, ...itemRequest } = item;
     const merged = { ...defaults, ...itemRequest };
     try {
       const result = await queryDate(merged, sharedOptions);
-      results.push({ ...(id !== undefined ? { id } : {}), ok: true, result });
+      return { ...(id !== undefined ? { id } : {}), ok: true, result };
     } catch (error) {
       if (!(error instanceof SeerQueryError)) throw error;
-      results.push({ ...(id !== undefined ? { id } : {}), ok: false, error: publicError(error) });
+      return { ...(id !== undefined ? { id } : {}), ok: false, error: publicError(error) };
     }
-  }
+  }));
   return { results };
 }
 
@@ -303,7 +302,7 @@ export async function queryRange(request, options = {}) {
   const maxItems = BigInt(options.maxRangeItems ?? DEFAULT_MAX_RANGE_ITEMS);
   if (count > maxItems) throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: hasCount ? 'count' : 'endInclusive' });
 
-  const results = [];
+  const pending = [];
   const provider = await providerFromOptions(options);
   const sharedOptions = { ...options, now, provider };
   for (let i = 0n; i < count; i += 1n) {
@@ -318,9 +317,9 @@ export async function queryRange(request, options = {}) {
         target: { jdn: exactIntegerString(targetJdn) },
       };
     }
-    results.push(await queryDate(dateRequest, sharedOptions));
+    pending.push(queryDate(dateRequest, sharedOptions));
   }
-  return { results };
+  return { results: await Promise.all(pending) };
 }
 
 export async function queryCalculationDay(request = {}, options = {}) {

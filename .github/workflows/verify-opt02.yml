@@ -1,0 +1,48 @@
+name: Verify OPT-02 bulk exact engine
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'query/index.mjs'
+      - 'query/exact-engine.mjs'
+      - 'query/provider-precomputed.mjs'
+      - 'query/test/provider-bulk-coalescing.test.mjs'
+      - 'query/test/bulk-query-concurrency.test.mjs'
+      - 'docs/OPT02_BULK_EXACT.md'
+      - '.github/workflows/verify-opt02.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build exact engines
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+      - name: Syntax checks
+        run: |
+          node --check query/index.mjs
+          node --check query/exact-engine.mjs
+          node --check query/provider-precomputed.mjs
+      - name: Focused OPT-02 tests
+        run: node --test query/test/provider-bulk-coalescing.test.mjs query/test/bulk-query-concurrency.test.mjs
+      - name: Repository Node tests
+        run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+      - name: Validate generated cache
+        run: node precompute/validate-generated.mjs
+      - name: API contract environment
+        run: |
+          python -m venv .contract-venv
+          .contract-venv/bin/python -m pip install --disable-pip-version-check \
+            'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+      - name: API contract tests
+        run: .contract-venv/bin/python api/tests/test_contract.py
