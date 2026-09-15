@@ -114,8 +114,12 @@ jobs:
               '"bin[pastafarian-seer-http]" script name was cleaned',
           }
           assert set(corrections)==expected, corrections
-          x=json.load(open('/tmp/seer-publish.json',encoding='utf-8'))['pastafarian-calendar-seer']
-          assert x['id']=='pastafarian-calendar-seer@0.1.0'
+          payload=json.load(open('/tmp/seer-publish.json',encoding='utf-8'))
+          if isinstance(payload, dict) and payload.get('id') == 'pastafarian-calendar-seer@0.1.0': x=payload
+          elif isinstance(payload, dict) and 'pastafarian-calendar-seer' in payload: x=payload['pastafarian-calendar-seer']
+          elif isinstance(payload, list): x=next((item for item in payload if item.get('id') == 'pastafarian-calendar-seer@0.1.0'), None)
+          else: x=None
+          assert x and x['id']=='pastafarian-calendar-seer@0.1.0', payload
           modes={f['path']:f['mode'] for f in x['files']}
           assert modes['query/cli.mjs'] & 0o111
           assert modes['http/server.mjs'] & 0o111
