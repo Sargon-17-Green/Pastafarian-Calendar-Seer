@@ -100,12 +100,69 @@ function structureFromYearRecords(locator, batch, includeDays) {
   return year;
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER } = {}) {
+
+function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) {
+  if (!parsed || parsed.schema !== 1 || parsed.calcJdn !== calc || parsed.year !== requestedYear ||
+      !Number.isInteger(parsed.startJdn) || !Number.isInteger(parsed.endJdn) || !Number.isInteger(parsed.lengthDays) ||
+      parsed.endJdn - parsed.startJdn + 1 !== parsed.lengthDays || parsed.lengthDays < 1 || parsed.lengthDays > MAX_BATCH_COUNT ||
+      !Array.isArray(parsed.cutlets) || parsed.cutlets.length < 1 || !Array.isArray(parsed.months) || parsed.months.length < 1) {
+    throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure engine returned an unexpected payload.');
+  }
+  let nextOffset = 0;
+  for (const cutlet of parsed.cutlets) {
+    if (!cutlet || !Number.isInteger(cutlet.cutletIndex) || cutlet.cutletIndex < 0 || cutlet.cutletIndex >= 17 ||
+        !Number.isInteger(cutlet.startOffset) || !Number.isInteger(cutlet.endOffset) || !Number.isInteger(cutlet.lengthDays) ||
+        cutlet.startOffset !== nextOffset || cutlet.endOffset < cutlet.startOffset ||
+        cutlet.lengthDays !== cutlet.endOffset - cutlet.startOffset + 1) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure engine returned invalid cutlets.');
+    }
+    nextOffset = cutlet.endOffset + 1;
+  }
+  if (nextOffset !== parsed.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure cutlets do not cover the year.');
+  let monthTotal = 0;
+  const monthNames = new Set();
+  for (const month of parsed.months) {
+    if (!month || !Number.isInteger(month.monthIndex) || month.monthIndex < 0 || month.monthIndex >= 47 ||
+        !Number.isInteger(month.lengthDays) || month.lengthDays < 4 || month.lengthDays > 123 || monthNames.has(month.monthIndex)) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure engine returned invalid months.');
+    }
+    monthNames.add(month.monthIndex); monthTotal += month.lengthDays;
+  }
+  if (monthTotal !== parsed.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure months do not sum to the year length.');
+  if (includeDays) {
+    if (!Array.isArray(parsed.days) || parsed.days.length !== parsed.lengthDays) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure engine omitted requested days.');
+    }
+    ensureBatch({ schema: 1, calcJdn: calc, targetStartJdn: parsed.startJdn, targetCount: parsed.lengthDays, records: parsed.days }, {
+      calc, start: parsed.startJdn, count: parsed.lengthDays,
+    });
+    if (parsed.days.some((record) => record.year !== requestedYear || record.cutletCount !== parsed.cutlets.length || record.monthCount !== parsed.months.length)) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact Seer year-structure day sequence does not match the supplied structure.');
+    }
+  }
+  return {
+    number: requestedYear,
+    startJdn: parsed.startJdn,
+    endJdn: parsed.endJdn,
+    lengthDays: parsed.lengthDays,
+    cutlets: parsed.cutlets,
+    months: parsed.months,
+    ...(includeDays ? { days: parsed.days } : {}),
+  };
+}
+
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
   async function batchBinary() { return resolveBinary({ explicit: yearBatchBinary, envName: 'SEER_YEAR_BATCH_BIN', rootDir, basename: 'seer_year_batch' }); }
   async function locatorBinary() { return resolveBinary({ explicit: yearLocatorBinary, envName: 'SEER_YEAR_LOCATOR_BIN', rootDir, basename: 'seer_year_locator' }); }
+  async function optionalStructureBinary() {
+    const candidates = [yearStructureBinary, process.env.SEER_YEAR_STRUCTURE_BIN];
+    if (process.platform === 'win32') candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_year_structure.exe'));
+    candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_year_structure'));
+    return firstExisting(candidates);
+  }
 
   async function queryRange({ calculationJdn, targetStartJdn, count }) {
     const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
@@ -129,6 +186,15 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     async year({ calculationJdn, year, includeDays = false }) {
       const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
       const requestedYear = safeInteger(year, 'year', 'YEAR_OUT_OF_SUPPORTED_DOMAIN');
+      const structureBinary = await optionalStructureBinary();
+      if (structureBinary) {
+        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer });
+        return {
+          year: yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }),
+          provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
+        };
+      }
+      // Compatibility fallback while older build environments have not yet built seer_year_structure.
       const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer });
       if (!located || located.schema !== 1 || located.calcJdn !== calc || located.year !== requestedYear || !Number.isInteger(located.startJdn) || !Number.isInteger(located.endJdn) || !Number.isInteger(located.lengthDays)) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned an unexpected payload.');
       if (located.lengthDays < 1 || located.lengthDays > MAX_BATCH_COUNT || located.endJdn - located.startJdn + 1 !== located.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned invalid boundaries.');

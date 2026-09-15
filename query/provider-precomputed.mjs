@@ -32,6 +32,7 @@ export function createPrecomputedProvider({
   generatedDir,
   yearBatchBinary,
   yearLocatorBinary,
+  yearStructureBinary,
   dataDir,
   exactTimeoutMs,
   exactMaxBuffer,
@@ -39,7 +40,7 @@ export function createPrecomputedProvider({
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
-  const exact = createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer });
+  const exact = createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer });
 
   let queue = [];
   let flushScheduled = false;

@@ -1,0 +1,78 @@
+name: Verify OPT-03 year structure fast path
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'prototype/scripts/build_year_structure.sh'
+      - 'query/exact-engine.mjs'
+      - 'query/provider-precomputed.mjs'
+      - 'query/test/year-structure-fastpath.test.mjs'
+      - 'docs/OPT03_YEAR_STRUCTURE_FASTPATH.md'
+      - '.github/workflows/verify-opt03.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+      - name: Build native engines
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+          bash prototype/scripts/build_year_structure.sh
+      - name: Syntax and focused JS tests
+        run: |
+          node --check query/exact-engine.mjs
+          node --check query/provider-precomputed.mjs
+          node --test query/test/year-structure-fastpath.test.mjs
+      - name: Native no-weave proof and canonical day comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          CALC=$(node --input-type=module -e "import fs from 'node:fs';const x=JSON.parse(fs.readFileSync('generated/index.json','utf8'));process.stdout.write(String(x.caches[0].calcJdn))")
+          rm -f /tmp/opt03-weave-counter
+          (
+            cd prototype/data
+            SEER_TEST_WEAVE_COUNTER_FILE=/tmp/opt03-weave-counter ../build/seer_year_structure "$CALC" 5000 0 > /tmp/opt03-structure.json
+          )
+          test ! -e /tmp/opt03-weave-counter
+          (
+            cd prototype/data
+            SEER_TEST_WEAVE_COUNTER_FILE=/tmp/opt03-weave-counter ../build/seer_year_structure "$CALC" 5000 1 > /tmp/opt03-days.json
+          )
+          test "$(wc -l < /tmp/opt03-weave-counter)" -eq 1
+          START=$(node -e "const x=require('/tmp/opt03-days.json');process.stdout.write(String(x.startJdn))")
+          COUNT=$(node -e "const x=require('/tmp/opt03-days.json');process.stdout.write(String(x.lengthDays))")
+          (cd prototype/data && ../build/seer_year_batch "$CALC" "$START" "$COUNT" > /tmp/opt03-batch.json)
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const a=JSON.parse(fs.readFileSync('/tmp/opt03-structure.json','utf8'));
+          const b=JSON.parse(fs.readFileSync('/tmp/opt03-days.json','utf8'));
+          const batch=JSON.parse(fs.readFileSync('/tmp/opt03-batch.json','utf8'));
+          const strip=(x)=>({calcJdn:x.calcJdn,year:x.year,startJdn:x.startJdn,endJdn:x.endJdn,lengthDays:x.lengthDays,cutlets:x.cutlets,months:x.months});
+          assert.deepEqual(strip(a),strip(b));
+          assert.equal(b.days.length,b.lengthDays);
+          assert.deepEqual(b.days,batch.records);
+          console.log(JSON.stringify({year:b.year,lengthDays:b.lengthDays,cutlets:b.cutlets.length,months:b.months.length}));
+          NODE
+      - name: Repository Node tests
+        run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+      - name: Validate generated cache
+        run: node precompute/validate-generated.mjs
+      - name: API contract environment
+        run: |
+          python -m venv .contract-venv
+          .contract-venv/bin/python -m pip install --disable-pip-version-check \
+            'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+      - name: API contract tests
+        run: .contract-venv/bin/python api/tests/test_contract.py
