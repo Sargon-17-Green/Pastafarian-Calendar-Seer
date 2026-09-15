@@ -42,6 +42,7 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.exports['./http'], './http/index.mjs');
   assert.equal(pkg.bin['pastafarian-seer'], './query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], './http/server.mjs');
+  assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
   assert.deepEqual(pkg.dependencies ?? {}, {});
   assert.deepEqual(pkg.optionalDependencies ?? {}, {});
 });
@@ -51,6 +52,8 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.ok(files.includes('generated'));
   assert.ok(files.includes('prototype/data'));
   assert.ok(files.includes('prototype/src'));
+  assert.ok(files.includes('scripts/build-runtime.mjs'));
+  assert.ok(files.includes('scripts/build-runtime.ps1'));
   assert.ok(files.includes('scripts/build-runtime.sh'));
   for (const entry of files) {
     assert.equal(entry.includes('.github'), false);

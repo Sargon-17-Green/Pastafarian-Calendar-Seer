@@ -35,6 +35,8 @@
     "prototype/scripts/build_year_locator.sh",
     "prototype/scripts/build_year_structure.sh",
     "prototype/scripts/build_engine_service.sh",
+    "scripts/build-runtime.mjs",
+    "scripts/build-runtime.ps1",
     "scripts/build-runtime.sh",
     "docs/DEPLOYMENT_STAGE6.md",
     "README_STAGE6.md",
@@ -43,12 +45,17 @@
     "NOTICE.md"
   ],
   "scripts": {
-    "build:native": "bash ./scripts/build-runtime.sh",
+    "build:native": "node ./scripts/build-runtime.mjs",
     "start": "node ./http/server.mjs",
     "cli": "node ./query/cli.mjs",
     "test": "node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
     "validate:cache": "node ./precompute/validate-generated.mjs"
   },
-  "keywords": ["pastafarian", "calendar", "http", "api"],
+  "keywords": [
+    "pastafarian",
+    "calendar",
+    "http",
+    "api"
+  ],
   "license": "MIT"
 }

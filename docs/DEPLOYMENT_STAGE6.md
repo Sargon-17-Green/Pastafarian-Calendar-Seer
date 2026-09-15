@@ -1,4 +1,4 @@
-# API Stage 6 — deployment and application integration
+# API Stage 6 ג€” deployment and application integration
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
@@ -52,13 +52,21 @@ The rolling generated cache is bundled, but public semantics are not limited to 
 window. Exact cache misses and complete years use the native engines introduced by Stage 5 and the
 persistent service adopted in OPT-06.
 
-On a supported Linux/WSL deployment install a C++20 compiler, GMP/GMPXX and Boost headers, then run:
+Run the same command on every supported platform:
 
-```bash
+```text
 npm run build:native
 ```
 
-This builds, in the package's `prototype/build/` directory:
+On Linux/WSL the dispatcher uses Bash and a GCC-compatible C++20 toolchain. On native Windows it uses
+PowerShell and `g++`; the supported setup is MSYS2 UCRT64 with `mingw-w64-ucrt-x86_64-gcc`,
+`mingw-w64-ucrt-x86_64-gmp`, and `mingw-w64-ucrt-x86_64-boost`. The UCRT64 `bin` directory must be on
+`PATH` while the generated executables run, so their GMP/GCC/OpenMP runtime DLLs are resolvable.
+
+Both build paths require AVX2 and fail explicitly when it is unavailable. The Windows dispatcher honors
+`CXX` for a specific compiler and `SEER_POWERSHELL` for a non-default PowerShell executable.
+
+This builds, in the package's `prototype/build/` directory (`.exe` suffix on Windows):
 
 - `seer_year_batch`;
 - `seer_year_locator`;

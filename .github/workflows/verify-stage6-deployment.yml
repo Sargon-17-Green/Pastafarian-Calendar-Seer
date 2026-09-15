@@ -14,6 +14,8 @@ on:
       - 'prototype/data/**'
       - 'prototype/scripts/build_year_*.sh'
       - 'prototype/scripts/build_engine_service.sh'
+      - 'scripts/build-runtime.mjs'
+      - 'scripts/build-runtime.ps1'
       - 'scripts/build-runtime.sh'
       - 'deployment/test/**'
       - 'docs/DEPLOYMENT_STAGE6.md'
@@ -52,6 +54,8 @@ jobs:
           grep -qx 'package/http/index.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/generated/index.json' /tmp/seer-package-files.txt
           grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-package-files.txt
+          grep -qx 'package/scripts/build-runtime.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/scripts/build-runtime.ps1' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.sh' /tmp/seer-package-files.txt
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/' /tmp/seer-package-files.txt; then
             echo 'repository-only material leaked into npm package' >&2
@@ -128,3 +132,86 @@ jobs:
           python -m venv .contract-venv
           .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
           .contract-venv/bin/python api/tests/test_contract.py
+  verify-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export MSYS2 UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Pack and install on native Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packDir = Join-Path $env:RUNNER_TEMP 'seer-stage6-win-pack'
+          $consumer = Join-Path $env:RUNNER_TEMP 'seer-stage6-win-consumer'
+          New-Item -ItemType Directory -Force $packDir, $consumer | Out-Null
+          $name = (npm pack --pack-destination $packDir --silent).Trim()
+          $tgz = Join-Path $packDir $name
+          Set-Location $consumer
+          npm init -y | Out-Null
+          npm install --ignore-scripts $tgz
+          $packageRoot = Join-Path $consumer 'node_modules\pastafarian-calendar-seer'
+          if (-not (Test-Path (Join-Path $packageRoot 'package.json'))) { throw 'installed package missing' }
+          Set-Location $packageRoot
+          npm run build:native
+          foreach ($bin in @('seer_year_batch.exe','seer_year_locator.exe','seer_year_structure.exe','seer_engine_service.exe')) {
+            if (-not (Test-Path (Join-Path $packageRoot "prototype\build\$bin"))) { throw "missing $bin" }
+          }
+          "SEER_WIN_CONSUMER=$consumer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Native Windows query and HTTP persistent-service smoke
+        shell: pwsh
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-Location $env:SEER_WIN_CONSUMER
+          $env:SEER_TEST_SERVICE_SPAWN_COUNTER_FILE = Join-Path $env:RUNNER_TEMP 'seer-stage6-win-spawns.txt'
+          Remove-Item -Force -ErrorAction SilentlyContinue $env:SEER_TEST_SERVICE_SPAWN_COUNTER_FILE
+          @'
+          import { readFile } from 'node:fs/promises';
+          import path from 'node:path';
+          import { fileURLToPath } from 'node:url';
+          const packageJson = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/package.json'));
+          const packageRoot = path.dirname(packageJson);
+          const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
+          const cache = index.caches[0];
+          const calculationJdn = cache.calcJdn;
+          const targetJdn = cache.targetStartJdn + cache.targetCount + 25;
+          const queryApi = await import('pastafarian-calendar-seer');
+          const httpApi = await import('pastafarian-calendar-seer/http');
+          const request = (target) => ({
+            calculation: { jdn: calculationJdn },
+            target: { jdn: target },
+            presentation: 'canonical',
+          });
+          const first = await queryApi.queryDate(request(targetJdn));
+          const second = await queryApi.queryDate(request(targetJdn + 1));
+          if (first.targetDay.jdn !== String(targetJdn)) throw new Error('Windows packed query mismatch');
+          if (second.targetDay.jdn !== String(targetJdn + 1)) throw new Error('Windows repeated query mismatch');
+          const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
+          try {
+            const port = server.address().port;
+            const response = await fetch(`http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn + 2}&presentation=canonical`);
+            if (response.status !== 200) throw new Error(`Windows packed HTTP status ${response.status}: ${await response.text()}`);
+            const body = await response.json();
+            if (body.targetDay.jdn !== String(targetJdn + 2)) throw new Error('Windows packed HTTP mismatch');
+          } finally {
+            await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+          }
+          const spawnLines = (await readFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, 'utf8'))
+            .split(/\r?\n/).filter(Boolean);
+          if (spawnLines.length !== 1) throw new Error(`expected one Windows persistent service spawn, got ${spawnLines.length}`);
+          console.log({ calculationJdn, targetJdn, persistentServiceSpawns: spawnLines.length });
+          '@ | node --input-type=module -
+          if ($LASTEXITCODE -ne 0) { throw "Windows packed runtime smoke failed with exit code $LASTEXITCODE" }
