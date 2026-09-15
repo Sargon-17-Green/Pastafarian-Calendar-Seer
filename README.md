@@ -1,32 +1,97 @@
-# Pastafarian Calendar Seer — Stage 3 query-layer delta
+# Pastafarian Calendar — Seer
 
-This is a cumulative local delta for `Sargon-17-Green/Pastafarian-Calendar-Seer`.
+> **The Monster performs. The Seer sees.**
 
-It includes the corrected v1 contract and Stage 2 single-date query layer, then adds Stage 3 batch/range/calculation-day/year query-layer operations. It does not add an HTTP server, commit, or push anything.
+The **Seer** is an experimental high-performance engine for the Pastafarian Calendar.
+It is deliberately **not** a spaghetti implementation and it does **not** reenact the
+Flying Spaghetti Monster's prescribed liturgy step by step.
 
-## Apply
+This is not an approved shortcut. **The Monster does not authorize the Seer.** Asked for
+a Pastafarian date, the Seer somehow already knows the answer it was not supposed to
+know without performing the liturgy.
 
-1. Extract this ZIP next to your local `Pastafarian-Calendar-Seer` repository, or inside its parent directory.
-2. Double-click `RUN_UPDATE.cmd` on Windows.
-3. The updater locates the repository, verifies every existing destination against known base hashes, copies the cumulative delta, runs tests, validates the generated cache, and writes timestamped log/result files under `logs/`.
+Operationally, the implementation in this repository uses precomputation, algebraic
+shortcuts, specialized integer representations, SIMD, fixed algorithm data, and other
+optimizations. Those methods are intentionally outside the Monster's liturgy; the only
+computational requirement is that the final result exactly match the result defined by
+the Pastafarian Calendar specification.
 
-You may instead pass the repository path:
+## Correctness contract
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\UPDATE.ps1 -RepoRoot C:\path\to\Pastafarian-Calendar-Seer
+The Seer is **not normative**.
+
+- The current Scroll defines what is true.
+- The historical spaghetti implementation (the **Monster**) performs the prescribed work.
+- The **Seer** is an accelerated implementation that predicts the same answer without reproducing the same computational history.
+- Test-only exact/reference oracles are verification tools, not authorities over the Scroll.
+- Agreement between multiple Seer implementations is not enough when they may share a common bug.
+
+If the Seer disagrees with the normative calendar, **the Seer is wrong**.
+
+### Canonical saved-sum correction — 2026-09-10
+
+The 12 final Sauce post-stirs use `R = SAVE(sum(oldBowls) + 149*r)` both to choose the bowl permutation
+and as the additive sum term inside `u`. All six new bowls in a stir read one common old-bowl snapshot.
+The former v3/v12 paths incorrectly used the raw old-bowl sum inside `u`; that common-mode error and
+all derived semantic witnesses are superseded. See `docs/CONFORMANCE.md`, `docs/DATA_PROVENANCE.md`,
+and `HISTORICAL_VALIDATION_NOTICE.md`.
+
+The corrected positive 40,000-gap corpus has SHA-256
+`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`.
+
+## Current state
+
+The repository contains the **2026-09-03 cold-conversion performance prototype** under `prototype/`,
+with the saved-sum semantic correction layered onto that latest prototype state. This is a benchmark
+baseline, not yet a stable library or public API.
+
+The current prototype includes C++20, specialized arithmetic for `M = 2^127 - 1`, a generated corpus
+of 40,000 positive canonical gate gaps, a fixed 720-permutation bowl-order table, exact 320-bit
+month-length dynamic programming, RNS/CRT weave counting and prefix unranking, AVX-512IFMA and portable
+backends, and no memoization or predictive precomputation across separate queries.
+
+Known prototype limitations include the positive-only bundled gate corpus, numeric cutlet/month indices
+rather than localized names, hardware requirements for the original IFMA backend, difficult weave-edge
+ranks, and absence of a stable ABI/API.
+
+## Build and conformance
+
+On Linux/WSL, run the semantic gate before treating benchmark output as meaningful:
+
+```bash
+cd prototype
+bash ./scripts/check_saved_sum_conformance.sh
+bash ./scripts/build_portable.sh
+bash ./scripts/run_portable_selftest.sh 1
+bash ./scripts/check_portable_vectors.sh
+bash ./scripts/run_benchmark_portable.sh 3
 ```
 
-## Safety
+The portable and IFMA backends require a GCC-compatible C++20 environment with OpenMP, GMP/GMPXX, and
+Boost headers. The IFMA baseline additionally requires AVX-512F/DQ/BW/VL + AVX-512IFMA.
 
-- No Git commit/push is performed.
-- The updater accepts a clean pre-Stage-2 repository or the known Stage-2 payload state.
-- Unknown local edits are not overwritten.
-- If verification fails, files touched by this run are rolled back from timestamped backups.
-- Re-running an already-applied Stage 3 delta is supported.
+See `prototype/STATUS.md`, `prototype/README.md`, `docs/PORTABLE_BACKEND.md`, and `ROADMAP.md`.
 
-## Stage 3 behavior
+## Repository map
 
-- `queryBatch()` captures one request instant and returns per-item semantic failures.
-- `queryRange()` supports fixed `c` and `same-as-target`, exact positive/negative steps, and exact inclusive endpoints.
-- `queryCalculationDay()` exposes only effective longitude; latitude/elevation remain ignored no-ops.
-- `queryYear()` is fully defined at the provider boundary. The rolling 366-day provider refuses complete-year queries rather than fabricating a partial year.
+```text
+docs/                 identity, architecture, conformance, and data provenance
+prototype/            current experimental cold-conversion engine
+  src/                C++20 benchmark engine
+  data/               generated/fixed algorithm data and canonical vectors
+  scripts/            build, conformance, and benchmark runners
+  tools/              CPU probe and independent conformance/oracle tools
+  results/            generated output (ignored by Git)
+ROADMAP.md             path from benchmark prototype to usable Seer engine
+LICENSE                MIT license granted by Sargon-17-Green
+NOTICE.md              explicit liturgical non-authorization by the Monster
+```
+
+## Related project
+
+The Seer exists beside, not inside, the Pastafarian Calendar's spaghetti history:
+`Sargon17-Green/Pastafarian-Calendar` contains the specification/historical implementations and
+independent language branches. The separation is intentional. Optimizing the Seer must not clean up,
+rewrite, or silently bypass the liturgical history preserved by the Monster.
+
+R’amen.
