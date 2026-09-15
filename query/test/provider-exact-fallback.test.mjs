@@ -24,10 +24,10 @@ test('cache miss falls through to exact batch and exact year reconstruction', as
 const [calc, start, count] = process.argv.slice(2).map(Number);
 const records=[];
 for(let i=0;i<count;i++) records.push({targetJdn:start+i,year:5000,cutletIndex:i<2?2:5,dayInCutlet:i<2?i+1:i-1,monthIndex:i%2?4:7,dayInMonth:i<2?1:2,cutletCount:2,monthCount:2});
-process.stdout.write(JSON.stringify({schema:1,engine:'fake-exact-batch',calcJdn:calc,targetStartJdn:start,targetCount:count,records})+'\\n');`);
+process.stdout.write(JSON.stringify({schema:1,engine:'fake-exact-batch',calcJdn:calc,targetStartJdn:start,targetCount:count,records}));`);
   const locator = await fakeExecutable(root, 'fake-locator', String.raw`
 const [calc, number] = process.argv.slice(2).map(Number);
-process.stdout.write(JSON.stringify({schema:1,engine:'fake-locator',calcJdn:calc,year:number,startJdn:100,endJdn:103,lengthDays:4})+'\\n');`);
+process.stdout.write(JSON.stringify({schema:1,engine:'fake-locator',calcJdn:calc,year:number,startJdn:100,endJdn:103,lengthDays:4}));`);
 
   const provider = createPrecomputedProvider({ generatedDir, yearBatchBinary: batch, yearLocatorBinary: locator, dataDir });
   const result = await provider.query({ calculationJdn: 2461300n, targetJdn: 2462000n });

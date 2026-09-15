@@ -58,10 +58,24 @@ test('batch and fixed range share the same real precomputed provider semantics',
   assert.deepEqual(range.results.map((x) => x.targetDay.jdn), [String(first), String(first + 1), String(first + 2)]);
 });
 
-test('rolling provider refuses to pretend it contains a complete year', async () => {
+test('rolling provider falls through to the exact engine for a complete year', async () => {
   const { descriptor, cache } = await fixture();
-  await assert.rejects(
-    () => queryYear(String(cache.records[0].year), { calculation: { jdn: String(descriptor.calcJdn) } }, { generatedDir }),
-    (error) => error instanceof SeerQueryError && error.code === 'SEER_UNAVAILABLE',
+  const requestedYear = String(cache.records[0].year);
+  const result = await queryYear(
+    requestedYear,
+    {
+      calculation: { jdn: String(descriptor.calcJdn) },
+      presentation: 'canonical',
+    },
+    { generatedDir },
   );
+  assert.equal(result.year.number, requestedYear);
+  assert.ok(Number.isInteger(result.year.lengthDays));
+  assert.ok(result.year.lengthDays >= 1);
+  assert.equal(
+    BigInt(result.year.endJdn) - BigInt(result.year.startJdn) + 1n,
+    BigInt(result.year.lengthDays),
+  );
+  assert.ok(Array.isArray(result.year.cutlets) && result.year.cutlets.length >= 1);
+  assert.ok(Array.isArray(result.year.months) && result.year.months.length >= 1);
 });
