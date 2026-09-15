@@ -1,4 +1,4 @@
-import { loadCacheRecordForCalculationDay } from '../precompute/cache-lookup.mjs';
+import { createCacheRequestContext } from '../precompute/cache-lookup.mjs';
 import { createExactEngine } from './exact-engine.mjs';
 import { queryError } from './errors.mjs';
 
@@ -22,8 +22,10 @@ export function createPrecomputedProvider({
   dataDir,
   exactTimeoutMs,
   exactMaxBuffer,
+  cacheContext,
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
+  const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
   const exact = createExactEngine({
     generatedDir,
     yearBatchBinary,
@@ -34,7 +36,7 @@ export function createPrecomputedProvider({
   });
 
   return Object.freeze({
-    // Stable compatibility id; behavior is now cache-first plus canonical exact fallback.
+    // Stable compatibility id; behavior is cache-first plus canonical exact fallback.
     id: 'precomputed',
 
     async query({ calculationJdn, targetJdn }) {
@@ -43,7 +45,7 @@ export function createPrecomputedProvider({
 
       if (calcJdn !== null && target !== null) {
         try {
-          const loaded = await loadCacheRecordForCalculationDay({ generatedDir, calcJdn, targetJdn: target });
+          const loaded = await cache.loadRecord(calcJdn, target);
           return {
             record: loaded.record,
             structure: {

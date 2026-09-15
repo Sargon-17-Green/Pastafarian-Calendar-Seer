@@ -1,0 +1,60 @@
+name: Verify OPT-01 request cache
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'precompute/cache-lookup.mjs'
+      - 'precompute/test/cache-request-context.test.mjs'
+      - 'query/index.mjs'
+      - 'query/provider-precomputed.mjs'
+      - 'bench/opt01-cache-request-context.mjs'
+      - 'docs/OPT01_CACHE_REQUEST_CONTEXT.md'
+      - '.github/workflows/verify-opt01.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libgmp-dev libboost-dev
+
+      - name: Build exact engines
+        run: |
+          bash prototype/scripts/build_year_batch.sh
+          bash prototype/scripts/build_year_locator.sh
+
+      - name: Syntax checks
+        run: |
+          node --check precompute/cache-lookup.mjs
+          node --check query/provider-precomputed.mjs
+          node --check query/index.mjs
+          node --check bench/opt01-cache-request-context.mjs
+
+      - name: OPT-01 focused tests
+        run: node --test precompute/test/cache-request-context.test.mjs
+
+      - name: Repository Node tests
+        run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+
+      - name: Validate generated cache
+        run: node precompute/validate-generated.mjs
+
+      - name: API contract environment
+        run: |
+          python -m venv .contract-venv
+          .contract-venv/bin/python -m pip install --disable-pip-version-check \
+            'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+
+      - name: API contract tests
+        run: .contract-venv/bin/python api/tests/test_contract.py
+
+      - name: OPT-01 benchmark
+        run: node bench/opt01-cache-request-context.mjs

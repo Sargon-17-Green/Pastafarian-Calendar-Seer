@@ -239,7 +239,8 @@ export async function queryBatch(request, options = {}) {
   }
 
   const now = requestNow(options);
-  const sharedOptions = { ...options, now };
+  const provider = await providerFromOptions(options);
+  const sharedOptions = { ...options, now, provider };
   const results = [];
   for (const item of request.queries) {
     const { id, ...itemRequest } = item;
@@ -303,7 +304,8 @@ export async function queryRange(request, options = {}) {
   if (count > maxItems) throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: hasCount ? 'count' : 'endInclusive' });
 
   const results = [];
-  const sharedOptions = { ...options, now };
+  const provider = await providerFromOptions(options);
+  const sharedOptions = { ...options, now, provider };
   for (let i = 0n; i < count; i += 1n) {
     const targetJdn = start.jdn + i * step;
     let dateRequest;
