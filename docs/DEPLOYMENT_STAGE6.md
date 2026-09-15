@@ -1,4 +1,4 @@
-# API Stage 6 ג€” deployment and application integration
+# API Stage 6 ׳’ג‚¬ג€ deployment and application integration
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
@@ -95,7 +95,8 @@ default, so `gates_u16.bin` is resolved with the same semantics verified by OPT-
 ## Packaging boundary
 
 `npm pack` intentionally includes the query/HTTP runtime, API contract, generated rolling cache,
-precompute loader, native sources/data, and the exact-runtime build scripts. It excludes GitHub
+precompute loader, the exact eight-file native runtime source closure, `gates_u16.bin`, and the
+exact-runtime build scripts. It excludes research/benchmark source variants, verification-only data, GitHub
 workflows, benchmark result directories, repository repair artifacts, and every `HANDOFF_*` file.
 
 The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches

@@ -15,6 +15,12 @@ const queryNames = [
   'queryCalculationDay', 'queryYear', 'gregorianToJdn', 'jdnToGregorian',
 ];
 
+const runtimeSources = [
+  'pastafarian_year_batch.cpp', 'rns_micro8_avx2_32x8.cpp',
+  'rns_primes32.hpp', 'sauce_fast127_v12.hpp', 'seer_engine_service.cpp',
+  'seer_year_locator.cpp', 'seer_year_structure.cpp', 'year_fast_bench_v12.cpp',
+].map((name) => `prototype/src/${name}`);
+
 test('root package entry point is the verified query API', () => {
   for (const name of queryNames) {
     assert.equal(typeof publicApi[name], 'function', `${name} must be exported`);
@@ -50,8 +56,13 @@ test('package file allowlist excludes repository-only material', async () => {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   const files = pkg.files.map(String);
   assert.ok(files.includes('generated'));
-  assert.ok(files.includes('prototype/data'));
-  assert.ok(files.includes('prototype/src'));
+  assert.ok(files.includes('prototype/data/gates_u16.bin'));
+  assert.equal(files.includes('prototype/data'), false);
+  assert.equal(files.includes('prototype/src'), false);
+  for (const source of runtimeSources) assert.ok(files.includes(source), source);
+  assert.equal(files.includes('prototype/src/opt07_transition_research.cpp'), false);
+  assert.equal(files.includes('prototype/src/month_count_table_bench.cpp'), false);
+  assert.equal(files.includes('prototype/data/canonical_saved_sum_vectors.tsv'), false);
   assert.ok(files.includes('scripts/build-runtime.mjs'));
   assert.ok(files.includes('scripts/build-runtime.ps1'));
   assert.ok(files.includes('scripts/build-runtime.sh'));

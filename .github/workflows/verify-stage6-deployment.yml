@@ -54,6 +54,21 @@ jobs:
           grep -qx 'package/http/index.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/generated/index.json' /tmp/seer-package-files.txt
           grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-package-files.txt
+          test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 1
+          cat > /tmp/seer-expected-runtime-sources.txt <<'EOF'
+          package/prototype/src/pastafarian_year_batch.cpp
+          package/prototype/src/rns_micro8_avx2_32x8.cpp
+          package/prototype/src/rns_primes32.hpp
+          package/prototype/src/sauce_fast127_v12.hpp
+          package/prototype/src/seer_engine_service.cpp
+          package/prototype/src/seer_year_locator.cpp
+          package/prototype/src/seer_year_structure.cpp
+          package/prototype/src/year_fast_bench_v12.cpp
+          EOF
+          sed -i 's/^          //' /tmp/seer-expected-runtime-sources.txt
+          grep '^package/prototype/src/' /tmp/seer-package-files.txt | sort > /tmp/seer-actual-runtime-sources.txt
+          sort -o /tmp/seer-expected-runtime-sources.txt /tmp/seer-expected-runtime-sources.txt
+          diff -u /tmp/seer-expected-runtime-sources.txt /tmp/seer-actual-runtime-sources.txt
           grep -qx 'package/scripts/build-runtime.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.ps1' /tmp/seer-package-files.txt
           grep -qx 'package/scripts/build-runtime.sh' /tmp/seer-package-files.txt
