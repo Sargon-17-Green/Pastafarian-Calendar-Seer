@@ -193,7 +193,8 @@ class SeerEngineService {
         const int64_t start = std::stoll(f[2]);
         const long long count = std::stoll(f[3]);
         if (count < 1 || count > 10000) throw std::runtime_error("count must be in 1..10000");
-        if (count - 1 > std::numeric_limits<int64_t>::max() - start) throw std::overflow_error("target range overflow");
+        const int64_t delta = count - 1;
+        if (start > std::numeric_limits<int64_t>::max() - delta) throw std::overflow_error("target range overflow");
         const int64_t end = start + static_cast<int64_t>(count) - 1;
 
         ServiceYearChain& chain = chainFor(calc);
