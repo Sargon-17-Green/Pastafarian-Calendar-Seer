@@ -1,0 +1,108 @@
+name: Verify negative-gate corpus Phase A
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/tools/generate_gates_saved_sum.cpp'
+      - 'prototype/tools/gate_validate_saved_sum.cpp'
+      - 'docs/FULL_DOMAIN_PHASE_A.md'
+      - '.github/workflows/verify-negative-gates-phase-a.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libboost-dev
+      - name: Build exact gate generator
+        run: |
+          mkdir -p prototype/build prototype/results
+          g++ -O2 -std=c++20 -fopenmp -Iprototype/tools \
+            prototype/tools/generate_gates_saved_sum.cpp \
+            -o prototype/build/generate_gates_saved_sum
+      - name: Positive corpus remains byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          prototype/build/generate_gates_saved_sum prototype/results/gates_positive.bin \
+            | tee prototype/results/gates-positive-generation.log
+          cmp prototype/results/gates_positive.bin prototype/data/gates_u16.bin
+          test "$(sha256sum prototype/results/gates_positive.bin | awk '{print $1}')" = \
+            '2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb'
+          test "$(stat -c%s prototype/results/gates_positive.bin)" = '80000'
+      - name: Generate exact negative corpus
+        shell: bash
+        run: |
+          set -euo pipefail
+          prototype/build/generate_gates_saved_sum prototype/results/gates_negative_u16.bin --negative \
+            | tee prototype/results/gates-negative-generation.log
+          test "$(stat -c%s prototype/results/gates_negative_u16.bin)" = '80000'
+          sha256sum prototype/results/gates_negative_u16.bin \
+            | tee prototype/results/gates-negative.sha256
+      - name: Historical positive mutant calibration remains reproducible
+        shell: bash
+        run: |
+          set -euo pipefail
+          prototype/build/generate_gates_saved_sum prototype/results/gates_positive_raw_mutant.bin --raw-mutant
+          test "$(sha256sum prototype/results/gates_positive_raw_mutant.bin | awk '{print $1}')" = \
+            '57d20ac6653e9cbd1d33a5e591bb6b65a39bc0c6ec90b3af1b978d3f7ec6fdbc'
+      - name: Build independent fast validators
+        run: |
+          g++ -O2 -std=c++20 -Iprototype/src -Iprototype/tools \
+            prototype/tools/gate_validate_saved_sum.cpp \
+            -o prototype/build/gate_validate_v12
+          g++ -O2 -std=c++20 -Iprototype/src -Iprototype/tools \
+            -DSAUCE_HEADER='"sauce_fast127_v3.hpp"' \
+            prototype/tools/gate_validate_saved_sum.cpp \
+            -o prototype/build/gate_validate_v3
+      - name: Cross-check positive and negative corpora with v3 and v12
+        shell: bash
+        run: |
+          set -euo pipefail
+          for ver in v3 v12; do
+            prototype/build/gate_validate_${ver} prototype/data/gates_u16.bin \
+              | tee prototype/results/gates-positive-${ver}.log
+            prototype/build/gate_validate_${ver} prototype/results/gates_negative_u16.bin --negative \
+              | tee prototype/results/gates-negative-${ver}.log
+          done
+      - name: Write canonical negative-corpus manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib, struct
+          p = pathlib.Path('prototype/results/gates_negative_u16.bin')
+          data = p.read_bytes()
+          vals = list(struct.unpack('<40000H', data))
+          manifest = {
+              'schema': 1,
+              'foundationJdn': -13334246,
+              'gateIndexRange': [-40000, 0],
+              'gapDefinition': 'negativeGap(n)=42..963 selected from Sauce(Foundation, Foundation-n), bowl 1 seal 1',
+              'count': len(vals),
+              'bytes': len(data),
+              'min': min(vals),
+              'max': max(vals),
+              'sum': sum(vals),
+              'sha256': hashlib.sha256(data).hexdigest(),
+              'ordering': 'record n-1 stores negativeGap(n), n=1..40000',
+          }
+          pathlib.Path('prototype/results/gates_negative_u16.manifest.json').write_text(
+              json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(manifest, sort_keys=True))
+          PY
+      - name: Upload verified Phase A corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: negative-gate-corpus-phase-a
+          path: |
+            prototype/results/gates_negative_u16.bin
+            prototype/results/gates_negative_u16.manifest.json
+            prototype/results/gates-negative.sha256
+            prototype/results/gates-negative-generation.log
+            prototype/results/gates-negative-v3.log
+            prototype/results/gates-negative-v12.log
+          if-no-files-found: error
