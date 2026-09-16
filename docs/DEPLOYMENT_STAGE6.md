@@ -2,8 +2,7 @@
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
-Its npm metadata declares Node `>=20` on x64 Linux or x64 Windows. AVX2 cannot be expressed in npm
-metadata, so `npm run build:native` performs the final CPU capability check.
+Its npm metadata declares Node `>=20` on x64 Linux or x64 Windows. `npm run build:native` detects AVX2 at build time and otherwise selects the exact portable scalar RNS backend.
 
 ## Node application API
 
@@ -65,8 +64,7 @@ PowerShell and `g++`; the supported setup is MSYS2 UCRT64 with `mingw-w64-ucrt-x
 `mingw-w64-ucrt-x86_64-gmp`, and `mingw-w64-ucrt-x86_64-boost`. The UCRT64 `bin` directory must be on
 `PATH` while the generated executables run, so their GMP/GCC/OpenMP runtime DLLs are resolvable.
 
-Both build paths require AVX2 and fail explicitly when it is unavailable. The Windows dispatcher honors
-`CXX` for a specific compiler and `SEER_POWERSHELL` for a non-default PowerShell executable.
+Both build paths select AVX2 automatically when the CPU exposes it and otherwise compile the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend; forcing AVX2 on an unsupported CPU fails explicitly. The Windows dispatcher honors `CXX` for a specific compiler and `SEER_POWERSHELL` for a non-default PowerShell executable.
 
 This builds, in the package's `prototype/build/` directory (`.exe` suffix on Windows):
 
@@ -107,7 +105,7 @@ default, so both `gates_u16.bin` and `gates_negative_u16.bin` are resolved from 
 
 `npm pack` intentionally includes the query/HTTP runtime, the two published OpenAPI documents, the
 three rolling cache files plus their index, the cache loader/validator and Venus boundary model, the exact
-eight-file native runtime source closure, both gate-corpus binaries, and the exact-runtime build scripts. It excludes
+ten-file native runtime source closure, both gate-corpus binaries, and the exact-runtime build scripts. It excludes
 API schemas/examples/tests, cache-generation helpers, research/benchmark source variants, GitHub workflows,
 repository repair artifacts, benchmark result directories, and every `HANDOFF_*` file.
 

@@ -64,8 +64,7 @@ query API or `pastafarian-calendar-seer/http` for the HTTP handler/server. The p
 `pastafarian-seer` and `pastafarian-seer-http` commands. It has no npm runtime dependencies.
 
 Exact out-of-cache operation requires the native runtime. On a supported Linux/WSL deployment run
-`npm run build:native`; set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard
-deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
+`npm run build:native`; the build selects AVX2 when available and otherwise uses the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend, and set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
 
 ## Build and conformance
 

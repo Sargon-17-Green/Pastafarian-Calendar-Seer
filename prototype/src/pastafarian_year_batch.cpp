@@ -1,5 +1,9 @@
 #define main rns_year_batch_disabled_main
+#ifdef SEER_USE_PORTABLE_RNS
+#include "rns_micro8_portable.cpp"
+#else
 #include "rns_micro8_avx2_32x8.cpp"
+#endif
 #undef main
 #define main year_fast_year_batch_disabled_main
 #include "year_fast_bench_v12.cpp"

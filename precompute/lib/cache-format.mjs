@@ -32,6 +32,8 @@ export async function sha256Tree(dirPath) {
 export const ENGINE_SOURCE_FILES = Object.freeze([
   'pastafarian_year_batch.cpp',
   'rns_micro8_avx2_32x8.cpp',
+  'rns_micro8_portable.cpp',
+  'rns_primes.hpp',
   'rns_primes32.hpp',
   'sauce_fast127_v12.hpp',
   'seer_engine_service.cpp',
@@ -42,7 +44,7 @@ export const ENGINE_SOURCE_FILES = Object.freeze([
 
 export async function sha256EngineInputs({ sourceDir, sourceFiles = ENGINE_SOURCE_FILES, dataFiles }) {
   const hash = createHash('sha256');
-  hash.update('seer-engine-inputs-v3\0');
+  hash.update('seer-engine-inputs-v4\0');
   for (const name of [...sourceFiles].sort((a, b) => a.localeCompare(b, 'en'))) {
     hash.update(`source/${name}`); hash.update('\0');
     hash.update(await readFile(path.join(sourceDir, name))); hash.update('\0');

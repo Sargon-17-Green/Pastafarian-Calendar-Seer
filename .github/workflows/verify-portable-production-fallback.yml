@@ -1,0 +1,72 @@
+name: Verify portable production fallback
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/rns_micro8_portable.cpp'
+      - 'prototype/src/rns_primes.hpp'
+      - 'prototype/src/seer_engine_service.cpp'
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'prototype/scripts/build_year_batch.sh'
+      - 'prototype/scripts/build_year_locator.sh'
+      - 'prototype/scripts/build_year_structure.sh'
+      - 'prototype/scripts/build_engine_service.sh'
+      - 'prototype/scripts/check_bidirectional_domain.py'
+      - 'scripts/build-runtime.ps1'
+      - 'scripts/build-runtime.sh'
+      - '.github/workflows/verify-portable-production-fallback.yml'
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+      - name: Build forced-portable exact runtime
+        env:
+          SEER_RNS_BACKEND: portable
+        run: bash scripts/build-runtime.sh
+      - name: Build independent oracle
+        run: |
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \
+            -o prototype/build/canonical_vector_oracle
+      - name: Positive and negative exact parity
+        run: python prototype/scripts/check_bidirectional_domain.py
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export MSYS2 UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build forced-portable Windows exact runtime
+        shell: pwsh
+        env:
+          SEER_RNS_BACKEND: portable
+        run: |
+          node scripts/build-runtime.mjs
+          if ($LASTEXITCODE -ne 0) { throw "portable Windows runtime build failed: $LASTEXITCODE" }
+          & $env:CXX '-O2' '-std=c++20' '-Iprototype/tools' 'prototype/tools/canonical_vector_oracle.cpp' '-o' 'prototype/build/canonical_vector_oracle.exe'
+          if ($LASTEXITCODE -ne 0) { throw "Windows oracle build failed: $LASTEXITCODE" }
+      - name: Positive and negative exact parity on Windows
+        shell: pwsh
+        run: |
+          python prototype/scripts/check_bidirectional_domain.py
+          if ($LASTEXITCODE -ne 0) { throw "portable Windows parity failed: $LASTEXITCODE" }

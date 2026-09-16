@@ -12,7 +12,7 @@ Stable package entry points:
 
 The package has zero npm runtime dependencies and declares Node `>=20`, x64 Linux and x64 Windows as
 its supported npm platforms. Exact out-of-cache operation still requires the native C++ runtime and its
-existing GMP/GMPXX, Boost and AVX2 requirements. Build it after install with `npm run build:native`.
+existing GCC-compatible C++20, GMP/GMPXX and Boost requirements. Build it after install with `npm run build:native`; the build selects the AVX2 RNS backend when available and otherwise uses the exact portable scalar backend.
 The command dispatches to Bash on Linux/WSL and PowerShell on native Windows.
 
 `npm test` verifies a bundled-cache query, the packaged Venus day-boundary model, and an HTTP loopback.

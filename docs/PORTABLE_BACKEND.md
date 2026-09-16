@@ -12,6 +12,7 @@ AVX-512 vectors to ordinary `uint64_t` lanes.
 This separation matters. A machine without IFMA must still be able to ask the Seer, but
 lack of a particular instruction set does not authorize a different answer.
 
+The packaged exact runtime also uses this backend as its non-AVX2 production fallback. `npm run build:native` selects the AVX2 RNS backend when available and otherwise compiles the portable backend; `SEER_RNS_BACKEND=portable` forces the fallback for verification or deployment.
 ## Correctness checks
 
 `prototype/scripts/run_portable_selftest.sh` builds and executes the standalone RNS test

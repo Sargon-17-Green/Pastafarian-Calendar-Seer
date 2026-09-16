@@ -10,8 +10,14 @@ DATA = ROOT / 'data'
 BUILD = ROOT / 'build'
 POS = DATA / 'gates_u16.bin'
 NEG = DATA / 'gates_negative_u16.bin'
-ORACLE = BUILD / 'canonical_vector_oracle'
-BATCH = BUILD / 'seer_year_batch'
+def built(name):
+    plain = BUILD / name
+    exe = BUILD / f'{name}.exe'
+    return exe if exe.exists() else plain
+
+
+ORACLE = built('canonical_vector_oracle')
+BATCH = built('seer_year_batch')
 FOUNDATION = -13_334_246
 
 

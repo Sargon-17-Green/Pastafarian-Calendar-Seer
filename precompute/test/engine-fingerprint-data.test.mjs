@@ -3,7 +3,15 @@ import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { sha256EngineInputs } from '../lib/cache-format.mjs';
+import { ENGINE_SOURCE_FILES, sha256EngineInputs } from '../lib/cache-format.mjs';
+
+
+test('runtime fingerprint closure includes both selectable RNS backends', () => {
+  assert.ok(ENGINE_SOURCE_FILES.includes('rns_micro8_avx2_32x8.cpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('rns_micro8_portable.cpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('rns_primes32.hpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('rns_primes.hpp'));
+});
 
 test('engine fingerprint includes both gate corpora deterministically', async () => {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'seer-engine-fp-'));

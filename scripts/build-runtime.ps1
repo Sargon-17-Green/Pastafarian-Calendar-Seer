@@ -24,7 +24,14 @@ int main() { return 0; }
 '@ | Set-Content -Encoding Ascii $ProbeSource
 $ProbeExe = Join-Path $Build 'deps_probe_runtime.exe'
 Invoke-Cxx @('-std=c++20', $ProbeSource, '-lgmpxx', '-lgmp', '-o', $ProbeExe) 'Dependency probe'
-$AvxSource = Join-Path $Build 'avx2_probe_runtime.cpp'
+$Backend = if ($env:SEER_RNS_BACKEND) { $env:SEER_RNS_BACKEND.ToLowerInvariant() } else { 'auto' }
+if ($Backend -notin @('auto', 'avx2', 'portable')) {
+    throw 'SEER_RNS_BACKEND must be auto, avx2, or portable.'
+}
+
+$HasAvx2 = $false
+if ($Backend -ne 'portable') {
+    $AvxSource = Join-Path $Build 'avx2_probe_runtime.cpp'
 @'
 int main() {
 #if defined(__GNUC__) && (defined(__x86_64__) || defined(__i386__))
@@ -35,13 +42,14 @@ int main() {
 #endif
 }
 '@ | Set-Content -Encoding Ascii $AvxSource
-$AvxExe = Join-Path $Build 'avx2_probe_runtime.exe'
-Invoke-Cxx @('-O2', '-std=c++20', $AvxSource, '-o', $AvxExe) 'AVX2 probe build'
-& $AvxExe
-if ($LASTEXITCODE -ne 0) {
-    throw 'AVX2 is unavailable; the current production-equivalent exact runtime requires AVX2.'
+    $AvxExe = Join-Path $Build 'avx2_probe_runtime.exe'
+    Invoke-Cxx @('-O2', '-std=c++20', $AvxSource, '-o', $AvxExe) 'AVX2 probe build'
+    & $AvxExe
+    $HasAvx2 = ($LASTEXITCODE -eq 0)
 }
-
+if ($Backend -eq 'auto') { $Backend = if ($HasAvx2) { 'avx2' } else { 'portable' } }
+if ($Backend -eq 'avx2' -and -not $HasAvx2) { throw 'AVX2 was requested but is unavailable.' }
+$BackendFlags = if ($Backend -eq 'portable') { @('-DSEER_USE_PORTABLE_RNS=1') } else { @() }
 $Common = @(
     '-O3', '-DNDEBUG', '-std=c++20', '-fopenmp', '-pthread', '-march=native',
     ('-I' + $Source)
@@ -57,10 +65,10 @@ $Targets = @(
 foreach ($Target in $Targets) {
     $Input = Join-Path $Source $Target[0]
     $Output = Join-Path $Build $Target[1]
-    $Args = $Common + @($Input) + $Libraries + @('-o', $Output)
+    $Args = $Common + $BackendFlags + @($Input) + $Libraries + @('-o', $Output)
     Invoke-Cxx $Args "Build $($Target[1])"
     if (-not (Test-Path $Output)) { throw "Missing runtime binary after build: $Output" }
     Write-Host "Built $Output"
 }
 
-Write-Host 'Pastafarian Calendar Seer exact Windows runtime built successfully.'
+Write-Host "Pastafarian Calendar Seer exact Windows runtime built successfully (RNS backend: $Backend)."
