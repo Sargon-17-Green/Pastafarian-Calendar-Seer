@@ -1,0 +1,51 @@
+name: Verify full finite gate domain Phase C
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/data/gates_u16.bin'
+      - 'prototype/data/gates_negative_u16.bin'
+      - 'prototype/src/year_fast_bench_v12.cpp'
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/tools/canonical_vector_oracle.cpp'
+      - 'prototype/tools/full_domain_fast_probe.cpp'
+      - 'prototype/tools/full_domain_reference_probe.cpp'
+      - 'prototype/scripts/check_full_domain_walk.py'
+      - '.github/workflows/verify-full-domain-walk-phase-c.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+      - name: Verify gate corpus digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum prototype/data/gates_u16.bin | awk '{print $1}')" = '2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb'
+          test "$(sha256sum prototype/data/gates_negative_u16.bin | awk '{print $1}')" = '90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab'
+      - name: Build exact runtime and independent/full-domain probes
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/build-runtime.sh
+          mkdir -p prototype/build
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \
+            -o prototype/build/canonical_vector_oracle
+          g++ -O3 -DNDEBUG -std=c++20 -fopenmp -pthread -march=native -Iprototype/src \
+            prototype/tools/full_domain_fast_probe.cpp -lgmpxx -lgmp \
+            -o prototype/build/full_domain_fast_probe
+          g++ -O2 -std=c++20 -Iprototype/tools \
+            prototype/tools/full_domain_reference_probe.cpp \
+            -o prototype/build/full_domain_reference_probe
+      - name: Compare production walking with independent exact reference through both corpus edges
+        run: python prototype/scripts/check_full_domain_walk.py
+      - name: Positive and negative regression suite
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
