@@ -36,6 +36,12 @@ static inline mpz_class mpz_from_u64_exact(uint64_t x){
     z+=(unsigned long)(x&0xffffffffu);
     return z;
 }
+static inline uint64_t mpz_to_u64_exact(const mpz_class& z){
+    uint64_t lo=(uint32_t)mpz_get_ui(z.get_mpz_t());
+    mpz_class hi=z>>32;
+    uint64_t high=(uint32_t)mpz_get_ui(hi.get_mpz_t());
+    return lo|(high<<32);
+}
 
 using Clock=std::chrono::steady_clock;
 static double ms(Clock::time_point a,Clock::time_point b){return std::chrono::duration<double,std::milli>(b-a).count();}
@@ -139,7 +145,7 @@ static long double mpz_ratio_ld(const mpz_class& num,const mpz_class& den){
     size_t bn=mpz_sizeinbase(num.get_mpz_t(),2), bd=mpz_sizeinbase(den.get_mpz_t(),2);
     unsigned tn=(unsigned)std::min<size_t>(64,bn), td=(unsigned)std::min<size_t>(64,bd);
     mpz_class an=num, ad=den; if(bn>tn) an >>= (bn-tn); if(bd>td) ad >>= (bd-td);
-    uint64_t un=mpz_get_ui(an.get_mpz_t()), ud=mpz_get_ui(ad.get_mpz_t());
+    uint64_t un=mpz_to_u64_exact(an), ud=mpz_to_u64_exact(ad);
     int en=(int)bn-(int)tn, ed=(int)bd-(int)td;
     return scalbnl((long double)un/(long double)ud,en-ed);
 }
