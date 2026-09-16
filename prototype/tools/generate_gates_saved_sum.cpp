@@ -22,31 +22,44 @@ static uint64_t choose_small(const reference::Trace& sauce, int bowl, uint64_t s
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2 || argc > 3) {
-        std::cerr << "usage: generate_gates_saved_sum OUTPUT [--raw-mutant]\n";
+    if (argc < 2 || argc > 4) {
+        std::cerr << "usage: generate_gates_saved_sum OUTPUT [--negative] [--raw-mutant]\n";
         return 2;
     }
-    const bool savedSum = !(argc == 3 && std::string(argv[2]) == "--raw-mutant");
-    if (argc == 3 && savedSum) {
-        std::cerr << "unknown option\n";
-        return 2;
+    bool negative = false;
+    bool savedSum = true;
+    for (int i = 2; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--negative") {
+            if (negative) { std::cerr << "duplicate --negative\n"; return 2; }
+            negative = true;
+        } else if (arg == "--raw-mutant") {
+            if (!savedSum) { std::cerr << "duplicate --raw-mutant\n"; return 2; }
+            savedSum = false;
+        } else {
+            std::cerr << "unknown option: " << arg << "\n";
+            return 2;
+        }
     }
 
+    constexpr int COUNT = 40000;
+    constexpr int64_t F = reference::FOUNDATION;
+    const int64_t direction = negative ? -1 : 1;
+    std::vector<uint16_t> gaps(COUNT);
+
+    // Warm immutable reference tables before the OpenMP region.
+    (void)reference::sauce(F, F + direction, savedSum);
+    #pragma omp parallel for schedule(static)
+    for (int n = 1; n <= COUNT; ++n) {
+        const int64_t target = F + direction * static_cast<int64_t>(n);
+        const auto sauce = reference::sauce(F, target, savedSum);
+        const uint64_t gap = choose_small(sauce, 1, 1, 922) + 41;
+        gaps[static_cast<size_t>(n - 1)] = static_cast<uint16_t>(gap);
+    }
     std::ofstream out(argv[1], std::ios::binary | std::ios::trunc);
     if (!out) {
         std::cerr << "cannot open output\n";
         return 3;
-    }
-
-    constexpr int64_t F = reference::FOUNDATION;
-    std::vector<uint16_t> gaps(40000);
-    // Warm the immutable stone table before entering the parallel region.
-    (void)reference::sauce(F, F + 1, savedSum);
-    #pragma omp parallel for schedule(static)
-    for (int i = 1; i <= 40000; ++i) {
-        const auto sauce = reference::sauce(F, F + i, savedSum);
-        const uint64_t gap = choose_small(sauce, 1, 1, 922) + 41;
-        gaps[static_cast<size_t>(i - 1)] = static_cast<uint16_t>(gap);
     }
 
     uint64_t sum = 0;
@@ -65,6 +78,10 @@ int main(int argc, char** argv) {
         if (x < mn) mn = x;
         if (x > mx) mx = x;
     }
+
     std::cout << "mode=" << (savedSum ? "saved-sum" : "raw-mutant")
-              << " count=40000 min=" << mn << " max=" << mx << " sum=" << sum << "\n";
+              << " direction=" << (negative ? "negative" : "positive")
+              << " count=" << gaps.size()
+              << " min=" << mn << " max=" << mx << " sum=" << sum << "\n";
+    return 0;
 }

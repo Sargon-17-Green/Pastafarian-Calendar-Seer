@@ -1,0 +1,36 @@
+name: Generate canonical negative gate corpus
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install exact-reference build dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libboost-dev
+      - name: Generate and prove canonical gate corpora
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/negative-gates"
+          bash prototype/scripts/generate_negative_gates.sh \
+            "$RUNNER_TEMP/negative-gates/gates_negative_u16.bin" \
+            | tee "$RUNNER_TEMP/negative-gates/GENERATION_LOG.txt"
+          cp "$RUNNER_TEMP/negative-gates/gates_negative_u16.bin.sha256" \
+            "$RUNNER_TEMP/negative-gates/NEGATIVE_GATE_SHA256.txt"
+          test "$(stat -c '%s' "$RUNNER_TEMP/negative-gates/gates_negative_u16.bin")" = 80000
+      - name: Upload exact-reference negative corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-negative-gates
+          path: |
+            ${{ runner.temp }}/negative-gates/gates_negative_u16.bin
+            ${{ runner.temp }}/negative-gates/NEGATIVE_GATE_SHA256.txt
+            ${{ runner.temp }}/negative-gates/GENERATION_LOG.txt
+          if-no-files-found: error
+          retention-days: 30
