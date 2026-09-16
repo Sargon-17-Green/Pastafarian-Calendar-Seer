@@ -1,0 +1,47 @@
+name: Verify bidirectional benchmark backends
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/src/pastafarian_cold_bench*.cpp'
+      - 'prototype/src/year_fast_bench_v12.cpp'
+      - 'prototype/src/rns_micro8_portable.cpp'
+      - 'prototype/src/rns_micro8_avx2_32x8.cpp'
+      - 'prototype/scripts/check_v12_default_adoption.sh'
+      - 'prototype/scripts/check_bidirectional_benchmark_backends.py'
+      - '.github/workflows/verify-bidirectional-benchmark-backends.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+      - name: Require AVX2 for candidate backend
+        run: grep -qm1 -w avx2 /proc/cpuinfo
+      - name: Build portable and AVX2 benchmark backends
+        shell: bash
+        env:
+          SEER_PORTABLE_CXXFLAGS: -march=native
+          SEER_AVX2_CXXFLAGS: -march=native
+        run: |
+          set -euo pipefail
+          bash prototype/scripts/build_portable.sh
+          bash prototype/scripts/build_avx2.sh
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \
+            -o prototype/build/canonical_vector_oracle
+      - name: Positive canonical vectors remain unchanged
+        shell: bash
+        run: |
+          bash prototype/scripts/check_portable_vectors.sh
+          bash prototype/scripts/check_avx2_vectors.sh
+      - name: Negative-domain benchmark parity with independent oracle
+        run: |
+          python prototype/scripts/check_bidirectional_benchmark_backends.py \
+            prototype/build/pastafarian_cold_bench_portable \
+            prototype/build/pastafarian_cold_bench_avx2

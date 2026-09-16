@@ -2,7 +2,7 @@
 #include "rns_micro8.cpp"
 #undef main
 #define main year_fast_disabled_main
-#include "year_fast_bench_v3.cpp"
+#include "year_fast_bench_v12.cpp"
 #undef main
 
 #include <boost/multiprecision/cpp_int.hpp>

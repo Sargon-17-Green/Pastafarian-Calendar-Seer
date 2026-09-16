@@ -12,7 +12,7 @@ for f in \
   pastafarian_cold_bench_avx2_split.cpp \
   pastafarian_cold_bench_portable.cpp \
   pastafarian_cold_bench_portable_split.cpp; do
-  grep -q '#include "year_fast_bench_v3.cpp"' "$ROOT/src/$f"
+  grep -q '#include "year_fast_bench_v12.cpp"' "$ROOT/src/$f"
 done
 
 bash "$ROOT/scripts/check_saved_sum_conformance.sh"
