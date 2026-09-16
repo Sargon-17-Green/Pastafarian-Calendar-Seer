@@ -17,6 +17,15 @@ The source generator is `prototype/tools/generate_gates_saved_sum.cpp`. The repr
 `prototype/scripts/check_saved_sum_conformance.sh` rebuilds the complete corpus with an independent exact Boost `cpp_int` reference, byte-compares it with
 the checked-in file, then validates the same file independently through both corrected fast Sauce headers.
 
+## `prototype/data/gates_negative_u16.bin`
+
+The negative corpus stores `negativeGap(n)` for `n=1..40000`, where the Sauce inputs are
+`(Foundation, Foundation-n)` on the JDN axis. It contains 40,000 gaps, minimum 42, maximum 963,
+sum 20,075,471, and SHA-256
+`90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
+Phase A regenerates it from the independent exact reference and validates every record through both
+fast Sauce headers before the binary is admitted as runtime data.
+
 ## Canonical semantic dependency
 
 For each of the 12 final post-stirs, the six new bowl values are computed from one old-bowl snapshot.
@@ -35,5 +44,6 @@ validation report based on it are archival evidence only, not a canonical baseli
 
 ## Scope
 
-The bundled file still covers positive gate indices only. Negative-gate support is not packaged in
-this benchmark prototype; that pre-existing scope limitation is unchanged by the saved-sum correction.
+The runtime now bundles separate positive and negative corpora and addresses gate indices `-40000..40000`.
+The files remain separate so the long-verified positive corpus stays byte-for-byte unchanged and each side
+has an independent provenance digest.

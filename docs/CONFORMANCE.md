@@ -38,9 +38,10 @@ The vector corpus covers Year 5000, year/cutlet/month boundaries, `c=t`, both qu
 walk, and a forward positive-corpus walk. Sauce-level conformance additionally covers Foundation vicinity,
 negative-axis inputs, and deterministic random inputs.
 
-## Remaining prototype scope
+## Bidirectional gate-domain conformance
 
-The current bundled gate corpus contains positive gates only, so full end-to-end negative-gate calendar
-vectors remain outside this prototype. Before a production release, the complete conformance suite should
-also cover negative gates, the 5,778-day ceiling, cache/call-order independence where persistent semantic
-state is introduced, and all supported public interfaces.
+Phase A independently regenerates and validates the complete negative 40,000-gap corpus through the exact
+Boost reference and both fast Sauce headers. Phase B compares full negative-domain calendar records against
+the independent oracle, retains the historical positive canonical vectors, and exercises the persistent service
+and public query layer across Foundation. The remaining conformance program should continue to cover the
+5,778-day ceiling, cache/call-order independence, and all supported public interfaces.

@@ -28,7 +28,8 @@ Requests are processed serially inside the service. That serialization is the sy
 `query/exact-engine.mjs` prefers `seer_engine_service` when present and falls back to the pre-OPT-06 process binaries if the service is unavailable. A module-level service registry is keyed by SHA-256 of:
 
 1. the service binary;
-2. `gates_u16.bin`.
+2. `gates_u16.bin`;
+3. `gates_negative_u16.bin`.
 
 The registry is bounded (default 4 identities). Multiple request-scoped providers therefore reuse the same native service only when engine/data identity is exactly the same.
 

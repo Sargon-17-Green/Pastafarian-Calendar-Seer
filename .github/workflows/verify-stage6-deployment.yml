@@ -70,7 +70,8 @@ jobs:
             exit 1
           fi
           grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-package-files.txt
-          test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 1
+          grep -qx 'package/prototype/data/gates_negative_u16.bin' /tmp/seer-package-files.txt
+          test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 2
           cat > /tmp/seer-expected-runtime-sources.txt <<'EOF'
           package/prototype/src/pastafarian_year_batch.cpp
           package/prototype/src/rns_micro8_avx2_32x8.cpp

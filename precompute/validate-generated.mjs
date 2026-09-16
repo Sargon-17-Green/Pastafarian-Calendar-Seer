@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sha256File, validateBatchCache } from './lib/cache-format.mjs';
+import { sha256EngineInputs, sha256File, validateBatchCache } from './lib/cache-format.mjs';
 import { cronForBoundary } from './lib/schedule.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -10,6 +10,14 @@ const index = JSON.parse(await readFile(path.join(generatedDir, 'index.json'), '
 if (index.schema !== 1) throw new Error('index schema mismatch');
 if (!Array.isArray(index.boundaries) || index.boundaries.length !== 4) throw new Error('expected four exact boundaries');
 if (!Array.isArray(index.caches) || index.caches.length !== 3) throw new Error('expected three calculation-day caches');
+const expectedEngineFingerprint = await sha256EngineInputs({
+  sourceDir: path.join(root, 'prototype', 'src'),
+  dataFiles: {
+    positiveGates: path.join(root, 'prototype', 'data', 'gates_u16.bin'),
+    negativeGates: path.join(root, 'prototype', 'data', 'gates_negative_u16.bin'),
+  },
+});
+if (index.engineFingerprint !== expectedEngineFingerprint) throw new Error('generated cache engine fingerprint is stale');
 for (let i = 0; i < index.boundaries.length; i += 1) {
   if (index.boundaries[i].calcJdn !== index.activeCalcJdn + i) throw new Error('boundary calc sequence mismatch');
   if (i) {

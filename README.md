@@ -37,7 +37,8 @@ all derived semantic witnesses are superseded. See `docs/CONFORMANCE.md`, `docs/
 and `HISTORICAL_VALIDATION_NOTICE.md`.
 
 The corrected positive 40,000-gap corpus has SHA-256
-`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`.
+`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`. The canonical negative 40,000-gap corpus has SHA-256
+`90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
 
 ## Current state
 
@@ -47,12 +48,12 @@ has a verified shared query API, CLI, HTTP v1 adapter, exact cache-miss/year pro
 OPT-06 native engine service. API Stage 6 packages those existing layers for stable Node application and
 service deployment without changing calendar semantics.
 
-The current prototype includes C++20, specialized arithmetic for `M = 2^127 - 1`, a generated corpus
-of 40,000 positive canonical gate gaps, a fixed 720-permutation bowl-order table, exact 320-bit
+The current prototype includes C++20, specialized arithmetic for `M = 2^127 - 1`, generated positive and negative 40,000-gap canonical gate corpora, a fixed 720-permutation
+bowl-order table, exact 320-bit
 month-length dynamic programming, RNS/CRT weave counting and prefix unranking, AVX-512IFMA and portable
 backends, and no memoization or predictive precomputation across separate queries.
 
-Known limitations include the positive-only bundled gate corpus, English-only presentation, the native
+Known limitations include the finite bundled gate horizon, English-only presentation, the native
 build/toolchain requirements for exact out-of-cache computation, and reverse conversion remaining TBC.
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
 

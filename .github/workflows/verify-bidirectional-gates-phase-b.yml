@@ -1,0 +1,86 @@
+name: Verify bidirectional gate domain Phase B
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/data/gates_negative_u16.bin'
+      - 'prototype/src/year_fast_bench_v12.cpp'
+      - 'prototype/src/opt07_transition_research.cpp'
+      - 'prototype/tools/canonical_vector_oracle.cpp'
+      - 'prototype/scripts/check_bidirectional_domain.py'
+      - 'query/exact-engine.mjs'
+      - 'precompute/**'
+      - 'package.json'
+      - 'deployment/test/package-entrypoints.test.mjs'
+      - 'docs/**'
+      - 'README.md'
+      - '.github/workflows/verify-bidirectional-gates-phase-b.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+      - name: Verify gate corpus digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(sha256sum prototype/data/gates_u16.bin | awk '{print $1}')" = '2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb'
+          test "$(sha256sum prototype/data/gates_negative_u16.bin | awk '{print $1}')" = '90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab'
+      - name: Build full exact runtime and independent oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash scripts/build-runtime.sh
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \
+            -o prototype/build/canonical_vector_oracle
+      - name: Independent positive and negative full-date verification
+        run: python prototype/scripts/check_bidirectional_domain.py
+      - name: Public query through required persistent service before Foundation
+        shell: bash
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+          SEER_TEST_SERVICE_SPAWN_COUNTER_FILE: /tmp/seer-negative-spawns.txt
+        run: |
+          set -euo pipefail
+          rm -f "$SEER_TEST_SERVICE_SPAWN_COUNTER_FILE"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { queryDate } from './index.mjs';
+          const F = -13334246;
+          const calc = F - 100;
+          const target = F - 3000;
+          const out = await queryDate({
+            calculation: { jdn: calc },
+            target: { jdn: target },
+            presentation: 'canonical',
+          });
+          if (out.targetDay.jdn !== String(target)) throw new Error('negative-domain query target mismatch');
+          const spawns = (await readFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, 'utf8')).split(/\r?\n/).filter(Boolean);
+          if (spawns.length !== 1) throw new Error(`expected one persistent service spawn, got ${spawns.length}`);
+          console.log({ calc, target, year: out.pastafarianDate.year, persistentServiceSpawns: spawns.length });
+          NODE
+      - name: Source-tree regressions before cache refresh
+        run: |
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
+      - name: Package boundary contains both gate corpora
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/seer-phase-b-pack
+          NAME="$(npm pack --pack-destination /tmp/seer-phase-b-pack --silent)"
+          TGZ="/tmp/seer-phase-b-pack/$NAME"
+          tar -tzf "$TGZ" | tee /tmp/seer-phase-b-files.txt
+          grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-phase-b-files.txt
+          grep -qx 'package/prototype/data/gates_negative_u16.bin' /tmp/seer-phase-b-files.txt
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/' /tmp/seer-phase-b-files.txt; then
+            echo 'repository-only material leaked into npm package' >&2
+            exit 1
+          fi
+

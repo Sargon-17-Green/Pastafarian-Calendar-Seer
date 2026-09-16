@@ -33,9 +33,14 @@ async function sha256File(file) {
 }
 
 async function engineServiceIdentity(binary, cwd) {
-  const gates = path.join(cwd, 'gates_u16.bin');
-  const [binaryHash, gatesHash] = await Promise.all([sha256File(binary), sha256File(gates)]);
-  return `${binaryHash}:${gatesHash}`;
+  const positiveGates = path.join(cwd, 'gates_u16.bin');
+  const negativeGates = path.join(cwd, 'gates_negative_u16.bin');
+  const [binaryHash, positiveHash, negativeHash] = await Promise.all([
+    sha256File(binary),
+    sha256File(positiveGates),
+    sha256File(negativeGates),
+  ]);
+  return `${binaryHash}:${positiveHash}:${negativeHash}`;
 }
 
 class EngineServiceClient {

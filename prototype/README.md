@@ -8,7 +8,7 @@ and not yet a stable public API.
 
 - C++20.
 - Specialized arithmetic modulo `M = 2^127 - 1` on `__uint128_t` for Sauce and year walking.
-- Generated 40,000-gap positive canonical gate dataset (`data/gates_u16.bin`).
+- Separate generated 40,000-gap positive and negative canonical gate datasets (`data/gates_u16.bin`, `data/gates_negative_u16.bin`).
 - Fixed 720-permutation table for bowl ordering.
 - Exact month-length DP in 5×64 bits (320 bits) rather than general big integers.
 - RNS weave counter/unrank with fixed primes, a `long double` predictor, micro-reset every 8 days, and exact CRT certification.
@@ -28,8 +28,9 @@ That check compares the real v3/v12 Sauce paths with an independent Boost `cpp_i
 visible drop 46 and after every final post-stir, kills the historical `rawSumMutant`, regenerates the full
 positive gate corpus, and verifies the canonical full-date vector corpus.
 
-Current gate SHA-256:
-`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`.
+Current gate SHA-256 values:
+- positive: `2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`;
+- negative: `90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
 
 ## Requirements
 
@@ -48,6 +49,6 @@ performance A/B agreement.
 
 ## Important limitation
 
-The program currently opens `gates_u16.bin` from its working directory. The provided runners therefore
-execute it from `data/`. The bundled gate file covers positive gate indices only. Treat both facts as
-prototype behavior, not a future API contract.
+The program currently opens both gate-corpus files from its working directory. The provided runners therefore
+execute it from `data/`. The bundled finite horizon covers gate indices `-40000..40000`. Treat the working-
+directory behavior and finite horizon as prototype constraints, not normative calendar limits.

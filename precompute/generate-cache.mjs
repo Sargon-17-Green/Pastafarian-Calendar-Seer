@@ -8,6 +8,7 @@ import {
   TARGET_COUNT,
   fileExists,
   sha256File,
+  sha256EngineInputs,
   sha256Tree,
   validateBatchCache,
   writeJsonAtomic,
@@ -37,7 +38,13 @@ if (!Number.isFinite(now.getTime())) throw new RangeError('invalid --now instant
 
 await mkdir(calcDir, { recursive: true });
 
-const engineFingerprint = await sha256Tree(path.join(root, 'prototype', 'src'));
+const engineFingerprint = await sha256EngineInputs({
+  sourceDir: path.join(root, 'prototype', 'src'),
+  dataFiles: {
+    positiveGates: path.join(dataDir, 'gates_u16.bin'),
+    negativeGates: path.join(dataDir, 'gates_negative_u16.bin'),
+  },
+});
 const astronomyFingerprint = await sha256Tree(path.join(here, 'vendor', 'pastafari-calendar-1.4.1'));
 const state = currentDayAt(now, KISURRA_OBSERVER);
 const activeCalc = Number(state.jdn);

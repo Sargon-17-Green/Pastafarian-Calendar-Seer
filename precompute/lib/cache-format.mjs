@@ -29,6 +29,30 @@ export async function sha256Tree(dirPath) {
   return hash.digest('hex');
 }
 
+export const ENGINE_SOURCE_FILES = Object.freeze([
+  'pastafarian_year_batch.cpp',
+  'rns_micro8_avx2_32x8.cpp',
+  'rns_primes32.hpp',
+  'sauce_fast127_v12.hpp',
+  'seer_engine_service.cpp',
+  'seer_year_locator.cpp',
+  'seer_year_structure.cpp',
+  'year_fast_bench_v12.cpp',
+]);
+
+export async function sha256EngineInputs({ sourceDir, sourceFiles = ENGINE_SOURCE_FILES, dataFiles }) {
+  const hash = createHash('sha256');
+  hash.update('seer-engine-inputs-v3\0');
+  for (const name of [...sourceFiles].sort((a, b) => a.localeCompare(b, 'en'))) {
+    hash.update(`source/${name}`); hash.update('\0');
+    hash.update(await readFile(path.join(sourceDir, name))); hash.update('\0');
+  }
+  for (const [label, filePath] of Object.entries(dataFiles).sort(([a], [b]) => a.localeCompare(b, 'en'))) {
+    hash.update(`data/${label}`); hash.update('\0');
+    hash.update(await readFile(filePath)); hash.update('\0');
+  }
+  return hash.digest('hex');
+}
 export async function writeJsonAtomic(filePath, value) {
   const tmp = `${filePath}.tmp-${process.pid}`;
   await writeFile(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');

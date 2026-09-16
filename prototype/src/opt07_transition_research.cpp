@@ -18,9 +18,9 @@ struct Opt07Edge {
 
 static Opt07Edge opt07_next_edge(
     int64_t calc, int gate, const FGates& G, const FStones& S) {
-    if (gate < 0 || gate >= (int)G.p.size()) throw std::runtime_error("gate index out of range");
-    FY dummy{0, std::max(0, gate - 6), gate,
-             G.at(std::max(0, gate - 6)), G.at(gate)};
+    if (gate < G.min_index() || gate > G.max_index()) throw std::runtime_error("gate index out of range");
+    FY dummy{0, std::max(G.min_index(), gate - 6), gate,
+             G.at(std::max(G.min_index(), gate - 6)), G.at(gate)};
     FY next = fadj(calc, G, S, dummy, true);
     if (next.o != gate) throw std::runtime_error("NEXT did not preserve fixed opening gate");
     if (next.c <= gate) throw std::runtime_error("NEXT is not strictly increasing");
@@ -79,8 +79,8 @@ int main(int argc, char** argv) {
             ++compositionChecks;
         }
 
-        const int lo = std::max(0, anchor.c - radius);
-        const int hi = std::min((int)G.p.size() - 1, anchor.c + radius);
+        const int lo = std::max(G.min_index(), anchor.c - radius);
+        const int hi = std::min(G.max_index(), anchor.c + radius);
         std::unordered_map<int, int> indegree1;
         std::unordered_map<int, int> indegree2;
         size_t sampledEdges = 0;

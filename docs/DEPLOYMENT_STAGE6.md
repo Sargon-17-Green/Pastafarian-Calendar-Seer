@@ -101,13 +101,13 @@ not silently fall back to one-process-per-call exact executables.
 Advanced deployments may override binary locations with the existing environment variables
 `SEER_ENGINE_SERVICE_BIN`, `SEER_YEAR_BATCH_BIN`, `SEER_YEAR_LOCATOR_BIN`, and
 `SEER_YEAR_STRUCTURE_BIN`. The native data directory remains the packaged `prototype/data` by
-default, so `gates_u16.bin` is resolved with the same semantics verified by OPT-03 through OPT-07.
+default, so both `gates_u16.bin` and `gates_negative_u16.bin` are resolved from the packaged data directory.
 
 ## Packaging boundary
 
 `npm pack` intentionally includes the query/HTTP runtime, the two published OpenAPI documents, the
 three rolling cache files plus their index, the cache loader/validator and Venus boundary model, the exact
-eight-file native runtime source closure, `gates_u16.bin`, and the exact-runtime build scripts. It excludes
+eight-file native runtime source closure, both gate-corpus binaries, and the exact-runtime build scripts. It excludes
 API schemas/examples/tests, cache-generation helpers, research/benchmark source variants, GitHub workflows,
 repository repair artifacts, benchmark result directories, and every `HANDOFF_*` file.
 

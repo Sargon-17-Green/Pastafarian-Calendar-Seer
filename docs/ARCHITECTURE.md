@@ -11,7 +11,7 @@ This document describes the **current benchmark baseline**, not a frozen public 
 specialized canonical Sauce arithmetic mod (2^127 - 1)
         |
         v
-fixed generated positive gate-gap corpus
+fixed generated bidirectional gate-gap corpora
         |
         v
 anchor year + year walk
@@ -42,9 +42,12 @@ covered by an intermediate-state conformance test rather than inferred from fina
 
 ## Gate corpus
 
-`prototype/data/gates_u16.bin` stores 40,000 generated positive canonical gate gaps. The current digest is
-`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`. The corpus is reproducible from
-`prototype/tools/generate_gates_saved_sum.cpp`; see `DATA_PROVENANCE.md`.
+`prototype/data/gates_u16.bin` stores 40,000 generated positive canonical gate gaps and
+`prototype/data/gates_negative_u16.bin` stores 40,000 generated negative canonical gate gaps.
+Their SHA-256 digests are respectively
+`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb` and
+`90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
+Both corpora are reproducible from `prototype/tools/generate_gates_saved_sum.cpp`; see `DATA_PROVENANCE.md`.
 
 ## Structure selection
 
@@ -60,5 +63,5 @@ machine. Only the prefix needed for the target day is materialized.
 
 ## Non-goals of the current prototype
 
-The current baseline is not yet a stable ABI/API, web service, localization layer, or complete replacement
-for every domain supported by the normative project. The bundled gate data still covers positive indices only.
+The benchmark core remains non-normative. The public Node/HTTP v1 layer is stable, while localization
+and reverse conversion remain separate product work. The bundled gate data now covers indices -40000..40000.
