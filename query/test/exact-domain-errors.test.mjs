@@ -24,14 +24,21 @@ async function fixture(t, stderr) {
     error.stderr = stderr;
     throw error;
   };
-  return createExactEngine({
-    generatedDir,
-    dataDir,
-    yearBatchBinary: bins.batch,
-    yearLocatorBinary: bins.locator,
-    yearStructureBinary: bins.structure,
-    execFileRunner,
-  });
+  const oldRequire = process.env.SEER_REQUIRE_ENGINE_SERVICE;
+  delete process.env.SEER_REQUIRE_ENGINE_SERVICE;
+  try {
+    return createExactEngine({
+      generatedDir,
+      dataDir,
+      yearBatchBinary: bins.batch,
+      yearLocatorBinary: bins.locator,
+      yearStructureBinary: bins.structure,
+      execFileRunner,
+    });
+  } finally {
+    if (oldRequire == null) delete process.env.SEER_REQUIRE_ENGINE_SERVICE;
+    else process.env.SEER_REQUIRE_ENGINE_SERVICE = oldRequire;
+  }
 }
 
 async function expectCode(promise, code) {
