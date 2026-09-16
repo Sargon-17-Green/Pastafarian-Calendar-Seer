@@ -9,6 +9,11 @@ const execFileAsync = promisify(execFile);
 const DEFAULT_MAX_BUFFER = 32 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 120_000;
 const MAX_BATCH_COUNT = 10_000;
+const DOMAIN_ERROR_CODES = new Set([
+  'CALCULATION_OUT_OF_SUPPORTED_DOMAIN',
+  'TARGET_OUT_OF_SUPPORTED_DOMAIN',
+  'YEAR_OUT_OF_SUPPORTED_DOMAIN',
+]);
 
 const SERVICE_REGISTRY = new Map();
 const SERVICE_HASH_CACHE = new Map();
@@ -96,7 +101,9 @@ class EngineServiceClient {
       try {
         const parsed = JSON.parse(line);
         if (parsed?.ok === false) {
-          waiter.reject(new Error(typeof parsed.error === 'string' ? parsed.error : 'persistent Seer engine service rejected the request'));
+          const error = new Error(typeof parsed.error === 'string' ? parsed.error : 'persistent Seer engine service rejected the request');
+          if (typeof parsed.code === 'string') error.seerCode = parsed.code;
+          waiter.reject(error);
         } else {
           waiter.resolve(parsed);
         }
@@ -207,13 +214,34 @@ function safeCount(value) {
   return count;
 }
 
-async function runJson(binary, args, { cwd, timeoutMs, maxBuffer, execFileRunner = execFileAsync }) {
+function classifyNativeDomainFailure(error, domainKind) {
+  const stderr = typeof error?.stderr === 'string' ? error.stderr : '';
+  const message = typeof error?.message === 'string' ? error.message : '';
+  const text = `${stderr}\n${message}`;
+  if (/day beyond bidirectional gate corpus|no anchor candidates in gate corpus/.test(text)) {
+    return 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN';
+  }
+  if (/no previous year in gate corpus|no next year in gate corpus|gate index/.test(text)) {
+    if (domainKind === 'range') return 'TARGET_OUT_OF_SUPPORTED_DOMAIN';
+    if (domainKind === 'year') return 'YEAR_OUT_OF_SUPPORTED_DOMAIN';
+  }
+  return null;
+}
+
+function domainErrorMessage(code) {
+  if (code === 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN') return 'Calculation day is outside the exact engine gate domain.';
+  if (code === 'TARGET_OUT_OF_SUPPORTED_DOMAIN') return 'Target day or range is outside the exact engine gate domain.';
+  return 'Requested year is outside the exact engine gate domain.';
+}
+async function runJson(binary, args, { cwd, timeoutMs, maxBuffer, execFileRunner = execFileAsync, domainKind }) {
   try {
     const { stdout } = await execFileRunner(binary, args, { cwd, encoding: 'utf8', timeout: timeoutMs, maxBuffer, windowsHide: true });
     return JSON.parse(stdout);
   } catch (error) {
     if (error?.code === 'ENOENT') throw queryError('SEER_UNAVAILABLE', 'Exact Seer engine executable could not be started.', { cause: error });
     if (error?.killed || error?.signal) throw queryError('SEER_UNAVAILABLE', 'Exact Seer engine timed out or was terminated.', { cause: error });
+    const domainCode = classifyNativeDomainFailure(error, domainKind);
+    if (domainCode) throw queryError(domainCode, domainErrorMessage(domainCode), { cause: error });
     if (error?.stdout !== undefined || error?.stderr !== undefined) {
       throw queryError('SEER_UNAVAILABLE', 'Exact Seer engine failed to produce a verified result.', { details: { exitCode: error.code ?? null }, cause: error });
     }
@@ -348,6 +376,9 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       const client = await getEngineServiceClient(binary, cwd);
       return await client.request(fields);
     } catch (error) {
+      if (DOMAIN_ERROR_CODES.has(error?.seerCode)) {
+        throw queryError(error.seerCode, domainErrorMessage(error.seerCode), { cause: error });
+      }
       if (requireService) {
         throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service failed.', { cause: error });
       }
@@ -362,7 +393,7 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     const serviceParsed = await serviceRequest(['R', String(calc), String(start), String(size)]);
     const parsed = serviceParsed
       ? ensureBatch(serviceParsed, { calc, start, count: size })
-      : ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer, execFileRunner }), { calc, start, count: size });
+      : ensureBatch(await runJson(await batchBinary(), [String(calc), String(start), String(size)], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'range' }), { calc, start, count: size });
     return {
       records: parsed.records,
       provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
@@ -389,14 +420,14 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       }
       const structureBinary = await optionalStructureBinary();
       if (structureBinary) {
-        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer, execFileRunner });
+        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
         return {
           year: yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }),
           provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
         };
       }
       // Compatibility fallback while older build environments have not yet built seer_year_structure.
-      const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer, execFileRunner });
+      const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
       if (!located || located.schema !== 1 || located.calcJdn !== calc || located.year !== requestedYear || !Number.isInteger(located.startJdn) || !Number.isInteger(located.endJdn) || !Number.isInteger(located.lengthDays)) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned an unexpected payload.');
       if (located.lengthDays < 1 || located.lengthDays > MAX_BATCH_COUNT || located.endJdn - located.startJdn + 1 !== located.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned invalid boundaries.');
       const supplied = await queryRange({ calculationJdn: calc, targetStartJdn: located.startJdn, count: located.lengthDays });

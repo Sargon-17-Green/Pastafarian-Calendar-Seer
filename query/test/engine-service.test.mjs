@@ -31,6 +31,13 @@ async function canonicalCalc() {
   return Number(index.caches[0].calcJdn);
 }
 
+async function lowerGateDay() {
+  const bytes = await readFile(path.join(dataDir, 'gates_negative_u16.bin'));
+  let sum = 0;
+  for (let i = 0; i < bytes.length; i += 2) sum += bytes.readUInt16LE(i);
+  return -13_334_246 - sum;
+}
+
 function startProtocolService(extraEnv = {}) {
   const child = spawn(serviceBinary, [], {
     cwd: dataDir,
@@ -180,4 +187,51 @@ test('JS exact engine reuses one persistent service across engine instances', as
 
   const lines = (await readFile(spawnCounter, 'utf8')).trim().split(/\r?\n/).filter(Boolean);
   assert.equal(lines.length, 1);
+});
+test('native service returns typed domain errors and remains usable', async (t) => {
+  if (!(await nativeAvailable())) {
+    t.skip('native OPT-06 binaries are not built in this environment');
+    return;
+  }
+  const calc = await canonicalCalc();
+  const lower = await lowerGateDay();
+  const svc = startProtocolService();
+  t.after(() => svc.close());
+
+  const calcError = await svc.request(['R', String(lower), String(calc), '1']);
+  assert.equal(calcError.ok, false);
+  assert.equal(calcError.code, 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+
+  const targetError = await svc.request(['R', String(calc), String(lower), '1']);
+  assert.equal(targetError.ok, false);
+  assert.equal(targetError.code, 'TARGET_OUT_OF_SUPPORTED_DOMAIN');
+
+  const stats = await svc.request(['S']);
+  assert.equal(stats.schema, 1);
+  assert.equal((await svc.request(['Y', String(calc), '5000', '0'])).year, 5000);
+});
+
+test('JS exact engine preserves typed service-domain errors', async (t) => {
+  if (!(await nativeAvailable())) {
+    t.skip('native OPT-06 binaries are not built in this environment');
+    return;
+  }
+  const calc = await canonicalCalc();
+  const lower = await lowerGateDay();
+  const oldRequire = process.env.SEER_REQUIRE_ENGINE_SERVICE;
+  process.env.SEER_REQUIRE_ENGINE_SERVICE = '1';
+  t.after(() => {
+    closeExactEngineServicesForTests();
+    if (oldRequire == null) delete process.env.SEER_REQUIRE_ENGINE_SERVICE;
+    else process.env.SEER_REQUIRE_ENGINE_SERVICE = oldRequire;
+  });
+  const engine = createExactEngine({ generatedDir, engineServiceBinary: serviceBinary, dataDir });
+  await assert.rejects(
+    engine.queryRange({ calculationJdn: lower, targetStartJdn: calc, count: 1 }),
+    (error) => error?.code === 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN',
+  );
+  await assert.rejects(
+    engine.queryRange({ calculationJdn: calc, targetStartJdn: lower, count: 1 }),
+    (error) => error?.code === 'TARGET_OUT_OF_SUPPORTED_DOMAIN',
+  );
 });

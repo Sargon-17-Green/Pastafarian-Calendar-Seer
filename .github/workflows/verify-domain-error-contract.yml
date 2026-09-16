@@ -1,0 +1,61 @@
+name: Verify exact domain error contract
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'query/exact-engine.mjs'
+      - 'query/test/exact-domain-errors.test.mjs'
+      - 'query/test/engine-service.test.mjs'
+      - 'prototype/src/seer_engine_service.cpp'
+      - '.github/workflows/verify-domain-error-contract.yml'
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+      - name: Build exact runtime
+        run: bash scripts/build-runtime.sh
+      - name: Domain error unit and native service tests
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          node --check query/exact-engine.mjs
+          node --test query/test/exact-domain-errors.test.mjs query/test/engine-service.test.mjs
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export MSYS2 UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build exact Windows runtime
+        shell: pwsh
+        run: |
+          node scripts/build-runtime.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Windows exact runtime build failed: $LASTEXITCODE" }
+      - name: Domain error unit and native service tests on Windows
+        shell: pwsh
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          node --check query/exact-engine.mjs
+          node --test query/test/exact-domain-errors.test.mjs query/test/engine-service.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Windows domain error contract tests failed: $LASTEXITCODE" }

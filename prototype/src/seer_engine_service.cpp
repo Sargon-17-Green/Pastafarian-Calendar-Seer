@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 struct ServiceCounters {
@@ -22,6 +23,23 @@ struct ServiceCounters {
     uint64_t prevSteps = 0;
     uint64_t evictions = 0;
 };
+
+class ServiceRequestError : public std::runtime_error {
+    std::string code_;
+public:
+    ServiceRequestError(std::string code, const std::string& message)
+        : std::runtime_error(message), code_(std::move(code)) {}
+    const std::string& code() const noexcept { return code_; }
+};
+
+static bool svc_is_domain_boundary(const std::exception& e) {
+    const std::string m = e.what();
+    return m == "day beyond bidirectional gate corpus" ||
+           m == "no anchor candidates in gate corpus" ||
+           m == "no previous year in gate corpus" ||
+           m == "no next year in gate corpus" ||
+           m == "gate index";
+}
 
 static std::string svc_json_escape(const std::string& s) {
     std::ostringstream out;
@@ -194,11 +212,34 @@ class SeerEngineService {
         const long long count = std::stoll(f[3]);
         if (count < 1 || count > 10000) throw std::runtime_error("count must be in 1..10000");
         const int64_t delta = count - 1;
-        if (start > std::numeric_limits<int64_t>::max() - delta) throw std::overflow_error("target range overflow");
+        if (start > std::numeric_limits<int64_t>::max() - delta) {
+            throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", "target range overflow");
+        }
         const int64_t end = start + static_cast<int64_t>(count) - 1;
+        const int64_t minDay = gates_.at(gates_.min_index());
+        const int64_t maxDay = gates_.at(gates_.max_index());
+        if (calc <= minDay || calc > maxDay) {
+            throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", "calculation day beyond bidirectional gate corpus");
+        }
+        if (start <= minDay || end > maxDay) {
+            throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", "target range beyond bidirectional gate corpus");
+        }
 
-        ServiceYearChain& chain = chainFor(calc);
-        FY y = chain.byTarget(start);
+        ServiceYearChain* chainPtr = nullptr;
+        try {
+            chainPtr = &chainFor(calc);
+        } catch (const std::exception& e) {
+            if (svc_is_domain_boundary(e)) throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", e.what());
+            throw;
+        }
+        ServiceYearChain& chain = *chainPtr;
+        FY y;
+        try {
+            y = chain.byTarget(start);
+        } catch (const std::exception& e) {
+            if (svc_is_domain_boundary(e)) throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", e.what());
+            throw;
+        }
         std::vector<BatchRecord> records;
         records.reserve(static_cast<size_t>(count));
         int64_t cursor = start;
@@ -208,7 +249,12 @@ class SeerEngineService {
             records.insert(records.end(), part.begin(), part.end());
             if (segmentEnd == end) break;
             cursor = segmentEnd + 1;
-            y = chain.byYear(y.num + 1);
+            try {
+                y = chain.byYear(y.num + 1);
+            } catch (const std::exception& e) {
+                if (svc_is_domain_boundary(e)) throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", e.what());
+                throw;
+            }
         }
         if (records.size() != static_cast<size_t>(count)) throw std::runtime_error("service batch record count mismatch");
 
@@ -228,8 +274,21 @@ class SeerEngineService {
         const int includeDays = std::stoi(f[3]);
         if (includeDays != 0 && includeDays != 1) throw std::runtime_error("include_days must be 0 or 1");
 
-        ServiceYearChain& chain = chainFor(calc);
-        const FY y = chain.byYear(requested);
+        ServiceYearChain* chainPtr = nullptr;
+        try {
+            chainPtr = &chainFor(calc);
+        } catch (const std::exception& e) {
+            if (svc_is_domain_boundary(e)) throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", e.what());
+            throw;
+        }
+        ServiceYearChain& chain = *chainPtr;
+        FY y;
+        try {
+            y = chain.byYear(requested);
+        } catch (const std::exception& e) {
+            if (svc_is_domain_boundary(e)) throw ServiceRequestError("YEAR_OUT_OF_SUPPORTED_DOMAIN", e.what());
+            throw;
+        }
         const int64_t start = y.a + 1, end = y.b, length = y.b - y.a;
         if (length < 1 || length > 10000) throw std::runtime_error("located year length is outside supported limit");
 
@@ -314,6 +373,10 @@ int main() {
             if (line == "X") break;
             try {
                 service.handle(line);
+            } catch (const ServiceRequestError& e) {
+                std::cout << "{\"schema\":1,\"ok\":false,\"code\":\""
+                          << svc_json_escape(e.code()) << "\",\"error\":\""
+                          << svc_json_escape(e.what()) << "\"}\n" << std::flush;
             } catch (const std::exception& e) {
                 std::cout << "{\"schema\":1,\"ok\":false,\"error\":\""
                           << svc_json_escape(e.what()) << "\"}\n" << std::flush;
