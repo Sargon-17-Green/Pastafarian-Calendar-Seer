@@ -106,7 +106,13 @@ static YBStructResult yb_build_nonweave(int64_t calc,const FGates&G,const FY&y,c
     BI mn=yb_perm_bi(47,r.monthCount);BI mr=yb_fast_choose_bi(so,5,33,mn);r.monthName=yb_unrank_names_idx(47,r.monthCount,mr);
     int gapOff=0,dayOff=0;for(int cg:r.cutGaps){r.cutStart.push_back(dayOff);gapOff+=cg;int64_t end=G.at(y.o+gapOff);dayOff=(int)(end-(y.a+1)+1);r.cutEnd.push_back(dayOff-1);}return r;
 }
-static int yb_conservative_npr(const std::vector<int>&len){int total=std::accumulate(len.begin(),len.end(),0);long double ln=lgammal((long double)total+1);for(int x:len)ln-=lgammal((long double)x+1);long double bits=ln/logl(2.0L);int k=(int)ceill((bits+32.0L)/31.9L)+2;return std::clamp(k,8,1050);}
+static int yb_conservative_npr(const std::vector<int>&len){int total=std::accumulate(len.begin(),len.end(),0);long double ln=lgammal((long double)total+1);for(int x:len)ln-=lgammal((long double)x+1);long double bits=ln/logl(2.0L);
+#ifdef SEER_USE_PORTABLE_RNS
+    int k=(int)ceill((bits+32.0L)/51.9L)+2;return std::clamp(k,8,608);
+#else
+    int k=(int)ceill((bits+32.0L)/31.9L)+2;return std::clamp(k,8,1050);
+#endif
+}
 
 struct BatchRecord{int64_t targetJdn=0;long long year=0;int cutletIndex=0,dayInCutlet=0,monthIndex=0,dayInMonth=0,cutletCount=0,monthCount=0;};
 
