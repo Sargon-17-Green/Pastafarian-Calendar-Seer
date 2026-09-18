@@ -70,3 +70,13 @@ test('CLI reports malformed full-presentation locale with the query error code',
     },
   );
 });
+
+test('CLI --help exits zero and prints usage to stdout', async () => {
+  const { stdout, stderr } = await execFileAsync(
+    process.execPath,
+    [cli, '--help'],
+    { cwd: root, encoding: 'utf8' },
+  );
+  assert.match(stdout, /^usage:/);
+  assert.equal(stderr, '');
+});

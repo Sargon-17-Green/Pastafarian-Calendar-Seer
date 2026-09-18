@@ -22,6 +22,12 @@ async function choose(page, name, value) {
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+const pageErrors = [];
+const consoleErrors = [];
+page.on('pageerror', (error) => pageErrors.push(error instanceof Error ? error.message : String(error)));
+page.on('console', (message) => {
+  if (message.type() === 'error') consoleErrors.push(message.text());
+});
 
 try {
   await page.goto(apiBase + '/web/', { waitUntil: 'domcontentloaded' });
@@ -33,7 +39,10 @@ try {
   await expectText(page.locator('#now-result .formatted'), /^שנה /);
   assert.equal(await page.locator('#now-result .formatted').getAttribute('dir'), 'rtl');
 
-  await page.getByRole('button', { name: 'Date', exact: true }).click();
+  const dateNav = page.getByRole('button', { name: 'Date', exact: true });
+  await dateNav.focus();
+  await page.keyboard.press('Enter');
+  assert.equal(await dateNav.getAttribute('aria-current'), 'page');
   await choose(page, 'calculation-mode', 'jdn');
   await page.locator('#calculation-jdn').fill('2461302');
   await choose(page, 'presentation', 'canonical');
@@ -56,6 +65,8 @@ try {
   await expectText(page.locator('#reverse-result'), /2461304/, 60000);
   await expectText(page.locator('#exchange-url'), /\/v1\/reverse$/);
   await expectText(page.locator('#exchange-status'), /^200$/);
+  assert.deepEqual(pageErrors, [], 'uncaught browser page errors before injected failures');
+  assert.deepEqual(consoleErrors, [], 'browser console errors before injected failures');
 
   await page.getByRole('button', { name: 'Date', exact: true }).click();
   await choose(page, 'target-kind', 'jdn');
@@ -122,6 +133,11 @@ try {
   const tracedUrl = await page.locator('#exchange-url').textContent();
   assert.ok((tracedUrl ?? '').startsWith(apiBase), 'cross-origin query did not use configured API base');
 
+  assert.deepEqual(pageErrors, [], 'uncaught browser page errors');
+  const unexpectedConsoleErrors = consoleErrors.filter(
+    (message) => !/status of (?:422|503)\b/.test(message),
+  );
+  assert.deepEqual(unexpectedConsoleErrors, [], 'unexpected browser console errors');
   console.log('production web E2E PASS');
 } finally {
   await browser.close();
