@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
@@ -37,6 +37,8 @@ async function withServer(fn) {
   const apiDir = await mkdtemp(path.join(os.tmpdir(), 'seer-http-test-'));
   await writeFile(path.join(apiDir, 'openapi.json'), '{"openapi":"3.1.0"}\n');
   await writeFile(path.join(apiDir, 'openapi.yaml'), 'openapi: 3.1.0\n');
+  await mkdir(path.join(apiDir, 'schemas'));
+  await writeFile(path.join(apiDir, 'schemas', 'date-response.schema.json'), '{"$id":"fixture-date-response"}\n');
   const now = new Date('2026-09-15T12:34:56.000Z');
   const server = http.createServer(createSeerHttpHandler({ queryApi: fakeApi(calls), apiDir, nowFactory: () => new Date(now) }));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -141,6 +143,11 @@ test('status probes the query provider and static endpoints are served', async (
     assert.equal(metaBody.reverse.endpoint, '/v1/reverse');
     const openapi = await fetch(`${base}/openapi.json`);
     assert.equal((await openapi.json()).openapi, '3.1.0');
+    const schema = await fetch(`${base}/schemas/date-response.schema.json`);
+    assert.equal(schema.status, 200);
+    assert.equal((await schema.json()).$id, 'fixture-date-response');
+    const missingSchema = await fetch(`${base}/schemas/missing.schema.json`);
+    assert.equal(missingSchema.status, 404);
   });
 });
 

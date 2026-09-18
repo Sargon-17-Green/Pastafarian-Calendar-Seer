@@ -56,6 +56,7 @@ backends, and no memoization or predictive precomputation across separate querie
 Known limitations include the finite bundled gate horizon, English-only presentation, and the native
 build/toolchain requirements for exact out-of-cache computation.
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
+The packaged OpenAPI documents include their complete JSON Schema closure; schemas are available through package subpaths under `pastafarian-calendar-seer/schemas/*` and from the HTTP service at `/schemas/*.schema.json`.
 
 ## Application and HTTP API
 

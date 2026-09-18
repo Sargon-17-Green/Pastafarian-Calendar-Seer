@@ -59,13 +59,15 @@ jobs:
           test "$(grep -Ec '^package/generated/calc/-?[0-9]+\.json$' /tmp/seer-package-files.txt)" -eq 3
           grep -qx 'package/api/openapi.json' /tmp/seer-package-files.txt
           grep -qx 'package/api/openapi.yaml' /tmp/seer-package-files.txt
-          test "$(grep -c '^package/api/' /tmp/seer-package-files.txt)" -eq 2
+          find api/schemas -maxdepth 1 -type f -name '*.json' -printf 'package/%p\n' | sort > /tmp/seer-expected-schemas.txt
+          grep -E '^package/api/schemas/[A-Za-z0-9.-]+\.json$' /tmp/seer-package-files.txt | sort > /tmp/seer-actual-schemas.txt
+          diff -u /tmp/seer-expected-schemas.txt /tmp/seer-actual-schemas.txt
           grep -qx 'package/precompute/cache-lookup.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/lib/cache-format.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/lib/schedule.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/validate-generated.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/vendor/pastafari-calendar-1.4.1/venus-day-boundary.js' /tmp/seer-package-files.txt
-          if grep -Eq '^package/api/(examples|schemas|tests)/|^package/precompute/(generate-cache|query)\.mjs$' /tmp/seer-package-files.txt; then
+          if grep -Eq '^package/api/(examples|tests)/|^package/precompute/(generate-cache|query)\.mjs$' /tmp/seer-package-files.txt; then
             echo 'verification/generation material leaked into npm package' >&2
             exit 1
           fi
@@ -137,6 +139,7 @@ jobs:
           npm init -y >/dev/null
           npm install --ignore-scripts "$SEER_TGZ"
           test -f node_modules/pastafarian-calendar-seer/package.json
+          test -f node_modules/pastafarian-calendar-seer/api/schemas/date-response.schema.json
           cd node_modules/pastafarian-calendar-seer
           npm test
           npm run validate:cache

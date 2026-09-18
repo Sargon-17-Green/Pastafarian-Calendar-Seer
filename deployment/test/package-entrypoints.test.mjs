@@ -46,6 +46,7 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.main, './index.mjs');
   assert.equal(pkg.exports['.'], './index.mjs');
   assert.equal(pkg.exports['./http'], './http/index.mjs');
+  assert.equal(pkg.exports['./schemas/*'], './api/schemas/*');
   assert.equal(pkg.bin['pastafarian-seer'], './query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], './http/server.mjs');
   assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
@@ -82,7 +83,7 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.equal(files.includes('prototype/src/month_count_table_bench.cpp'), false);
   assert.equal(files.includes('prototype/data/canonical_saved_sum_vectors.tsv'), false);
   assert.equal(files.includes('api/tests/test_contract.py'), false);
-  assert.equal(files.includes('api/schemas/date-request.schema.json'), false);
+  assert.ok(files.includes('api/schemas/*.json'));
   assert.equal(files.includes('api/examples/valid/date-minimal.json'), false);
   assert.equal(files.includes('precompute/generate-cache.mjs'), false);
   assert.equal(files.includes('precompute/query.mjs'), false);

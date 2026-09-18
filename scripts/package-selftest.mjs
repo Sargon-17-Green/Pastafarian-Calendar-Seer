@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { queryCalculationDay, queryDate } from '../index.mjs';
 import { listen } from '../http/index.mjs';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const exportedSchemaPath = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/schemas/date-response.schema.json'));
+const exportedSchema = JSON.parse(await readFile(exportedSchemaPath, 'utf8'));
+assert.equal(exportedSchema.$id, 'date-response.schema.json');
+const packagedSchemaCount = (await readdir(path.join(packageRoot, 'api', 'schemas'))).filter((name) => name.endsWith('.json')).length;
 const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
 const cache = index.caches?.[0];
 assert.ok(cache, 'generated cache index must contain at least one cache');
@@ -16,6 +20,41 @@ const request = {
   target: { jdn: targetJdn },
   presentation: 'canonical',
 };
+
+function collectRefs(value, out = []) {
+  if (Array.isArray(value)) {
+    for (const item of value) collectRefs(item, out);
+  } else if (value && typeof value === 'object') {
+    if (typeof value.$ref === 'string') out.push(value.$ref);
+    for (const [key, item] of Object.entries(value)) if (key !== '$ref') collectRefs(item, out);
+  }
+  return out;
+}
+
+async function verifyOpenApiSchemaClosure(baseUrl) {
+  const openapiUrl = new URL('/openapi.json', baseUrl);
+  const openapiResponse = await fetch(openapiUrl);
+  assert.equal(openapiResponse.status, 200);
+  const queue = collectRefs(await openapiResponse.json()).map((ref) => ({ ref, baseUrl: openapiUrl }));
+  const seen = new Set();
+  while (queue.length) {
+    const { ref, baseUrl: parentUrl } = queue.shift();
+    const resolved = new URL(ref, parentUrl);
+    if (resolved.hash) resolved.hash = '';
+    assert.equal(resolved.origin, openapiUrl.origin, 'external schema ref is not self-contained: ' + ref);
+    assert.match(resolved.pathname, /^\/schemas\/[A-Za-z0-9.-]+\.schema\.json$/);
+    if (seen.has(resolved.href)) continue;
+    seen.add(resolved.href);
+    const response = await fetch(resolved);
+    const text = await response.text();
+    assert.equal(response.status, 200, 'unresolved schema ref ' + resolved.href + ': ' + text);
+    const schema = JSON.parse(text);
+    assert.equal(schema.$id, resolved.pathname.split('/').at(-1), 'schema $id must be relocatable');
+    for (const nested of collectRefs(schema)) queue.push({ ref: nested, baseUrl: resolved });
+  }
+  assert.ok(seen.size >= 1, 'OpenAPI must reference at least one packaged schema');
+  return seen.size;
+}
 
 const direct = await queryDate(request);
 assert.equal(direct.targetDay.jdn, String(targetJdn));
@@ -37,6 +76,8 @@ try {
   assert.equal(response.status, 200, text);
   const body = JSON.parse(text);
   assert.equal(body.targetDay.jdn, String(targetJdn));
+  const schemaCount = await verifyOpenApiSchemaClosure('http://127.0.0.1:' + port + '/');
+  assert.equal(schemaCount, packagedSchemaCount);
 } finally {
   await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 }
@@ -45,5 +86,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['cache-query', 'venus-boundary', 'http-loopback'],
+  checks: ['cache-query', 'venus-boundary', 'http-loopback', 'openapi-schema-closure'],
 }));

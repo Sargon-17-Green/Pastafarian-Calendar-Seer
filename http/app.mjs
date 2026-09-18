@@ -307,11 +307,13 @@ function rangeNdjson(results) {
   return results.map((item) => JSON.stringify(item)).join('\n') + (results.length ? '\n' : '');
 }
 
+const SCHEMA_PATH_RE = /^\/schemas\/([A-Za-z0-9.-]+\.schema\.json)$/;
+
 function knownPath(pathname) {
   return pathname === '/v1/now' || pathname === '/v1/date' || pathname === '/v1/batch' ||
     pathname === '/v1/range' || pathname === '/v1/reverse' || pathname === '/v1/calculation-day' || pathname === '/v1/locales' ||
     pathname === '/v1/meta' || pathname === '/v1/status' || pathname === '/openapi.json' ||
-    pathname === '/openapi.yaml' || /^\/v1\/year\/[^/]+$/.test(pathname);
+    pathname === '/openapi.yaml' || SCHEMA_PATH_RE.test(pathname) || /^\/v1\/year\/[^/]+$/.test(pathname);
 }
 
 export function createSeerHttpHandler(options = {}) {
@@ -346,6 +348,20 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         const body = await readFile(path.join(apiDir, 'openapi.yaml'), 'utf8');
         send(res, 200, body.endsWith('\n') ? body : `${body}\n`, YAML_TYPE, { 'cache-control': 'public, max-age=300' });
+        return;
+      }
+
+      const schemaMatch = SCHEMA_PATH_RE.exec(pathname);
+      if (schemaMatch && method === 'GET') {
+        ensureNoQuery(url.searchParams);
+        let body;
+        try {
+          body = await readFile(path.join(apiDir, 'schemas', schemaMatch[1]), 'utf8');
+        } catch (error) {
+          if (error?.code === 'ENOENT') throw new HttpAdapterError('NOT_FOUND', 'Schema not found.', 404);
+          throw error;
+        }
+        send(res, 200, body.endsWith('\n') ? body : `${body}\n`, JSON_TYPE, { 'cache-control': 'public, max-age=300' });
         return;
       }
 

@@ -103,11 +103,12 @@ default, so both `gates_u16.bin` and `gates_negative_u16.bin` are resolved from 
 
 ## Packaging boundary
 
-`npm pack` intentionally includes the query/HTTP runtime, the two published OpenAPI documents, the
-three rolling cache files plus their index, the cache loader/validator and Venus boundary model, the exact
-ten-file native runtime source closure, both gate-corpus binaries, and the exact-runtime build scripts. It excludes
-API schemas/examples/tests, cache-generation helpers, research/benchmark source variants, GitHub workflows,
-repository repair artifacts, benchmark result directories, and every `HANDOFF_*` file.
+`npm pack` intentionally includes the query/HTTP runtime, the two published OpenAPI documents and
+their complete JSON Schema reference closure, the three rolling cache files plus their index, the
+cache loader/validator and Venus boundary model, the exact ten-file native runtime source closure,
+both gate-corpus binaries, and the exact-runtime build scripts. It excludes API examples/tests,
+cache-generation helpers, research/benchmark source variants, GitHub workflows, repository repair
+artifacts, benchmark result directories, and every `HANDOFF_*` file.
 
 The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches
 missing package files and deep relative-import assumptions that repository-local tests cannot catch.
