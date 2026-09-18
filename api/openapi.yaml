@@ -1,9 +1,10 @@
 openapi: 3.1.0
 info:
   title: Pastafarian Calendar Seer API
-  version: 1.0.0-draft
-  description: User-facing v1 contract. The calendar definition itself is normative; implementation details are
-    intentionally absent from ordinary date responses. Reverse conversion is available at POST /v1/reverse for a complete canonical Pastafarian tuple.
+  version: 1.0.0
+  description: User-facing v1 contract. The calendar definition itself is normative; implementation details are intentionally
+    absent from ordinary date responses. Reverse conversion is available at POST /v1/reverse for a complete canonical Pastafarian
+    tuple.
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 servers:
 - url: /
@@ -44,7 +45,8 @@ paths:
         name: locale
         in: query
         required: false
-        description: BCP 47 locale code. Missing defaults to en for full presentation; canonical presentation ignores locale. Discover supported codes at /v1/locales.
+        description: BCP 47 locale code. Missing defaults to en for full presentation; canonical presentation ignores locale.
+          Discover supported codes at /v1/locales.
         schema:
           type: string
       - &id007
@@ -79,7 +81,7 @@ paths:
               schema:
                 $ref: ./schemas/error-response.schema.json
         '406': &id010
-          description: Requested active locale is unsupported
+          description: Requested response representation or active locale is not acceptable
           content: *id001
         '422': &id011
           description: Semantically invalid request
@@ -110,7 +112,7 @@ paths:
         description: Target offset from calculation day.
         schema:
           $ref: ./schemas/exact-integer.schema.json
-      - &id013
+      - &id015
         name: calculationAt
         in: query
         required: false
@@ -118,7 +120,7 @@ paths:
         schema:
           type: string
           format: date-time
-      - &id014
+      - &id016
         name: calculationJdn
         in: query
         required: false
@@ -162,6 +164,12 @@ paths:
         '406': *id010
         '422': *id011
         '503': *id012
+        '415': &id014
+          description: 'POST requests require Content-Type: application/json'
+          content: *id001
+        '413': &id013
+          description: Request body or operation exceeds the configured limit
+          content: *id001
   /v1/batch:
     post:
       summary: Resolve multiple independent date queries using one captured request instant
@@ -179,10 +187,10 @@ paths:
               schema:
                 $ref: ./schemas/batch-response.schema.json
         '400': *id009
-        '413':
-          description: Batch exceeds deployment limit
-          content: *id001
+        '413': *id013
         '503': *id012
+        '415': *id014
+        '406': *id010
   /v1/range:
     post:
       summary: Resolve a deterministic sequence of target days
@@ -212,6 +220,7 @@ paths:
           content: *id001
         '422': *id011
         '503': *id012
+        '415': *id014
   /v1/year/{year}:
     get:
       summary: Get the Pastafarian structure of a year under a resolved calculation day
@@ -221,8 +230,8 @@ paths:
         required: true
         schema:
           $ref: ./schemas/exact-integer.schema.json
-      - *id013
-      - *id014
+      - *id015
+      - *id016
       - *id002
       - *id003
       - *id004
@@ -244,7 +253,8 @@ paths:
   /v1/reverse:
     post:
       summary: Reverse a complete Pastafarian date to its target day
-      description: The calculation day remains independent. Supply year plus both canonical cutlet/day and month/day coordinates; both coordinate systems must identify the same day.
+      description: The calculation day remains independent. Supply year plus both canonical cutlet/day and month/day coordinates;
+        both coordinate systems must identify the same day.
       requestBody:
         required: true
         content:
@@ -282,6 +292,8 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+        '415': *id014
+        '413': *id013
   /v1/calculation-day:
     get:
       summary: Resolve the active calculation day
@@ -319,6 +331,8 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/locales-response.schema.json
+        '400': *id009
+        '406': *id010
   /v1/meta:
     get:
       summary: Describe v1 capabilities
@@ -329,6 +343,8 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/meta-response.schema.json
+        '400': *id009
+        '406': *id010
   /v1/status:
     get:
       summary: Service readiness
@@ -345,18 +361,43 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/status-response.schema.json
+        '400': *id009
+        '406': *id010
   /openapi.json:
     get:
       summary: OpenAPI contract in JSON
       responses:
         '200':
           description: OpenAPI 3.1 document
+        '400': *id009
   /openapi.yaml:
     get:
       summary: OpenAPI contract in YAML
       responses:
         '200':
           description: OpenAPI 3.1 document
+        '400': *id009
+  /schemas/{schema}:
+    get:
+      summary: Referenced public JSON Schema
+      parameters:
+      - name: schema
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9.-]+\.schema\.json$
+      responses:
+        '200':
+          description: JSON Schema document
+          content:
+            application/json:
+              schema:
+                type: object
+        '400': *id009
+        '404':
+          description: Referenced public schema was not found
+          content: *id001
 x-seer-semantics:
   defaultObserver: kisurra
   defaultLocale: en
@@ -384,6 +425,5 @@ x-seer-semantics:
   - resolve-defaults
   - calculate
   - present
-
 x-locale-pack-schema:
   $ref: ./schemas/locale-pack.schema.json

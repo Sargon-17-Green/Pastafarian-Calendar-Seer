@@ -4,6 +4,8 @@
 
 The **Seer** is a high-performance engine and public API for the Pastafarian Calendar. It exposes the calendar through a stable Node API, browser/remote HTTP client, CLI, HTTP v1 service, OpenAPI contract, and verified Linux container deployment on amd64 and ARM64.
 
+[Hosted Public API architecture and production contract](docs/PUBLIC_API_ARCHITECTURE.md) defines the authority boundary for a future hosted public HTTPS service. It is a pre-launch contract, not a claim that a production endpoint is already live.
+
 The Seer is **not normative**. The current Scroll defines the calendar; if the Seer disagrees with it, the Seer is wrong. The Seer is deliberately allowed to use precomputation, algebraic shortcuts, specialized integer representations, SIMD, and other optimizations instead of reenacting the Monster's liturgy.
 
 ## Install

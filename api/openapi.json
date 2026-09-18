@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Pastafarian Calendar Seer API",
-    "version": "1.0.0-draft",
+    "version": "1.0.0",
     "description": "User-facing v1 contract. The calendar definition itself is normative; implementation details are intentionally absent from ordinary date responses. Reverse conversion is available at POST /v1/reverse for a complete canonical Pastafarian tuple."
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -105,7 +105,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -275,7 +275,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -340,7 +340,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -361,6 +361,26 @@
           },
           "503": {
             "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -407,7 +427,7 @@
             }
           },
           "413": {
-            "description": "Batch exceeds deployment limit",
+            "description": "Request body or operation exceeds the configured limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -418,6 +438,26 @@
           },
           "503": {
             "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -474,7 +514,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -505,6 +545,16 @@
           },
           "503": {
             "description": "Seer cannot currently guarantee a correct answer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
             "content": {
               "application/json": {
                 "schema": {
@@ -634,7 +684,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -730,6 +780,26 @@
                 }
               }
             }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
           }
         }
       }
@@ -812,7 +882,7 @@
             }
           },
           "406": {
-            "description": "Requested active locale is unsupported",
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -857,6 +927,26 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
           }
         }
       }
@@ -871,6 +961,26 @@
               "application/json": {
                 "schema": {
                   "$ref": "./schemas/meta-response.schema.json"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
                 }
               }
             }
@@ -901,6 +1011,26 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
           }
         }
       }
@@ -911,6 +1041,16 @@
         "responses": {
           "200": {
             "description": "OpenAPI 3.1 document"
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
           }
         }
       }
@@ -921,6 +1061,64 @@
         "responses": {
           "200": {
             "description": "OpenAPI 3.1 document"
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/schemas/{schema}": {
+      "get": {
+        "summary": "Referenced public JSON Schema",
+        "parameters": [
+          {
+            "name": "schema",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9.-]+\\.schema\\.json$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON Schema document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced public schema was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
           }
         }
       }

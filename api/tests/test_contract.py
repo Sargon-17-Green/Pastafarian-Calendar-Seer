@@ -340,8 +340,25 @@ def check_openapi():
     y=yaml.safe_load((API/"openapi.yaml").read_text(encoding="utf-8"))
     if j != y: raise AssertionError("openapi.json and openapi.yaml differ")
     if j.get("openapi") != "3.1.0": raise AssertionError("OpenAPI version is not 3.1.0")
-    required={"/v1/now","/v1/date","/v1/batch","/v1/range","/v1/reverse","/v1/year/{year}","/v1/calculation-day","/v1/locales","/v1/meta","/v1/status","/openapi.json","/openapi.yaml"}
+    required={"/v1/now","/v1/date","/v1/batch","/v1/range","/v1/reverse","/v1/year/{year}","/v1/calculation-day","/v1/locales","/v1/meta","/v1/status","/openapi.json","/openapi.yaml","/schemas/{schema}"}
     if set(j.get("paths",{})) != required: raise AssertionError("OpenAPI path set mismatch")
+    if j.get("info",{}).get("version") != "1.0.0": raise AssertionError("OpenAPI public v1 contract version mismatch")
+    expected_transport = {
+        ("/v1/date","post"): {"413","415"},
+        ("/v1/batch","post"): {"406","413","415"},
+        ("/v1/range","post"): {"406","413","415"},
+        ("/v1/reverse","post"): {"406","413","415"},
+        ("/v1/locales","get"): {"400","406"},
+        ("/v1/meta","get"): {"400","406"},
+        ("/v1/status","get"): {"400","406"},
+        ("/openapi.json","get"): {"400"},
+        ("/openapi.yaml","get"): {"400"},
+        ("/schemas/{schema}","get"): {"200","400","404"},
+    }
+    for (route, method), statuses in expected_transport.items():
+        actual = set(j["paths"][route][method].get("responses",{}))
+        if not statuses <= actual:
+            raise AssertionError(f"OpenAPI transport response drift for {method.upper()} {route}: missing {sorted(statuses-actual)}")
     # Every external schema ref in OpenAPI must exist locally.
     text=json.dumps(j)
     for rel in re.findall(r'\.\/schemas\/([A-Za-z0-9.-]+\.schema\.json)', text):
