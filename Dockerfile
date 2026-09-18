@@ -7,7 +7,8 @@ RUN set -eux; \
     mv "$tgz" /tmp/seer.tgz
 
 FROM node:24-bookworm-slim AS build
-RUN test "$(uname -m)" = "x86_64"
+ARG TARGETARCH
+RUN case "$TARGETARCH" in amd64|arm64) ;; *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 2 ;; esac
 RUN apt-get update \
     && apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -16,7 +17,7 @@ COPY --from=package /tmp/seer.tgz /tmp/seer.tgz
 RUN npm init -y >/dev/null \
     && npm install --omit=dev --ignore-scripts /tmp/seer.tgz \
     && cd node_modules/pastafarian-calendar-seer \
-    && SEER_RNS_BACKEND=portable SEER_MARCH=x86-64 npm run build:native \
+    && SEER_ARCH="$TARGETARCH" SEER_RNS_BACKEND=portable npm run build:native \
     && npm test \
     && npm run validate:cache
 
