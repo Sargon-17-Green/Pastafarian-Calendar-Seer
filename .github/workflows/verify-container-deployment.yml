@@ -171,13 +171,34 @@ jobs:
           python - <<'PY'
           import json, tarfile
           archive='/tmp/seer-multiarch.oci'
+
           with tarfile.open(archive) as tf:
-              index=json.load(tf.extractfile('index.json'))
-          platforms={
-              (m.get('platform') or {}).get('os','') + '/' +
-              (m.get('platform') or {}).get('architecture','')
-              for m in index.get('manifests', [])
-          }
+              root=json.load(tf.extractfile('index.json'))
+              seen=set()
+              platforms=set()
+
+              def load_descriptor(descriptor):
+                  platform=descriptor.get('platform') or {}
+                  os_name=platform.get('os')
+                  arch=platform.get('architecture')
+                  if os_name and arch:
+                      platforms.add(f'{os_name}/{arch}')
+
+                  digest=descriptor.get('digest', '')
+                  if not digest.startswith('sha256:') or digest in seen:
+                      return
+                  seen.add(digest)
+                  member='blobs/sha256/' + digest.split(':', 1)[1]
+                  try:
+                      payload=json.load(tf.extractfile(member))
+                  except (KeyError, TypeError, json.JSONDecodeError):
+                      return
+                  for child in payload.get('manifests', []):
+                      load_descriptor(child)
+
+              for descriptor in root.get('manifests', []):
+                  load_descriptor(descriptor)
+
           assert 'linux/amd64' in platforms, platforms
           assert 'linux/arm64' in platforms, platforms
           print('multi-architecture OCI index PASS', sorted(platforms))

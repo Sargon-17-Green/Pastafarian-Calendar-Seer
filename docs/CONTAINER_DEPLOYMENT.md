@@ -2,14 +2,15 @@
 
 The repository provides a multi-stage Docker build for the public HTTP v1 service.
 
-The image is deliberately built with the exact **portable** RNS backend and a generic x86-64 code-generation target:
+The image is deliberately built with the exact **portable** RNS backend on both supported Linux container architectures. BuildKit supplies `TARGETARCH`, which is mapped to the explicit native build policy:
 
 ```text
+linux/amd64 -> SEER_ARCH=amd64 -> -march=x86-64
+linux/arm64 -> SEER_ARCH=arm64 -> -march=armv8-a
 SEER_RNS_BACKEND=portable
-SEER_MARCH=x86-64
 ```
 
-This avoids baking the GitHub runner or build host's CPU-specific `-march=native` instructions into a distributable image. Ordinary local native builds still default to `SEER_MARCH=native`.
+This avoids baking the build host's CPU-specific `-march=native` instructions into a distributable image. Ordinary local Linux builds still default to `SEER_ARCH=auto` and `SEER_MARCH=native`.
 
 ## Build
 
@@ -42,10 +43,12 @@ The web application is copied into the image separately from the npm package. Th
 
 The image healthcheck calls `GET /v1/status` on the loopback interface.
 
-The repository workflow `Verify container deployment` additionally performs an exact HTTP request whose calculation JDN is after the Seer Foundation while its target JDN is before it. This forces the packaged persistent service through the historical negative-gate domain and verifies that the container is not merely serving the rolling cache.
+The repository workflow `Verify container deployment` runs this smoke natively on both `linux/amd64` and `linux/arm64`. It performs an exact HTTP request whose calculation JDN is after the Seer Foundation while its target JDN is before it, then verifies reverse conversion and the corresponding year structure. This forces the packaged persistent service through the historical negative-gate domain and verifies that the container is not merely serving the rolling cache.
 
 The canonical Seer Foundation JDN used by that smoke test remains `-13334246`; this is the JDN axis and is distinct from the calendar's other linear day axis.
 
 ## Architecture
 
-The current container is an **x86-64 Linux** deployment artifact. The portable RNS backend means “no AVX2 requirement”; it does not imply a multi-architecture native build. ARM64 support would require separately validating all native C++ build assumptions and exact-runtime behavior.
+The verified container architectures are **linux/amd64** and **linux/arm64**. ARM64 uses the portable scalar RNS backend; the AVX2 backend remains x86-only. CI builds and runs each architecture on a native GitHub-hosted runner, and separately builds an OCI multi-architecture layout containing both platforms. QEMU is used only for the supplementary combined Buildx layout, not as the evidence for ARM64 runtime correctness.
+
+The ARM64 path is checked against the same canonical architecture fixture as amd64, including positive and historical negative-gate cases, reverse conversion, range queries, year structure, typed domain errors, and persistent-service reuse. Performance numbers are informational only; ARM64 support is a correctness guarantee, not a claim that the portable backend matches AVX2 throughput.

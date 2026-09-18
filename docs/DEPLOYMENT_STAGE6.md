@@ -2,8 +2,8 @@
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
-Its npm metadata declares Node `>=20` without an install-time OS/CPU gate, so the browser HTTP client can be installed on ordinary browser-development hosts. The exact native runtime remains supported on x64 Linux/WSL and x64 Windows; `npm run build:native` rejects unsupported native platforms explicitly, detects AVX2 on supported hosts, and otherwise selects the exact portable scalar RNS backend.
-Linux shell builds accept `SEER_MARCH` and default it to `native`. Use a generic target such as `SEER_MARCH=x86-64` only when producing a binary intended to move between x86-64 hosts; the verified container path does exactly this together with `SEER_RNS_BACKEND=portable`. See `CONTAINER_DEPLOYMENT.md`.
+Its npm metadata declares Node `>=20` without an install-time OS/CPU gate, so the browser HTTP client can be installed on ordinary browser-development hosts. The exact native runtime is verified on x64 Linux/WSL, ARM64 Linux, and x64 Windows. `npm run build:native` rejects unsupported native platforms explicitly; Windows ARM64 and macOS native exact-runtime support are not implied by the browser-safe package.
+Linux shell builds accept `SEER_ARCH`, `SEER_MARCH`, and `SEER_RNS_BACKEND`. `SEER_ARCH=auto` preserves the ordinary local `SEER_MARCH=native` behavior. Explicit `SEER_ARCH=amd64` defaults to the generic `x86-64` baseline, while `SEER_ARCH=arm64` defaults to `armv8-a` and requires the portable RNS backend. The verified container uses these explicit generic policies. See `CONTAINER_DEPLOYMENT.md`.
 
 ## Node application API
 
@@ -80,7 +80,7 @@ PowerShell and `g++`; the supported setup is MSYS2 UCRT64 with `mingw-w64-ucrt-x
 `mingw-w64-ucrt-x86_64-gmp`, and `mingw-w64-ucrt-x86_64-boost`. The UCRT64 `bin` directory must be on
 `PATH` while the generated executables run, so their GMP/GCC/OpenMP runtime DLLs are resolvable.
 
-Both build paths select AVX2 automatically when the CPU exposes it and otherwise compile the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend; forcing AVX2 on an unsupported CPU fails explicitly. The Windows dispatcher honors `CXX` for a specific compiler and `SEER_POWERSHELL` for a non-default PowerShell executable.
+On amd64 Linux and x64 Windows, automatic backend selection uses AVX2 when the host exposes it and otherwise compiles the exact portable scalar RNS backend. On ARM64 Linux, the exact runtime uses the portable backend; AVX2 is rejected as an x86-only request. Set `SEER_RNS_BACKEND=portable` to force the portable path on supported hosts. The Windows dispatcher honors `CXX` for a specific compiler and `SEER_POWERSHELL` for a non-default PowerShell executable.
 
 This builds, in the package's `prototype/build/` directory (`.exe` suffix on Windows):
 
@@ -89,7 +89,7 @@ This builds, in the package's `prototype/build/` directory (`.exe` suffix on Win
 - `seer_year_structure`;
 - `seer_engine_service`.
 
-The build does not download runtime JavaScript dependencies and does not alter API data.
+The build does not download runtime JavaScript dependencies and does not alter API data. ARM64 CI additionally installs the packed npm tarball in a clean consumer, rebuilds all four exact-runtime binaries there, and compares canonical date/range/year/reverse/error snapshots against amd64.
 
 ## Installed-package self-test
 
