@@ -81,9 +81,10 @@ const answer = await seer.queryDate({ target: { gregorian: '2026-09-18' } });
 Pass an empty base URL for same-origin browser use. The client depends only on the standard `fetch`,
 `Response`, and `URLSearchParams` web APIs and does not import Node built-ins.
 The npm package is not OS/CPU-gated for this use; only `npm run build:native` is restricted to the supported x64 Linux/WSL and x64 Windows native-runtime hosts.
+A verified x86-64 Linux container path is documented in `docs/CONTAINER_DEPLOYMENT.md`; it uses the portable backend with `SEER_MARCH=x86-64` rather than inheriting the build host's CPU.
 
 Exact out-of-cache operation requires the native runtime. On a supported Linux/WSL deployment run
-`npm run build:native`; the build selects AVX2 when available and otherwise uses the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend, and set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
+`npm run build:native`; the build selects AVX2 when available and otherwise uses the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend. Linux builds also accept `SEER_MARCH` (default `native`) so distributable builds can use a generic CPU target. Set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
 
 ## Build and conformance
 

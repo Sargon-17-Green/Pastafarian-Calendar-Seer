@@ -47,7 +47,9 @@ export async function sha256EngineInputs({ sourceDir, sourceFiles = ENGINE_SOURC
   hash.update('seer-engine-inputs-v4\0');
   for (const name of [...sourceFiles].sort((a, b) => a.localeCompare(b, 'en'))) {
     hash.update(`source/${name}`); hash.update('\0');
-    hash.update(await readFile(path.join(sourceDir, name))); hash.update('\0');
+    const sourceBytes = await readFile(path.join(sourceDir, name));
+    const canonicalSource = Buffer.from(sourceBytes.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+    hash.update(canonicalSource); hash.update('\0');
   }
   for (const [label, filePath] of Object.entries(dataFiles).sort(([a], [b]) => a.localeCompare(b, 'en'))) {
     hash.update(`data/${label}`); hash.update('\0');

@@ -1,0 +1,36 @@
+FROM node:24-bookworm-slim AS package
+WORKDIR /src
+COPY . .
+RUN set -eux; \
+    tgz="$(npm pack --silent)"; \
+    test -n "$tgz"; \
+    mv "$tgz" /tmp/seer.tgz
+
+FROM node:24-bookworm-slim AS build
+RUN test "$(uname -m)" = "x86_64"
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/seer
+COPY --from=package /tmp/seer.tgz /tmp/seer.tgz
+RUN npm init -y >/dev/null \
+    && npm install --omit=dev --ignore-scripts /tmp/seer.tgz \
+    && cd node_modules/pastafarian-calendar-seer \
+    && SEER_RNS_BACKEND=portable SEER_MARCH=x86-64 npm run build:native \
+    && npm test \
+    && npm run validate:cache
+
+FROM node:24-bookworm-slim AS runtime
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgmp10 libgmpxx4ldbl libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /opt/seer
+COPY --from=build --chown=node:node /opt/seer /opt/seer
+ENV HOST=0.0.0.0 \
+    PORT=8080 \
+    SEER_REQUIRE_ENGINE_SERVICE=1
+USER node
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:8080/v1/status').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+CMD ["node", "node_modules/pastafarian-calendar-seer/http/server.mjs"]

@@ -1,0 +1,104 @@
+name: Verify container deployment
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'api/**'
+      - 'client/**'
+      - 'generated/**'
+      - 'http/**'
+      - 'precompute/**'
+      - 'query/**'
+      - 'prototype/data/**'
+      - 'prototype/src/**'
+      - 'prototype/scripts/build_*.sh'
+      - 'scripts/build-runtime.sh'
+      - '.github/workflows/verify-container-deployment.yml'
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'api/**'
+      - 'client/**'
+      - 'generated/**'
+      - 'http/**'
+      - 'precompute/**'
+      - 'query/**'
+      - 'prototype/data/**'
+      - 'prototype/src/**'
+      - 'prototype/scripts/build_*.sh'
+      - 'scripts/build-runtime.sh'
+      - '.github/workflows/verify-container-deployment.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Build generic portable image
+        run: docker build --pull --tag pastafarian-seer:ci .
+
+      - name: Inspect image contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect pastafarian-seer:ci --format '{{.Config.User}}')" = "node"
+          docker image inspect pastafarian-seer:ci --format '{{json .Config.Healthcheck.Test}}' | grep -q '/v1/status'
+          docker image inspect pastafarian-seer:ci --format '{{json .Config.Env}}' | grep -q 'SEER_REQUIRE_ENGINE_SERVICE=1'
+
+      - name: HTTP and negative-domain smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name seer-container -p 18080:8080 pastafarian-seer:ci
+          cleanup() {
+            docker logs seer-container || true
+            docker rm -f seer-container >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          ready=0
+          for _ in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:18080/v1/status >/tmp/seer-status.json; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/seer-status.json', encoding='utf-8'))
+          assert x['status'] == 'ok', x
+          print('container status PASS')
+          PY
+
+          test "$(docker exec seer-container id -u)" != "0"
+
+          curl -fsS \
+            -H 'content-type: application/json' \
+            -H 'accept: application/json' \
+            --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}' \
+            http://127.0.0.1:18080/v1/date >/tmp/seer-negative.json
+
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/seer-negative.json', encoding='utf-8'))
+          assert x['calculationDay']['jdn'] == '-13334146', x
+          assert x['targetDay']['jdn'] == '-13337246', x
+          pf=x['pastafarianDate']
+          assert isinstance(pf['year'], str)
+          assert 1 <= pf['cutlet']['canonicalIndex'] <= 17
+          assert 1 <= pf['month']['canonicalIndex'] <= 47
+          print('container negative-domain exact query PASS', pf['year'])
+          PY

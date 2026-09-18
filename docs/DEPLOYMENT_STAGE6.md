@@ -3,6 +3,7 @@
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
 Its npm metadata declares Node `>=20` without an install-time OS/CPU gate, so the browser HTTP client can be installed on ordinary browser-development hosts. The exact native runtime remains supported on x64 Linux/WSL and x64 Windows; `npm run build:native` rejects unsupported native platforms explicitly, detects AVX2 on supported hosts, and otherwise selects the exact portable scalar RNS backend.
+Linux shell builds accept `SEER_MARCH` and default it to `native`. Use a generic target such as `SEER_MARCH=x86-64` only when producing a binary intended to move between x86-64 hosts; the verified container path does exactly this together with `SEER_RNS_BACKEND=portable`. See `CONTAINER_DEPLOYMENT.md`.
 
 ## Node application API
 

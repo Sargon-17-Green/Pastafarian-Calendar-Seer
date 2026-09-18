@@ -27,6 +27,13 @@ test('engine fingerprint includes both gate corpora deterministically', async ()
     const a = await sha256EngineInputs(opts);
     const b = await sha256EngineInputs({ sourceDir: src, sourceFiles: ['engine.cpp'], dataFiles: { negativeGates: negative, positiveGates: positive } });
     assert.equal(a, b);
+
+    await writeFile(path.join(src, 'engine.cpp'), 'int main() {\r\n  return 0;\r\n}\r\n');
+    const crlf = await sha256EngineInputs(opts);
+    await writeFile(path.join(src, 'engine.cpp'), 'int main() {\n  return 0;\n}\n');
+    const lf = await sha256EngineInputs(opts);
+    assert.equal(crlf, lf, 'engine source fingerprint must be line-ending neutral');
+    await writeFile(path.join(src, 'engine.cpp'), 'engine-v1\n');
     await writeFile(negative, Buffer.from([4, 5, 7]));
     const c = await sha256EngineInputs(opts);
     assert.notEqual(c, a);
