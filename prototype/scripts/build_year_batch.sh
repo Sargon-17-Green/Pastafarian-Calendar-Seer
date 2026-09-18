@@ -57,5 +57,5 @@ else
 fi
 BACKEND_FLAGS=()
 if [[ "$BACKEND" == portable ]]; then BACKEND_FLAGS=(-DSEER_USE_PORTABLE_RNS=1); else BACKEND_FLAGS=(-mavx2); fi
-"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" "$ROOT/src/pastafarian_year_batch.cpp" -lgmpxx -lgmp -o "$ROOT/build/seer_year_batch"
+"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" -Wno-return-type "$ROOT/src/pastafarian_year_batch.cpp" -lgmpxx -lgmp -o "$ROOT/build/seer_year_batch"
 echo "Built $ROOT/build/seer_year_batch (arch: $EFFECTIVE_ARCH; RNS backend: $BACKEND; march: $MARCH)"
