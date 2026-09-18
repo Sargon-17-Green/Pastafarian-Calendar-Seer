@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
         const int replayThreads = argc > 6 ? atoi(argv[6]) : threads;
         if (threads < 1 || replayThreads < 1 || sb < 1) throw std::runtime_error("invalid execution parameters");
 
-        FGates G("gates_u16.bin");
+        FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
         auto S = fast_stones();
         FY y = fanchor(calc, G, S);
         while (y.num < requested) y = fadj(calc, G, S, y, true);

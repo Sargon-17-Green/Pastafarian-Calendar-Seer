@@ -115,7 +115,7 @@ not silently fall back to one-process-per-call exact executables.
 Advanced deployments may override binary locations with the existing environment variables
 `SEER_ENGINE_SERVICE_BIN`, `SEER_YEAR_BATCH_BIN`, `SEER_YEAR_LOCATOR_BIN`, and
 `SEER_YEAR_STRUCTURE_BIN`. The native data directory remains the packaged `prototype/data` by
-default, so both `gates_u16.bin` and `gates_negative_u16.bin` are resolved from the packaged data directory.
+default. Production resolves `gates_100k_u16.bin` and `gates_negative_100k_u16.bin`; the historical 40k files remain packaged as immutable provenance/compatibility fixtures.
 
 ## Packaging boundary
 
@@ -124,7 +124,7 @@ their complete JSON Schema reference closure, the three rolling cache files plus
 cache loader/validator and Venus boundary model, the exact ten-file native runtime source closure,
 both gate-corpus binaries, and the exact-runtime build scripts. It excludes API examples/tests,
 cache-generation helpers, research/benchmark source variants, GitHub workflows, repository repair
-artifacts, benchmark result directories, and every `HANDOFF_*` file.
+artifacts, benchmark result directories, and every `HANDOFF_*` file. The package includes both historical 40k gate corpora and the two production 100k corpora; see `GATE_DOMAIN_EXTENSION.md`.
 
 The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches
 missing package files and deep relative-import assumptions that repository-local tests cannot catch.

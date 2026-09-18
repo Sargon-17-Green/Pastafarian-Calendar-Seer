@@ -32,7 +32,7 @@ async function canonicalCalc() {
 }
 
 async function lowerGateDay() {
-  const bytes = await readFile(path.join(dataDir, 'gates_negative_u16.bin'));
+  const bytes = await readFile(path.join(dataDir, 'gates_negative_100k_u16.bin'));
   let sum = 0;
   for (let i = 0; i < bytes.length; i += 2) sum += bytes.readUInt16LE(i);
   return -13_334_246 - sum;

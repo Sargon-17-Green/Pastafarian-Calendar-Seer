@@ -349,7 +349,7 @@ class SeerEngineService {
 
 public:
     SeerEngineService()
-        : gates_("gates_u16.bin"),
+        : gates_("gates_100k_u16.bin", "gates_negative_100k_u16.bin"),
           stones_(fast_stones()),
           maxCalcs_(svc_env_limit("SEER_SERVICE_MAX_CALCS", 8, 1, 64)) {}
 

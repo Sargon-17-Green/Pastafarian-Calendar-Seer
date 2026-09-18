@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
         }
         const int64_t calc = std::stoll(argv[1]);
         const long long requested = std::stoll(argv[2]);
-        FGates G("gates_u16.bin");
+        FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
         auto S = fast_stones();
         FY y = fanchor(calc, G, S);
         while (y.num < requested) y = fadj(calc, G, S, y, true);

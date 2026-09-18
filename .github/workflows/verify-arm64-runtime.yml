@@ -54,6 +54,14 @@ jobs:
           g++ -O2 -std=c++20 -Iprototype/tools             prototype/tools/canonical_vector_oracle.cpp             -o prototype/build/canonical_vector_oracle
       - name: Positive and negative oracle parity
         run: python prototype/scripts/check_bidirectional_domain.py
+      - name: Extended 100k gate-domain exactness
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -O2 -std=c++20 -Iprototype/src prototype/tools/gate_domain_extension_probe.cpp -o prototype/build/gate_domain_extension_probe
+          (cd prototype/data && ../build/gate_domain_extension_probe)
+          python prototype/scripts/check_gate_domain_extension.py
+          python prototype/scripts/check_gate_domain_differential.py
       - name: Persistent service, typed errors and reverse
         env:
           SEER_REQUIRE_ENGINE_SERVICE: '1'

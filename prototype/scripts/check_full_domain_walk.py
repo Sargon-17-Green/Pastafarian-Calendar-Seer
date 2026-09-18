@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import os
 import re
 import struct
 import subprocess
@@ -10,13 +11,18 @@ DATA = ROOT / 'data'
 BUILD = ROOT / 'build'
 POS = DATA / 'gates_u16.bin'
 NEG = DATA / 'gates_negative_u16.bin'
-FAST = BUILD / 'full_domain_fast_probe'
-REF = BUILD / 'full_domain_reference_probe'
-BATCH = BUILD / 'seer_year_batch'
-ORACLE = BUILD / 'canonical_vector_oracle'
+POS_EXT = DATA / 'gates_100k_u16.bin'
+NEG_EXT = DATA / 'gates_negative_100k_u16.bin'
+EXE_SUFFIX = '.exe' if os.name == 'nt' else ''
+FAST = BUILD / f'full_domain_fast_probe{EXE_SUFFIX}'
+REF = BUILD / f'full_domain_reference_probe{EXE_SUFFIX}'
+BATCH = BUILD / f'seer_year_batch{EXE_SUFFIX}'
+ORACLE = BUILD / f'canonical_vector_oracle{EXE_SUFFIX}'
 FOUNDATION = -13_334_246
 MIN_GATE = -40_000
 MAX_GATE = 40_000
+EXT_MIN_GATE = -100_000
+EXT_MAX_GATE = 100_000
 
 
 def run(args, *, check=True):
@@ -30,9 +36,14 @@ def tokens(text):
     return {k: int(v) for k, v in re.findall(r'([A-Za-z_]+)=(-?[0-9]+)', text)}
 
 
-def gate_positions():
-    positive = struct.unpack('<40000H', POS.read_bytes())
-    negative = struct.unpack('<40000H', NEG.read_bytes())
+def gate_positions(positive_path=POS, negative_path=NEG):
+    positive_bytes = positive_path.read_bytes()
+    negative_bytes = negative_path.read_bytes()
+    if len(positive_bytes) != len(negative_bytes) or len(positive_bytes) % 2:
+        raise AssertionError('positive/negative gate corpus size mismatch')
+    count = len(positive_bytes) // 2
+    positive = struct.unpack(f'<{count}H', positive_bytes)
+    negative = struct.unpack(f'<{count}H', negative_bytes)
     positions = {0: FOUNDATION}
     for n, gap in enumerate(negative, 1):
         positions[-n] = positions[-n + 1] - gap
@@ -102,7 +113,7 @@ def expect_outside(label, calc, target, needle):
 
 
 def main():
-    for required in (POS, NEG, FAST, REF, BATCH, ORACLE):
+    for required in (POS, NEG, POS_EXT, NEG_EXT, FAST, REF, BATCH, ORACLE):
         if not required.exists():
             raise SystemExit(f'missing required full-domain input: {required}')
     positions = gate_positions()
@@ -130,12 +141,14 @@ def main():
     last_target = foundation['last_b']
     compare_full_record('foundation-left-edge-record', FOUNDATION, first_target)
     compare_full_record('foundation-right-edge-record', FOUNDATION, last_target)
+    extended_positions = gate_positions(POS_EXT, NEG_EXT)
     expect_outside(
-        'foundation-one-day-before-left-edge', FOUNDATION, foundation['first_a'],
+        'foundation-at-extended-left-boundary', FOUNDATION, extended_positions[EXT_MIN_GATE],
         'no previous year in gate corpus',
     )
     expect_outside(
-        'foundation-one-day-after-right-edge', FOUNDATION, foundation['last_b'] + 1,
+        'foundation-one-day-after-extended-right-boundary', FOUNDATION,
+        extended_positions[EXT_MAX_GATE] + 1,
         'no next year in gate corpus',
     )
     print('Full finite gate-domain walking verification: PASS')

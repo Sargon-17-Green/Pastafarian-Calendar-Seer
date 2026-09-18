@@ -10,7 +10,7 @@ This document describes how release origin and artifact integrity are establishe
 
 `v0.1.4` added the verified ARM64/runtime and localization workstreams. Its GitHub Release is immutable at commit `e851014f84ff176ee3b44c7d3b8eadbb4c904ec0`; npm `0.1.4` has SLSA v1 provenance.
 
-`v0.1.5` is intentionally recorded as a **partial release**. Its tag is fixed at commit `91e6fdddccc2e86fdaea53dd22e3de8ace252132`. npm `0.1.5` was published with SLSA v1 provenance and the GHCR multi-architecture image was published and verified, but the final GitHub Release workflow stopped before creating release assets because the generated npm CycloneDX document did not carry an explicit release-version root component and the validator rejected it. The published npm and GHCR artifacts are not rewritten or removed; the complete hardened release continues as `v0.1.6`.
+`v0.1.5` is intentionally recorded as a **partial release**. Its tag is fixed at commit `91e6fdddccc2e86fdaea53dd22e3de8ace252132`. npm `0.1.5` was published with SLSA v1 provenance and the GHCR multi-architecture image was published and verified, but the final GitHub Release workflow stopped before creating release assets because the generated npm CycloneDX document did not carry an explicit release-version root component and the validator rejected it. The published npm and GHCR artifacts are not rewritten or removed. The next complete hardened release is `v0.2.0`, which also incorporates the independently verified extended gate-domain workstream.
 
 The repository is configured so that GitHub Releases are immutable once published. A published release's tag and assets must not be moved or replaced. If a published artifact is defective, publish a new patch version.
 

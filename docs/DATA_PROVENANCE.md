@@ -42,8 +42,22 @@ independent reference run in raw-mutant mode reproduces that exact historical di
 corrected saved-sum semantics, 39,956 of the 40,000 gap records differ. The old digest and any
 validation report based on it are archival evidence only, not a canonical baseline.
 
+## Extended production corpora
+
+The historical 40k files above remain byte-for-byte unchanged. Production additionally bundles:
+
+```text
+gates_100k_u16.bin
+SHA-256 4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8
+100,000 gaps; minimum 42; maximum 963; sum 50,163,029
+
+gates_negative_100k_u16.bin
+SHA-256 40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884
+100,000 gaps; minimum 42; maximum 963; sum 50,139,702
+```
+
+Each 100k corpus has the corresponding historical 40k corpus as an exact byte prefix. The generator's `--count` option reproduces either horizon. Because the gate definition is `choose(..., 922) + 41`, every canonical gap is in `42..963`; `u16` is therefore safe by definition rather than only by measurement.
+
 ## Scope
 
-The runtime now bundles separate positive and negative corpora and addresses gate indices `-40000..40000`.
-The files remain separate so the long-verified positive corpus stays byte-for-byte unchanged and each side
-has an independent provenance digest.
+The production runtime addresses gate indices `-100000..100000`. The four files remain separate so the historical 40k evidence stays immutable while each 100k direction has its own reproducible digest. See `GATE_DOMAIN_EXTENSION.md` for the legacy-boundary compatibility rule and verification matrix.

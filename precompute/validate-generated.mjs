@@ -13,8 +13,8 @@ if (!Array.isArray(index.caches) || index.caches.length !== 3) throw new Error('
 const expectedEngineFingerprint = await sha256EngineInputs({
   sourceDir: path.join(root, 'prototype', 'src'),
   dataFiles: {
-    positiveGates: path.join(root, 'prototype', 'data', 'gates_u16.bin'),
-    negativeGates: path.join(root, 'prototype', 'data', 'gates_negative_u16.bin'),
+    positiveGates: path.join(root, 'prototype', 'data', 'gates_100k_u16.bin'),
+    negativeGates: path.join(root, 'prototype', 'data', 'gates_negative_100k_u16.bin'),
   },
 });
 if (index.engineFingerprint !== expectedEngineFingerprint) throw new Error('generated cache engine fingerprint is stale');

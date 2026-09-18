@@ -150,6 +150,20 @@ jobs:
           print('container reverse/year PASS')
           PY
 
+          curl -fsS \
+            -H 'content-type: application/json' \
+            -H 'accept: application/json' \
+            --data '{"calculation":{"jdn":"6732954"},"target":{"jdn":"6732955"},"presentation":"canonical"}' \
+            http://127.0.0.1:18080/v1/date >/tmp/seer-extended.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/seer-extended.json', encoding='utf-8'))
+          assert x['calculationDay']['jdn'] == '6732954', x
+          assert x['targetDay']['jdn'] == '6732955', x
+          assert x['pastafarianDate']['year'] == '5001', x
+          print('container beyond-old-horizon exact query PASS')
+          PY
+
   multiarch-layout:
     name: Build multi-architecture OCI index
     needs: verify

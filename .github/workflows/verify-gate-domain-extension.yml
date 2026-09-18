@@ -1,0 +1,179 @@
+name: Verify gate domain extension 100k
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'prototype/data/gates_100k_u16.bin'
+      - 'prototype/data/gates_negative_100k_u16.bin'
+      - 'prototype/tools/generate_gates_saved_sum.cpp'
+      - 'prototype/tools/canonical_saved_sum_reference.hpp'
+      - 'prototype/tools/canonical_vector_oracle.cpp'
+      - 'prototype/tools/gate_domain_extension_probe.cpp'
+      - 'prototype/src/year_fast_bench_v12.cpp'
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/seer_year_locator.cpp'
+      - 'prototype/src/seer_year_structure.cpp'
+      - 'prototype/src/seer_engine_service.cpp'
+      - 'prototype/scripts/check_gate_domain_extension.py'
+      - 'prototype/scripts/check_gate_domain_differential.py'
+      - 'query/**'
+      - 'precompute/**'
+      - 'package.json'
+      - 'generated/**'
+      - '.github/workflows/verify-gate-domain-extension.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
+
+      - name: Reproduce legacy and extended corpora
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prototype/build prototype/results/domain-extension
+          g++ -O2 -std=c++20 -fopenmp -Iprototype/tools \
+            prototype/tools/generate_gates_saved_sum.cpp \
+            -o prototype/build/generate_gates_saved_sum
+          prototype/build/generate_gates_saved_sum prototype/results/domain-extension/positive-40k.bin
+          prototype/build/generate_gates_saved_sum prototype/results/domain-extension/negative-40k.bin --negative
+          cmp prototype/results/domain-extension/positive-40k.bin prototype/data/gates_u16.bin
+          cmp prototype/results/domain-extension/negative-40k.bin prototype/data/gates_negative_u16.bin
+          test "$(sha256sum prototype/results/domain-extension/positive-40k.bin | awk '{print $1}')" = '2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb'
+          test "$(sha256sum prototype/results/domain-extension/negative-40k.bin | awk '{print $1}')" = '90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab'
+          prototype/build/generate_gates_saved_sum prototype/results/domain-extension/positive-100k.bin --count 100000
+          prototype/build/generate_gates_saved_sum prototype/results/domain-extension/negative-100k.bin --negative --count 100000
+          cmp prototype/results/domain-extension/positive-100k.bin prototype/data/gates_100k_u16.bin
+          cmp prototype/results/domain-extension/negative-100k.bin prototype/data/gates_negative_100k_u16.bin
+          test "$(sha256sum prototype/results/domain-extension/positive-100k.bin | awk '{print $1}')" = '4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8'
+          test "$(sha256sum prototype/results/domain-extension/negative-100k.bin | awk '{print $1}')" = '40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884'
+
+      - name: Verify corpus overlap and fixed positions
+        run: python prototype/scripts/check_gate_domain_extension.py
+
+      - name: Build exact portable runtime
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+        run: npm run build:native
+
+      - name: Build independent oracle and gate lookup probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp -o prototype/build/canonical_vector_oracle
+          g++ -O2 -std=c++20 -Iprototype/src prototype/tools/gate_domain_extension_probe.cpp -o prototype/build/gate_domain_extension_probe
+          (cd prototype/data && ../build/gate_domain_extension_probe)
+
+      - name: Independent semantic differential
+        run: python prototype/scripts/check_gate_domain_differential.py
+
+      - name: Persistent service, reverse, year and range beyond old horizon
+        shell: bash
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+          SEER_TEST_SERVICE_SPAWN_COUNTER_FILE: /tmp/seer-domain-extension-spawns.txt
+        run: |
+          set -euo pipefail
+          rm -f "$SEER_TEST_SERVICE_SPAWN_COUNTER_FILE"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { queryDate, queryReverse, queryRange, queryYear } from './index.mjs';
+          const cases = [
+            ['old-to-first-positive', '6732954', '6732955'],
+            ['old-to-first-negative', '-33409716', '-33409717'],
+            ['first-positive', '6732955', '6732955'],
+            ['first-negative', '-33409717', '-33409717'],
+            ['far-positive', '11747270', '11747270'],
+            ['far-negative', '-38454152', '-38454152'],
+          ];
+          for (const [name, calculationJdn, targetJdn] of cases) {
+            const forward = await queryDate({ calculation: { jdn: calculationJdn }, target: { jdn: targetJdn }, presentation: 'canonical', include: ['structure'] });
+            const reverse = await queryReverse({ calculation: { jdn: calculationJdn }, pastafarianDate: forward.pastafarianDate, presentation: 'canonical' });
+            if (reverse.targetDay.jdn !== targetJdn) throw new Error(name + ': reverse mismatch');
+            const year = await queryYear(forward.pastafarianDate.year, { calculation: { jdn: calculationJdn }, presentation: 'canonical' });
+            const target = BigInt(targetJdn);
+            if (!(BigInt(year.year.startJdn) <= target && target <= BigInt(year.year.endJdn))) throw new Error(name + ': queryYear does not contain target');
+            const range = await queryRange({ calculation: { jdn: calculationJdn }, start: { jdn: targetJdn }, count: '3', presentation: 'canonical' });
+            if (range.results.length !== 3 || range.results[0].targetDay.jdn !== targetJdn) throw new Error(name + ': range mismatch');
+          }
+          const spawns = (await readFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, 'utf8')).split(/\r?\n/).filter(Boolean);
+          if (spawns.length !== 1) throw new Error('expected one persistent service spawn, got ' + spawns.length);
+          console.log('persistent extended-domain API PASS');
+          NODE
+
+      - name: HTTP query beyond old horizon
+        shell: bash
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          const httpApi = await import('./http/index.mjs');
+          const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
+          try {
+            const port = server.address().port;
+            for (const body of [
+              { calculation: { jdn: '6732954' }, target: { jdn: '6732955' }, presentation: 'canonical' },
+              { calculation: { jdn: '-33409716' }, target: { jdn: '-33409717' }, presentation: 'canonical' },
+            ]) {
+              const response = await fetch('http://127.0.0.1:' + port + '/v1/date', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) });
+              if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + await response.text());
+              const payload = await response.json();
+              if (payload.targetDay.jdn !== body.target.jdn) throw new Error('HTTP extended-domain target mismatch');
+            }
+          } finally {
+            await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+          }
+          console.log('HTTP extended-domain PASS');
+          NODE
+
+      - name: Repository and cache verification
+        run: |
+          npm test
+          npm run test:repo
+          npm run validate:cache
+
+      - name: Package boundary and installed exact runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACK_DIR="$RUNNER_TEMP/seer-domain-pack"
+          CONSUMER="$RUNNER_TEMP/seer-domain-consumer"
+          mkdir -p "$PACK_DIR" "$CONSUMER"
+          npm pack --dry-run --json
+          NAME="$(npm pack --pack-destination "$PACK_DIR" --silent)"
+          TGZ="$PACK_DIR/$NAME"
+          tar -tzf "$TGZ" > "$RUNNER_TEMP/seer-domain-files.txt"
+          for f in gates_u16.bin gates_negative_u16.bin gates_100k_u16.bin gates_negative_100k_u16.bin; do
+            grep -qx "package/prototype/data/$f" "$RUNNER_TEMP/seer-domain-files.txt"
+          done
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/' "$RUNNER_TEMP/seer-domain-files.txt"; then
+            echo 'repository-only material leaked into npm package' >&2
+            exit 1
+          fi
+          du -h "$TGZ"
+          cd "$CONSUMER"
+          npm init -y >/dev/null
+          npm install --ignore-scripts "$TGZ"
+          cd node_modules/pastafarian-calendar-seer
+          SEER_RNS_BACKEND=portable SEER_MARCH=x86-64 npm run build:native
+          SEER_REQUIRE_ENGINE_SERVICE=1 node --input-type=module <<'NODE'
+          import { queryDate } from './index.mjs';
+          for (const [calc, target] of [['6732954', '6732955'], ['-33409716', '-33409717']]) {
+            const result = await queryDate({ calculation: { jdn: calc }, target: { jdn: target }, presentation: 'canonical' });
+            if (result.targetDay.jdn !== target) throw new Error('installed package extended-domain mismatch');
+          }
+          console.log('installed package extended-domain PASS');
+          NODE

@@ -42,12 +42,7 @@ covered by an intermediate-state conformance test rather than inferred from fina
 
 ## Gate corpus
 
-`prototype/data/gates_u16.bin` stores 40,000 generated positive canonical gate gaps and
-`prototype/data/gates_negative_u16.bin` stores 40,000 generated negative canonical gate gaps.
-Their SHA-256 digests are respectively
-`2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb` and
-`90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
-Both corpora are reproducible from `prototype/tools/generate_gates_saved_sum.cpp`; see `DATA_PROVENANCE.md`.
+The historical 40,000-gap positive/negative corpora remain checked in unchanged as provenance fixtures. Production loads `prototype/data/gates_100k_u16.bin` and `prototype/data/gates_negative_100k_u16.bin`, covering gate indices `-100000..100000`. Their SHA-256 digests are respectively `4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8` and `40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884`. All four corpora are reproducible from `prototype/tools/generate_gates_saved_sum.cpp`; see `DATA_PROVENANCE.md` and `GATE_DOMAIN_EXTENSION.md`.
 
 ## Structure selection
 
@@ -64,4 +59,4 @@ machine. Only the prefix needed for the target day is materialized.
 ## Non-goals of the current prototype
 
 The benchmark core remains non-normative. The public Node/HTTP v1 layer is stable, while localization
-remain separate product work. Reverse conversion is now part of the shared query/HTTP layer and requires the complete canonical tuple. The bundled gate data now covers indices -40000..40000.
+remain separate product work. Reverse conversion is now part of the shared query/HTTP layer and requires the complete canonical tuple. The production gate data now covers indices -100000..100000 while preserving historical-domain outputs.

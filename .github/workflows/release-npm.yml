@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-supply-chain.yml verify-release-preflight.yml; do
+          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-supply-chain.yml verify-release-preflight.yml; do
             ok=0
             for _ in $(seq 1 120); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
@@ -121,7 +121,27 @@ jobs:
           set -euo pipefail
           TGZ="${{ steps.pack.outputs.tgz }}"
           tar -tzf "$TGZ" > "$RUNNER_TEMP/npm-package-files.txt"
-          for REQUIRED in             package/index.mjs             package/client/index.mjs             package/query/cli.mjs             package/query/locales/catalog.mjs             package/query/locales/en.mjs             package/query/locales/he.mjs             package/http/server.mjs             package/api/openapi.json             package/api/openapi.yaml             package/api/schemas/date-response.schema.json             package/api/schemas/locale-pack.schema.json             package/scripts/package-selftest.mjs             package/scripts/verify-release.mjs             package/docs/LOCALIZATION.md             package/docs/SUPPLY_CHAIN.md; do
+          for REQUIRED in \
+            package/index.mjs \
+            package/client/index.mjs \
+            package/query/cli.mjs \
+            package/query/locales/catalog.mjs \
+            package/query/locales/en.mjs \
+            package/query/locales/he.mjs \
+            package/http/server.mjs \
+            package/api/openapi.json \
+            package/api/openapi.yaml \
+            package/api/schemas/date-response.schema.json \
+            package/api/schemas/locale-pack.schema.json \
+            package/scripts/package-selftest.mjs \
+            package/scripts/verify-release.mjs \
+            package/docs/LOCALIZATION.md \
+            package/docs/SUPPLY_CHAIN.md \
+            package/docs/GATE_DOMAIN_EXTENSION.md \
+            package/prototype/data/gates_u16.bin \
+            package/prototype/data/gates_negative_u16.bin \
+            package/prototype/data/gates_100k_u16.bin \
+            package/prototype/data/gates_negative_100k_u16.bin; do
             grep -qx "$REQUIRED" "$RUNNER_TEMP/npm-package-files.txt"
           done
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/(deployment|examples)/|^package/api/(examples|tests)/|^package/(query|client|http|precompute)/test/' "$RUNNER_TEMP/npm-package-files.txt"; then

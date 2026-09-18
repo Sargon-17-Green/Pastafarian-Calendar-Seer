@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
+          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
             ok=0
             for _ in $(seq 1 120); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"

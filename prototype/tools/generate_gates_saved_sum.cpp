@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -22,12 +23,13 @@ static uint64_t choose_small(const reference::Trace& sauce, int bowl, uint64_t s
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2 || argc > 4) {
-        std::cerr << "usage: generate_gates_saved_sum OUTPUT [--negative] [--raw-mutant]\n";
+    if (argc < 2) {
+        std::cerr << "usage: generate_gates_saved_sum OUTPUT [--negative] [--raw-mutant] [--count N]\n";
         return 2;
     }
     bool negative = false;
     bool savedSum = true;
+    int count = 40000;
     for (int i = 2; i < argc; ++i) {
         const std::string arg = argv[i];
         if (arg == "--negative") {
@@ -36,21 +38,30 @@ int main(int argc, char** argv) {
         } else if (arg == "--raw-mutant") {
             if (!savedSum) { std::cerr << "duplicate --raw-mutant\n"; return 2; }
             savedSum = false;
+        } else if (arg == "--count") {
+            if (++i >= argc) { std::cerr << "--count requires a value\n"; return 2; }
+            try {
+                const long long parsed = std::stoll(argv[i]);
+                if (parsed < 1 || parsed > std::numeric_limits<int>::max()) throw std::out_of_range("count");
+                count = static_cast<int>(parsed);
+            } catch (...) {
+                std::cerr << "invalid --count value\n";
+                return 2;
+            }
         } else {
             std::cerr << "unknown option: " << arg << "\n";
             return 2;
         }
     }
 
-    constexpr int COUNT = 40000;
     constexpr int64_t F = reference::FOUNDATION;
     const int64_t direction = negative ? -1 : 1;
-    std::vector<uint16_t> gaps(COUNT);
+    std::vector<uint16_t> gaps(static_cast<size_t>(count));
 
     // Warm immutable reference tables before the OpenMP region.
     (void)reference::sauce(F, F + direction, savedSum);
     #pragma omp parallel for schedule(static)
-    for (int n = 1; n <= COUNT; ++n) {
+    for (int n = 1; n <= count; ++n) {
         const int64_t target = F + direction * static_cast<int64_t>(n);
         const auto sauce = reference::sauce(F, target, savedSum);
         const uint64_t gap = choose_small(sauce, 1, 1, 922) + 41;

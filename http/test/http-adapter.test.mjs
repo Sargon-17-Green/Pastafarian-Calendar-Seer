@@ -148,6 +148,11 @@ test('status probes the query provider and static endpoints are served', async (
     const meta = await fetch(`${base}/v1/meta`);
     const metaBody = await meta.json();
     assert.equal(metaBody.observerPresets[0].longitude, 45.481);
+    assert.deepEqual(metaBody.exactDomain, {
+      kind: 'finite',
+      minimumJdnExclusive: '-63473948',
+      maximumJdnInclusive: '36828783',
+    });
     assert.equal(metaBody.reverse.status, 'implemented');
     assert.equal(metaBody.reverse.endpoint, '/v1/reverse');
     const openapi = await fetch(`${base}/openapi.json`);

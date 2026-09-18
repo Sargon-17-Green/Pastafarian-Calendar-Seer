@@ -79,6 +79,8 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.equal(files.includes('precompute/*.mjs'), false);
   assert.ok(files.includes('prototype/data/gates_u16.bin'));
   assert.ok(files.includes('prototype/data/gates_negative_u16.bin'));
+  assert.ok(files.includes('prototype/data/gates_100k_u16.bin'));
+  assert.ok(files.includes('prototype/data/gates_negative_100k_u16.bin'));
   assert.equal(files.includes('prototype/data'), false);
   assert.equal(files.includes('prototype/src'), false);
   for (const source of runtimeSources) assert.ok(files.includes(source), source);
