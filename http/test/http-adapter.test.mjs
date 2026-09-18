@@ -28,7 +28,10 @@ function fakeApi(calls) {
     async queryRange(request, options) { calls.push(['range', request, options.now]); return { results: [dateResult()] }; },
     async queryReverse(request, options) { calls.push(['reverse', request, options.now]); return dateResult(); },
     async queryCalculationDay(request, options) { calls.push(['calculation-day', request, options.now]); return { at: options.now.toISOString(), jdn: '100', observer: { longitude: 45.481 } }; },
-    async queryYear(year, request, options) { calls.push(['year', year, request, options.now]); throw queryError('SEER_UNAVAILABLE', 'no year'); },
+    async queryYear(year, request, options) {
+      calls.push(['year', year, request, options.now]);
+      throw queryError('SEER_UNAVAILABLE', 'no year', { details: { provider: 'fixture' } });
+    },
   };
 }
 
@@ -173,6 +176,8 @@ test('OPTIONS, 404, 405, 406 and provider errors map cleanly', async () => {
     assert.equal(notAcceptable.status, 406);
     const year = await fetch(`${base}/v1/year/5000`);
     assert.equal(year.status, 503);
-    assert.equal((await year.json()).error.code, 'SEER_UNAVAILABLE');
+    const yearError = (await year.json()).error;
+    assert.equal(yearError.code, 'SEER_UNAVAILABLE');
+    assert.deepEqual(yearError.details, { provider: 'fixture' });
   });
 });

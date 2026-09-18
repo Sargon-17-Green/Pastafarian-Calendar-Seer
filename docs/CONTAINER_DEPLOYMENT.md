@@ -32,8 +32,11 @@ The image sets:
 - `HOST=0.0.0.0`
 - `PORT=8080`
 - `SEER_REQUIRE_ENGINE_SERVICE=1`
+- `SEER_WEB_ROOT=/opt/seer-web`
 
-The service therefore requires the persistent exact engine rather than silently operating as a cache-only deployment.
+The service therefore requires the persistent exact engine rather than silently operating as a cache-only deployment. It also serves the production static web application at `/web/` and redirects `/` there. `/v1/*`, `/openapi.*`, and `/schemas/*` keep their API behavior; there is no SPA fallback that can absorb those routes.
+
+The web application is copied into the image separately from the npm package. The npm tarball boundary remains unchanged.
 
 ## Health
 

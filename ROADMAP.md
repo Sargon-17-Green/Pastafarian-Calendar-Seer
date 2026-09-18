@@ -35,7 +35,8 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - installable Node package and persistent-service deployment path (API Stage 6);
    - reverse conversion for a complete canonical Pastafarian tuple;
    - browser/website integration foundation: dependency-free fetch client, CORS-capable HTTP API, and a no-build runnable browser example;
+   - production no-build web application with same-origin container and cross-origin static deployment paths;
    - reproducible x86-64 Linux container deployment with generic portable exact runtime and persistent-service smoke;
-   - remaining product work: additional locales and site-specific production UI integration.
+   - remaining product work: additional presentation locales and optional externally hosted production endpoints.
 
 A faster answer is useful only if it remains the same answer.

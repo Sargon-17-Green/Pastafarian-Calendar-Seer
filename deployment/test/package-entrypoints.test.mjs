@@ -67,6 +67,7 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.ok(files.includes('generated/calc/*.json'));
   assert.equal(files.includes('generated'), false);
   assert.ok(files.includes('client/*.mjs'));
+  assert.equal(files.some((entry) => entry === 'web' || entry.startsWith('web/')), false);
   assert.ok(files.includes('api/openapi.json'));
   assert.ok(files.includes('api/openapi.yaml'));
   assert.equal(files.includes('api'), false);

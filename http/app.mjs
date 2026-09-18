@@ -14,6 +14,116 @@ const NDJSON_TYPE = 'application/x-ndjson; charset=utf-8';
 const CSV_TYPE = 'text/csv; charset=utf-8';
 const YAML_TYPE = 'application/yaml; charset=utf-8';
 
+const WEB_CONTENT_TYPES = new Map([
+  ['.html', 'text/html; charset=utf-8'],
+  ['.css', 'text/css; charset=utf-8'],
+  ['.js', 'text/javascript; charset=utf-8'],
+  ['.mjs', 'text/javascript; charset=utf-8'],
+  ['.json', 'application/json; charset=utf-8'],
+  ['.svg', 'image/svg+xml'],
+  ['.png', 'image/png'],
+  ['.ico', 'image/x-icon'],
+]);
+
+function webSecurityHeaders(contentType) {
+  const headers = {
+    'access-control-allow-origin': '*',
+    'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
+    'x-frame-options': 'DENY',
+  };
+  if (contentType.startsWith('text/html')) {
+    headers['content-security-policy'] = [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self'",
+      "img-src 'self' data:",
+      "connect-src 'self' http: https:",
+      "object-src 'none'",
+      "base-uri 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+    ].join('; ');
+  }
+  return headers;
+}
+
+function sendStatic(res, method, status, body, contentType, extraHeaders = {}) {
+  const bytes = Buffer.isBuffer(body) ? body : Buffer.from(body);
+  res.writeHead(status, {
+    ...webSecurityHeaders(contentType),
+    ...extraHeaders,
+    'content-type': contentType,
+    'content-length': bytes.length,
+  });
+  res.end(method === 'HEAD' ? undefined : bytes);
+}
+
+function safeWebPath(root, relativePath) {
+  let decoded;
+  try {
+    decoded = decodeURIComponent(relativePath);
+  } catch {
+    return null;
+  }
+  if (!decoded || decoded.includes('\\') || decoded.includes('\0')) return null;
+  const parts = decoded.split('/');
+  if (parts.some((part) => part === '..' || part === '.')) return null;
+  const resolved = path.resolve(root, ...parts);
+  const prefix = root.endsWith(path.sep) ? root : root + path.sep;
+  return resolved.startsWith(prefix) ? resolved : null;
+}
+
+async function serveWebRequest(req, res, pathname, { webRoot, clientDir }) {
+  if (!webRoot) return false;
+  const method = String(req.method ?? 'GET').toUpperCase();
+  const isWebPath = pathname === '/' || pathname === '/web' || pathname.startsWith('/web/') || pathname === '/client/index.mjs';
+  if (!isWebPath) return false;
+
+  if (method !== 'GET' && method !== 'HEAD') {
+    send(res, 405, '', null, { allow: 'GET, HEAD, OPTIONS' });
+    return true;
+  }
+  if (pathname === '/') {
+    send(res, 302, '', null, { location: '/web/', 'cache-control': 'no-store' });
+    return true;
+  }
+  if (pathname === '/web') {
+    send(res, 308, '', null, { location: '/web/', 'cache-control': 'no-store' });
+    return true;
+  }
+
+  const relative = pathname === '/client/index.mjs'
+    ? 'index.mjs'
+    : (pathname === '/web/' ? 'index.html' : pathname.slice('/web/'.length));
+  const root = pathname === '/client/index.mjs' ? clientDir : webRoot;
+  const filePath = safeWebPath(root, relative);
+  if (!filePath) {
+    sendStatic(res, method, 404, 'Not found.\n', 'text/plain; charset=utf-8', { 'cache-control': 'no-store' });
+    return true;
+  }
+
+  let body;
+  try {
+    body = await readFile(filePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT' || error?.code === 'EISDIR') {
+      sendStatic(res, method, 404, 'Not found.\n', 'text/plain; charset=utf-8', { 'cache-control': 'no-store' });
+      return true;
+    }
+    throw error;
+  }
+
+  const extension = path.extname(filePath).toLowerCase();
+  const contentType = WEB_CONTENT_TYPES.get(extension) ?? 'application/octet-stream';
+  const basename = path.basename(filePath);
+  const cacheControl = basename === 'index.html' || basename === 'config.js'
+    ? 'no-cache'
+    : 'public, max-age=3600';
+  sendStatic(res, method, 200, body, contentType, { 'cache-control': cacheControl });
+  return true;
+}
+
 const DATE_GET_KEYS = new Set([
   'target', 'targetJdn', 'offsetDays',
   'calculationAt', 'calculationJdn',
@@ -100,6 +210,7 @@ function publicError(error) {
       code: error.code ?? 'INTERNAL_ERROR',
       message: error.message ?? 'Internal server error.',
       ...(error.field !== undefined ? { field: error.field } : {}),
+      ...(error.details !== undefined ? { details: error.details } : {}),
     },
   };
 }
@@ -323,6 +434,8 @@ export function createSeerHttpHandler(options = {}) {
   const nowFactory = options.nowFactory ?? (() => new Date());
   const logger = options.logger ?? console;
   const baseQueryOptions = options.queryOptions ?? {};
+  const webRoot = options.webRoot ? path.resolve(options.webRoot) : null;
+  const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
 
   return async function seerHttpHandler(req, res) {
     const requestInstant = nowFactory();
@@ -334,6 +447,7 @@ export function createSeerHttpHandler(options = {}) {
         send(res, 204, '', null);
         return;
       }
+      if (await serveWebRequest(req, res, pathname, { webRoot, clientDir })) return;
       if (!knownPath(pathname)) throw new HttpAdapterError('NOT_FOUND', 'Endpoint not found.', 404);
 
       const queryOptions = { ...baseQueryOptions, now: requestInstant };

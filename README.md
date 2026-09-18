@@ -480,6 +480,19 @@ const seer = createSeerClient('https://seer.example', {
 
 See `examples/browser/` for a no-build runnable browser example.
 
+## Web application
+
+A production no-build web application is available under `web/`. It uses the existing `pastafarian-calendar-seer/client` transport layer and delegates all calendar semantics to HTTP v1; it does not implement a second calendar engine in the browser.
+
+The same files support both deployment styles:
+
+- **same-origin container** — the repository image serves the UI at `/web/`, the browser client at `/client/index.mjs`, and the API at `/v1/*`;
+- **separate static site** — publish `web/` together with `client/` and configure the remote API base through `web/config.js`, `?apiBase=...`, or the connection control in the UI.
+
+The application includes current/date/JDN/offset queries, explicit calculation-day controls, observer longitude, reverse conversion, year structure, ranges, readiness diagnostics, structured error details, raw JSON, responsive layouts, and shareable primary query state. `include=days` remains opt-in.
+
+See [`docs/WEB_APPLICATION.md`](docs/WEB_APPLICATION.md) for deployment, security, configuration, and E2E details.
+
 ## HTTP API
 
 ### Start the server

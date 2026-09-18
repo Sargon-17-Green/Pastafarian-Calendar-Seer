@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Production web client for the Pastafarian Calendar Seer HTTP v1 API.">
+  <title>Pastafarian Calendar Seer</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./config.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to queries</a>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Pastafarian Calendar Seer</p>
+      <h1>Web application</h1>
+      <p class="lede">A browser client for the exact Seer HTTP v1 service. Calendar semantics stay on the server.</p>
+    </div>
+    <div class="readiness" aria-live="polite">
+      <span id="api-indicator" class="indicator" data-state="checking" aria-hidden="true"></span>
+      <div>
+        <strong id="api-status-title">Checking API…</strong>
+        <div id="api-status-detail" class="muted">No status response yet.</div>
+      </div>
+      <button id="refresh-status" type="button" class="secondary">Refresh status</button>
+    </div>
+  </header>
+
+  <main id="workspace" class="layout">
+    <aside class="controls" aria-label="Seer connection and shared query controls">
+      <section class="panel">
+        <h2>Connection</h2>
+        <form id="connection-form">
+          <label for="api-base">API base URL</label>
+          <input id="api-base" name="apiBase" type="text" inputmode="url" spellcheck="false" autocomplete="off"
+                 placeholder="Same origin (empty) or https://seer.example">
+          <p class="hint">Empty means same origin. A runtime <code>config.js</code> or <code>?apiBase=</code> can set a remote API.</p>
+          <button type="submit">Apply API base</button>
+        </form>
+        <details class="diagnostics">
+          <summary>API diagnostics</summary>
+          <dl class="compact-dl">
+            <div><dt>API version</dt><dd id="meta-version">—</dd></div>
+            <div><dt>Locales</dt><dd id="meta-locales">—</dd></div>
+            <div><dt>Reverse</dt><dd id="meta-reverse">—</dd></div>
+          </dl>
+          <pre id="meta-json" class="raw-block" aria-label="Raw API metadata">No metadata loaded.</pre>
+        </details>
+      </section>
+
+      <section class="panel">
+        <h2>Presentation</h2>
+        <fieldset class="inline-options">
+          <legend>Response presentation</legend>
+          <label><input type="radio" name="presentation" value="full" checked> Full</label>
+          <label><input type="radio" name="presentation" value="canonical"> Canonical</label>
+        </fieldset>
+        <p class="hint">The service currently reports English as its presentation locale.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Calculation day</h2>
+        <p class="explanation"><strong>Calculation day</strong> controls the mapping. <strong>Target day</strong> is the day being asked about. They are distinct inputs.</p>
+        <fieldset>
+          <legend>Calculation selector</legend>
+          <label><input type="radio" name="calculation-mode" value="live" checked> Automatic / live</label>
+          <label><input type="radio" name="calculation-mode" value="jdn"> Explicit JDN</label>
+          <label><input type="radio" name="calculation-mode" value="instant"> Explicit instant</label>
+        </fieldset>
+        <label for="calculation-jdn">Calculation JDN</label>
+        <input id="calculation-jdn" type="text" inputmode="numeric" spellcheck="false" disabled placeholder="2461302">
+        <label for="calculation-at">Calculation instant (RFC 3339)</label>
+        <input id="calculation-at" type="text" spellcheck="false" disabled placeholder="2026-09-18T08:00:00Z">
+        <p class="hint">“Today / Now” always uses live mode. Other query modes use this selector.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Observer</h2>
+        <fieldset>
+          <legend>Observer selector</legend>
+          <label><input type="radio" name="observer-mode" value="kisurra" checked> Kisurra preset</label>
+          <label><input type="radio" name="observer-mode" value="custom"> Custom longitude</label>
+        </fieldset>
+        <label for="observer-longitude">Longitude (degrees, east-positive)</label>
+        <input id="observer-longitude" type="number" step="any" min="-180" max="180" disabled placeholder="45.481">
+        <p class="hint">Latitude and elevation are not shown because they are compatibility no-ops in HTTP v1.</p>
+      </section>
+    </aside>
+
+    <div class="main-column">
+      <nav class="mode-nav" aria-label="Query modes">
+        <button type="button" data-mode="now" aria-current="page">Today / Now</button>
+        <button type="button" data-mode="date">Date</button>
+        <button type="button" data-mode="reverse">Reverse</button>
+        <button type="button" data-mode="year">Year</button>
+        <button type="button" data-mode="range">Range</button>
+      </nav>
+
+      <section id="mode-now" class="query-panel" tabindex="-1" data-panel="now">
+        <div class="panel-heading">
+          <div>
+            <h2>Today / Now</h2>
+            <p>Resolve the currently active calculation day and show its Pastafarian date.</p>
+          </div>
+          <button id="now-refresh" type="button">Refresh now</button>
+        </div>
+        <div id="now-result" class="result" aria-live="polite" tabindex="-1">
+          <p class="muted">No query yet.</p>
+        </div>
+      </section>
+
+      <section id="mode-date" class="query-panel" tabindex="-1" data-panel="date" hidden>
+        <h2>Date query</h2>
+        <form id="date-form">
+          <fieldset class="selector-box">
+            <legend>Target selector — choose exactly one</legend>
+            <label><input type="radio" name="target-kind" value="gregorian" checked> Gregorian date</label>
+            <input id="target-gregorian" type="text" autocomplete="off" spellcheck="false" placeholder="2026-09-20" aria-label="Gregorian target date">
+            <label><input type="radio" name="target-kind" value="jdn"> JDN</label>
+            <input id="target-jdn" type="text" inputmode="numeric" spellcheck="false" disabled placeholder="2461304" aria-label="Target JDN">
+            <label><input type="radio" name="target-kind" value="offset"> offsetDays</label>
+            <input id="target-offset" type="text" inputmode="numeric" spellcheck="false" disabled placeholder="2" aria-label="Target offset days">
+          </fieldset>
+          <p class="hint">Only the selected target field is enabled and sent to the API.</p>
+          <button type="submit">Query date</button>
+        </form>
+        <div id="date-result" class="result" aria-live="polite" tabindex="-1">
+          <p class="muted">No query yet.</p>
+        </div>
+      </section>
+
+      <section id="mode-reverse" class="query-panel" tabindex="-1" data-panel="reverse" hidden>
+        <h2>Reverse conversion</h2>
+        <form id="reverse-form" class="form-grid">
+          <label>Pastafarian year
+            <input id="reverse-year" type="text" inputmode="numeric" required>
+          </label>
+          <label>Cutlet canonical index
+            <input id="reverse-cutlet-index" type="number" min="1" max="17" required>
+          </label>
+          <label>Day in cutlet
+            <input id="reverse-cutlet-day" type="text" inputmode="numeric" required>
+          </label>
+          <label>Month canonical index
+            <input id="reverse-month-index" type="number" min="1" max="47" required>
+          </label>
+          <label>Day in month
+            <input id="reverse-month-day" type="text" inputmode="numeric" required>
+          </label>
+          <div class="form-action"><button type="submit">Reverse convert</button></div>
+        </form>
+        <p class="hint">All coordinates are sent. If they contradict one another, the complete Seer error code is displayed.</p>
+        <div id="reverse-result" class="result" aria-live="polite" tabindex="-1">
+          <p class="muted">No query yet.</p>
+        </div>
+      </section>
+
+      <section id="mode-year" class="query-panel" tabindex="-1" data-panel="year" hidden>
+        <h2>Year structure</h2>
+        <form id="year-form">
+          <label for="year-number">Pastafarian year</label>
+          <input id="year-number" type="text" inputmode="numeric" required placeholder="5000">
+          <label class="warning-option">
+            <input id="year-include-days" type="checkbox">
+            Load every day (advanced; response can be large)
+          </label>
+          <button type="submit">Load year structure</button>
+        </form>
+        <div id="year-result" class="result" aria-live="polite" tabindex="-1">
+          <p class="muted">No query yet.</p>
+        </div>
+      </section>
+
+      <section id="mode-range" class="query-panel" tabindex="-1" data-panel="range" hidden>
+        <h2>Range query</h2>
+        <form id="range-form">
+          <fieldset class="selector-box">
+            <legend>Start selector</legend>
+            <label><input type="radio" name="range-start-kind" value="gregorian" checked> Gregorian</label>
+            <input id="range-start-gregorian" type="text" placeholder="2026-09-20" aria-label="Range start Gregorian">
+            <label><input type="radio" name="range-start-kind" value="jdn"> JDN</label>
+            <input id="range-start-jdn" type="text" inputmode="numeric" disabled placeholder="2461304" aria-label="Range start JDN">
+            <label><input type="radio" name="range-start-kind" value="offset"> offsetDays</label>
+            <input id="range-start-offset" type="text" inputmode="numeric" disabled placeholder="0" aria-label="Range start offset">
+          </fieldset>
+
+          <fieldset>
+            <legend>Range end</legend>
+            <label><input type="radio" name="range-end-mode" value="count" checked> Count</label>
+            <label><input type="radio" name="range-end-mode" value="end"> endInclusive</label>
+          </fieldset>
+          <label for="range-count">Count</label>
+          <input id="range-count" type="text" inputmode="numeric" value="10">
+          <div id="range-end-fields" class="selector-box" hidden>
+            <fieldset>
+              <legend>endInclusive selector</legend>
+              <label><input type="radio" name="range-end-kind" value="gregorian" checked> Gregorian</label>
+              <input id="range-end-gregorian" type="text" placeholder="2026-09-29" aria-label="Range end Gregorian">
+              <label><input type="radio" name="range-end-kind" value="jdn"> JDN</label>
+              <input id="range-end-jdn" type="text" inputmode="numeric" disabled placeholder="2461313" aria-label="Range end JDN">
+              <label><input type="radio" name="range-end-kind" value="offset"> offsetDays</label>
+              <input id="range-end-offset" type="text" inputmode="numeric" disabled placeholder="9" aria-label="Range end offset">
+            </fieldset>
+          </div>
+          <div class="two-column">
+            <label>stepDays
+              <input id="range-step" type="text" inputmode="numeric" value="1">
+            </label>
+            <label>Calculation mode
+              <select id="range-calculation-mode">
+                <option value="fixed">fixed</option>
+                <option value="same-as-target">same-as-target</option>
+              </select>
+            </label>
+          </div>
+          <button type="submit">Query range</button>
+        </form>
+        <div id="range-result" class="result" aria-live="polite" tabindex="-1">
+          <p class="muted">No query yet.</p>
+        </div>
+      </section>
+
+      <section class="query-panel exchange-panel" aria-labelledby="exchange-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="exchange-title">Latest API exchange</h2>
+            <p>Transport details from the actual browser client request.</p>
+          </div>
+          <button id="copy-response" type="button" class="secondary" disabled>Copy response JSON</button>
+        </div>
+        <dl class="compact-dl">
+          <div><dt>Method</dt><dd id="exchange-method">—</dd></div>
+          <div><dt>Route / URL</dt><dd id="exchange-url" class="breakable">—</dd></div>
+          <div><dt>HTTP status</dt><dd id="exchange-status">—</dd></div>
+          <div><dt>Seer error code</dt><dd id="exchange-code">—</dd></div>
+        </dl>
+        <details>
+          <summary>Request payload</summary>
+          <pre id="raw-request" class="raw-block">No request captured.</pre>
+        </details>
+        <details>
+          <summary>Raw response</summary>
+          <pre id="raw-response" class="raw-block">No response captured.</pre>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p>This interface delegates all calendar semantics to <code>pastafarian-calendar-seer/client</code> and HTTP v1.</p>
+  </footer>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

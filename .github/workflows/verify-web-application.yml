@@ -1,0 +1,107 @@
+name: Verify production web application
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'web/**'
+      - 'client/**'
+      - 'http/**'
+      - 'api/**'
+      - 'Dockerfile'
+      - 'docs/WEB_APPLICATION.md'
+      - 'README.md'
+      - '.github/workflows/verify-web-application.yml'
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'client/**'
+      - 'http/**'
+      - 'api/**'
+      - 'Dockerfile'
+      - 'docs/WEB_APPLICATION.md'
+      - 'README.md'
+      - '.github/workflows/verify-web-application.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+
+      - name: Syntax and unit/contract tests
+        run: |
+          set -euo pipefail
+          node --check web/app.mjs
+          node --check web/model.mjs
+          node --check web/transport.mjs
+          node --check web/test/e2e.mjs
+          node --test \
+            web/test/model.test.mjs \
+            web/test/transport.test.mjs \
+            web/test/openapi-drift.test.mjs \
+            web/test/http-static.test.mjs \
+            client/test/client.test.mjs \
+            http/test/http-adapter.test.mjs
+          git diff --check
+          test -z "$(find web -type f -iname 'HANDOFF_*' -print -quit)"
+
+      - name: Build production same-origin image
+        run: docker build --pull --tag pastafarian-seer-web:ci .
+
+      - name: Start exact Seer web container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name seer-web-e2e -p 18080:8080 pastafarian-seer-web:ci
+          ready=0
+          for _ in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18080/v1/status >/tmp/seer-web-status.json; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          test "$ready" -eq 1
+          node -e "const x=require('/tmp/seer-web-status.json'); if(x.status!=='ok') process.exit(1)"
+          curl -fsS http://127.0.0.1:18080/web/ | grep -q 'Pastafarian Calendar Seer'
+          curl -fsS http://127.0.0.1:18080/client/index.mjs | grep -q 'createSeerClient'
+          docker image inspect pastafarian-seer-web:ci --format '{{json .Config.Env}}' | grep -q 'SEER_WEB_ROOT=/opt/seer-web'
+
+      - name: Start cross-origin static host
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 18081 --bind 127.0.0.1 >/tmp/seer-static.log 2>&1 &
+          echo $! >/tmp/seer-static.pid
+          for _ in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:18081/web/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/seer-static.log
+          exit 1
+
+      - name: Install browser runner
+        run: |
+          npm install --no-save --package-lock=false playwright@1.63.0
+          npx playwright install --with-deps chromium
+      - name: Browser E2E against real exact runtime
+        env:
+          SEER_E2E_BASE: http://127.0.0.1:18080
+          SEER_E2E_STATIC_BASE: http://127.0.0.1:18081
+        run: node web/test/e2e.mjs
+
+      - name: Container logs on failure
+        if: failure()
+        run: |
+          docker logs seer-web-e2e || true
+          cat /tmp/seer-static.log || true

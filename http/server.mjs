@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { createSeerHttpHandler } from './app.mjs';
 
 export function createSeerHttpServer(options = {}) {
-  return http.createServer(createSeerHttpHandler(options));
+  const envWebRoot = String(process.env.SEER_WEB_ROOT ?? '').trim();
+  const handlerOptions = options.webRoot === undefined && envWebRoot
+    ? { ...options, webRoot: envWebRoot }
+    : options;
+  return http.createServer(createSeerHttpHandler(handlerOptions));
 }
 
 export async function listen(options = {}) {

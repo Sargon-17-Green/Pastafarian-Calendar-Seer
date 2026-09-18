@@ -26,9 +26,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /opt/seer
 COPY --from=build --chown=node:node /opt/seer /opt/seer
+COPY --from=package --chown=node:node /src/web /opt/seer-web
 ENV HOST=0.0.0.0 \
     PORT=8080 \
-    SEER_REQUIRE_ENGINE_SERVICE=1
+    SEER_REQUIRE_ENGINE_SERVICE=1 \
+    SEER_WEB_ROOT=/opt/seer-web
 USER node
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
