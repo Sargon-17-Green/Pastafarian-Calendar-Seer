@@ -1040,6 +1040,8 @@ Canonical negative 40,000-gap corpus SHA-256:
 90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab
 ```
 
+Production extends both exact directions to 100,000 gates while retaining those 40k files unchanged as provenance fixtures. The extended SHA-256 values are `4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8` (positive) and `40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884` (negative). The finite exact JDN domain is `(-63473948, 36828783]`; see `docs/GATE_DOMAIN_EXTENSION.md`.
+
 ## Current state and limitations
 
 The repository contains:
@@ -1059,7 +1061,7 @@ The repository contains:
 
 Known limitations:
 
-- the exact engine has a finite bundled gate horizon;
+- the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
 - presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - Windows ARM64 and macOS native exact-runtime support are not currently verified;

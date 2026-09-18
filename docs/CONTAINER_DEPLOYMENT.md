@@ -43,7 +43,7 @@ The web application is copied into the image separately from the npm package. Th
 
 The image healthcheck calls `GET /v1/status` on the loopback interface.
 
-The repository workflow `Verify container deployment` runs this smoke natively on both `linux/amd64` and `linux/arm64`. It performs an exact HTTP request whose calculation JDN is after the Seer Foundation while its target JDN is before it, then verifies reverse conversion and the corresponding year structure. This forces the packaged persistent service through the historical negative-gate domain and verifies that the container is not merely serving the rolling cache.
+The repository workflow `Verify container deployment` runs this smoke natively on both `linux/amd64` and `linux/arm64`. It performs an exact HTTP request whose calculation JDN is after the Seer Foundation while its target JDN is before it, then verifies reverse conversion and the corresponding year structure. It also performs a request that crosses the historical +40,000-gate boundary, proving that the packaged image contains and uses the extended corpus rather than merely the rolling cache or the old gate horizon.
 
 The canonical Seer Foundation JDN used by that smoke test remains `-13334246`; this is the JDN axis and is distinct from the calendar's other linear day axis.
 

@@ -9,9 +9,11 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - pin provenance for generated gate data.
 
 2. **Complete the calendar domain needed by production callers**
-   - package negative-gate support;
+   - package negative-gate support — complete;
+   - extend the exact finite gate horizon from ±40k to ±100k with immutable old-domain compatibility — implemented and independently verified;
    - verify far-past/far-future walking across the full supported domain;
-   - harden difficult weave-edge ranks.
+   - harden difficult weave-edge ranks;
+   - reconsider checkpoints/lazy exact extension only if a future horizon makes static corpora materially costly.
 
 3. **Separate engine from benchmark CLI**
    - extract a stable library-facing conversion function;
