@@ -5,6 +5,8 @@ on:
     paths:
       - 'prototype/data/gates_u16.bin'
       - 'prototype/data/gates_negative_u16.bin'
+      - 'prototype/data/gates_100k_u16.bin'
+      - 'prototype/data/gates_negative_100k_u16.bin'
       - 'prototype/src/year_fast_bench_v12.cpp'
       - 'prototype/src/pastafarian_year_batch.cpp'
       - 'prototype/tools/canonical_vector_oracle.cpp'
@@ -30,6 +32,8 @@ jobs:
           set -euo pipefail
           test "$(sha256sum prototype/data/gates_u16.bin | awk '{print $1}')" = '2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb'
           test "$(sha256sum prototype/data/gates_negative_u16.bin | awk '{print $1}')" = '90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab'
+          test "$(sha256sum prototype/data/gates_100k_u16.bin | awk '{print $1}')" = '4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8'
+          test "$(sha256sum prototype/data/gates_negative_100k_u16.bin | awk '{print $1}')" = '40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884'
       - name: Build exact runtime and independent/full-domain probes
         shell: bash
         run: |
