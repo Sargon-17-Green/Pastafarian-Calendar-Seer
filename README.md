@@ -75,7 +75,7 @@ const result = await queryDate({
 console.log(result);
 ```
 
-At v0.1.2 this returns the following canonical shape for that request:
+For this request, the current package returns the following canonical shape:
 
 ```json
 {

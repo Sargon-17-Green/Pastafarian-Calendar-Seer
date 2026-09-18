@@ -2,8 +2,8 @@
 import { readFile } from 'node:fs/promises';
 import { queryBatch, queryCalculationDay, queryDate, queryNow, queryRange, queryReverse, queryYear, SeerQueryError } from './index.mjs';
 
-function usage() {
-  console.error(`usage:
+function usage(stream = process.stderr) {
+  stream.write(`usage:
   node query/cli.mjs [date] [date options]
   node query/cli.mjs now [date presentation options]
   node query/cli.mjs calculation-day [--at RFC3339] [--longitude DEG] [--include boundaries]
@@ -117,6 +117,10 @@ function calculationDayRequest(args) {
 
 async function main() {
   const argv = process.argv.slice(2);
+  if (argv.length === 1 && (argv[0] === '--help' || argv[0] === '-h')) {
+    usage(process.stdout);
+    return undefined;
+  }
   const known = new Set(['date', 'now', 'calculation-day', 'range', 'reverse', 'year', 'batch']);
   const command = argv.length > 0 && known.has(argv[0]) ? argv.shift() : 'date';
   if (command === 'date') return queryDate(dateRequest(argv));
@@ -138,7 +142,7 @@ async function main() {
 
 try {
   const result = await main();
-  process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  if (result !== undefined) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
 } catch (error) {
   if (error instanceof SeerQueryError) {
     console.error(JSON.stringify({ error: { code: error.code, message: error.message, ...(error.field ? { field: error.field } : {}), ...(error.details !== undefined ? { details: error.details } : {}) } }));
