@@ -66,7 +66,13 @@ jobs:
           npm test
           npm run validate:cache
           npm pack --dry-run --json > "$RUNNER_TEMP/npm-pack-dry-run.json"
-          npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION already exists; publish dry-run is not meaningful for a post-release commit."
+          else
+            npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+          fi
 
       - name: Prove byte-identical clean npm packs
         shell: bash

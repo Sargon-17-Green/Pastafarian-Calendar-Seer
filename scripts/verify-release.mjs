@@ -26,10 +26,17 @@ function digest(algorithm, data, encoding = 'hex') {
   return createHash(algorithm).update(data).digest(encoding);
 }
 
-let ref = await json(`https://api.github.com/repos/${owner}/${repo}/git/ref/tags/${encodeURIComponent(tag)}`);
-let commit = ref.object.sha;
-if (ref.object.type === 'tag') {
-  commit = (await json(`https://api.github.com/repos/${owner}/${repo}/git/tags/${commit}`)).object.sha;
+let commit = null;
+let tagPresent = true;
+try {
+  const ref = await json(`https://api.github.com/repos/${owner}/${repo}/git/ref/tags/${encodeURIComponent(tag)}`);
+  commit = ref.object.sha;
+  if (ref.object.type === 'tag') {
+    commit = (await json(`https://api.github.com/repos/${owner}/${repo}/git/tags/${commit}`)).object.sha;
+  }
+} catch (error) {
+  if (!allowIncomplete || ![404, 422].includes(error.status)) throw error;
+  tagPresent = false;
 }
 
 let release = null;
@@ -48,6 +55,7 @@ const arm64SbomName = `pastafarian-calendar-seer-${version}-container-arm64.spdx
 const status = {
   version,
   tag,
+  tagPresent,
   commit,
   github: release ? { immutable: release.immutable === true } : { missing: true },
   npm: null,
@@ -94,11 +102,48 @@ try {
   if (!allowIncomplete && provenance !== slsaV1) {
     throw new Error(`npm SLSA provenance missing or unexpected: ${provenance}`);
   }
+
+  let provenanceCommit = null;
+  let provenanceRef = null;
+  const attestationUrl = npmMeta.dist.attestations?.url ?? null;
+  if (attestationUrl && provenance === slsaV1) {
+    const attestationDoc = await json(attestationUrl);
+    const slsaAttestation = attestationDoc.attestations?.find((item) => item.predicateType === slsaV1);
+    if (!slsaAttestation?.bundle?.dsseEnvelope?.payload) {
+      throw new Error('npm SLSA attestation payload missing');
+    }
+    const statement = JSON.parse(Buffer.from(slsaAttestation.bundle.dsseEnvelope.payload, 'base64').toString('utf8'));
+    const workflow = statement.predicate?.buildDefinition?.externalParameters?.workflow;
+    const dependency = statement.predicate?.buildDefinition?.resolvedDependencies?.find((item) => item.digest?.gitCommit);
+    provenanceCommit = dependency?.digest?.gitCommit ?? null;
+    provenanceRef = workflow?.ref ?? null;
+
+    const expectedRepository = `https://github.com/${owner}/${repo}`;
+    const expectedRef = `refs/tags/${tag}`;
+    if (workflow?.repository !== expectedRepository) {
+      throw new Error(`npm provenance repository mismatch: ${workflow?.repository ?? '<missing>'}`);
+    }
+    if (workflow?.path !== '.github/workflows/release-npm.yml') {
+      throw new Error(`npm provenance workflow mismatch: ${workflow?.path ?? '<missing>'}`);
+    }
+    if (provenanceRef !== expectedRef) {
+      throw new Error(`npm provenance ref mismatch: ${provenanceRef ?? '<missing>'} != ${expectedRef}`);
+    }
+    if (!provenanceCommit) throw new Error('npm provenance git commit missing');
+    if (commit && provenanceCommit !== commit) {
+      throw new Error(`npm provenance commit mismatch: ${provenanceCommit} != ${commit}`);
+    }
+    if (!commit) commit = provenanceCommit;
+  }
+
+  status.commit = commit;
   status.npm = {
     integrity: npmMeta.dist.integrity,
     tarball: npmMeta.dist.tarball,
     sha256: npmSha256,
     provenance,
+    provenanceRef,
+    provenanceCommit,
   };
 } catch (error) {
   if (!allowIncomplete || error.status !== 404) throw error;
