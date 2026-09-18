@@ -1,0 +1,241 @@
+name: Publish verified package to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: npm-publish-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tagged release source
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node for npm trusted publishing
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Ensure supported npm CLI
+        run: npm install --global 'npm@^11.15.0'
+
+      - name: Validate immutable release ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          VERSION="$(node -p "require('./package.json').version")"
+          EXPECTED_TAG="v${VERSION}"
+          [[ "${GITHUB_REF_NAME}" == "${EXPECTED_TAG}" ]] || {
+            echo "tag ${GITHUB_REF_NAME} does not match package version ${EXPECTED_TAG}" >&2
+            exit 1
+          }
+          TAG_COMMIT="$(git rev-list -n 1 "${GITHUB_REF_NAME}")"
+          [[ "${TAG_COMMIT}" == "${GITHUB_SHA}" ]] || {
+            echo "tag commit ${TAG_COMMIT} does not match workflow SHA ${GITHUB_SHA}" >&2
+            exit 1
+          }
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main || {
+            echo "release tag must point to a commit reachable from origin/main" >&2
+            exit 1
+          }
+
+      - name: Require exact-head Stage 6 and release preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for WORKFLOW in verify-stage6-deployment.yml release-github-package.yml; do
+            RUNS="$(gh run list --workflow "${WORKFLOW}" --commit "${GITHUB_SHA}" --limit 30 --json headSha,status,conclusion)"
+            node --input-type=module - "${WORKFLOW}" "${GITHUB_SHA}" "${RUNS}" <<'NODE'
+          const [workflow, sha, raw] = process.argv.slice(2);
+          const runs = JSON.parse(raw);
+          const ok = runs.some((run) =>
+            run.headSha === sha &&
+            run.status === 'completed' &&
+            run.conclusion === 'success'
+          );
+          if (!ok) {
+            console.error(`No successful exact-head run found for ${workflow} at ${sha}`);
+            process.exit(1);
+          }
+          NODE
+          done
+
+      - name: Package self-test
+        run: npm test
+
+      - name: Validate generated cache
+        run: npm run validate:cache
+
+      - name: npm publish dry-run
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+          cat "$RUNNER_TEMP/npm-publish-dry-run.json"
+
+      - name: Download the verified GitHub Release artifact
+        id: release_asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+          TGZ_NAME="pastafarian-calendar-seer-${VERSION}.tgz"
+          SHA_NAME="${TGZ_NAME}.sha256"
+          DEST="$RUNNER_TEMP/npm-package"
+          mkdir -p "$DEST"
+          for ATTEMPT in {1..36}; do
+            rm -f "$DEST/$TGZ_NAME" "$DEST/$SHA_NAME"
+            if gh release download "$TAG" --pattern "$TGZ_NAME" --pattern "$SHA_NAME" --dir "$DEST" 2>/dev/null; then
+              break
+            fi
+            sleep 5
+          done
+          test -f "$DEST/$TGZ_NAME"
+          test -f "$DEST/$SHA_NAME"
+          (
+            cd "$DEST"
+            sha256sum --check "$SHA_NAME"
+          )
+          echo "tgz=$DEST/$TGZ_NAME" >> "$GITHUB_OUTPUT"
+          echo "sha=$DEST/$SHA_NAME" >> "$GITHUB_OUTPUT"
+          sha256sum "$DEST/$TGZ_NAME"
+
+      - name: Verify npm package boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          TGZ="${{ steps.release_asset.outputs.tgz }}"
+          tar -tzf "$TGZ" > "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/index.mjs' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/client/index.mjs' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/query/cli.mjs' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/http/server.mjs' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/api/openapi.json' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/api/openapi.yaml' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/api/schemas/date-response.schema.json' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/scripts/package-selftest.mjs' "$RUNNER_TEMP/npm-package-files.txt"
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/(deployment|examples)/|^package/api/(examples|tests)/|^package/(query|client|http|precompute)/test/' "$RUNNER_TEMP/npm-package-files.txt"; then
+            echo 'repository-only material leaked into npm package' >&2
+            exit 1
+          fi
+          tar -xOf "$TGZ" package/package.json > "$RUNNER_TEMP/npm-archive-package.json"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const source = JSON.parse(await readFile('package.json', 'utf8'));
+          const archive = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/npm-archive-package.json', 'utf8'));
+          const expected = {
+            'pastafarian-seer': 'query/cli.mjs',
+            'pastafarian-seer-http': 'http/server.mjs',
+          };
+          if (archive.name !== source.name || archive.version !== source.version) {
+            throw new Error(`release archive identity mismatch: ${archive.name}@${archive.version} vs ${source.name}@${source.version}`);
+          }
+          if (JSON.stringify(archive.bin) !== JSON.stringify(expected)) {
+            throw new Error(`unexpected archive bin map: ${JSON.stringify(archive.bin)}`);
+          }
+          NODE
+
+      - name: Publish to npm with OIDC
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm publish "${{ steps.release_asset.outputs.tgz }}" --access public
+
+      - name: Verify registry metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          for ATTEMPT in {1..12}; do
+            FOUND="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
+            [[ "${FOUND}" == "${VERSION}" ]] && break
+            sleep 5
+          done
+          [[ "${FOUND}" == "${VERSION}" ]] || {
+            echo "published version did not appear in registry" >&2
+            exit 1
+          }
+          npm view "${NAME}@${VERSION}" version dist --json
+
+      - name: Clean registry install and package verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          CONSUMER="$RUNNER_TEMP/npm-registry-consumer"
+          rm -rf "$CONSUMER"
+          mkdir -p "$CONSUMER"
+          cd "$CONSUMER"
+          npm init -y >/dev/null
+          npm install --ignore-scripts "${NAME}@${VERSION}"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import path from 'node:path';
+          import { fileURLToPath } from 'node:url';
+
+          const rootApi = await import('pastafarian-calendar-seer');
+          const clientApi = await import('pastafarian-calendar-seer/client');
+          if (typeof rootApi.queryDate !== 'function') throw new Error('queryDate export missing');
+          if (typeof clientApi.createSeerClient !== 'function') throw new Error('createSeerClient export missing');
+
+          const packageJson = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/package.json'));
+          const packageRoot = path.dirname(packageJson);
+          const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
+          const cache = index.caches[0];
+          const result = await rootApi.queryDate({
+            calculation: { jdn: cache.calcJdn },
+            target: { jdn: cache.targetStartJdn },
+            presentation: 'canonical',
+          });
+          if (result.targetDay.jdn !== String(cache.targetStartJdn)) {
+            throw new Error('registry-installed queryDate smoke mismatch');
+          }
+          NODE
+          node "$GITHUB_WORKSPACE/deployment/test/installed-bins.mjs" "$CONSUMER"
+          cd "$CONSUMER/node_modules/${NAME}"
+          npm test
+          npm run validate:cache
+          cd "$CONSUMER"
+          npm audit signatures --json --include-attestations > "$RUNNER_TEMP/npm-signatures.json"
+          cat "$RUNNER_TEMP/npm-signatures.json"
+
+      - name: Verify GitHub tag and release alignment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          TAG="v${VERSION}"
+          for ATTEMPT in {1..24}; do
+            if gh release view "$TAG" --json tagName,targetCommitish >/tmp/npm-release.json 2>/dev/null; then
+              cat /tmp/npm-release.json
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "matching GitHub Release was not visible after npm publication" >&2
+          exit 1
