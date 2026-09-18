@@ -65,6 +65,8 @@ try {
   await expectText(page.locator('#reverse-result'), /2461304/, 60000);
   await expectText(page.locator('#exchange-url'), /\/v1\/reverse$/);
   await expectText(page.locator('#exchange-status'), /^200$/);
+  assert.deepEqual(pageErrors, [], 'uncaught browser page errors before injected failures');
+  assert.deepEqual(consoleErrors, [], 'browser console errors before injected failures');
 
   await page.getByRole('button', { name: 'Date', exact: true }).click();
   await choose(page, 'target-kind', 'jdn');
@@ -132,7 +134,10 @@ try {
   assert.ok((tracedUrl ?? '').startsWith(apiBase), 'cross-origin query did not use configured API base');
 
   assert.deepEqual(pageErrors, [], 'uncaught browser page errors');
-  assert.deepEqual(consoleErrors, [], 'browser console errors');
+  const unexpectedConsoleErrors = consoleErrors.filter(
+    (message) => !/status of (?:422|503)\b/.test(message),
+  );
+  assert.deepEqual(unexpectedConsoleErrors, [], 'unexpected browser console errors');
   console.log('production web E2E PASS');
 } finally {
   await browser.close();
