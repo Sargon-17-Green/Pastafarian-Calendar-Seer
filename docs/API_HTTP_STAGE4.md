@@ -34,6 +34,6 @@ The HTTP layer parses transport syntax only. Calendar semantics remain in `query
 
 `/v1/status` returns `ok` only if the configured query provider can answer the default current-date query. A process that is alive but cannot guarantee a current answer returns HTTP 503 with `{"status":"unavailable"}`.
 
-## Current provider limitation
+## Current provider chain
 
-The rolling precomputed provider still cannot answer complete fixed-calculation-day year structures, so `/v1/year/{year}` may correctly return `SEER_UNAVAILABLE`/503 until an exact/full-year provider is added. This is a provider limitation, not an HTTP contract limitation.
+The rolling precomputed provider still cannot answer complete fixed-calculation-day year structures by itself. The current production query chain falls through to the Stage 5/OPT-06 exact native provider, so `/v1/year/{year}` is exact when the native runtime is available. HTTP 503/`SEER_UNAVAILABLE` therefore indicates provider/runtime unavailability, not an intentional lack of year-query support.

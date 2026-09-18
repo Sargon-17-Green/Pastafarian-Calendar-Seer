@@ -4,7 +4,7 @@ This stage establishes a reusable query core before an HTTP server is added.
 
 The existing rolling precompute format remains unchanged. `precompute/cache-lookup.mjs` gains a calculation-day-addressed lookup primitive while retaining the previous `loadCacheAnswer()` function for compatibility.
 
-The public query layer does not expose whether a result came from a cache. It talks to a provider. The first provider is precomputed data; a future exact compute provider can be chained behind it without changing request or response semantics.
+The public query layer does not expose whether a result came from a cache. Stage 2 introduced the provider boundary with precomputed data first; the current production chain now falls through to the Stage 5/OPT-06 exact native provider without changing request or response semantics.
 
 ## Canonical index correction
 

@@ -1,0 +1,99 @@
+name: Release verified package to GitHub
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate release ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "package version: $VERSION"
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            [[ "${GITHUB_REF_NAME}" == "v${VERSION}" ]] || {
+              echo "tag ${GITHUB_REF_NAME} does not match package version v${VERSION}" >&2
+              exit 1
+            }
+            git fetch origin main
+            git merge-base --is-ancestor "${GITHUB_SHA}" origin/main || {
+              echo "release tag must point to a commit reachable from origin/main" >&2
+              exit 1
+            }
+          fi
+
+      - name: Package self-test
+        run: npm test
+
+      - name: Validate generated cache
+        run: npm run validate:cache
+
+      - name: npm publish dry-run
+        run: npm publish --dry-run --json
+
+      - name: Build release tarball and checksum
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          TGZ="$(npm pack --silent)"
+          test -n "$TGZ"
+          sha256sum "$TGZ" > "$TGZ.sha256"
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
+          echo "sha=$TGZ.sha256" >> "$GITHUB_OUTPUT"
+          cat "$TGZ.sha256"
+      - name: Verify release tarball boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          tar -tf "$TGZ" > /tmp/release-files.txt
+          grep -qx 'package/client/index.mjs' /tmp/release-files.txt
+          grep -qx 'package/api/openapi.json' /tmp/release-files.txt
+          grep -qx 'package/api/schemas/date-response.schema.json' /tmp/release-files.txt
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' /tmp/release-files.txt; then
+            echo 'repository-only material leaked into release tarball' >&2
+            exit 1
+          fi
+
+      - name: Upload verified package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pastafarian-calendar-seer-package
+          path: |
+            ${{ steps.pack.outputs.tgz }}
+            ${{ steps.pack.outputs.sha }}
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            "${{ steps.pack.outputs.tgz }}" \
+            "${{ steps.pack.outputs.sha }}" \
+            --verify-tag \
+            --title "Pastafarian Calendar Seer ${GITHUB_REF_NAME}" \
+            --generate-notes

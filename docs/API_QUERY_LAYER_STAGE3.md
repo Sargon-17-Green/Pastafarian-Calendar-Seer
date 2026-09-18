@@ -35,8 +35,8 @@ A batch captures the request instant once. Each item is resolved with that same 
 
 `queryYear()` defines the complete provider-facing year contract. A provider must supply the full fixed-calculation-day structure: year bounds, cutlet structure, month lengths/name indices, and optionally the complete day sequence.
 
-The current rolling 366-day cache cannot prove a complete Pastafarian year for a fixed calculation day, so its provider deliberately returns `SEER_UNAVAILABLE` for this operation. This is a provider limitation, not an API contract limitation.
+The rolling 366-day cache alone cannot prove a complete Pastafarian year for a fixed calculation day. In the current production provider chain, such requests fall through to the Stage 5/OPT-06 exact native provider; `SEER_UNAVAILABLE` is reserved for an unavailable exact runtime rather than being an inherent year-query limitation.
 
 ## Provider boundary
 
-The query layer depends on provider capabilities rather than cache layout. The current provider is `precomputed`; a future exact-compute provider can add `query()` and `year()` without changing HTTP, CLI, or application-facing semantics.
+The query layer depends on provider capabilities rather than cache layout. The current production chain combines the rolling precomputed provider with the exact native provider, preserving the same HTTP, CLI, and application-facing semantics across cache hits and exact fallbacks.
