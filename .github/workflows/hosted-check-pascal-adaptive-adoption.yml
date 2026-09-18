@@ -1,6 +1,9 @@
 name: Seer adaptive Pascal-ladder default adoption check
 on:
   workflow_dispatch:
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-24.04
@@ -9,7 +12,7 @@ jobs:
       run:
         shell: bash --noprofile --norc -e -o pipefail {0}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Record CPU and commit
         run: |
           mkdir -p prototype/results
@@ -29,7 +32,7 @@ jobs:
       - name: Heavy exact RNS self-test on adopted default
         run: |
           (cd prototype/build && ./pascal_adaptive_selftest 4 1) | tee prototype/results/pascal-adaptive-adopted-selftest.csv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-pascal-adoption-${{ github.run_id }}
           path: prototype/results/

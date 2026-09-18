@@ -1,104 +1,422 @@
 name: Release verified package to GitHub
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
 
 permissions:
   contents: write
+  actions: read
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: github-release-${{ github.ref_name || github.sha }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/sargon-17-green/pastafarian-calendar-seer
 
 jobs:
   package:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
     steps:
-      - name: Check out release source
-        uses: actions/checkout@v7.0.1
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: '24'
+          package-manager-cache: false
 
       - name: Validate release ref
+        id: meta
         shell: bash
         run: |
           set -euo pipefail
           VERSION="$(node -p "require('./package.json').version")"
-          echo "package version: $VERSION"
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            [[ "${GITHUB_REF_NAME}" == "v${VERSION}" ]] || {
-              echo "tag ${GITHUB_REF_NAME} does not match package version v${VERSION}" >&2
-              exit 1
-            }
-            git fetch origin main
-            git merge-base --is-ancestor "${GITHUB_SHA}" origin/main || {
-              echo "release tag must point to a commit reachable from origin/main" >&2
-              exit 1
-            }
+          NAME="$(node -p "require('./package.json').name")"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF_TYPE" == 'tag' ]]; then
+            test "$GITHUB_REF_NAME" = "v$VERSION"
+            git fetch origin main --tags
+            test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+            git merge-base --is-ancestor "$GITHUB_SHA" origin/main
           fi
 
-      - name: Package self-test
-        run: npm test
+      - name: Package self-test and cache validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test
+          npm run validate:cache
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            npm pack --dry-run --json > "$RUNNER_TEMP/npm-pack-dry-run.json"
+          else
+            npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+          fi
 
-      - name: Validate generated cache
-        run: npm run validate:cache
-
-      - name: npm publish dry-run
-        run: npm publish --dry-run --json
-
-      - name: Build release tarball and checksum
+      - name: Build two clean byte-identical packages
         id: pack
         shell: bash
         run: |
           set -euo pipefail
-          TGZ="$(npm pack --silent)"
-          test -n "$TGZ"
-          sha256sum "$TGZ" > "$TGZ.sha256"
+          VERSION="${{ steps.meta.outputs.version }}"
+          A="$RUNNER_TEMP/pack-a"
+          B="$RUNNER_TEMP/pack-b"
+          OA="$RUNNER_TEMP/out-a"
+          OB="$RUNNER_TEMP/out-b"
+          git worktree add --detach "$A" "$GITHUB_SHA"
+          git worktree add --detach "$B" "$GITHUB_SHA"
+          mkdir -p "$OA" "$OB"
+          (cd "$A" && npm pack --silent --pack-destination "$OA" >/dev/null)
+          (cd "$B" && npm pack --silent --pack-destination "$OB" >/dev/null)
+          TGZ="$OA/pastafarian-calendar-seer-$VERSION.tgz"
+          TGZ_B="$OB/pastafarian-calendar-seer-$VERSION.tgz"
+          test -f "$TGZ" && test -f "$TGZ_B"
+          SHA="$(sha256sum "$TGZ" | awk '{print $1}')"
+          SHA_B="$(sha256sum "$TGZ_B" | awk '{print $1}')"
+          echo "pack A: $SHA"
+          echo "pack B: $SHA_B"
+          test "$SHA" = "$SHA_B"
+          SHA_FILE="$OA/pastafarian-calendar-seer-$VERSION.tgz.sha256"
+          (
+            cd "$OA"
+            sha256sum "pastafarian-calendar-seer-$VERSION.tgz" > "pastafarian-calendar-seer-$VERSION.tgz.sha256"
+          )
           echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
-          echo "sha=$TGZ.sha256" >> "$GITHUB_OUTPUT"
-          cat "$TGZ.sha256"
+          echo "sha_file=$SHA_FILE" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+
       - name: Verify release tarball boundary
         shell: bash
         run: |
           set -euo pipefail
           TGZ="${{ steps.pack.outputs.tgz }}"
-          tar -tf "$TGZ" > /tmp/release-files.txt
-          grep -qx 'package/client/index.mjs' /tmp/release-files.txt
-          grep -qx 'package/query/locales/catalog.mjs' /tmp/release-files.txt
-          grep -qx 'package/query/locales/en.mjs' /tmp/release-files.txt
-          grep -qx 'package/query/locales/he.mjs' /tmp/release-files.txt
-          grep -qx 'package/api/openapi.json' /tmp/release-files.txt
-          grep -qx 'package/api/schemas/date-response.schema.json' /tmp/release-files.txt
-          grep -qx 'package/api/schemas/locale-pack.schema.json' /tmp/release-files.txt
-          grep -qx 'package/docs/LOCALIZATION.md' /tmp/release-files.txt
-          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' /tmp/release-files.txt; then
+          tar -tzf "$TGZ" > "$RUNNER_TEMP/release-files.txt"
+          for REQUIRED in             package/client/index.mjs             package/query/locales/catalog.mjs             package/query/locales/en.mjs             package/query/locales/he.mjs             package/api/openapi.json             package/api/schemas/date-response.schema.json             package/api/schemas/locale-pack.schema.json             package/scripts/verify-release.mjs             package/docs/LOCALIZATION.md             package/docs/SUPPLY_CHAIN.md; do
+            grep -qx "$REQUIRED" "$RUNNER_TEMP/release-files.txt"
+          done
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' "$RUNNER_TEMP/release-files.txt"; then
             echo 'repository-only material leaked into release tarball' >&2
             exit 1
           fi
 
-      - name: Upload verified package artifact
-        uses: actions/upload-artifact@v7.0.1
+      - name: Upload reproducible preflight artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: pastafarian-calendar-seer-package
+          name: release-preflight-${{ steps.meta.outputs.version }}
           path: |
             ${{ steps.pack.outputs.tgz }}
-            ${{ steps.pack.outputs.sha }}
+            ${{ steps.pack.outputs.sha_file }}
           if-no-files-found: error
+          retention-days: 90
 
-      - name: Create GitHub Release
+      - name: Require exact-head verification and published channels
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          gh release create "${GITHUB_REF_NAME}" \
-            "${{ steps.pack.outputs.tgz }}" \
-            "${{ steps.pack.outputs.sha }}" \
-            --verify-tag \
-            --title "Pastafarian Calendar Seer ${GITHUB_REF_NAME}" \
-            --generate-notes
+          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
+            ok=0
+            for _ in $(seq 1 120); do
+              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
+              if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
+          const [sha, raw] = process.argv.slice(2);
+          const runs = JSON.parse(raw);
+          process.exit(runs.some((run) =>
+            run.headSha === sha &&
+            run.status === 'completed' &&
+            run.conclusion === 'success'
+          ) ? 0 : 1);
+          NODE
+              then ok=1; break; fi
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+          done
+          for WORKFLOW in release-npm.yml release-container.yml; do
+            ok=0
+            for _ in $(seq 1 120); do
+              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 20 --json headSha,status,conclusion,event)"
+              if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
+          const [sha, raw] = process.argv.slice(2);
+          const runs = JSON.parse(raw);
+          process.exit(runs.some((run) => run.headSha === sha && run.event === 'push' && run.status === 'completed' && run.conclusion === 'success') ? 0 : 1);
+          NODE
+              then ok=1; break; fi
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "No successful publication run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+          done
+
+      - name: Inspect existing GitHub Release
+        id: release_state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" --json isDraft > "$RUNNER_TEMP/release-state.json" 2>/dev/null; then
+            STATE="$(node -e "const x=require(process.argv[1]);process.stdout.write(x.isDraft?'draft':'published')" "$RUNNER_TEMP/release-state.json")"
+          else
+            STATE="absent"
+          fi
+          echo "state=$STATE" >> "$GITHUB_OUTPUT"
+          echo "release state: $STATE"
+
+      - name: Log in to GHCR for digest and SBOM verification
+        if: steps.release_state.outputs.state != 'published'
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Buildx
+        if: steps.release_state.outputs.state != 'published'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Resolve npm and container identities
+        if: steps.release_state.outputs.state != 'published'
+        id: channels
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.meta.outputs.name }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+          npm view "$NAME@$VERSION" dist --json > "$RUNNER_TEMP/npm-dist.json"
+          NPM_INTEGRITY="$(node -e "const x=require(process.argv[1]);process.stdout.write(x.integrity)" "$RUNNER_TEMP/npm-dist.json")"
+          NPM_TARBALL="$(node -e "const x=require(process.argv[1]);process.stdout.write(x.tarball)" "$RUNNER_TEMP/npm-dist.json")"
+          curl -fsSL "$NPM_TARBALL" -o "$RUNNER_TEMP/npm-registry.tgz"
+          NPM_SHA="$(sha256sum "$RUNNER_TEMP/npm-registry.tgz" | awk '{print $1}')"
+          test "$NPM_SHA" = "${{ steps.pack.outputs.sha256 }}"
+          CONTAINER_DIGEST="$(docker buildx imagetools inspect "$IMAGE:$VERSION" | awk '/^Digest:/ {print $2; exit}')"
+          test -n "$CONTAINER_DIGEST"
+          test "$(docker buildx imagetools inspect "$IMAGE:v$VERSION" | awk '/^Digest:/ {print $2; exit}')" = "$CONTAINER_DIGEST"
+          RAW="$(docker buildx imagetools inspect "$IMAGE@$CONTAINER_DIGEST" --raw)"
+          mapfile -t PLATFORM_DIGESTS < <(node --input-type=module - "$RAW" <<'NODE'
+          const raw=JSON.parse(process.argv[2]);
+          for (const arch of ['amd64','arm64']) {
+            const m=raw.manifests?.find((x)=>x.platform?.os==='linux' && x.platform?.architecture===arch);
+            if(!m?.digest) throw new Error(`linux/${arch} digest missing`);
+            console.log(`${arch}=${m.digest}`);
+          }
+          NODE
+          )
+          declare -A P
+          for line in "${PLATFORM_DIGESTS[@]}"; do
+            P["${line%%=*}"]="${line#*=}"
+          done
+          test -n "${P[amd64]:-}" && test -n "${P[arm64]:-}"
+          echo "npm_integrity=$NPM_INTEGRITY" >> "$GITHUB_OUTPUT"
+          echo "npm_tarball=$NPM_TARBALL" >> "$GITHUB_OUTPUT"
+          echo "container_digest=$CONTAINER_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "amd64_digest=${P[amd64]}" >> "$GITHUB_OUTPUT"
+          echo "arm64_digest=${P[arm64]}" >> "$GITHUB_OUTPUT"
+
+      - name: Extract npm package for SBOM generation
+        if: steps.release_state.outputs.state != 'published'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/npm-sbom-root"
+          tar -xzf "${{ steps.pack.outputs.tgz }}" -C "$RUNNER_TEMP/npm-sbom-root"
+
+      - name: Generate npm package CycloneDX SBOM
+        if: steps.release_state.outputs.state != 'published'
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        with:
+          path: ${{ runner.temp }}/npm-sbom-root/package
+          format: cyclonedx-json
+          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate amd64 container SPDX SBOM
+        if: steps.release_state.outputs.state != 'published'
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.channels.outputs.amd64_digest }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ github.token }}
+          format: spdx-json
+          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate arm64 container SPDX SBOM
+        if: steps.release_state.outputs.state != 'published'
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.channels.outputs.arm64_digest }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ github.token }}
+          format: spdx-json
+          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Validate SBOM identity
+        if: steps.release_state.outputs.state != 'published'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const version=process.env.VERSION;
+          const npm=JSON.parse(await readFile(process.env.NPM_SBOM,'utf8'));
+          const amd64=JSON.parse(await readFile(process.env.AMD64_SBOM,'utf8'));
+          const arm64=JSON.parse(await readFile(process.env.ARM64_SBOM,'utf8'));
+          if (!JSON.stringify(npm).includes(version)) throw new Error('npm SBOM does not reference release version');
+          if (!amd64.spdxVersion) throw new Error('amd64 container SPDX document missing spdxVersion');
+          if (!arm64.spdxVersion) throw new Error('arm64 container SPDX document missing spdxVersion');
+          NODE
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          NPM_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
+          AMD64_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          ARM64_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
+
+      - name: Generate release manifest and checksums
+        if: steps.release_state.outputs.state != 'published'
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ steps.meta.outputs.version }}
+          RELEASE_COMMIT: ${{ github.sha }}
+          GITHUB_TARBALL_SHA256: ${{ steps.pack.outputs.sha256 }}
+          NPM_INTEGRITY: ${{ steps.channels.outputs.npm_integrity }}
+          NPM_TARBALL_URL: ${{ steps.channels.outputs.npm_tarball }}
+          CONTAINER_IMAGE: ${{ env.IMAGE }}
+          CONTAINER_DIGEST: ${{ steps.channels.outputs.container_digest }}
+          CONTAINER_AMD64_DIGEST: ${{ steps.channels.outputs.amd64_digest }}
+          CONTAINER_ARM64_DIGEST: ${{ steps.channels.outputs.arm64_digest }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.meta.outputs.version }}"
+          TGZ_NAME="pastafarian-calendar-seer-$VERSION.tgz"
+          SHA_NAME="$TGZ_NAME.sha256"
+          NPM_SBOM="pastafarian-calendar-seer-$VERSION.cdx.json"
+          AMD64_SBOM="pastafarian-calendar-seer-$VERSION-container-amd64.spdx.json"
+          ARM64_SBOM="pastafarian-calendar-seer-$VERSION-container-arm64.spdx.json"
+          node scripts/generate-release-manifest.mjs
+          cp "${{ steps.pack.outputs.tgz }}" "$TGZ_NAME"
+          cp "${{ steps.pack.outputs.sha_file }}" "$SHA_NAME"
+          cp "${{ runner.temp }}/$NPM_SBOM" "$NPM_SBOM"
+          cp "${{ runner.temp }}/$AMD64_SBOM" "$AMD64_SBOM"
+          cp "${{ runner.temp }}/$ARM64_SBOM" "$ARM64_SBOM"
+          sha256sum "$TGZ_NAME" "$SHA_NAME" "$NPM_SBOM" "$AMD64_SBOM" "$ARM64_SBOM" release-manifest.json > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Attest npm tarball with its SBOM
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.tgz
+          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
+
+      - name: Attest amd64 container SBOM against immutable child digest
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.channels.outputs.amd64_digest }}
+          subject-version: ${{ steps.meta.outputs.version }}
+          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          push-to-registry: true
+
+      - name: Attest arm64 container SBOM against immutable child digest
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.channels.outputs.arm64_digest }}
+          subject-version: ${{ steps.meta.outputs.version }}
+          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
+          push-to-registry: true
+
+      - name: Attest release asset checksum set
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: SHA256SUMS
+
+      - name: Attest checksum manifest itself
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: SHA256SUMS
+
+      - name: Verify GitHub attestations before publication
+        if: steps.release_state.outputs.state != 'published'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh attestation verify "pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.tgz" --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "SHA256SUMS" --repo "$GITHUB_REPOSITORY"
+          gh attestation verify "oci://$IMAGE@${{ steps.channels.outputs.container_digest }}" --repo "$GITHUB_REPOSITORY"
+
+      - name: Create or resume draft release without replacing assets
+        if: steps.release_state.outputs.state != 'published'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+          VERSION="${{ steps.meta.outputs.version }}"
+          if gh release view "$TAG" --json isDraft > "$RUNNER_TEMP/release-state.json" 2>/dev/null; then
+            node --input-type=module - "$RUNNER_TEMP/release-state.json" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const x=JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          if (!x.isDraft) throw new Error('release already published; refusing modification');
+          NODE
+          else
+            gh release create "$TAG" --draft --verify-tag --title "Pastafarian Calendar Seer $TAG" --generate-notes
+          fi
+          ASSETS=(
+            "pastafarian-calendar-seer-$VERSION.tgz"
+            "pastafarian-calendar-seer-$VERSION.tgz.sha256"
+            "pastafarian-calendar-seer-$VERSION.cdx.json"
+            "pastafarian-calendar-seer-$VERSION-container-amd64.spdx.json"
+            "pastafarian-calendar-seer-$VERSION-container-arm64.spdx.json"
+            "release-manifest.json"
+            "SHA256SUMS"
+          )
+          for FILE in "${ASSETS[@]}"; do
+            NAME="$(basename "$FILE")"
+            if gh release view "$TAG" --json assets --jq '.assets[].name' | grep -Fxq "$NAME"; then
+              DEST="$RUNNER_TEMP/existing-$NAME"
+              mkdir -p "$DEST"
+              gh release download "$TAG" --pattern "$NAME" --dir "$DEST"
+              cmp "$FILE" "$DEST/$NAME" || { echo "existing draft asset differs: $NAME" >&2; exit 1; }
+            else
+              gh release upload "$TAG" "$FILE"
+            fi
+          done
+
+      - name: Publish immutable GitHub Release
+        if: steps.release_state.outputs.state != 'published'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest
+          gh release view "$GITHUB_REF_NAME" --json tagName,isDraft,url,assets
+
+      - name: Strict post-release alignment verification
+        run: node scripts/verify-release.mjs "${{ steps.meta.outputs.version }}"

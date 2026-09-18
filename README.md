@@ -8,19 +8,19 @@ The Seer is **not normative**. The current Scroll defines the calendar; if the S
 
 ## Install
 
-The current release line is **v0.1.4**.
-
-Install from the public npm registry:
+Install the current public release from npm:
 
 ```bash
 npm install pastafarian-calendar-seer
 ```
 
-For a manual/reproducible install of this exact release, the GitHub Release tarball remains available:
+For a version-pinned install:
 
 ```bash
-npm install https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/releases/download/v0.1.4/pastafarian-calendar-seer-0.1.4.tgz
+npm install pastafarian-calendar-seer@X.Y.Z
 ```
+
+The same npm-format tarball is attached to the matching immutable GitHub Release as `pastafarian-calendar-seer-X.Y.Z.tgz`; its SHA-256, SBOMs, provenance, container digest, and cross-channel verification procedure are documented in [Supply-chain verification](docs/SUPPLY_CHAIN.md).
 
 The package is ESM-only, requires Node `>=20`, has no npm runtime dependencies, and is not install-time OS/CPU gated.
 
@@ -1134,3 +1134,8 @@ The Seer exists beside, not inside, the Pastafarian Calendar's spaghetti history
 `Sargon17-Green/Pastafarian-Calendar` contains the specification/historical implementations and independent language branches. The separation is intentional. Optimizing the Seer must not clean up, rewrite, or silently bypass the liturgical history preserved by the Monster.
 
 R'amen.
+
+
+## Supply-chain verification
+
+The `v0.1.2` GitHub tarball can be checked against its published SHA-256 file. The repository is prepared for subsequent hardened releases with SHA-pinned Actions, OIDC npm publishing, GHCR digest publication, SBOMs, GitHub attestations, immutable GitHub Releases, and a machine-readable release manifest. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) for the exact verification model and commands. Provenance establishes build origin and artifact integrity; it is not evidence of calendar-semantic correctness.
