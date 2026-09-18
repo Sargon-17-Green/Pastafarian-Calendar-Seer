@@ -1,0 +1,224 @@
+name: Publish verified container to GHCR
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  actions: read
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: container-publish-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/sargon-17-green/pastafarian-calendar-seer
+
+jobs:
+  publish:
+    if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Validate immutable release ref
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for exact-head verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
+            ok=0
+            for _ in $(seq 1 120); do
+              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
+              if node --input-type=module - "$WORKFLOW" "$GITHUB_SHA" "$RUNS" <<'NODE'
+          const [workflow, sha, raw] = process.argv.slice(2);
+          const runs = JSON.parse(raw);
+          process.exit(runs.some((run) =>
+            run.headSha === sha &&
+            run.status === 'completed' &&
+            run.conclusion === 'success'
+          ) ? 0 : 1);
+          NODE
+              then ok=1; break; fi
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+          done
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Resolve existing immutable version tags
+        id: existing
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIGEST_VERSION="$(docker buildx imagetools inspect "$IMAGE:$VERSION" 2>/dev/null | awk '/^Digest:/ {print $2; exit}' || true)"
+          DIGEST_VVERSION="$(docker buildx imagetools inspect "$IMAGE:v$VERSION" 2>/dev/null | awk '/^Digest:/ {print $2; exit}' || true)"
+          if [[ -z "$DIGEST_VERSION" && -z "$DIGEST_VVERSION" ]]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$DIGEST_VERSION" || -z "$DIGEST_VVERSION" || "$DIGEST_VERSION" != "$DIGEST_VVERSION" ]]; then
+            echo "partial or divergent existing GHCR version tags; refusing overwrite" >&2
+            exit 1
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+            echo "digest=$DIGEST_VERSION" >> "$GITHUB_OUTPUT"
+            echo "existing GHCR version tags agree at $DIGEST_VERSION"
+          fi
+
+      - name: Build and publish final runtime image
+        if: steps.existing.outputs.present != 'true'
+        id: build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          pull: true
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE }}:v${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Resolve published image digest
+        id: image
+        shell: bash
+        env:
+          BUILT_DIGEST: ${{ steps.build.outputs.digest }}
+          EXISTING_DIGEST: ${{ steps.existing.outputs.digest }}
+        run: |
+          set -euo pipefail
+          DIGEST="$BUILT_DIGEST"
+          if [[ -z "$DIGEST" ]]; then DIGEST="$EXISTING_DIGEST"; fi
+          test -n "$DIGEST"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          docker pull "$IMAGE@$DIGEST"
+          REVISION="$(docker image inspect "$IMAGE@$DIGEST" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
+          VERSION_LABEL="$(docker image inspect "$IMAGE@$DIGEST" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
+          test "$REVISION" = "$GITHUB_SHA"
+          test "$VERSION_LABEL" = "$VERSION"
+
+      - name: Attest published image digest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          subject-version: ${{ steps.meta.outputs.version }}
+          push-to-registry: true
+
+      - name: Scan final image and retain HIGH/CRITICAL report
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.digest }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: json
+          output: trivy-high-critical.json
+          exit-code: '0'
+
+      - name: Enforce unfixed-aware CRITICAL vulnerability gate
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.digest }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Pull by digest and run exact smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF="$IMAGE@${{ steps.image.outputs.digest }}"
+          docker pull "$REF"
+          docker run -d --name seer-release -p 18080:8080 "$REF"
+          cleanup() { docker logs seer-release || true; docker rm -f seer-release >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          for _ in $(seq 1 45); do
+            curl -fsS http://127.0.0.1:18080/v1/status > /tmp/status.json && break
+            sleep 2
+          done
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/status.json', encoding='utf-8'))
+          assert x['status'] == 'ok', x
+          PY
+          test "$(docker exec seer-release id -u)" != '0'
+          curl -fsS http://127.0.0.1:18080/web/ | grep -q 'Pastafarian Calendar Seer'
+          curl -fsS http://127.0.0.1:18080/client/index.mjs | grep -q 'createSeerClient'
+          curl -fsS -H 'content-type: application/json' --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}' http://127.0.0.1:18080/v1/date > /tmp/date.json
+          python - <<'PY'
+          import json
+          x=json.load(open('/tmp/date.json', encoding='utf-8'))
+          assert x['calculationDay']['jdn'] == '-13334146', x
+          assert x['targetDay']['jdn'] == '-13337246', x
+          PY
+
+      - name: Record manifest and platform digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          RAW="$(docker buildx imagetools inspect "$IMAGE@${{ steps.image.outputs.digest }}" --raw)"
+          PLATFORM_DIGEST="$(node --input-type=module - "$RAW" <<'NODE'
+          const raw = JSON.parse(process.argv[2]);
+          const m = raw.manifests?.find((x) => x.platform?.os === 'linux' && x.platform?.architecture === 'amd64');
+          if (!m?.digest) throw new Error('linux/amd64 manifest digest missing');
+          process.stdout.write(m.digest);
+          NODE
+          )"
+          cat > container-release.json <<EOF
+          {
+            "version": "$VERSION",
+            "commit": "$GITHUB_SHA",
+            "image": "$IMAGE",
+            "digest": "${{ steps.image.outputs.digest }}",
+            "platforms": { "linux/amd64": "$PLATFORM_DIGEST" }
+          }
+          EOF
+          cat container-release.json
+
+      - name: Upload scan and digest records
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-release-${{ steps.meta.outputs.version }}
+          path: |
+            container-release.json
+            trivy-high-critical.json
+          if-no-files-found: error
+          retention-days: 90

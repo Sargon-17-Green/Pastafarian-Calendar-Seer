@@ -1,0 +1,94 @@
+name: Verify release preflight
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Package self-test and cache validation
+        run: |
+          set -euo pipefail
+          npm test
+          npm run validate:cache
+
+      - name: npm publication preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION already exists; running package-only dry-run for this post-release commit."
+            npm pack --dry-run --json > "$RUNNER_TEMP/npm-pack-dry-run.json"
+          else
+            npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+          fi
+
+      - name: Prove byte-identical clean npm packs
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="$(node -p "require('./package.json').version")"
+          A="$RUNNER_TEMP/pack-a"
+          B="$RUNNER_TEMP/pack-b"
+          OA="$RUNNER_TEMP/out-a"
+          OB="$RUNNER_TEMP/out-b"
+          git worktree add --detach "$A" "$GITHUB_SHA"
+          git worktree add --detach "$B" "$GITHUB_SHA"
+          mkdir -p "$OA" "$OB"
+          (cd "$A" && npm pack --silent --pack-destination "$OA" >/dev/null)
+          (cd "$B" && npm pack --silent --pack-destination "$OB" >/dev/null)
+          TGZ="$OA/pastafarian-calendar-seer-$VERSION.tgz"
+          TGZ_B="$OB/pastafarian-calendar-seer-$VERSION.tgz"
+          test -f "$TGZ" && test -f "$TGZ_B"
+          SHA="$(sha256sum "$TGZ" | awk '{print $1}')"
+          SHA_B="$(sha256sum "$TGZ_B" | awk '{print $1}')"
+          echo "pack A: $SHA"
+          echo "pack B: $SHA_B"
+          test "$SHA" = "$SHA_B"
+          (
+            cd "$OA"
+            sha256sum "pastafarian-calendar-seer-$VERSION.tgz" > "pastafarian-calendar-seer-$VERSION.tgz.sha256"
+          )
+          tar -tzf "$TGZ" > "$RUNNER_TEMP/release-files.txt"
+          for REQUIRED in package/index.mjs package/client/index.mjs package/api/openapi.json package/scripts/verify-release.mjs package/docs/SUPPLY_CHAIN.md; do
+            grep -qx "$REQUIRED" "$RUNNER_TEMP/release-files.txt"
+          done
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' "$RUNNER_TEMP/release-files.txt"; then
+            echo 'repository-only material leaked into release tarball' >&2
+            exit 1
+          fi
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
+          echo "sha=$OA/pastafarian-calendar-seer-$VERSION.tgz.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Upload exact-head release preflight artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-preflight-${{ github.sha }}
+          path: |
+            ${{ steps.pack.outputs.tgz }}
+            ${{ steps.pack.outputs.sha }}
+          if-no-files-found: error
+          retention-days: 30

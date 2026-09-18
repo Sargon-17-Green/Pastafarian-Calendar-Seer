@@ -1,6 +1,6 @@
 {
   "name": "pastafarian-calendar-seer",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Exact high-performance query and HTTP runtime for the Pastafarian Calendar Seer",
   "type": "module",
   "main": "./index.mjs",
@@ -62,7 +62,9 @@
     "README_STAGE6.md",
     "README.md",
     "LICENSE",
-    "NOTICE.md"
+    "NOTICE.md",
+    "scripts/verify-release.mjs",
+    "docs/SUPPLY_CHAIN.md"
   ],
   "scripts": {
     "build:native": "node ./scripts/build-runtime.mjs",
@@ -70,7 +72,8 @@
     "cli": "node ./query/cli.mjs",
     "test": "node ./scripts/package-selftest.mjs",
     "validate:cache": "node ./precompute/validate-generated.mjs",
-    "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs"
+    "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
+    "verify:release": "node ./scripts/verify-release.mjs"
   },
   "keywords": [
     "pastafarian",
