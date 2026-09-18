@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { queryCalculationDay, queryDate } from '../index.mjs';
 import { listen } from '../http/index.mjs';
+import { createSeerClient } from 'pastafarian-calendar-seer/client';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const exportedSchemaPath = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/schemas/date-response.schema.json'));
@@ -76,6 +77,9 @@ try {
   assert.equal(response.status, 200, text);
   const body = JSON.parse(text);
   assert.equal(body.targetDay.jdn, String(targetJdn));
+  const browserClient = createSeerClient('http://127.0.0.1:' + port);
+  const clientBody = await browserClient.queryDate(request);
+  assert.equal(clientBody.targetDay.jdn, String(targetJdn));
   const schemaCount = await verifyOpenApiSchemaClosure('http://127.0.0.1:' + port + '/');
   assert.equal(schemaCount, packagedSchemaCount);
 } finally {
@@ -86,5 +90,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['cache-query', 'venus-boundary', 'http-loopback', 'openapi-schema-closure'],
+  checks: ['cache-query', 'venus-boundary', 'http-loopback', 'browser-client', 'openapi-schema-closure'],
 }));

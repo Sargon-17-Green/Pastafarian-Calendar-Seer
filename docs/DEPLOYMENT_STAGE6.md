@@ -2,7 +2,7 @@
 
 Stage 6 packages the already-verified v1 query and HTTP layers without changing their semantics.
 The npm package name is `pastafarian-calendar-seer`; it is ESM-only and has no npm runtime dependencies.
-Its npm metadata declares Node `>=20` on x64 Linux or x64 Windows. `npm run build:native` detects AVX2 at build time and otherwise selects the exact portable scalar RNS backend.
+Its npm metadata declares Node `>=20` without an install-time OS/CPU gate, so the browser HTTP client can be installed on ordinary browser-development hosts. The exact native runtime remains supported on x64 Linux/WSL and x64 Windows; `npm run build:native` rejects unsupported native platforms explicitly, detects AVX2 on supported hosts, and otherwise selects the exact portable scalar RNS backend.
 
 ## Node application API
 
@@ -23,6 +23,21 @@ const answer = await queryDate({
 
 The same functions remain available from `pastafarian-calendar-seer/query`. The root export is the
 stable application-facing path; consumers do not need to import repository-internal files.
+
+## Browser / remote HTTP client
+
+`pastafarian-calendar-seer/client` is browser-safe and contains no Node runtime imports. It wraps the
+public HTTP v1 routes with the same method names used by the application API where practical:
+
+```js
+import { createSeerClient } from 'pastafarian-calendar-seer/client';
+
+const seer = createSeerClient('https://seer.example');
+const answer = await seer.queryDate({ target: { gregorian: '2026-09-18' } });
+```
+
+Use `createSeerClient('')` for same-origin browser deployment. A custom `fetch` implementation may be
+injected as the second argument for non-browser hosts.
 
 ## Embedded HTTP server
 

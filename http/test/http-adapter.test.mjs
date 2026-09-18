@@ -153,8 +153,18 @@ test('status probes the query provider and static endpoints are served', async (
 
 test('OPTIONS, 404, 405, 406 and provider errors map cleanly', async () => {
   await withServer(async (base) => {
-    const opt = await fetch(`${base}/v1/date`, { method: 'OPTIONS' });
+    const opt = await fetch(`${base}/v1/date`, {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://app.example',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type',
+      },
+    });
     assert.equal(opt.status, 204);
+    assert.equal(opt.headers.get('access-control-allow-origin'), '*');
+    assert.match(opt.headers.get('access-control-allow-methods'), /POST/);
+    assert.match(opt.headers.get('access-control-allow-headers'), /Content-Type/i);
     const missing = await fetch(`${base}/v1/nope`);
     assert.equal(missing.status, 404);
     const method = await fetch(`${base}/v1/date`, { method: 'PUT' });

@@ -6,12 +6,14 @@ It does not add calendar rules, routes, response fields, locales, or reverse con
 Stable package entry points:
 
 - `pastafarian-calendar-seer` — shared query API;
+- `pastafarian-calendar-seer/client` — browser-safe fetch client for the HTTP v1 service;
 - `pastafarian-calendar-seer/http` — HTTP handler/server/listener;
 - `pastafarian-seer` — existing query CLI;
 - `pastafarian-seer-http` — existing HTTP v1 server.
 
-The package has zero npm runtime dependencies and declares Node `>=20`, x64 Linux and x64 Windows as
-its supported npm platforms. Exact out-of-cache operation still requires the native C++ runtime and its
+The package has zero npm runtime dependencies and declares Node `>=20`. Installation itself is not
+OS/CPU-gated so the browser HTTP client can be consumed from any npm-supported development host.
+Exact out-of-cache operation still requires the native C++ runtime and its
 existing GCC-compatible C++20, GMP/GMPXX and Boost requirements. Build it after install with `npm run build:native`; the build selects the AVX2 RNS backend when available and otherwise uses the exact portable scalar backend.
 The command dispatches to Bash on Linux/WSL and PowerShell on native Windows.
 

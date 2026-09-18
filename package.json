@@ -7,6 +7,7 @@
   "exports": {
     ".": "./index.mjs",
     "./query": "./query/index.mjs",
+    "./client": "./client/index.mjs",
     "./http": "./http/index.mjs",
     "./http/server": "./http/server.mjs",
     "./openapi.json": "./api/openapi.json",
@@ -25,6 +26,7 @@
     "index.mjs",
     "query/*.mjs",
     "query/locales/*.mjs",
+    "client/*.mjs",
     "http/*.mjs",
     "api/openapi.json",
     "api/openapi.yaml",
@@ -68,7 +70,7 @@
     "cli": "node ./query/cli.mjs",
     "test": "node ./scripts/package-selftest.mjs",
     "validate:cache": "node ./precompute/validate-generated.mjs",
-    "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs"
+    "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs"
   },
   "keywords": [
     "pastafarian",
@@ -77,13 +79,6 @@
     "api"
   ],
   "license": "MIT",
-  "os": [
-    "linux",
-    "win32"
-  ],
-  "cpu": [
-    "x64"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer.git"

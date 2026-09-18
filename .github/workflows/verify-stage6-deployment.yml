@@ -6,6 +6,7 @@ on:
       - 'package.json'
       - 'index.mjs'
       - 'query/**'
+      - 'client/**'
       - 'http/**'
       - 'api/**'
       - 'precompute/**'
@@ -140,6 +141,7 @@ jobs:
           npm install --ignore-scripts "$SEER_TGZ"
           test -f node_modules/pastafarian-calendar-seer/package.json
           test -f node_modules/pastafarian-calendar-seer/api/schemas/date-response.schema.json
+          test -f node_modules/pastafarian-calendar-seer/client/index.mjs
           cd node_modules/pastafarian-calendar-seer
           npm test
           npm run validate:cache
@@ -201,7 +203,7 @@ jobs:
         run: npm run build:native
       - name: Full repository regressions
         run: |
-          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
+          node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
           node precompute/validate-generated.mjs
           python -m venv .contract-venv
           .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML

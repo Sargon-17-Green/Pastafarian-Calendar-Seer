@@ -4,6 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const nativeSupported = process.arch === 'x64' && (process.platform === 'linux' || process.platform === 'win32');
+if (!nativeSupported) {
+  console.error('The exact native runtime is currently supported only on x64 Linux/WSL and x64 Windows.');
+  console.error('The browser HTTP client and bundled-cache JavaScript API do not require build:native.');
+  process.exit(1);
+}
 const isWindows = process.platform === 'win32';
 const command = isWindows
   ? (process.env.SEER_POWERSHELL || 'powershell.exe')

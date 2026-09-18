@@ -46,15 +46,16 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.main, './index.mjs');
   assert.equal(pkg.exports['.'], './index.mjs');
   assert.equal(pkg.exports['./http'], './http/index.mjs');
+  assert.equal(pkg.exports['./client'], './client/index.mjs');
   assert.equal(pkg.exports['./schemas/*'], './api/schemas/*');
   assert.equal(pkg.bin['pastafarian-seer'], './query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], './http/server.mjs');
   assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
   assert.equal(pkg.scripts.test, 'node ./scripts/package-selftest.mjs');
-  assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
+  assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
   assert.equal(pkg.engines.node, '>=20');
-  assert.deepEqual(pkg.os, ['linux', 'win32']);
-  assert.deepEqual(pkg.cpu, ['x64']);
+  assert.equal(pkg.os, undefined);
+  assert.equal(pkg.cpu, undefined);
   assert.equal(pkg.repository.url, 'git+https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer.git');
   assert.deepEqual(pkg.dependencies ?? {}, {});
   assert.deepEqual(pkg.optionalDependencies ?? {}, {});
@@ -65,6 +66,7 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.ok(files.includes('generated/index.json'));
   assert.ok(files.includes('generated/calc/*.json'));
   assert.equal(files.includes('generated'), false);
+  assert.ok(files.includes('client/*.mjs'));
   assert.ok(files.includes('api/openapi.json'));
   assert.ok(files.includes('api/openapi.yaml'));
   assert.equal(files.includes('api'), false);
