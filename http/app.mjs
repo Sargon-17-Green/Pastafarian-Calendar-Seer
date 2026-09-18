@@ -494,6 +494,11 @@ export function createSeerHttpHandler(options = {}) {
           presentations: ['full', 'canonical'],
           includes: ['structure', 'boundaries', 'provenance', 'resolution'],
           observerPresets: [{ id: 'kisurra', longitude: KISURRA_LONGITUDE }],
+          exactDomain: {
+            kind: 'finite',
+            minimumJdnExclusive: '-63473948',
+            maximumJdnInclusive: '36828783',
+          },
           reverse: { status: 'implemented', endpoint: '/v1/reverse', requiresCompleteTuple: true },
         }, { 'cache-control': 'public, max-age=300' });
         return;

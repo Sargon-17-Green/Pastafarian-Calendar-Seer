@@ -41,8 +41,8 @@ await mkdir(calcDir, { recursive: true });
 const engineFingerprint = await sha256EngineInputs({
   sourceDir: path.join(root, 'prototype', 'src'),
   dataFiles: {
-    positiveGates: path.join(dataDir, 'gates_u16.bin'),
-    negativeGates: path.join(dataDir, 'gates_negative_u16.bin'),
+    positiveGates: path.join(dataDir, 'gates_100k_u16.bin'),
+    negativeGates: path.join(dataDir, 'gates_negative_100k_u16.bin'),
   },
 });
 const astronomyFingerprint = await sha256Tree(path.join(here, 'vendor', 'pastafari-calendar-1.4.1'));

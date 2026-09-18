@@ -79,7 +79,9 @@ jobs:
           fi
           grep -qx 'package/prototype/data/gates_u16.bin' /tmp/seer-package-files.txt
           grep -qx 'package/prototype/data/gates_negative_u16.bin' /tmp/seer-package-files.txt
-          test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 2
+          grep -qx 'package/prototype/data/gates_100k_u16.bin' /tmp/seer-package-files.txt
+          grep -qx 'package/prototype/data/gates_negative_100k_u16.bin' /tmp/seer-package-files.txt
+          test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 4
           cat > /tmp/seer-expected-runtime-sources.txt <<'EOF'
           package/prototype/src/pastafarian_year_batch.cpp
           package/prototype/src/rns_micro8_avx2_32x8.cpp
@@ -200,6 +202,12 @@ jobs:
               localized.pastafarianDate.month.day !== first.pastafarianDate.month.day) {
             throw new Error('packed localized exact query changed canonical coordinates');
           }
+          const extended = await queryApi.queryDate({
+            calculation: { jdn: '6732954' },
+            target: { jdn: '6732955' },
+            presentation: 'canonical',
+          });
+          if (extended.targetDay.jdn !== '6732955') throw new Error('packed extended-domain query mismatch');
 
           const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
           try {
@@ -323,6 +331,12 @@ jobs:
               localized.pastafarianDate.month.day !== first.pastafarianDate.month.day) {
             throw new Error('Windows localized exact query changed canonical coordinates');
           }
+          const extended = await queryApi.queryDate({
+            calculation: { jdn: '6732954' },
+            target: { jdn: '6732955' },
+            presentation: 'canonical',
+          });
+          if (extended.targetDay.jdn !== '6732955') throw new Error('Windows extended-domain query mismatch');
           const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
           try {
             const port = server.address().port;

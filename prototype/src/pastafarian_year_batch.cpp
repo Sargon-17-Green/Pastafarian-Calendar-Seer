@@ -171,7 +171,7 @@ int main(int argc,char**argv){
         int64_t calc=std::stoll(argv[1]),targetStart=std::stoll(argv[2]);long long count=std::stoll(argv[3]);if(count<=0||count>10000)throw std::runtime_error("count must be in 1..10000");
         int threads=argc>4?atoi(argv[4]):3,sb=argc>5?atoi(argv[5]):512,replayThreads=argc>6?atoi(argv[6]):threads;if(threads<1||replayThreads<1||sb<1)throw std::runtime_error("invalid execution parameters");
         const int64_t delta=(int64_t)count-1;if(targetStart>std::numeric_limits<int64_t>::max()-delta)throw std::overflow_error("target range overflow");int64_t targetEnd=targetStart+delta;
-        FGates G("gates_u16.bin");auto S=fast_stones();FY y=fanchor(calc,G,S);while(targetStart<y.a+1)y=fadj(calc,G,S,y,false);while(targetStart>y.b)y=fadj(calc,G,S,y,true);
+        FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");auto S=fast_stones();FY y=fanchor(calc,G,S);while(targetStart<y.a+1)y=fadj(calc,G,S,y,false);while(targetStart>y.b)y=fadj(calc,G,S,y,true);
         std::vector<BatchRecord>records;records.reserve((size_t)count);int64_t cursor=targetStart;
         while(cursor<=targetEnd){int64_t segEnd=std::min<int64_t>(targetEnd,y.b);auto part=compute_segment(calc,cursor,segEnd,G,S,y,threads,sb,replayThreads);records.insert(records.end(),part.begin(),part.end());if(segEnd==targetEnd)break;cursor=segEnd+1;y=fadj(calc,G,S,y,true);}
         if(records.size()!=(size_t)count)throw std::runtime_error("batch record count mismatch");
