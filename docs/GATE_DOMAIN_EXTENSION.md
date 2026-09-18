@@ -104,7 +104,27 @@ year structure, ranges, typed finite-domain errors and persistent-service reuse.
 ## Why static 100k
 
 On the Windows x86-64 verification host, generation of each 100k direction
-took about 35 seconds. The two new files add only 400,000 raw bytes.
+took on the order of tens of seconds. The two new production files add only
+400,000 raw bytes.
+
+Larger horizons were generated in scratch storage only, to measure whether a
+future extension would justify a different architecture:
+
+| Horizon | Direction | Wall time | Output bytes | SHA-256 |
+| --- | --- | ---: | ---: | --- |
+| 250k | positive | 90.526 s | 500,000 | `8a3cea02ca8ea7dca857b7bad251d0c4e8ff55857088e01b812c46378da2ba16` |
+| 250k | negative | 97.498 s | 500,000 | `01872be074d01a7d0d449ecea197b1d4bdf3f11699a9c10d73c17197ed79f448` |
+| 1M | positive | 368.418 s | 2,000,000 | `57b217a3885d611cdfce754892e2fe9bab5914a0633a843af547ef6ca4a289f3` |
+| 1M | negative | 363.384 s | 2,000,000 | `cc03e6a987717406f80c7422f72eaa9dc7cec99deff9fc7dca3b5965dd7b3db7` |
+
+All four scratch corpora retained the exact `42..963` gap range. During the 1M
+negative run the sampled peak working set was about 7.9 MB; this is a runtime
+observation rather than a formal peak-memory bound. Generation cost was dominated
+by CPU and remained approximately linear with the requested horizon.
+
+These 250k/1M files are benchmark evidence only. They are not packaged, committed,
+or used as authority inputs by production.
+
 Measured npm package size against v0.1.4:
 
 | Package | Packed | Unpacked |
