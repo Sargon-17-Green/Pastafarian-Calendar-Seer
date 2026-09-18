@@ -6,8 +6,14 @@ const staticBase = process.env.SEER_E2E_STATIC_BASE ?? 'http://127.0.0.1:18081';
 
 async function expectText(locator, pattern, timeout = 30000) {
   await locator.waitFor({ state: 'visible', timeout });
-  const value = await locator.textContent();
-  assert.match(value ?? '', pattern);
+  const deadline = Date.now() + timeout;
+  let value = '';
+  while (Date.now() <= deadline) {
+    value = (await locator.textContent()) ?? '';
+    if (pattern.test(value)) return value;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.match(value, pattern);
 }
 
 async function choose(page, name, value) {
