@@ -125,14 +125,14 @@ by CPU and remained approximately linear with the requested horizon.
 These 250k/1M files are benchmark evidence only. They are not packaged, committed,
 or used as authority inputs by production.
 
-Measured npm package size against v0.1.4:
+Measured npm package size after reconciling the v0.1.5 supply-chain hardening:
 
 | Package | Packed | Unpacked |
 | --- | ---: | ---: |
-| v0.1.4 baseline | 245,351 B | 826,322 B |
-| v0.2.0 candidate with ±100k corpora and domain documentation | 546,557 B | 1,234,357 B |
+| v0.1.5 baseline | 251,187 B | 844,893 B |
+| v0.2.0 candidate with ±100k corpora and hardened release files | 553,058 B | 1,254,178 B |
 
-The packed increase is about 301 kB. At this scale compression, mmap,
+The packed increase attributable to the v0.2.0 candidate over v0.1.5 is 301,871 B; the unpacked increase is 409,285 B. At this scale compression, mmap,
 checkpoint serialization and an on-demand disk-cache protocol would add more
 complexity and failure surface than they save.
 

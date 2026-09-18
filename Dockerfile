@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS package
+FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS package
 WORKDIR /src
 COPY . .
 RUN set -eux; \
@@ -6,7 +6,7 @@ RUN set -eux; \
     test -n "$tgz"; \
     mv "$tgz" /tmp/seer.tgz
 
-FROM node:24-bookworm-slim AS build
+FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS build
 ARG TARGETARCH
 RUN case "$TARGETARCH" in amd64|arm64) ;; *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 2 ;; esac
 RUN apt-get update \
@@ -21,7 +21,7 @@ RUN npm init -y >/dev/null \
     && npm test \
     && npm run validate:cache
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgmp10 libgmpxx4ldbl libgomp1 \
     && rm -rf /var/lib/apt/lists/*

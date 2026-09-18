@@ -10,6 +10,9 @@ on:
         description: Seconds between cold processes
         required: false
         default: '2'
+permissions:
+  contents: read
+
 jobs:
   benchmark:
     runs-on: ubuntu-24.04
@@ -18,7 +21,7 @@ jobs:
       run:
         shell: bash --noprofile --norc -e -o pipefail {0}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Record CPU
         run: |
           mkdir -p prototype/results
@@ -44,7 +47,7 @@ jobs:
         run: python3 ./prototype/scripts/run_mulsmall_ab.py "${{ inputs.repetitions || '5' }}"
       - name: Heavy exact RNS self-test after timing
         run: ./prototype/build/mulsmall_selftest 4 1 | tee prototype/results/mulsmall-selftest.csv
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-mulsmall-${{ github.run_id }}
           path: prototype/results/

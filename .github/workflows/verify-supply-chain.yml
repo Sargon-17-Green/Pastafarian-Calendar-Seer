@@ -1,0 +1,97 @@
+name: Verify supply-chain hardening
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'scripts/audit-supply-chain.mjs'
+      - 'scripts/verify-release.mjs'
+      - 'scripts/generate-release-manifest.mjs'
+      - 'docs/SUPPLY_CHAIN.md'
+      - 'README.md'
+  pull_request:
+    paths:
+      - '.github/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'package.json'
+      - 'scripts/audit-supply-chain.mjs'
+      - 'scripts/verify-release.mjs'
+      - 'scripts/generate-release-manifest.mjs'
+      - 'docs/SUPPLY_CHAIN.md'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Static workflow and Docker audit
+        run: node scripts/audit-supply-chain.mjs
+
+      - name: Parse every workflow as YAML
+        shell: bash
+        run: |
+          ruby <<'RUBY'
+          require 'yaml'
+          Dir['.github/workflows/*.{yml,yaml}'].sort.each { |path| YAML.load_file(path, aliases: true) }
+          puts 'workflow YAML parse PASS'
+          RUBY
+
+      - name: Package and cache checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/audit-supply-chain.mjs
+          node --check scripts/verify-release.mjs
+          node --check scripts/generate-release-manifest.mjs
+          npm test
+          npm run validate:cache
+          npm pack --dry-run --json > "$RUNNER_TEMP/npm-pack-dry-run.json"
+          npm publish --dry-run --json > "$RUNNER_TEMP/npm-publish-dry-run.json"
+
+      - name: Prove byte-identical clean npm packs
+        shell: bash
+        run: |
+          set -euo pipefail
+          A="$RUNNER_TEMP/pack-a"
+          B="$RUNNER_TEMP/pack-b"
+          OA="$RUNNER_TEMP/out-a"
+          OB="$RUNNER_TEMP/out-b"
+          git worktree add --detach "$A" "$GITHUB_SHA"
+          git worktree add --detach "$B" "$GITHUB_SHA"
+          mkdir -p "$OA" "$OB"
+          (cd "$A" && npm pack --silent --pack-destination "$OA" >/dev/null)
+          (cd "$B" && npm pack --silent --pack-destination "$OB" >/dev/null)
+          TA="$(find "$OA" -maxdepth 1 -name '*.tgz' -print -quit)"
+          TB="$(find "$OB" -maxdepth 1 -name '*.tgz' -print -quit)"
+          test -n "$TA" && test -n "$TB"
+          SHA_A="$(sha256sum "$TA" | awk '{print $1}')"
+          SHA_B="$(sha256sum "$TB" | awk '{print $1}')"
+          echo "pack A: $SHA_A"
+          echo "pack B: $SHA_B"
+          test "$SHA_A" = "$SHA_B"
+          tar -tzf "$TA" > "$RUNNER_TEMP/package-files.txt"
+          if grep -Eiq '(^|/)HANDOFF_|^package/\.github/' "$RUNNER_TEMP/package-files.txt"; then
+            echo 'forbidden repository material leaked into npm package' >&2
+            exit 1
+          fi
+          echo 'clean npm pack reproducibility PASS'
