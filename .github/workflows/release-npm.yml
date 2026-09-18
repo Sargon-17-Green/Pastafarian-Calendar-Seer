@@ -62,20 +62,31 @@ jobs:
         run: |
           set -euo pipefail
           for WORKFLOW in verify-stage6-deployment.yml release-github-package.yml; do
-            RUNS="$(gh run list --workflow "${WORKFLOW}" --commit "${GITHUB_SHA}" --limit 30 --json headSha,status,conclusion)"
-            node --input-type=module - "${WORKFLOW}" "${GITHUB_SHA}" "${RUNS}" <<'NODE'
-          const [workflow, sha, raw] = process.argv.slice(2);
+            echo "Waiting for successful exact-head run: ${WORKFLOW} @ ${GITHUB_SHA}"
+            OK=0
+            for ATTEMPT in {1..90}; do
+              RUNS="$(gh run list --workflow "${WORKFLOW}" --commit "${GITHUB_SHA}" --limit 30 --json headSha,status,conclusion)"
+              if node --input-type=module - "${GITHUB_SHA}" "${RUNS}" <<'NODE'
+          const [sha, raw] = process.argv.slice(2);
           const runs = JSON.parse(raw);
           const ok = runs.some((run) =>
             run.headSha === sha &&
             run.status === 'completed' &&
             run.conclusion === 'success'
           );
-          if (!ok) {
-            console.error(`No successful exact-head run found for ${workflow} at ${sha}`);
-            process.exit(1);
-          }
+          process.exit(ok ? 0 : 1);
           NODE
+              then
+                OK=1
+                break
+              fi
+              sleep 10
+            done
+            [[ "${OK}" == "1" ]] || {
+              echo "No successful exact-head run found for ${WORKFLOW} at ${GITHUB_SHA}" >&2
+              gh run list --workflow "${WORKFLOW}" --commit "${GITHUB_SHA}" --limit 10
+              exit 1
+            }
           done
 
       - name: Package self-test
@@ -160,7 +171,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm publish "${{ steps.release_asset.outputs.tgz }}" --access public
+          npm publish "${{ steps.release_asset.outputs.tgz }}" --access public --provenance
 
       - name: Verify registry metadata
         shell: bash
@@ -178,6 +189,21 @@ jobs:
             exit 1
           }
           npm view "${NAME}@${VERSION}" version dist --json
+
+      - name: Verify registry tarball equals GitHub Release artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="$(node -p "require('./package.json').name")"
+          VERSION="$(node -p "require('./package.json').version")"
+          TARBALL_URL="$(npm view "${NAME}@${VERSION}" dist.tarball)"
+          test -n "$TARBALL_URL"
+          curl --fail --silent --show-error --location "$TARBALL_URL" --output "$RUNNER_TEMP/npm-registry.tgz"
+          sha256sum "${{ steps.release_asset.outputs.tgz }}" "$RUNNER_TEMP/npm-registry.tgz"
+          cmp --silent "${{ steps.release_asset.outputs.tgz }}" "$RUNNER_TEMP/npm-registry.tgz" || {
+            echo 'registry tarball differs byte-for-byte from verified GitHub Release artifact' >&2
+            exit 1
+          }
 
       - name: Clean registry install and package verification
         shell: bash
@@ -221,6 +247,20 @@ jobs:
           cd "$CONSUMER"
           npm audit signatures --json --include-attestations > "$RUNNER_TEMP/npm-signatures.json"
           cat "$RUNNER_TEMP/npm-signatures.json"
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const report = JSON.parse(await readFile(process.env.RUNNER_TEMP + '/npm-signatures.json', 'utf8'));
+          if (!Array.isArray(report.invalid) || report.invalid.length !== 0) {
+            throw new Error(`invalid signatures/attestations: ${JSON.stringify(report.invalid)}`);
+          }
+          if (!Array.isArray(report.missing) || report.missing.length !== 0) {
+            throw new Error(`missing signatures/attestations: ${JSON.stringify(report.missing)}`);
+          }
+          if (!Array.isArray(report.verified) || report.verified.length < 1) {
+            throw new Error('expected at least one verified npm provenance attestation');
+          }
+          console.log(`verified npm attestations: ${report.verified.length}`);
+          NODE
 
       - name: Verify GitHub tag and release alignment
         env:

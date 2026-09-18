@@ -50,18 +50,15 @@ The workflow grants only `contents: read`, `actions: read`, and `id-token: write
 
 ## One-time package bootstrap
 
-npm requires the package to exist before trusted-publisher configuration can be attached. The initial bootstrap publication is therefore exceptional and must not introduce a repository secret.
+The one-time bootstrap is complete. Version `0.1.2` was created in the public npm registry by publishing the already verified GitHub Release tarball with SHA-256:
 
-For the first publication only:
+```text
+471251e3f3a884341d8346e502d7bb9e411f9cb5b0c6f31f2a9027aff4e99e4a
+```
 
-1. authenticate interactively with npm's web login on a maintainer machine with account-level 2FA;
-2. publish the already verified GitHub Release tarball for the existing version, not a newly packed working tree;
-3. verify the version and dist metadata in the public registry;
-4. configure the GitHub Actions trusted publisher shown above;
-5. verify the trusted-publisher configuration;
-6. run `npm logout` and confirm the temporary local npm credential is no longer usable.
+The bootstrap used interactive npm web authentication with account-level 2FA. No repository npm token was created. After the package existed, the GitHub Actions trusted publisher described above was configured and verified, and the temporary local npm credential was revoked with `npm logout`.
 
-All later versions are published only by the OIDC workflow.
+Version `0.1.2` therefore has normal npm registry signatures but no CI provenance attestation. Every later release is published only by the OIDC workflow, which requires and verifies npm provenance.
 
 ## Release safety rules
 

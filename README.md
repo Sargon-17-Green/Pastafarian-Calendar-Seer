@@ -8,12 +8,18 @@ The Seer is **not normative**. The current Scroll defines the calendar; if the S
 
 ## Install
 
-The current verified release is **v0.1.2**.
+The current release line is **v0.1.3**.
 
-Public npm-registry publication is not configured yet, so install the verified GitHub Release tarball directly:
+Install from the public npm registry:
 
 ```bash
-npm install https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/releases/download/v0.1.2/pastafarian-calendar-seer-0.1.2.tgz
+npm install pastafarian-calendar-seer
+```
+
+For a manual/reproducible install of this exact release, the GitHub Release tarball remains available:
+
+```bash
+npm install https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/releases/download/v0.1.3/pastafarian-calendar-seer-0.1.3.tgz
 ```
 
 The package is ESM-only, requires Node `>=20`, has no npm runtime dependencies, and is not install-time OS/CPU gated.
