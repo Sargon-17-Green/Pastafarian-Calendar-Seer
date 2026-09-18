@@ -4,9 +4,11 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const nativeSupported = process.arch === 'x64' && (process.platform === 'linux' || process.platform === 'win32');
+const nativeSupported =
+  (process.platform === 'linux' && (process.arch === 'x64' || process.arch === 'arm64'))
+  || (process.platform === 'win32' && process.arch === 'x64');
 if (!nativeSupported) {
-  console.error('The exact native runtime is currently supported only on x64 Linux/WSL and x64 Windows.');
+  console.error('The exact native runtime is currently supported on x64/ARM64 Linux and x64 Windows.');
   console.error('The browser HTTP client and bundled-cache JavaScript API do not require build:native.');
   process.exit(1);
 }

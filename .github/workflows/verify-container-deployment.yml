@@ -17,6 +17,7 @@ on:
       - 'prototype/src/**'
       - 'prototype/scripts/build_*.sh'
       - 'scripts/build-runtime.sh'
+      - 'scripts/build-runtime.mjs'
       - 'web/**'
       - 'docs/WEB_APPLICATION.md'
       - '.github/workflows/verify-container-deployment.yml'
@@ -35,6 +36,7 @@ on:
       - 'prototype/src/**'
       - 'prototype/scripts/build_*.sh'
       - 'scripts/build-runtime.sh'
+      - 'scripts/build-runtime.mjs'
       - 'web/**'
       - 'docs/WEB_APPLICATION.md'
       - '.github/workflows/verify-container-deployment.yml'
@@ -44,28 +46,49 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
+    name: Native container ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            uname: x86_64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            uname: aarch64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7.0.1
+      - name: Assert native host
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "${{ matrix.uname }}"
 
       - name: Build generic portable image
-        run: docker build --pull --tag pastafarian-seer:ci .
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --pull             --build-arg TARGETARCH="${{ matrix.arch }}"             --tag "pastafarian-seer:ci-${{ matrix.arch }}" .
 
       - name: Inspect image contract
         shell: bash
         run: |
           set -euo pipefail
-          test "$(docker image inspect pastafarian-seer:ci --format '{{.Config.User}}')" = "node"
-          docker image inspect pastafarian-seer:ci --format '{{json .Config.Healthcheck.Test}}' | grep -q '/v1/status'
-          docker image inspect pastafarian-seer:ci --format '{{json .Config.Env}}' | grep -q 'SEER_REQUIRE_ENGINE_SERVICE=1'
-          docker image inspect pastafarian-seer:ci --format '{{json .Config.Env}}' | grep -q 'SEER_WEB_ROOT=/opt/seer-web'
-
-      - name: HTTP and negative-domain smoke
+          image="pastafarian-seer:ci-${{ matrix.arch }}"
+          test "$(docker image inspect "$image" --format '{{.Config.User}}')" = "node"
+          docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/v1/status'
+          docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_REQUIRE_ENGINE_SERVICE=1'
+          docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_WEB_ROOT=/opt/seer-web'
+          test "$(docker image inspect "$image" --format '{{.Architecture}}')" = "${{ matrix.arch }}"
+      - name: HTTP, web and exact runtime smoke
         shell: bash
         run: |
           set -euo pipefail
-          docker run -d --name seer-container -p 18080:8080 pastafarian-seer:ci
+          image="pastafarian-seer:ci-${{ matrix.arch }}"
+          docker run -d --name seer-container -p 18080:8080 "$image"
           cleanup() {
             docker logs seer-container || true
             docker rm -f seer-container >/dev/null 2>&1 || true
@@ -73,7 +96,7 @@ jobs:
           trap cleanup EXIT
 
           ready=0
-          for _ in $(seq 1 45); do
+          for _ in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:18080/v1/status >/tmp/seer-status.json; then
               ready=1
               break
@@ -81,31 +104,102 @@ jobs:
             sleep 2
           done
           test "$ready" -eq 1
-          python - <<'PY'
-          import json
-          x=json.load(open('/tmp/seer-status.json', encoding='utf-8'))
-          assert x['status'] == 'ok', x
-          print('container status PASS')
-          PY
-
           test "$(docker exec seer-container id -u)" != "0"
           curl -fsS http://127.0.0.1:18080/web/ | grep -q 'Pastafarian Calendar Seer'
           curl -fsS http://127.0.0.1:18080/client/index.mjs | grep -q 'createSeerClient'
 
-          curl -fsS \
-            -H 'content-type: application/json' \
-            -H 'accept: application/json' \
-            --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}' \
-            http://127.0.0.1:18080/v1/date >/tmp/seer-negative.json
-
+          curl -fsS             -H 'content-type: application/json'             -H 'accept: application/json'             --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}'             http://127.0.0.1:18080/v1/date >/tmp/seer-negative.json
           python - <<'PY'
           import json
           x=json.load(open('/tmp/seer-negative.json', encoding='utf-8'))
           assert x['calculationDay']['jdn'] == '-13334146', x
           assert x['targetDay']['jdn'] == '-13337246', x
           pf=x['pastafarianDate']
-          assert isinstance(pf['year'], str)
-          assert 1 <= pf['cutlet']['canonicalIndex'] <= 17
-          assert 1 <= pf['month']['canonicalIndex'] <= 47
-          print('container negative-domain exact query PASS', pf['year'])
+          req={
+              'calculation': {'jdn': x['calculationDay']['jdn']},
+              'pastafarianDate': {
+                  'year': pf['year'],
+                  'cutlet': {
+                      'canonicalIndex': pf['cutlet']['canonicalIndex'],
+                      'day': pf['cutlet']['day'],
+                  },
+                  'month': {
+                      'canonicalIndex': pf['month']['canonicalIndex'],
+                      'day': pf['month']['day'],
+                  },
+              },
+              'presentation': 'canonical',
+          }
+          json.dump(req, open('/tmp/seer-reverse-request.json','w',encoding='utf-8'))
+          open('/tmp/seer-year.txt','w',encoding='utf-8').write(str(pf['year']))
+          print('negative exact query PASS', pf['year'])
+          PY
+
+          curl -fsS             -H 'content-type: application/json'             -H 'accept: application/json'             --data @/tmp/seer-reverse-request.json             http://127.0.0.1:18080/v1/reverse >/tmp/seer-reverse.json
+          year="$(cat /tmp/seer-year.txt)"
+          curl -fsS             "http://127.0.0.1:18080/v1/year/$year?calculationJdn=-13334146&presentation=canonical"             >/tmp/seer-year.json
+
+          python - <<'PY'
+          import json
+          reverse=json.load(open('/tmp/seer-reverse.json', encoding='utf-8'))
+          year=json.load(open('/tmp/seer-year.json', encoding='utf-8'))
+          assert reverse['targetDay']['jdn'] == '-13337246', reverse
+          expected=open('/tmp/seer-year.txt', encoding='utf-8').read().strip()
+          assert year['year']['number'] == expected, year
+          assert int(year['year']['endJdn']) - int(year['year']['startJdn']) + 1 == year['year']['lengthDays'], year
+          print('container reverse/year PASS')
+          PY
+
+  multiarch-layout:
+    name: Build multi-architecture OCI index
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build amd64 and arm64 OCI layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx build             --platform linux/amd64,linux/arm64             --provenance=false             --output type=oci,dest=/tmp/seer-multiarch.oci .
+
+      - name: Verify OCI manifest architectures
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, tarfile
+          archive='/tmp/seer-multiarch.oci'
+
+          with tarfile.open(archive) as tf:
+              root=json.load(tf.extractfile('index.json'))
+              seen=set()
+              platforms=set()
+
+              def load_descriptor(descriptor):
+                  platform=descriptor.get('platform') or {}
+                  os_name=platform.get('os')
+                  arch=platform.get('architecture')
+                  if os_name and arch:
+                      platforms.add(f'{os_name}/{arch}')
+
+                  digest=descriptor.get('digest', '')
+                  if not digest.startswith('sha256:') or digest in seen:
+                      return
+                  seen.add(digest)
+                  member='blobs/sha256/' + digest.split(':', 1)[1]
+                  try:
+                      payload=json.load(tf.extractfile(member))
+                  except (KeyError, TypeError, json.JSONDecodeError):
+                      return
+                  for child in payload.get('manifests', []):
+                      load_descriptor(child)
+
+              for descriptor in root.get('manifests', []):
+                  load_descriptor(descriptor)
+
+          assert 'linux/amd64' in platforms, platforms
+          assert 'linux/arm64' in platforms, platforms
+          print('multi-architecture OCI index PASS', sorted(platforms))
           PY

@@ -2,7 +2,7 @@
 
 > **The Monster performs. The Seer sees.**
 
-The **Seer** is a high-performance engine and public API for the Pastafarian Calendar. It exposes the calendar through a stable Node API, browser/remote HTTP client, CLI, HTTP v1 service, OpenAPI contract, and a verified x86-64 Linux container deployment.
+The **Seer** is a high-performance engine and public API for the Pastafarian Calendar. It exposes the calendar through a stable Node API, browser/remote HTTP client, CLI, HTTP v1 service, OpenAPI contract, and verified Linux container deployment on amd64 and ARM64.
 
 The Seer is **not normative**. The current Scroll defines the calendar; if the Seer disagrees with it, the Seer is wrong. The Seer is deliberately allowed to use precomputation, algebraic shortcuts, specialized integer representations, SIMD, and other optimizations instead of reenacting the Monster's liturgy.
 
@@ -56,7 +56,7 @@ From a source checkout:
 npm run build:native
 ```
 
-The exact native runtime is supported on x64 Linux/WSL and x64 Windows. See [Native runtime and deployment](#native-runtime-and-deployment).
+The exact native runtime is verified on x64 Linux/WSL, ARM64 Linux, and x64 Windows. See [Native runtime and deployment](#native-runtime-and-deployment).
 
 ## 30-second Node example
 
@@ -917,8 +917,9 @@ The UCRT64 `bin` directory must remain on `PATH` when the generated executables 
 
 Default behavior:
 
-- use AVX2 when the build host exposes it;
-- otherwise use the exact portable scalar RNS backend.
+- on amd64/x64, use AVX2 when the build host exposes it, otherwise use the exact portable scalar RNS backend;
+- on Linux ARM64, use the exact portable scalar RNS backend;
+- reject AVX2 explicitly on ARM64 because that backend is x86-only.
 
 Force one:
 
@@ -929,13 +930,14 @@ SEER_RNS_BACKEND=avx2 npm run build:native
 
 Forcing AVX2 on an unsupported CPU fails explicitly.
 
-Linux shell builds also accept:
+Linux shell builds also accept an explicit architecture policy:
 
 ```bash
-SEER_MARCH=x86-64 SEER_RNS_BACKEND=portable npm run build:native
+SEER_ARCH=amd64 SEER_RNS_BACKEND=portable npm run build:native
+SEER_ARCH=arm64 SEER_RNS_BACKEND=portable npm run build:native
 ```
 
-The default is `SEER_MARCH=native`. Use a generic target only when the compiled binaries are intended to move between x86-64 hosts.
+With `SEER_ARCH=auto`, the default remains `SEER_MARCH=native`. Explicit `amd64` defaults to the generic `x86-64` baseline; explicit `arm64` defaults to `armv8-a`. These explicit baselines are used by the verified container and architecture-conformance workflows.
 
 ### Persistent service policy
 
@@ -960,7 +962,7 @@ SEER_YEAR_STRUCTURE_BIN
 
 ### Container
 
-The verified x86-64 Linux image path builds the exact portable backend using a generic CPU target.
+The verified Linux image path builds the exact portable backend for both `linux/amd64` and `linux/arm64` using explicit generic CPU targets.
 
 ```bash
 docker build -t pastafarian-calendar-seer:local .
@@ -973,7 +975,8 @@ The image:
 - binds `0.0.0.0:8080`;
 - sets `SEER_REQUIRE_ENGINE_SERVICE=1`;
 - includes a `/v1/status` healthcheck;
-- is CI-tested with an exact negative-gate-domain HTTP request.
+- is CI-tested natively on amd64 and ARM64 with exact negative-gate-domain HTTP, reverse, and year queries;
+- has a Buildx path that produces one OCI multi-architecture layout containing `linux/amd64` and `linux/arm64`.
 
 See `docs/CONTAINER_DEPLOYMENT.md`.
 
@@ -1051,7 +1054,7 @@ The repository contains:
 - bidirectional positive/negative gate support;
 - reverse conversion;
 - runnable no-build browser example;
-- verified x86-64 Linux container deployment;
+- verified amd64 and ARM64 Linux container deployment;
 - reproducible GitHub package releases.
 
 Known limitations:
@@ -1059,7 +1062,7 @@ Known limitations:
 - the exact engine has a finite bundled gate horizon;
 - presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
 - exact out-of-cache execution requires the native toolchain/runtime;
-- the verified container is x86-64 Linux, not ARM64;
+- Windows ARM64 and macOS native exact-runtime support are not currently verified;
 - public npm-registry publication is not configured yet.
 
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
@@ -1118,7 +1121,7 @@ precompute/           cache lookup, validation and boundary support
 prototype/            exact/native engine, data and benchmark lineage
 query/                shared semantic query layer and CLI
 scripts/              package/native build and self-test entry points
-Dockerfile            verified x86-64 Linux service image
+Dockerfile            verified amd64/ARM64 Linux service image
 ROADMAP.md             remaining product work
 LICENSE                MIT license
 NOTICE.md              liturgical non-authorization notice

@@ -3,7 +3,6 @@
 // Exact modular arithmetic and CRT certification are preserved; only the 8-lane
 // execution representation is replaced by ordinary uint64_t lanes.
 
-#include <immintrin.h>
 #include <gmpxx.h>
 #include <omp.h>
 #include <algorithm>
@@ -287,7 +286,7 @@ static void replay_pack(const RnsEngine&e,PackState&z,int pk,const std::vector<S
 struct ReplayPool{
     const RnsEngine& e; int nth; std::barrier<> bar; std::vector<std::thread> workers; std::atomic<uint64_t> gen{0}; std::atomic<bool> stop{false};
     std::vector<PackState>* packs=nullptr; const std::vector<StepMeta>* steps=nullptr; int active=0;
-    explicit ReplayPool(const RnsEngine&ee,int n):e(ee),nth(std::max(1,n)),bar(nth){for(int tid=1;tid<nth;tid++)workers.emplace_back([this,tid]{uint64_t seen=0;for(;;){uint64_t g;while((g=gen.load(std::memory_order_acquire))==seen){if(stop.load(std::memory_order_relaxed))return;_mm_pause();}seen=g;if(stop.load(std::memory_order_relaxed))return;auto *pp=packs;auto *ss=steps;int aa=active;for(int pk=tid;pk<aa;pk+=nth)replay_pack(e,(*pp)[pk],pk,*ss);bar.arrive_and_wait();}});}
+    explicit ReplayPool(const RnsEngine&ee,int n):e(ee),nth(std::max(1,n)),bar(nth){for(int tid=1;tid<nth;tid++)workers.emplace_back([this,tid]{uint64_t seen=0;for(;;){uint64_t g;while((g=gen.load(std::memory_order_acquire))==seen){if(stop.load(std::memory_order_relaxed))return;std::this_thread::yield();}seen=g;if(stop.load(std::memory_order_relaxed))return;auto *pp=packs;auto *ss=steps;int aa=active;for(int pk=tid;pk<aa;pk+=nth)replay_pack(e,(*pp)[pk],pk,*ss);bar.arrive_and_wait();}});}
     ~ReplayPool(){stop.store(true,std::memory_order_relaxed);gen.fetch_add(1,std::memory_order_release);for(auto&t:workers)t.join();}
     void submit(std::vector<PackState>&p,const std::vector<StepMeta>&s,int activePacks){packs=&p;steps=&s;active=activePacks;gen.fetch_add(1,std::memory_order_release);for(int pk=0;pk<activePacks;pk+=nth)replay_pack(e,p[pk],pk,s);bar.arrive_and_wait();}
 };
@@ -322,4 +321,5 @@ int main(int argc,char**argv){int threads=std::min(5,omp_get_max_threads());int 
     std::vector<std::pair<std::string,mpz_class>> ranks;ranks.push_back({"mid",N/2});gmp_randclass rr(gmp_randinit_mt);rr.seed(0xC01DCAFE);for(int i=0;i<randoms;i++)ranks.push_back({"rnd"+std::to_string(i+1),rr.get_z_range(N)+1});
     std::cout<<"rank,superblock,ok,unknown_ms,cert,splits,fallback,failed,spec,waste,discard,micro,invalid,forced,pred_ms,replay_ms,reset_ms,crt_ms,fallback_ms,minbasis,maxbasis,avgbasis,maxlayers,avglayers,reset_minbasis,reset_maxbasis,reset_avgbasis\n";
     for(auto& [name,rank]:ranks){auto w0=Clock::now();auto gold=gold_word(gt,rank);auto w1=Clock::now();std::cerr<<"gold "<<name<<" ms="<<ms(w0,w1)<<"\n";for(int sb:{64,128,256,512}){FastState s;s.st=initial_struct(len);s.pack=eng.initPacks;s.k=initk;s.coeff=coeff;s.rank=rank;s.total=N;set_rank_resid(eng,s);Unknown u{eng,ap,gt,gold,pool,sb};bool ok=u.run(s);auto&z=u.st;double avg=z.basis_samples?(double)z.basis_sum/z.basis_samples:0;std::cout<<name<<","<<sb<<","<<ok<<","<<std::fixed<<std::setprecision(6)<<z.total_ms<<","<<z.cert<<","<<z.splits<<","<<z.fallback<<","<<z.failed<<","<<z.spec<<","<<z.waste<<","<<z.discard<<","<<z.micro<<","<<z.invalid<<","<<z.forced<<","<<z.pred_ms<<","<<z.replay_ms<<","<<z.reset_ms<<","<<z.crt_ms<<","<<z.fallback_ms<<","<<z.minbasis<<","<<z.maxbasis<<","<<avg<<","<<z.maxlayers<<","<<(z.micro?(double)z.layers_sum/(3.0*z.micro):0.0)<<","<<(z.reset_basis_samples?z.reset_minbasis:0)<<","<<z.reset_maxbasis<<","<<(z.reset_basis_samples?(double)z.reset_basis_sum/z.reset_basis_samples:0.0)<<"\n";}}
+    return 0;
 }
