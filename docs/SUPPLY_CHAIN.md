@@ -8,7 +8,9 @@ This document describes how release origin and artifact integrity are establishe
 
 `v0.1.3` was the first release verified here with npm OIDC provenance. Its GitHub and npm tarballs are byte-identical with SHA-256 `6936a6da8f67d36cbb759c4861d32e61b921471b2c8ad940b79eaee8864e853b`.
 
-`v0.1.4` added the verified ARM64/runtime and localization workstreams and is the current immutable pre-hardening release. Its GitHub Release is immutable at commit `e851014f84ff176ee3b44c7d3b8eadbb4c904ec0`; npm `0.1.4` has SLSA v1 provenance. It still predates the GHCR, per-platform SBOM, release-manifest, and project-generated artifact-attestation layer introduced by `v0.1.5`.
+`v0.1.4` added the verified ARM64/runtime and localization workstreams. Its GitHub Release is immutable at commit `e851014f84ff176ee3b44c7d3b8eadbb4c904ec0`; npm `0.1.4` has SLSA v1 provenance.
+
+`v0.1.5` is intentionally recorded as a **partial release**. Its tag is fixed at commit `91e6fdddccc2e86fdaea53dd22e3de8ace252132`. npm `0.1.5` was published with SLSA v1 provenance and the GHCR multi-architecture image was published and verified, but the final GitHub Release workflow stopped before creating release assets because the generated npm CycloneDX document did not carry an explicit release-version root component and the validator rejected it. The published npm and GHCR artifacts are not rewritten or removed; the complete hardened release continues as `v0.1.6`.
 
 The repository is configured so that GitHub Releases are immutable once published. A published release's tag and assets must not be moved or replaced. If a published artifact is defective, publish a new patch version.
 
@@ -39,7 +41,7 @@ Publication workflows use per-version concurrency groups and never overwrite an 
 
 ## GitHub Actions integrity
 
-Every `uses:` reference in `.github/workflows` is pinned to a full 40-character commit SHA. A same-line version comment records the human-readable release. Dependabot is configured to propose updates for GitHub Actions, Docker, and npm metadata; updates are not auto-merged.
+Every `uses:` reference in `.github/workflows` is pinned to a full 40-character commit SHA. A same-line version comment records the human-readable release. Runtime tools hidden behind actions are also constrained where material to reproducibility: Syft is pinned to `v1.52.0`, Buildx to `v0.37.1`, Trivy to `v0.70.0`, and the QEMU `tonistiigi/binfmt:latest` image is pinned to OCI index digest `sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0`. Dependabot is configured to propose updates for GitHub Actions, Docker, and npm metadata; updates are not auto-merged.
 
 `npm run` does not download workflow actions. `scripts/audit-supply-chain.mjs` checks that workflow references remain SHA-pinned, explicit permissions exist, `write-all` is absent, Docker bases are digest-pinned, and no tracked `HANDOFF_*` file exists.
 
@@ -59,7 +61,7 @@ Both published child images are pulled by immutable child digest and checked for
 
 A hardened GitHub Release contains:
 
-- `pastafarian-calendar-seer-X.Y.Z.cdx.json` — CycloneDX SBOM for the npm package contents;
+- `pastafarian-calendar-seer-X.Y.Z.cdx.json` — CycloneDX SBOM for the npm package contents. Syft is version-pinned, and the SBOM root component identity is explicitly set and verified as `pastafarian-calendar-seer@X.Y.Z`;
 - `pastafarian-calendar-seer-X.Y.Z-container-amd64.spdx.json` — SPDX JSON SBOM for the immutable `linux/amd64` child image;
 - `pastafarian-calendar-seer-X.Y.Z-container-arm64.spdx.json` — SPDX JSON SBOM for the immutable `linux/arm64` child image.
 
@@ -119,7 +121,7 @@ Release publication uses `GITHUB_TOKEN` and OIDC where GitHub-native authorizati
 
 Never move a release tag, unpublish/re-publish an npm version, overwrite a GHCR version tag, or silently replace a published GitHub Release asset.
 
-If npm fails after GHCR succeeds, rerun only the failed npm workflow, then rerun the final GitHub Release workflow. If the final workflow has an existing draft, it resumes only when every existing draft asset is byte-identical; it never overwrites a differing asset. If a published release is bad, create a new patch version.
+If npm or GHCR fails before publication completes, rerun only the failed channel workflow, then rerun the final GitHub Release workflow. If the final workflow fails **after npm and/or GHCR have already published an immutable version but before a GitHub Release exists**, do not move the tag or attempt to backfill a changed workflow under that tag; record the version as partial and publish the fix under a new patch version. If the final workflow has an existing draft, it resumes only when every existing draft asset is byte-identical; it never overwrites a differing asset. If a published release is bad, create a new patch version.
 
 ## `HANDOFF_*` exclusion
 
