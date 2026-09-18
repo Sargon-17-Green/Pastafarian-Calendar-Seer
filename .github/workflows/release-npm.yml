@@ -179,7 +179,7 @@ jobs:
           set -euo pipefail
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
-          for ATTEMPT in {1..12}; do
+          for ATTEMPT in {1..60}; do
             FOUND="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
             [[ "${FOUND}" == "${VERSION}" ]] && break
             sleep 5
