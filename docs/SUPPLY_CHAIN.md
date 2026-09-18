@@ -26,7 +26,7 @@ The immutable GHCR manifest digest, not a mutable tag, is the container source o
 ## Publication order
 
 1. The tagged commit must be reachable from `main` and its tag must exactly match `package.json`.
-2. Exact-head Stage 6, container verification, and supply-chain verification must already be green.
+2. Exact-head Stage 6, native ARM64 parity, multi-architecture container verification, production-web verification, release preflight, and supply-chain verification must already be green.
 3. npm publishes the byte-reproducible tarball through OIDC Trusted Publishing with provenance.
 4. GHCR publishes the final image, BuildKit provenance/SBOM attestations, and a GitHub artifact attestation for the image digest.
 5. The GitHub Release workflow independently rebuilds the npm tarball and requires it to be byte-identical to the registry tarball.
@@ -43,22 +43,23 @@ Every `uses:` reference in `.github/workflows` is pinned to a full 40-character 
 
 ## Docker base and image integrity
 
-The human-readable base is `node:24-bookworm-slim`, pinned in `Dockerfile` to its OCI index digest. Pinning the index rather than an architecture-specific child manifest preserves compatibility with a future multi-architecture build while keeping the base immutable for a given source commit.
+The human-readable base is `node:24-bookworm-slim`, pinned in `Dockerfile` to its OCI index digest. Pinning the index rather than an architecture-specific child manifest allows the same immutable base identity to resolve correctly for the verified `linux/amd64` and `linux/arm64` builds.
 
-The release workflow records both the GHCR top-level image digest and the Linux/amd64 child digest. Consumers should pull by digest:
+The release workflow records the GHCR top-level multi-architecture image digest plus the `linux/amd64` and `linux/arm64` child digests. Consumers should normally pull the top-level digest and let the container runtime select the matching child:
 
 ```bash
 docker pull ghcr.io/sargon-17-green/pastafarian-calendar-seer@sha256:<manifest-digest>
 ```
 
-The final image is checked for non-root execution, `/v1/status`, and an exact calendar query. Trivy retains a HIGH/CRITICAL report and fails publication for unfixed-aware CRITICAL findings. A vulnerability finding is a dependency/security signal, not evidence about calendar semantics.
+Both published child images are pulled by immutable child digest and checked for non-root execution, `/v1/status`, web/client serving, and an exact calendar query; the arm64 smoke runs through QEMU in the release job after native ARM64 CI has already passed. Trivy retains separate HIGH/CRITICAL reports for amd64 and arm64 and fails publication if either child has an unfixed-aware CRITICAL finding. A vulnerability finding is a dependency/security signal, not evidence about calendar semantics.
 
 ## SBOMs
 
 A hardened GitHub Release contains:
 
 - `pastafarian-calendar-seer-X.Y.Z.cdx.json` — CycloneDX SBOM for the npm package contents;
-- `pastafarian-calendar-seer-X.Y.Z-container.spdx.json` — SPDX JSON SBOM generated from the final image digest.
+- `pastafarian-calendar-seer-X.Y.Z-container-amd64.spdx.json` — SPDX JSON SBOM for the immutable `linux/amd64` child image;
+- `pastafarian-calendar-seer-X.Y.Z-container-arm64.spdx.json` — SPDX JSON SBOM for the immutable `linux/arm64` child image.
 
 BuildKit also publishes container provenance and SBOM attestations with the OCI image.
 
@@ -90,7 +91,7 @@ The one-time npm bootstrap is complete: the package was created from the verifie
 
 ## Release manifest and one-command verification
 
-`release-manifest.json` is the machine-readable index connecting the version, commit, tag, GitHub tarball SHA-256, npm integrity/tarball URL, GHCR image, and image digest.
+`release-manifest.json` is the machine-readable index connecting the version, commit, tag, GitHub tarball SHA-256, npm integrity/tarball URL, GHCR top-level digest, both platform child digests, and the per-platform SBOM filenames.
 
 From a source checkout or installed package:
 

@@ -12,7 +12,7 @@ The package version in `package.json` is the release version. The release tag mu
 
 Before creating a version tag, the exact commit must already pass the relevant source checks on `main`. A tag push then waits for successful exact-head runs rather than assuming concurrently started workflows have finished.
 
-The release gates include Stage 6, supply-chain verification, container verification, and production-web verification where the container is involved. Package self-test and cache validation are also repeated inside the publication workflows.
+The release gates include Stage 6, native ARM64 parity, multi-architecture container verification, supply-chain verification, release preflight, and production-web verification. Package self-test and cache validation are also repeated inside the publication workflows.
 
 `.github/workflows/verify-release-preflight.yml` runs on every push to `main` and can also be dispatched manually. It has read-only repository permissions and performs package tests, cache validation, publication dry-run, deterministic packing, boundary checks, checksum creation, and upload of the exact-head preflight artifact. The privileged GitHub Release workflow runs only for a version tag.
 
@@ -35,16 +35,16 @@ The one-time npm bootstrap is complete. Version `0.1.2` was created from the alr
 
 ## GHCR publication
 
-`.github/workflows/release-container.yml` publishes `ghcr.io/sargon-17-green/pastafarian-calendar-seer` using `GITHUB_TOKEN`. Version tags are `X.Y.Z` and `vX.Y.Z`; the digest is the source of truth.
+`.github/workflows/release-container.yml` publishes `ghcr.io/sargon-17-green/pastafarian-calendar-seer` using `GITHUB_TOKEN` as one OCI index containing `linux/amd64` and `linux/arm64`. Version tags are `X.Y.Z` and `vX.Y.Z`; the top-level digest and both child digests are recorded.
 
-A retry never overwrites an existing version tag. If both version tags already exist, the workflow continues only when they resolve to the same digest and the image labels bind that digest to the exact release commit and version. Otherwise it fails closed.
+A retry never overwrites an existing version tag. If both version tags already exist, the workflow continues only when they resolve to the same top-level digest, that index contains both required platform children, and the release identity matches the exact commit/version. Otherwise it fails closed.
 
-The container publication records BuildKit provenance/SBOM attestations, a GitHub artifact attestation for the digest, a Trivy HIGH/CRITICAL report, an unfixed-aware CRITICAL gate, a pull-by-digest smoke test, non-root execution, web serving, and an exact calendar query.
+The container publication records BuildKit provenance/SBOM attestations and a GitHub artifact attestation for the index digest. It runs separate Trivy HIGH/CRITICAL scans and CRITICAL gates for amd64 and arm64, then pulls each child by digest and performs non-root, readiness, web/client, and exact-query smoke tests.
 
 ## Final immutable GitHub Release
 
 The GitHub Release workflow waits for successful npm and GHCR publication for the same commit. It independently rebuilds the npm tarball and requires byte identity with npm before assembling the final release.
-The final release contains the npm-format tarball, its SHA-256 file, `SHA256SUMS`, a CycloneDX package SBOM, an SPDX container SBOM, and `release-manifest.json`. GitHub artifact attestations bind the tarball, checksum material, and container SBOM to the workflow and commit.
+The final release contains the npm-format tarball, its SHA-256 file, `SHA256SUMS`, a CycloneDX package SBOM, separate SPDX SBOMs for the amd64 and arm64 child images, and `release-manifest.json`. GitHub artifact attestations bind the tarball and checksum material to the workflow/commit, and bind each platform SBOM to its immutable child digest.
 
 Release assets are accumulated in a draft. Existing draft assets are never replaced silently: a retry may reuse an asset only if the bytes are identical. Only after all checks pass is the draft published. Repository-level immutable releases then lock the release assets and associated tag.
 

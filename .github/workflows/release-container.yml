@@ -23,7 +23,7 @@ jobs:
   publish:
     if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer' && github.ref_type == 'tag'
     runs-on: ubuntu-24.04
-    timeout-minutes: 50
+    timeout-minutes: 120
     steps:
       - name: Check out tagged source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
+          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
             ok=0
             for _ in $(seq 1 120); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
@@ -74,6 +74,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ github.token }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
@@ -104,7 +107,7 @@ jobs:
           context: .
           pull: true
           push: true
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: |
             ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
             ${{ env.IMAGE }}:v${{ steps.meta.outputs.version }}
@@ -115,7 +118,7 @@ jobs:
           provenance: mode=max
           sbom: true
 
-      - name: Resolve published image digest
+      - name: Resolve published image and platform digests
         id: image
         shell: bash
         env:
@@ -126,10 +129,32 @@ jobs:
           DIGEST="$BUILT_DIGEST"
           if [[ -z "$DIGEST" ]]; then DIGEST="$EXISTING_DIGEST"; fi
           test -n "$DIGEST"
+
+          RAW="$(docker buildx imagetools inspect "$IMAGE@$DIGEST" --raw)"
+          mapfile -t PLATFORM_DIGESTS < <(node --input-type=module - "$RAW" <<'NODE'
+          const raw = JSON.parse(process.argv[2]);
+          for (const arch of ['amd64', 'arm64']) {
+            const m = raw.manifests?.find((x) => x.platform?.os === 'linux' && x.platform?.architecture === arch);
+            if (!m?.digest) throw new Error(`linux/${arch} manifest digest missing`);
+            console.log(`${arch}=${m.digest}`);
+          }
+          NODE
+          )
+
+          declare -A P
+          for line in "${PLATFORM_DIGESTS[@]}"; do
+            P["${line%%=*}"]="${line#*=}"
+          done
+          test -n "${P[amd64]:-}" && test -n "${P[arm64]:-}"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
-          docker pull "$IMAGE@$DIGEST"
-          REVISION="$(docker image inspect "$IMAGE@$DIGEST" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
-          VERSION_LABEL="$(docker image inspect "$IMAGE@$DIGEST" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
+          echo "amd64=${P[amd64]}" >> "$GITHUB_OUTPUT"
+          echo "arm64=${P[arm64]}" >> "$GITHUB_OUTPUT"
+
+          # Pull the native child and verify release identity labels. Both child images
+          # are built by the same BuildKit invocation with identical OCI labels.
+          docker pull --platform linux/amd64 "$IMAGE@${P[amd64]}"
+          REVISION="$(docker image inspect "$IMAGE@${P[amd64]}" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
+          VERSION_LABEL="$(docker image inspect "$IMAGE@${P[amd64]}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
           test "$REVISION" = "$GITHUB_SHA"
           test "$VERSION_LABEL" = "$VERSION"
 
@@ -141,74 +166,112 @@ jobs:
           subject-version: ${{ steps.meta.outputs.version }}
           push-to-registry: true
 
-      - name: Scan final image and retain HIGH/CRITICAL report
+      - name: Scan amd64 image and retain HIGH/CRITICAL report
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
-          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.digest }}
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.amd64 }}
           severity: HIGH,CRITICAL
           ignore-unfixed: true
           format: json
-          output: trivy-high-critical.json
+          output: trivy-high-critical-amd64.json
           exit-code: '0'
 
-      - name: Enforce unfixed-aware CRITICAL vulnerability gate
+      - name: Scan arm64 image and retain HIGH/CRITICAL report
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
-          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.digest }}
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.arm64 }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: json
+          output: trivy-high-critical-arm64.json
+          exit-code: '0'
+          skip-setup-trivy: true
+
+      - name: Enforce amd64 unfixed-aware CRITICAL vulnerability gate
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.amd64 }}
           severity: CRITICAL
           ignore-unfixed: true
           format: table
           exit-code: '1'
           skip-setup-trivy: true
 
-      - name: Pull by digest and run exact smoke
+      - name: Enforce arm64 unfixed-aware CRITICAL vulnerability gate
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.arm64 }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Pull each platform by digest and run exact smoke
         shell: bash
         run: |
           set -euo pipefail
-          REF="$IMAGE@${{ steps.image.outputs.digest }}"
-          docker pull "$REF"
-          docker run -d --name seer-release -p 18080:8080 "$REF"
-          cleanup() { docker logs seer-release || true; docker rm -f seer-release >/dev/null 2>&1 || true; }
-          trap cleanup EXIT
-          for _ in $(seq 1 45); do
-            curl -fsS http://127.0.0.1:18080/v1/status > /tmp/status.json && break
-            sleep 2
-          done
-          python - <<'PY'
-          import json
-          x=json.load(open('/tmp/status.json', encoding='utf-8'))
+
+          smoke() {
+            local arch="$1"
+            local digest="$2"
+            local ref="$IMAGE@$digest"
+            local name="seer-release-$arch"
+            local port="$3"
+
+            docker pull --platform "linux/$arch" "$ref"
+            docker run --platform "linux/$arch" -d --name "$name" -p "$port:8080" "$ref"
+            cleanup_one() {
+              docker logs "$name" || true
+              docker rm -f "$name" >/dev/null 2>&1 || true
+            }
+
+            ready=0
+            for _ in $(seq 1 90); do
+              if curl -fsS "http://127.0.0.1:$port/v1/status" > "/tmp/status-$arch.json"; then
+                ready=1
+                break
+              fi
+              sleep 2
+            done
+            test "$ready" -eq 1
+            python - "$arch" <<'PY'
+          import json, sys
+          arch=sys.argv[1]
+          x=json.load(open(f'/tmp/status-{arch}.json', encoding='utf-8'))
           assert x['status'] == 'ok', x
           PY
-          test "$(docker exec seer-release id -u)" != '0'
-          curl -fsS http://127.0.0.1:18080/web/ | grep -q 'Pastafarian Calendar Seer'
-          curl -fsS http://127.0.0.1:18080/client/index.mjs | grep -q 'createSeerClient'
-          curl -fsS -H 'content-type: application/json' --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}' http://127.0.0.1:18080/v1/date > /tmp/date.json
-          python - <<'PY'
-          import json
-          x=json.load(open('/tmp/date.json', encoding='utf-8'))
+            test "$(docker exec "$name" id -u)" != '0'
+            curl -fsS "http://127.0.0.1:$port/web/" | grep -q 'Pastafarian Calendar Seer'
+            curl -fsS "http://127.0.0.1:$port/client/index.mjs" | grep -q 'createSeerClient'
+            curl -fsS -H 'content-type: application/json'               --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}'               "http://127.0.0.1:$port/v1/date" > "/tmp/date-$arch.json"
+            python - "$arch" <<'PY'
+          import json, sys
+          arch=sys.argv[1]
+          x=json.load(open(f'/tmp/date-{arch}.json', encoding='utf-8'))
           assert x['calculationDay']['jdn'] == '-13334146', x
           assert x['targetDay']['jdn'] == '-13337246', x
           PY
+            cleanup_one
+          }
+
+          smoke amd64 "${{ steps.image.outputs.amd64 }}" 18080
+          smoke arm64 "${{ steps.image.outputs.arm64 }}" 18081
 
       - name: Record manifest and platform digests
         shell: bash
         run: |
           set -euo pipefail
-          RAW="$(docker buildx imagetools inspect "$IMAGE@${{ steps.image.outputs.digest }}" --raw)"
-          PLATFORM_DIGEST="$(node --input-type=module - "$RAW" <<'NODE'
-          const raw = JSON.parse(process.argv[2]);
-          const m = raw.manifests?.find((x) => x.platform?.os === 'linux' && x.platform?.architecture === 'amd64');
-          if (!m?.digest) throw new Error('linux/amd64 manifest digest missing');
-          process.stdout.write(m.digest);
-          NODE
-          )"
           cat > container-release.json <<EOF
           {
             "version": "$VERSION",
             "commit": "$GITHUB_SHA",
             "image": "$IMAGE",
             "digest": "${{ steps.image.outputs.digest }}",
-            "platforms": { "linux/amd64": "$PLATFORM_DIGEST" }
+            "platforms": {
+              "linux/amd64": "${{ steps.image.outputs.amd64 }}",
+              "linux/arm64": "${{ steps.image.outputs.arm64 }}"
+            }
           }
           EOF
           cat container-release.json
@@ -219,6 +282,7 @@ jobs:
           name: container-release-${{ steps.meta.outputs.version }}
           path: |
             container-release.json
-            trivy-high-critical.json
+            trivy-high-critical-amd64.json
+            trivy-high-critical-arm64.json
           if-no-files-found: error
           retention-days: 90

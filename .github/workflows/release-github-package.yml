@@ -128,7 +128,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
+          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
             ok=0
             for _ in $(seq 1 120); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
@@ -206,17 +206,25 @@ jobs:
           test -n "$CONTAINER_DIGEST"
           test "$(docker buildx imagetools inspect "$IMAGE:v$VERSION" | awk '/^Digest:/ {print $2; exit}')" = "$CONTAINER_DIGEST"
           RAW="$(docker buildx imagetools inspect "$IMAGE@$CONTAINER_DIGEST" --raw)"
-          PLATFORM_DIGEST="$(node --input-type=module - "$RAW" <<'NODE'
+          mapfile -t PLATFORM_DIGESTS < <(node --input-type=module - "$RAW" <<'NODE'
           const raw=JSON.parse(process.argv[2]);
-          const m=raw.manifests?.find((x)=>x.platform?.os==='linux' && x.platform?.architecture==='amd64');
-          if(!m?.digest) throw new Error('linux/amd64 digest missing');
-          process.stdout.write(m.digest);
+          for (const arch of ['amd64','arm64']) {
+            const m=raw.manifests?.find((x)=>x.platform?.os==='linux' && x.platform?.architecture===arch);
+            if(!m?.digest) throw new Error(`linux/${arch} digest missing`);
+            console.log(`${arch}=${m.digest}`);
+          }
           NODE
-          )"
+          )
+          declare -A P
+          for line in "${PLATFORM_DIGESTS[@]}"; do
+            P["${line%%=*}"]="${line#*=}"
+          done
+          test -n "${P[amd64]:-}" && test -n "${P[arm64]:-}"
           echo "npm_integrity=$NPM_INTEGRITY" >> "$GITHUB_OUTPUT"
           echo "npm_tarball=$NPM_TARBALL" >> "$GITHUB_OUTPUT"
           echo "container_digest=$CONTAINER_DIGEST" >> "$GITHUB_OUTPUT"
-          echo "platform_digest=$PLATFORM_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "amd64_digest=${P[amd64]}" >> "$GITHUB_OUTPUT"
+          echo "arm64_digest=${P[arm64]}" >> "$GITHUB_OUTPUT"
 
       - name: Extract npm package for SBOM generation
         if: steps.release_state.outputs.state != 'published'
@@ -236,15 +244,27 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      - name: Generate final container SPDX SBOM
+      - name: Generate amd64 container SPDX SBOM
         if: steps.release_state.outputs.state != 'published'
         uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
         with:
-          image: ${{ env.IMAGE }}@${{ steps.channels.outputs.container_digest }}
+          image: ${{ env.IMAGE }}@${{ steps.channels.outputs.amd64_digest }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ github.token }}
           format: spdx-json
-          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container.spdx.json
+          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate arm64 container SPDX SBOM
+        if: steps.release_state.outputs.state != 'published'
+        uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        with:
+          image: ${{ env.IMAGE }}@${{ steps.channels.outputs.arm64_digest }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ github.token }}
+          format: spdx-json
+          output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
           upload-artifact: false
           upload-release-assets: false
 
@@ -257,14 +277,17 @@ jobs:
           import { readFile } from 'node:fs/promises';
           const version=process.env.VERSION;
           const npm=JSON.parse(await readFile(process.env.NPM_SBOM,'utf8'));
-          const container=JSON.parse(await readFile(process.env.CONTAINER_SBOM,'utf8'));
+          const amd64=JSON.parse(await readFile(process.env.AMD64_SBOM,'utf8'));
+          const arm64=JSON.parse(await readFile(process.env.ARM64_SBOM,'utf8'));
           if (!JSON.stringify(npm).includes(version)) throw new Error('npm SBOM does not reference release version');
-          if (!container.spdxVersion) throw new Error('container SPDX document missing spdxVersion');
+          if (!amd64.spdxVersion) throw new Error('amd64 container SPDX document missing spdxVersion');
+          if (!arm64.spdxVersion) throw new Error('arm64 container SPDX document missing spdxVersion');
           NODE
         env:
           VERSION: ${{ steps.meta.outputs.version }}
           NPM_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
-          CONTAINER_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container.spdx.json
+          AMD64_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          ARM64_SBOM: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
 
       - name: Generate release manifest and checksums
         if: steps.release_state.outputs.state != 'published'
@@ -277,20 +300,23 @@ jobs:
           NPM_TARBALL_URL: ${{ steps.channels.outputs.npm_tarball }}
           CONTAINER_IMAGE: ${{ env.IMAGE }}
           CONTAINER_DIGEST: ${{ steps.channels.outputs.container_digest }}
-          CONTAINER_PLATFORM_DIGEST: ${{ steps.channels.outputs.platform_digest }}
+          CONTAINER_AMD64_DIGEST: ${{ steps.channels.outputs.amd64_digest }}
+          CONTAINER_ARM64_DIGEST: ${{ steps.channels.outputs.arm64_digest }}
         run: |
           set -euo pipefail
           VERSION="${{ steps.meta.outputs.version }}"
           TGZ_NAME="pastafarian-calendar-seer-$VERSION.tgz"
           SHA_NAME="$TGZ_NAME.sha256"
           NPM_SBOM="pastafarian-calendar-seer-$VERSION.cdx.json"
-          CONTAINER_SBOM="pastafarian-calendar-seer-$VERSION-container.spdx.json"
+          AMD64_SBOM="pastafarian-calendar-seer-$VERSION-container-amd64.spdx.json"
+          ARM64_SBOM="pastafarian-calendar-seer-$VERSION-container-arm64.spdx.json"
           node scripts/generate-release-manifest.mjs
           cp "${{ steps.pack.outputs.tgz }}" "$TGZ_NAME"
           cp "${{ steps.pack.outputs.sha_file }}" "$SHA_NAME"
           cp "${{ runner.temp }}/$NPM_SBOM" "$NPM_SBOM"
-          cp "${{ runner.temp }}/$CONTAINER_SBOM" "$CONTAINER_SBOM"
-          sha256sum "$TGZ_NAME" "$SHA_NAME" "$NPM_SBOM" "$CONTAINER_SBOM" release-manifest.json > SHA256SUMS
+          cp "${{ runner.temp }}/$AMD64_SBOM" "$AMD64_SBOM"
+          cp "${{ runner.temp }}/$ARM64_SBOM" "$ARM64_SBOM"
+          sha256sum "$TGZ_NAME" "$SHA_NAME" "$NPM_SBOM" "$AMD64_SBOM" "$ARM64_SBOM" release-manifest.json > SHA256SUMS
           cat SHA256SUMS
 
       - name: Attest npm tarball with its SBOM
@@ -300,14 +326,24 @@ jobs:
           subject-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.tgz
           sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
 
-      - name: Attest final container SBOM against immutable digest
+      - name: Attest amd64 container SBOM against immutable child digest
         if: steps.release_state.outputs.state != 'published'
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.channels.outputs.container_digest }}
+          subject-digest: ${{ steps.channels.outputs.amd64_digest }}
           subject-version: ${{ steps.meta.outputs.version }}
-          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container.spdx.json
+          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
+          push-to-registry: true
+
+      - name: Attest arm64 container SBOM against immutable child digest
+        if: steps.release_state.outputs.state != 'published'
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.channels.outputs.arm64_digest }}
+          subject-version: ${{ steps.meta.outputs.version }}
+          sbom-path: pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
           push-to-registry: true
 
       - name: Attest release asset checksum set
@@ -355,7 +391,8 @@ jobs:
             "pastafarian-calendar-seer-$VERSION.tgz"
             "pastafarian-calendar-seer-$VERSION.tgz.sha256"
             "pastafarian-calendar-seer-$VERSION.cdx.json"
-            "pastafarian-calendar-seer-$VERSION-container.spdx.json"
+            "pastafarian-calendar-seer-$VERSION-container-amd64.spdx.json"
+            "pastafarian-calendar-seer-$VERSION-container-arm64.spdx.json"
             "release-manifest.json"
             "SHA256SUMS"
           )
