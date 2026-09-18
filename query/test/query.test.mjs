@@ -84,3 +84,14 @@ test('boundaries make observer relevant', async () => {
   assert.deepEqual(result.observer, { longitude: 12.5 });
   assert.deepEqual(result.boundaries, { startsAt: '2026-01-01T00:00:00.000Z', endsAt: '2026-01-02T00:00:00.000Z' });
 });
+
+
+test('duplicate include values are rejected rather than silently deduplicated', async () => {
+  await assert.rejects(
+    () => queryDate(
+      { calculation: { jdn: '2461299' }, include: ['structure', 'structure'] },
+      { provider: fakeProvider },
+    ),
+    (error) => error?.code === 'UNSUPPORTED_INCLUDE' && error?.field === 'include',
+  );
+});

@@ -60,6 +60,9 @@ function normalizeInclude(value, supported, field = 'include') {
     if (typeof item !== 'string' || !supported.has(item)) {
       throw queryError('UNSUPPORTED_INCLUDE', `Unsupported include: ${String(item)}.`, { field });
     }
+    if (result.has(item)) {
+      throw queryError('UNSUPPORTED_INCLUDE', `Duplicate include: ${item}.`, { field });
+    }
     result.add(item);
   }
   return result;
