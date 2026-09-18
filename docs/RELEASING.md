@@ -14,7 +14,7 @@ Before creating a version tag, the exact commit must already pass the relevant s
 
 The release gates include Stage 6, native ARM64 parity, multi-architecture container verification, supply-chain verification, release preflight, and production-web verification. Package self-test and cache validation are also repeated inside the publication workflows.
 
-`.github/workflows/verify-release-preflight.yml` runs on every push to `main` and can also be dispatched manually. It has read-only repository permissions and performs package tests, cache validation, publication dry-run, deterministic packing, boundary checks, checksum creation, and upload of the exact-head preflight artifact. The privileged GitHub Release workflow runs only for a version tag.
+`.github/workflows/verify-release-preflight.yml` runs on every push to `main` and can also be dispatched manually. It has read-only repository permissions and performs package tests, cache validation, publication dry-run, deterministic packing, boundary checks, checksum creation, **version-pinned Syft CycloneDX generation with explicit root package identity validation**, and upload of the exact-head preflight artifact. The privileged GitHub Release workflow runs only for a version tag.
 
 ## npm Trusted Publishing
 
@@ -44,7 +44,7 @@ The container publication records BuildKit provenance/SBOM attestations and a Gi
 ## Final immutable GitHub Release
 
 The GitHub Release workflow waits for successful npm and GHCR publication for the same commit. It independently rebuilds the npm tarball and requires byte identity with npm before assembling the final release.
-The final release contains the npm-format tarball, its SHA-256 file, `SHA256SUMS`, a CycloneDX package SBOM, separate SPDX SBOMs for the amd64 and arm64 child images, and `release-manifest.json`. GitHub artifact attestations bind the tarball and checksum material to the workflow/commit, and bind each platform SBOM to its immutable child digest.
+The final release contains the npm-format tarball, its SHA-256 file, `SHA256SUMS`, a CycloneDX package SBOM, separate SPDX SBOMs for the amd64 and arm64 child images, and `release-manifest.json`. Syft is version-pinned and the package SBOM root component must exactly match the release package name and version. GitHub artifact attestations bind the tarball and checksum material to the workflow/commit, and bind each platform SBOM to its immutable child digest.
 
 Release assets are accumulated in a draft. Existing draft assets are never replaced silently: a retry may reuse an asset only if the bytes are identical. Only after all checks pass is the draft published. Repository-level immutable releases then lock the release assets and associated tag.
 
@@ -57,7 +57,7 @@ Publication is intentionally restartable without duplicate publication:
 - if a GitHub draft exists, compare and reuse identical assets;
 - if a GitHub Release is already published, do not modify its assets or move its tag.
 
-Never unpublish/re-publish a version, force-move a release tag, overwrite a GHCR version tag, or replace an immutable release asset. If a published release is defective, create a new patch version.
+Never unpublish/re-publish a version, force-move a release tag, overwrite a GHCR version tag, or replace an immutable release asset. If npm/GHCR have already published but the final GitHub Release fails before publication, keep that version as a documented partial release and fix the workflow under a new patch version. If a published release is defective, create a new patch version.
 
 ## Release safety rules
 

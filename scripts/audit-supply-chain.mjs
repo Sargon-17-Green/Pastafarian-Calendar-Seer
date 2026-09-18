@@ -17,11 +17,29 @@ const allowedWrites = new Map([
   ['release-npm.yml', new Set(['id-token'])],
 ]);
 let useCount = 0;
+let qemuUses = 0;
+let qemuDigestPins = 0;
+let buildxUses = 0;
+let buildxVersionPins = 0;
+let sbomUses = 0;
+let syftVersionPins = 0;
+let trivyUses = 0;
+let trivyVersionPins = 0;
+let trivyReusePins = 0;
 
 for (const name of names) {
   const text = await readFile(path.join(workflowDir, name), 'utf8');
   if (!/^permissions:\s*$/m.test(text)) missingPermissions.push(name);
   if (/\bwrite-all\b/.test(text)) broad.push(`${name}: write-all`);
+  qemuUses += (text.match(/docker\/setup-qemu-action@/g) ?? []).length;
+  qemuDigestPins += (text.match(/image:\s*docker\.io\/tonistiigi\/binfmt:[^\s]+@sha256:[0-9a-f]{64}\b/g) ?? []).length;
+  buildxUses += (text.match(/docker\/setup-buildx-action@/g) ?? []).length;
+  buildxVersionPins += (text.match(/^\s+version:\s*v0\.37\.1\s*$/gm) ?? []).length;
+  sbomUses += (text.match(/anchore\/sbom-action@/g) ?? []).length;
+  syftVersionPins += (text.match(/^\s+syft-version:\s*v\d+\.\d+\.\d+\s*$/gm) ?? []).length;
+  trivyUses += (text.match(/aquasecurity\/trivy-action@/g) ?? []).length;
+  trivyVersionPins += (text.match(/^\s+version:\s*v0\.70\.0\s*$/gm) ?? []).length;
+  trivyReusePins += (text.match(/^\s+skip-setup-trivy:\s*true\s*$/gm) ?? []).length;
   for (const line of text.split(/\r?\n/)) {
     const writePermission = line.match(/^\s+(contents|actions|packages|id-token|attestations|checks|issues|pull-requests):\s*write\s*$/);
     if (writePermission && !allowedWrites.get(name)?.has(writePermission[1])) {
@@ -43,16 +61,23 @@ const mutableBase = fromLines.filter((line) => !/@sha256:[0-9a-f]{64}\b/.test(li
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean);
 const handoff = tracked.filter((name) => path.basename(name).startsWith('HANDOFF_'));
 
+const runtimeToolProblems = [];
+if (qemuDigestPins !== qemuUses) runtimeToolProblems.push(`QEMU binfmt digest pins ${qemuDigestPins}/${qemuUses}`);
+if (buildxVersionPins < buildxUses) runtimeToolProblems.push(`Buildx version pins ${buildxVersionPins}/${buildxUses}`);
+if (syftVersionPins !== sbomUses) runtimeToolProblems.push(`Syft version pins ${syftVersionPins}/${sbomUses}`);
+if (trivyVersionPins + trivyReusePins !== trivyUses) runtimeToolProblems.push(`Trivy setup/reuse pins ${trivyVersionPins}+${trivyReusePins}/${trivyUses}`);
+
 const problems = [
   ...mutable.map((x) => `mutable action reference: ${x}`),
   ...missingPermissions.map((x) => `missing explicit permissions: ${x}`),
   ...broad.map((x) => `broad permission: ${x}`),
   ...forbiddenSecret.map((x) => `unexpected secret reference: ${x}`),
   ...mutableBase.map((x) => `mutable Docker base: ${x}`),
+  ...runtimeToolProblems.map((x) => `mutable runtime tool dependency: ${x}`),
   ...handoff.map((x) => `tracked HANDOFF file: ${x}`),
 ];
 
-console.log(JSON.stringify({ workflows: names.length, actionUses: useCount, secretRefs, dockerBases: fromLines }, null, 2));
+console.log(JSON.stringify({ workflows: names.length, actionUses: useCount, secretRefs, dockerBases: fromLines, runtimeTools: { qemuUses, qemuDigestPins, buildxUses, buildxVersionPins, sbomUses, syftVersionPins, trivyUses, trivyVersionPins, trivyReusePins } }, null, 2));
 if (problems.length) {
   console.error(problems.join('\n'));
   process.exit(1);

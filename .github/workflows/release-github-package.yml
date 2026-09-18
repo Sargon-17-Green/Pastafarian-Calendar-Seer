@@ -202,6 +202,8 @@ jobs:
       - name: Set up Buildx
         if: steps.release_state.outputs.state != 'published'
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          version: v0.37.1
 
       - name: Resolve npm and container identities
         if: steps.release_state.outputs.state != 'published'
@@ -252,8 +254,12 @@ jobs:
       - name: Generate npm package CycloneDX SBOM
         if: steps.release_state.outputs.state != 'published'
         uses: anchore/sbom-action@006b7ce8314066bdf1765b4500370d40fa6917a3 # v0.24.2
+        env:
+          SYFT_SOURCE_NAME: pastafarian-calendar-seer
+          SYFT_SOURCE_VERSION: ${{ steps.meta.outputs.version }}
         with:
           path: ${{ runner.temp }}/npm-sbom-root/package
+          syft-version: v1.52.0
           format: cyclonedx-json
           output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}.cdx.json
           upload-artifact: false
@@ -266,6 +272,7 @@ jobs:
           image: ${{ env.IMAGE }}@${{ steps.channels.outputs.amd64_digest }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ github.token }}
+          syft-version: v1.52.0
           format: spdx-json
           output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-amd64.spdx.json
           upload-artifact: false
@@ -278,6 +285,7 @@ jobs:
           image: ${{ env.IMAGE }}@${{ steps.channels.outputs.arm64_digest }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ github.token }}
+          syft-version: v1.52.0
           format: spdx-json
           output-file: ${{ runner.temp }}/pastafarian-calendar-seer-${{ steps.meta.outputs.version }}-container-arm64.spdx.json
           upload-artifact: false
@@ -294,7 +302,14 @@ jobs:
           const npm=JSON.parse(await readFile(process.env.NPM_SBOM,'utf8'));
           const amd64=JSON.parse(await readFile(process.env.AMD64_SBOM,'utf8'));
           const arm64=JSON.parse(await readFile(process.env.ARM64_SBOM,'utf8'));
-          if (!JSON.stringify(npm).includes(version)) throw new Error('npm SBOM does not reference release version');
+          if (npm.bomFormat !== 'CycloneDX') throw new Error('npm SBOM is not CycloneDX');
+          const root=npm.metadata?.component;
+          if (root?.name !== 'pastafarian-calendar-seer') {
+            throw new Error(`npm SBOM root component mismatch: ${root?.name ?? '<missing>'}`);
+          }
+          if (root?.version !== version) {
+            throw new Error(`npm SBOM root version mismatch: ${root?.version ?? '<missing>'} != ${version}`);
+          }
           if (!amd64.spdxVersion) throw new Error('amd64 container SPDX document missing spdxVersion');
           if (!arm64.spdxVersion) throw new Error('arm64 container SPDX document missing spdxVersion');
           NODE
