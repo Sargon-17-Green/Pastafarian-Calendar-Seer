@@ -65,7 +65,8 @@ $Targets = @(
 foreach ($Target in $Targets) {
     $Input = Join-Path $Source $Target[0]
     $Output = Join-Path $Build $Target[1]
-    $Args = $Common + $BackendFlags + @($Input) + $Libraries + @('-o', $Output)
+    $EmbeddedMainWarningFlags = if ($Target[0] -in @('pastafarian_year_batch.cpp', 'seer_year_structure.cpp', 'seer_engine_service.cpp')) { @('-Wno-return-type') } else { @() }
+    $Args = $Common + $BackendFlags + $EmbeddedMainWarningFlags + @($Input) + $Libraries + @('-o', $Output)
     Invoke-Cxx $Args "Build $($Target[1])"
     if (-not (Test-Path $Output)) { throw "Missing runtime binary after build: $Output" }
     Write-Host "Built $Output"
