@@ -6,7 +6,9 @@ This document describes how release origin and artifact integrity are establishe
 
 `v0.1.2` was the one-time npm bootstrap release. Its GitHub tarball and npm tarball are the same verified bytes, but the npm copy predates OIDC provenance.
 
-`v0.1.3` is the latest release completed before this full hardening pass. Its GitHub Release is immutable and its release attestation binds commit `d0fc843db448b35b8a3aaa83fc73640dda983a77` to the two release assets. Its GitHub and npm tarballs are byte-identical with SHA-256 `6936a6da8f67d36cbb759c4861d32e61b921471b2c8ad940b79eaee8864e853b`. npm provenance was independently verified with `npm audit signatures --include-attestations`, with no invalid or missing attestations and SLSA provenance tied to `release-npm.yml@refs/tags/v0.1.3`. It still predates the GHCR/SBOM/release-manifest layer introduced by the next hardened release.
+`v0.1.3` was the first release verified here with npm OIDC provenance. Its GitHub and npm tarballs are byte-identical with SHA-256 `6936a6da8f67d36cbb759c4861d32e61b921471b2c8ad940b79eaee8864e853b`.
+
+`v0.1.4` added the verified ARM64/runtime and localization workstreams and is the current immutable pre-hardening release. Its GitHub Release is immutable at commit `e851014f84ff176ee3b44c7d3b8eadbb4c904ec0`; npm `0.1.4` has SLSA v1 provenance. It still predates the GHCR, per-platform SBOM, release-manifest, and project-generated artifact-attestation layer introduced by `v0.1.5`.
 
 The repository is configured so that GitHub Releases are immutable once published. A published release's tag and assets must not be moved or replaced. If a published artifact is defective, publish a new patch version.
 

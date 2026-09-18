@@ -148,6 +148,7 @@ const STATUS_BY_CODE = new Map([
   ['INVALID_OBSERVER', 400],
   ['DUPLICATE_BATCH_ID', 400],
   ['UNSUPPORTED_PRESENTATION', 400],
+  ['INVALID_LOCALE', 422],
   ['UNSUPPORTED_INCLUDE', 400],
   ['AMBIGUOUS_RANGE_END', 400],
   ['MISSING_RANGE_END', 400],
@@ -482,7 +483,7 @@ export function createSeerHttpHandler(options = {}) {
       if (pathname === '/v1/locales' && method === 'GET') {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
-        sendJson(res, 200, { locales: [{ tag: 'en', name: 'English', direction: 'ltr' }] }, { 'cache-control': 'public, max-age=300' });
+        sendJson(res, 200, { locales: defaultQueryApi.listLocales() }, { 'cache-control': 'public, max-age=300' });
         return;
       }
       if (pathname === '/v1/meta' && method === 'GET') {

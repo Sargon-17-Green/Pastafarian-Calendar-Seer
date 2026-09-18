@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { parseExactInteger, exactIntegerString } from './exact-integer.mjs';
 import { gregorianToJdn, jdnToGregorian } from './gregorian.mjs';
 import { resolveObserver } from './observer.mjs';
-import { englishName, formatEnglish } from './locales/en.mjs';
+import { DEFAULT_LOCALE, getLocalePack, listLocales, localizedName } from './locales/catalog.mjs';
 import { queryError, SeerQueryError } from './errors.mjs';
 import { defaultDayBoundaryService } from './day-boundary.mjs';
 
@@ -69,12 +69,9 @@ function resolvePresentation(request) {
   if (presentation !== 'full' && presentation !== 'canonical') {
     throw queryError('UNSUPPORTED_PRESENTATION', `Unsupported presentation: ${String(presentation)}.`, { field: 'presentation' });
   }
-  let locale = null;
-  if (presentation === 'full') {
-    locale = request.locale ?? 'en';
-    if (locale !== 'en') throw queryError('LOCALE_NOT_SUPPORTED', `Unsupported locale: ${String(locale)}.`, { field: 'locale' });
-  }
-  return { presentation, locale };
+  if (presentation === 'canonical') return { presentation, locale: null, localePack: null };
+  const localePack = getLocalePack(request.locale ?? DEFAULT_LOCALE);
+  return { presentation, locale: localePack.code, localePack };
 }
 async function providerFromOptions(options = {}) {
   if (options.provider) return options.provider;
@@ -134,13 +131,13 @@ async function resolveDateRequest(request, now, boundaryService) {
   assertObject(request, 'request');
   rejectUnknown(request, DATE_KEYS);
   const include = normalizeInclude(request.include, DATE_INCLUDES);
-  const { presentation, locale } = resolvePresentation(request);
+  const { presentation, locale, localePack } = resolvePresentation(request);
   const calculation = await resolveCalculation(request.calculation, request.observer, include, now, boundaryService);
   const target = resolveTarget(request.target, calculation.calculationJdn, 'target');
-  return { include, presentation, locale, ...calculation, targetSource: target.source, targetJdn: target.jdn };
+  return { include, presentation, locale, localePack, ...calculation, targetSource: target.source, targetJdn: target.jdn };
 }
 
-function presentRecord(record, presentation) {
+function presentRecord(record, presentation, localePack = null) {
   const cutletIndex = record.cutletIndex + 1;
   const monthIndex = record.monthIndex + 1;
   if (!Number.isInteger(cutletIndex) || cutletIndex < 1 || cutletIndex > 17) throw queryError('INTERNAL_ERROR', 'Invalid internal cutlet index.');
@@ -149,8 +146,9 @@ function presentRecord(record, presentation) {
   const month = { canonicalIndex: monthIndex, day: record.dayInMonth };
   const date = { year: String(record.year), cutlet, month };
   if (presentation === 'full') {
-    cutlet.name = englishName('cutlet', cutletIndex);
-    month.name = englishName('month', monthIndex);
+    if (!localePack) throw queryError('INTERNAL_ERROR', 'Full presentation requires a resolved locale pack.');
+    cutlet.name = localizedName(localePack, 'cutlet', cutletIndex);
+    month.name = localizedName(localePack, 'month', monthIndex);
   }
   return date;
 }
@@ -207,7 +205,7 @@ export async function queryDate(request = {}, options = {}) {
   const resolved = await resolveDateRequest(request, now, boundaryService);
   const provider = await providerFromOptions(options);
   const supplied = await provider.query({ calculationJdn: resolved.calculationJdn, targetJdn: resolved.targetJdn });
-  const pastafarianDate = presentRecord(supplied.record, resolved.presentation);
+  const pastafarianDate = presentRecord(supplied.record, resolved.presentation, resolved.localePack);
   const response = {
     ...(resolved.calculationAt ? { calculationAt: resolved.calculationAt.toISOString() } : {}),
     calculationDay: { jdn: exactIntegerString(resolved.calculationJdn) },
@@ -216,8 +214,8 @@ export async function queryDate(request = {}, options = {}) {
     pastafarianDate,
   };
   if (resolved.presentation === 'full') {
-    response.locale = 'en';
-    response.formatted = formatEnglish(pastafarianDate);
+    response.locale = resolved.locale;
+    response.formatted = resolved.localePack.formatDate(pastafarianDate);
   }
   if (resolved.include.has('structure')) {
     const structure = structureFromSupplied(supplied);
@@ -237,7 +235,7 @@ export async function queryReverse(request = {}, options = {}) {
     throw queryError('MISSING_PASTAFARIAN_DATE', 'pastafarianDate is required.', { field: 'pastafarianDate' });
   }
   const include = normalizeInclude(request.include, DATE_INCLUDES);
-  const { presentation, locale } = resolvePresentation(request);
+  const { presentation, locale, localePack } = resolvePresentation(request);
   const now = requestNow(options);
   const boundaryService = boundaryServiceFromOptions(options);
   const calculation = await resolveCalculation(request.calculation, request.observer, include, now, boundaryService);
@@ -271,7 +269,7 @@ export async function queryReverse(request = {}, options = {}) {
   if (record.monthIndex !== wanted.month.canonicalIndex - 1 || record.dayInMonth !== wanted.month.day) {
     throw queryError('PASTAFARIAN_DATE_CONFLICT', 'The supplied cutlet and month coordinates identify different Pastafarian days.', { field: 'pastafarianDate' });
   }
-  const pastafarianDate = presentRecord(record, presentation);
+  const pastafarianDate = presentRecord(record, presentation, localePack);
   const response = {
     ...(calculation.calculationAt ? { calculationAt: calculation.calculationAt.toISOString() } : {}),
     calculationDay: { jdn: exactIntegerString(calculation.calculationJdn) },
@@ -280,8 +278,8 @@ export async function queryReverse(request = {}, options = {}) {
     pastafarianDate,
   };
   if (presentation === 'full') {
-    response.locale = locale ?? 'en';
-    response.formatted = formatEnglish(pastafarianDate);
+    response.locale = locale;
+    response.formatted = localePack.formatDate(pastafarianDate);
   }
   if (include.has('structure')) {
     const structure = structureFromSupplied(supplied);
@@ -436,7 +434,7 @@ export async function queryCalculationDay(request = {}, options = {}) {
   return response;
 }
 
-function presentYearStructure(rawYear, presentation, includeDays) {
+function presentYearStructure(rawYear, presentation, includeDays, localePack = null) {
   const number = exactIntegerString(rawYear.number);
   const startJdn = exactIntegerString(rawYear.startJdn);
   const endJdn = exactIntegerString(rawYear.endJdn);
@@ -446,7 +444,7 @@ function presentYearStructure(rawYear, presentation, includeDays) {
     if (!Number.isInteger(canonicalIndex) || canonicalIndex < 1 || canonicalIndex > 17) throw queryError('INTERNAL_ERROR', 'Provider returned an invalid cutlet index.');
     const out = {
       canonicalIndex,
-      ...(presentation === 'full' ? { name: englishName('cutlet', canonicalIndex) } : {}),
+      ...(presentation === 'full' ? { name: localizedName(localePack, 'cutlet', canonicalIndex) } : {}),
       lengthDays: item.lengthDays,
       startOffset: item.startOffset,
       endOffset: item.endOffset,
@@ -458,7 +456,7 @@ function presentYearStructure(rawYear, presentation, includeDays) {
     if (!Number.isInteger(canonicalIndex) || canonicalIndex < 1 || canonicalIndex > 47) throw queryError('INTERNAL_ERROR', 'Provider returned an invalid month index.');
     return {
       canonicalIndex,
-      ...(presentation === 'full' ? { name: englishName('month', canonicalIndex) } : {}),
+      ...(presentation === 'full' ? { name: localizedName(localePack, 'month', canonicalIndex) } : {}),
       lengthDays: item.lengthDays,
     };
   });
@@ -469,7 +467,7 @@ function presentYearStructure(rawYear, presentation, includeDays) {
     }
     year.days = rawYear.days.map((record) => ({
       targetDay: { jdn: exactIntegerString(record.targetJdn), gregorian: jdnToGregorian(BigInt(record.targetJdn)) },
-      pastafarianDate: presentRecord(record, presentation),
+      pastafarianDate: presentRecord(record, presentation, localePack),
     }));
   }
   return year;
@@ -479,7 +477,7 @@ export async function queryYear(yearInput, request = {}, options = {}) {
   assertObject(request, 'request');
   rejectUnknown(request, YEAR_KEYS);
   const include = normalizeInclude(request.include, YEAR_INCLUDES);
-  const { presentation, locale } = resolvePresentation(request);
+  const { presentation, locale, localePack } = resolvePresentation(request);
   const now = requestNow(options);
   const boundaryService = boundaryServiceFromOptions(options);
   const calculation = await resolveCalculation(request.calculation, request.observer, new Set(), now, boundaryService);
@@ -493,8 +491,8 @@ export async function queryYear(yearInput, request = {}, options = {}) {
     ...(calculation.calculationAt ? { calculationAt: calculation.calculationAt.toISOString() } : {}),
     calculationDay: { jdn: exactIntegerString(calculation.calculationJdn) },
     ...(calculation.observer ? { observer: { longitude: calculation.observer.longitude } } : {}),
-    ...(presentation === 'full' ? { locale: locale ?? 'en' } : {}),
-    year: presentYearStructure(supplied.year, presentation, include.has('days')),
+    ...(presentation === 'full' ? { locale } : {}),
+    year: presentYearStructure(supplied.year, presentation, include.has('days'), localePack),
   };
   if (include.has('provenance')) response.provenance = supplied.provenance ?? {};
   if (include.has('resolution')) {
@@ -508,3 +506,4 @@ export async function queryYear(yearInput, request = {}, options = {}) {
 
 export { SeerQueryError } from './errors.mjs';
 export { gregorianToJdn, jdnToGregorian } from './gregorian.mjs';
+export { DEFAULT_LOCALE, listLocales };

@@ -11,6 +11,8 @@ const exportedSchemaPath = fileURLToPath(import.meta.resolve('pastafarian-calend
 const exportedSchema = JSON.parse(await readFile(exportedSchemaPath, 'utf8'));
 assert.equal(exportedSchema.$id, 'date-response.schema.json');
 const packagedSchemaCount = (await readdir(path.join(packageRoot, 'api', 'schemas'))).filter((name) => name.endsWith('.json')).length;
+const packagedLocales = (await readdir(path.join(packageRoot, 'query', 'locales'))).filter((name) => name.endsWith('.mjs')).sort();
+assert.deepEqual(packagedLocales, ['catalog.mjs', 'en.mjs', 'he.mjs']);
 const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
 const cache = index.caches?.[0];
 assert.ok(cache, 'generated cache index must contain at least one cache');
@@ -59,6 +61,9 @@ async function verifyOpenApiSchemaClosure(baseUrl) {
 
 const direct = await queryDate(request);
 assert.equal(direct.targetDay.jdn, String(targetJdn));
+const localizedDirect = await queryDate({ ...request, presentation: 'full', locale: 'he' });
+assert.equal(localizedDirect.locale, 'he');
+assert.match(localizedDirect.formatted, /^שנה /);
 
 const boundary = await queryCalculationDay({
   at: index.generatedForInstantUtc,
@@ -77,9 +82,33 @@ try {
   assert.equal(response.status, 200, text);
   const body = JSON.parse(text);
   assert.equal(body.targetDay.jdn, String(targetJdn));
+  const localizedResponse = await fetch(`http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}&locale=he`);
+  const localizedHttp = await localizedResponse.json();
+  assert.equal(localizedResponse.status, 200);
+  assert.equal(localizedHttp.locale, 'he');
+  const languageHeaderResponse = await fetch(
+    `http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}`,
+    { headers: { 'accept-language': 'he' } },
+  );
+  assert.equal(languageHeaderResponse.status, 200);
+  assert.equal((await languageHeaderResponse.json()).locale, 'en');
+  const malformedLocale = await fetch(
+    `http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}&locale=en_us`,
+  );
+  assert.equal(malformedLocale.status, 422);
+  assert.equal((await malformedLocale.json()).error.code, 'INVALID_LOCALE');
+  const unsupportedLocale = await fetch(
+    `http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}&locale=en-US`,
+  );
+  assert.equal(unsupportedLocale.status, 406);
+  assert.equal((await unsupportedLocale.json()).error.code, 'LOCALE_NOT_SUPPORTED');
   const browserClient = createSeerClient('http://127.0.0.1:' + port);
   const clientBody = await browserClient.queryDate(request);
   assert.equal(clientBody.targetDay.jdn, String(targetJdn));
+  const clientLocalized = await browserClient.queryDate({ ...request, presentation: 'full', locale: 'he' });
+  assert.equal(clientLocalized.locale, 'he');
+  const locales = await browserClient.getLocales();
+  assert.deepEqual(locales.locales.map((item) => item.code), ['en', 'he']);
   const schemaCount = await verifyOpenApiSchemaClosure('http://127.0.0.1:' + port + '/');
   assert.equal(schemaCount, packagedSchemaCount);
 } finally {
@@ -90,5 +119,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['cache-query', 'venus-boundary', 'http-loopback', 'browser-client', 'openapi-schema-closure'],
+  checks: ['cache-query', 'venus-boundary', 'localized-direct', 'localized-http', 'accept-language-explicit-only', 'locale-errors', 'browser-client', 'locale-discovery', 'openapi-schema-closure'],
 }));

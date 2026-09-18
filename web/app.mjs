@@ -43,6 +43,7 @@ function setSelectedValue(name, value) {
 function sharedState() {
   return {
     presentation: selectedValue('presentation') ?? 'full',
+    locale: q('#presentation-locale').value || 'en',
     calculationMode: selectedValue('calculation-mode') ?? 'live',
     calculationJdn: q('#calculation-jdn').value,
     calculationAt: q('#calculation-at').value,
@@ -102,6 +103,8 @@ let activeMode = 'now';
 let queryController = null;
 let querySerial = 0;
 let latestTrace = null;
+let requestedLocale = null;
+let localeMetadata = new Map([['en', Object.freeze({ code: 'en', direction: 'ltr', default: true })]]);
 
 function formatJson(value) {
   if (value === undefined) return '—';
@@ -220,7 +223,14 @@ function renderDate(host, result, title) {
     ['Calculation JDN', summary.calculationJdn],
     ['Observer', observer],
   ]));
-  if (summary.formatted) card.append(paragraph(summary.formatted, 'formatted'));
+  if (summary.formatted) {
+    const direction = localeMetadata.get(result?.locale)?.direction ?? 'auto';
+    card.append(node('p', {
+      className: 'formatted',
+      text: summary.formatted,
+      attrs: { dir: direction },
+    }));
+  }
   host.replaceChildren(card);
 }
 
@@ -392,9 +402,15 @@ function updateRangeEndMode() {
   if (useEnd) updateRangeEndInputs();
 }
 
+function updatePresentationInputs() {
+  q('#presentation-locale').disabled = selectedValue('presentation') === 'canonical' || localeMetadata.size === 0;
+}
+
+for (const item of qa('input[name="presentation"]')) item.addEventListener('change', updatePresentationInputs);
 for (const item of qa('input[name="calculation-mode"]')) item.addEventListener('change', updateCalculationInputs);
 for (const item of qa('input[name="observer-mode"]')) item.addEventListener('change', updateObserverInputs);
 for (const item of qa('input[name="range-end-mode"]')) item.addEventListener('change', updateRangeEndMode);
+updatePresentationInputs();
 updateCalculationInputs();
 updateObserverInputs();
 updateRangeEndMode();
@@ -414,6 +430,8 @@ function currentShareState() {
     target,
     calculationMode: date.calculationMode,
     calculation,
+    presentation: date.presentation,
+    locale: date.locale,
   };
 }
 
@@ -484,7 +502,33 @@ async function refreshDiagnostics() {
     q('#meta-json').textContent = 'Metadata unavailable.';
   }
   if (localeResult.status === 'fulfilled') {
-    q('#meta-locales').textContent = (localeResult.value.locales ?? []).map((item) => item.name ?? item.tag).join(', ') || '—';
+    const locales = Array.isArray(localeResult.value.locales) ? localeResult.value.locales : [];
+    q('#meta-locales').textContent = locales.map((item) => item.selfName ?? item.name ?? item.code ?? item.tag).join(', ') || '—';
+
+    const select = q('#presentation-locale');
+    const previous = requestedLocale ?? select.value;
+    localeMetadata = new Map(locales.map((item) => [
+      item.code ?? item.tag,
+      Object.freeze({
+        code: item.code ?? item.tag,
+        direction: item.direction ?? 'ltr',
+        default: item.default === true,
+      }),
+    ]));
+    const options = locales.map((item) => node('option', {
+      text: item.selfName ? `${item.selfName} — ${item.name ?? item.code ?? item.tag}` : (item.name ?? item.code ?? item.tag),
+      attrs: { value: item.code ?? item.tag },
+    }));
+    select.replaceChildren(...options);
+    const codes = new Set(locales.map((item) => item.code ?? item.tag));
+    const fallback = locales.find((item) => item.default)?.code
+      ?? locales.find((item) => item.default)?.tag
+      ?? locales[0]?.code
+      ?? locales[0]?.tag
+      ?? '';
+    select.value = codes.has(previous) ? previous : fallback;
+    requestedLocale = null;
+    updatePresentationInputs();
   } else {
     q('#meta-locales').textContent = '—';
   }
@@ -585,6 +629,10 @@ function applyInitialUrlState() {
     apiBase = '';
   }
   q('#api-base').value = apiBase;
+  if (initial.presentation && ['full', 'canonical'].includes(initial.presentation)) {
+    setSelectedValue('presentation', initial.presentation);
+  }
+  if (initial.locale) requestedLocale = initial.locale;
   if (initial.targetKind && ['gregorian', 'jdn', 'offset'].includes(initial.targetKind)) {
     setSelectedValue('target-kind', initial.targetKind);
     if (initial.target !== null) {
@@ -601,6 +649,7 @@ function applyInitialUrlState() {
       if (initial.calculationMode === 'instant') q('#calculation-at').value = initial.calculation;
     }
   }
+  updatePresentationInputs();
   updateTargetInputs();
   updateCalculationInputs();
   setMode(initial.mode ?? 'now', { sync: false });

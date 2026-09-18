@@ -11,6 +11,8 @@ on:
       - 'prototype/tools/canonical_vector_oracle.cpp'
       - 'prototype/scripts/check_bidirectional_domain.py'
       - 'query/exact-engine.mjs'
+      - 'query/index.mjs'
+      - 'query/locales/**'
       - 'precompute/**'
       - 'package.json'
       - 'deployment/test/package-entrypoints.test.mjs'
@@ -58,15 +60,39 @@ jobs:
           const F = -13334246;
           const calc = F - 100;
           const target = F - 3000;
-          const out = await queryDate({
+          const stripPresentation = (value) => {
+            if (Array.isArray(value)) return value.map(stripPresentation);
+            if (!value || typeof value !== 'object') return value;
+            const out = {};
+            for (const [key, item] of Object.entries(value)) {
+              if (key === 'locale' || key === 'formatted' || key === 'name') continue;
+              out[key] = stripPresentation(item);
+            }
+            return out;
+          };
+          const request = (targetJdn, extra = {}) => ({
             calculation: { jdn: calc },
-            target: { jdn: target },
-            presentation: 'canonical',
+            target: { jdn: targetJdn },
+            ...extra,
           });
-          if (out.targetDay.jdn !== String(target)) throw new Error('negative-domain query target mismatch');
+          const canonical = await queryDate(request(target, { presentation: 'canonical' }));
+          const english = await queryDate(request(target, { presentation: 'full', locale: 'en' }));
+          const hebrew = await queryDate(request(target, { presentation: 'full', locale: 'he' }));
+          if (canonical.targetDay.jdn !== String(target)) throw new Error('negative-domain query target mismatch');
+          if (hebrew.locale !== 'he' || !hebrew.formatted.startsWith('שנה ')) throw new Error('negative-domain Hebrew presentation mismatch');
+          if (JSON.stringify(stripPresentation(english)) !== JSON.stringify(canonical)) throw new Error('negative-domain English semantic drift');
+          if (JSON.stringify(stripPresentation(hebrew)) !== JSON.stringify(canonical)) throw new Error('negative-domain Hebrew semantic drift');
+
+          const adjacent = F - 1;
+          const adjacentCanonical = await queryDate(request(adjacent, { presentation: 'canonical' }));
+          const adjacentHebrew = await queryDate(request(adjacent, { presentation: 'full', locale: 'he' }));
+          if (JSON.stringify(stripPresentation(adjacentHebrew)) !== JSON.stringify(adjacentCanonical)) {
+            throw new Error('Foundation-adjacent Hebrew semantic drift');
+          }
+
           const spawns = (await readFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, 'utf8')).split(/\r?\n/).filter(Boolean);
           if (spawns.length !== 1) throw new Error(`expected one persistent service spawn, got ${spawns.length}`);
-          console.log({ calc, target, year: out.pastafarianDate.year, persistentServiceSpawns: spawns.length });
+          console.log({ calc, target, adjacent, year: canonical.pastafarianDate.year, persistentServiceSpawns: spawns.length });
           NODE
       - name: Source-tree regressions before cache refresh
         run: |

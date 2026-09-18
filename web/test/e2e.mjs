@@ -28,6 +28,10 @@ try {
   await expectText(page.locator('#api-status-title'), /API reachable — ready/);
   await expectText(page.locator('#now-result'), /Current Pastafarian date/);
   await expectText(page.locator('#now-result'), /Calculation JDN/);
+  await page.locator('#presentation-locale').selectOption('he');
+  await page.getByRole('button', { name: 'Refresh now' }).click();
+  await expectText(page.locator('#now-result .formatted'), /^שנה /);
+  assert.equal(await page.locator('#now-result .formatted').getAttribute('dir'), 'rtl');
 
   await page.getByRole('button', { name: 'Date', exact: true }).click();
   await choose(page, 'calculation-mode', 'jdn');

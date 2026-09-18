@@ -74,6 +74,19 @@ test('reverse conversion supports canonical presentation without localized names
   assert.equal(result.pastafarianDate.month.name, undefined);
 });
 
+test('reverse conversion localizes only presentation fields', async () => {
+  const en = await queryReverse(request({ locale: 'en' }), { provider: provider() });
+  const he = await queryReverse(request({ locale: 'he' }), { provider: provider() });
+  assert.equal(he.locale, 'he');
+  assert.match(he.formatted, /^שנה /);
+  assert.equal(he.targetDay.jdn, en.targetDay.jdn);
+  assert.equal(he.pastafarianDate.year, en.pastafarianDate.year);
+  assert.equal(he.pastafarianDate.cutlet.canonicalIndex, en.pastafarianDate.cutlet.canonicalIndex);
+  assert.equal(he.pastafarianDate.cutlet.day, en.pastafarianDate.cutlet.day);
+  assert.equal(he.pastafarianDate.month.canonicalIndex, en.pastafarianDate.month.canonicalIndex);
+  assert.equal(he.pastafarianDate.month.day, en.pastafarianDate.month.day);
+});
+
 async function expectCode(promise, code) {
   await assert.rejects(promise, (error) => error instanceof SeerQueryError && error.code === code);
 }

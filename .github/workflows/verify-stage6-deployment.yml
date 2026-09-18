@@ -21,6 +21,7 @@ on:
       - 'scripts/build-runtime.sh'
       - 'deployment/test/**'
       - 'docs/DEPLOYMENT_STAGE6.md'
+      - 'docs/LOCALIZATION.md'
       - 'README_STAGE6.md'
       - 'README.md'
       - 'ROADMAP.md'
@@ -60,6 +61,10 @@ jobs:
           test "$(grep -Ec '^package/generated/calc/-?[0-9]+\.json$' /tmp/seer-package-files.txt)" -eq 3
           grep -qx 'package/api/openapi.json' /tmp/seer-package-files.txt
           grep -qx 'package/api/openapi.yaml' /tmp/seer-package-files.txt
+          grep -qx 'package/query/locales/catalog.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/query/locales/en.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/query/locales/he.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/docs/LOCALIZATION.md' /tmp/seer-package-files.txt
           find api/schemas -maxdepth 1 -type f -name '*.json' -printf 'package/%p\n' | sort > /tmp/seer-expected-schemas.txt
           grep -E '^package/api/schemas/[A-Za-z0-9.-]+\.json$' /tmp/seer-package-files.txt | sort > /tmp/seer-actual-schemas.txt
           diff -u /tmp/seer-expected-schemas.txt /tmp/seer-actual-schemas.txt
@@ -179,8 +184,22 @@ jobs:
 
           const first = await queryApi.queryDate(request(targetJdn));
           const second = await queryApi.queryDate(request(targetJdn + 1));
+          const localized = await queryApi.queryDate({
+            calculation: { jdn: calculationJdn },
+            target: { jdn: targetJdn },
+            presentation: 'full',
+            locale: 'he',
+          });
           if (first.targetDay.jdn !== String(targetJdn)) throw new Error('packed query target mismatch');
           if (second.targetDay.jdn !== String(targetJdn + 1)) throw new Error('packed repeated query target mismatch');
+          if (localized.locale !== 'he' || localized.targetDay.jdn !== first.targetDay.jdn) throw new Error('packed localized exact query mismatch');
+          if (localized.pastafarianDate.year !== first.pastafarianDate.year ||
+              localized.pastafarianDate.cutlet.canonicalIndex !== first.pastafarianDate.cutlet.canonicalIndex ||
+              localized.pastafarianDate.cutlet.day !== first.pastafarianDate.cutlet.day ||
+              localized.pastafarianDate.month.canonicalIndex !== first.pastafarianDate.month.canonicalIndex ||
+              localized.pastafarianDate.month.day !== first.pastafarianDate.month.day) {
+            throw new Error('packed localized exact query changed canonical coordinates');
+          }
 
           const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
           try {
@@ -190,6 +209,10 @@ jobs:
             if (response.status !== 200) throw new Error(`packed HTTP status ${response.status}: ${await response.text()}`);
             const body = await response.json();
             if (body.targetDay.jdn !== String(targetJdn + 2)) throw new Error('packed HTTP target mismatch');
+            const localizedResponse = await fetch(`http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn + 2}&locale=he`);
+            if (localizedResponse.status !== 200) throw new Error(`packed localized HTTP status ${localizedResponse.status}: ${await localizedResponse.text()}`);
+            const localizedBody = await localizedResponse.json();
+            if (localizedBody.locale !== 'he' || localizedBody.targetDay.jdn !== body.targetDay.jdn) throw new Error('packed localized HTTP mismatch');
           } finally {
             await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
           }
@@ -284,8 +307,22 @@ jobs:
           });
           const first = await queryApi.queryDate(request(targetJdn));
           const second = await queryApi.queryDate(request(targetJdn + 1));
+          const localized = await queryApi.queryDate({
+            calculation: { jdn: calculationJdn },
+            target: { jdn: targetJdn },
+            presentation: 'full',
+            locale: 'he',
+          });
           if (first.targetDay.jdn !== String(targetJdn)) throw new Error('Windows packed query mismatch');
           if (second.targetDay.jdn !== String(targetJdn + 1)) throw new Error('Windows repeated query mismatch');
+          if (localized.locale !== 'he' || localized.targetDay.jdn !== first.targetDay.jdn) throw new Error('Windows localized exact query mismatch');
+          if (localized.pastafarianDate.year !== first.pastafarianDate.year ||
+              localized.pastafarianDate.cutlet.canonicalIndex !== first.pastafarianDate.cutlet.canonicalIndex ||
+              localized.pastafarianDate.cutlet.day !== first.pastafarianDate.cutlet.day ||
+              localized.pastafarianDate.month.canonicalIndex !== first.pastafarianDate.month.canonicalIndex ||
+              localized.pastafarianDate.month.day !== first.pastafarianDate.month.day) {
+            throw new Error('Windows localized exact query changed canonical coordinates');
+          }
           const server = await httpApi.listen({ host: '127.0.0.1', port: 0 });
           try {
             const port = server.address().port;
@@ -293,6 +330,10 @@ jobs:
             if (response.status !== 200) throw new Error(`Windows packed HTTP status ${response.status}: ${await response.text()}`);
             const body = await response.json();
             if (body.targetDay.jdn !== String(targetJdn + 2)) throw new Error('Windows packed HTTP mismatch');
+            const localizedResponse = await fetch(`http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn + 2}&locale=he`);
+            if (localizedResponse.status !== 200) throw new Error(`Windows localized HTTP status ${localizedResponse.status}: ${await localizedResponse.text()}`);
+            const localizedBody = await localizedResponse.json();
+            if (localizedBody.locale !== 'he' || localizedBody.targetDay.jdn !== body.targetDay.jdn) throw new Error('Windows localized HTTP mismatch');
           } finally {
             await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
           }

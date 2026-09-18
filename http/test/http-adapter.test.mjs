@@ -52,7 +52,7 @@ async function withServer(fn) {
 
 test('GET /v1/date maps transport selectors and drops no-op location fields', async () => {
   await withServer(async (base, calls, now) => {
-    const r = await fetch(`${base}/v1/date?targetJdn=101&calculationJdn=100&longitude=35.2&latitude=999&elevationMeters=oops&presentation=canonical`);
+    const r = await fetch(`${base}/v1/date?targetJdn=101&calculationJdn=100&longitude=35.2&latitude=999&elevationMeters=oops&locale=he&presentation=canonical`);
     assert.equal(r.status, 200);
     assert.equal(r.headers.get('access-control-allow-origin'), '*');
     const body = await r.json();
@@ -60,6 +60,7 @@ test('GET /v1/date maps transport selectors and drops no-op location fields', as
     assert.equal(calls.length, 1);
     assert.equal(calls[0][0], 'date');
     assert.deepEqual(calls[0][1], {
+      locale: 'he',
       presentation: 'canonical',
       observer: { longitude: 35.2 },
       target: { jdn: '101' },
@@ -139,6 +140,11 @@ test('status probes the query provider and static endpoints are served', async (
     const status = await fetch(`${base}/v1/status`);
     assert.equal(status.status, 200);
     assert.deepEqual(await status.json(), { status: 'ok' });
+    const locales = await fetch(`${base}/v1/locales`);
+    assert.equal(locales.status, 200);
+    const localeBody = await locales.json();
+    assert.deepEqual(localeBody.locales.map((item) => item.code), ['en', 'he']);
+    assert.equal(localeBody.locales[1].direction, 'rtl');
     const meta = await fetch(`${base}/v1/meta`);
     const metaBody = await meta.json();
     assert.equal(metaBody.observerPresets[0].longitude, 45.481);

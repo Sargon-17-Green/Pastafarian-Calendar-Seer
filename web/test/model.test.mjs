@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import {
   assertSingleSelector,
   buildDateRequest,
+  buildNowRequest,
   buildRangeRequest,
   dateSummary,
   errorPresentation,
   normalizeApiBase,
+  readInitialUrlState,
+  writeShareableUrl,
 } from '../model.mjs';
 
 const baseState = {
@@ -100,4 +103,41 @@ test('error UI preserves authoritative API status/code/details and special-cases
   assert.equal(view.code, 'SEER_UNAVAILABLE');
   assert.deepEqual(view.details, { provider: 'native' });
   assert.match(view.explanation, /does not by itself mean the date is invalid/i);
+});
+
+test('full presentation forwards the discovered locale without browser translations', () => {
+  const request = buildNowRequest({
+    ...baseState,
+    presentation: 'full',
+    locale: 'he',
+  });
+  assert.equal(request.presentation, 'full');
+  assert.equal(request.locale, 'he');
+  assert.equal(request.observer.preset, 'kisurra');
+});
+
+test('canonical presentation omits locale even when one is selected', () => {
+  const request = buildNowRequest({
+    ...baseState,
+    presentation: 'canonical',
+    locale: 'he',
+  });
+  assert.equal(request.presentation, 'canonical');
+  assert.equal(Object.prototype.hasOwnProperty.call(request, 'locale'), false);
+});
+
+test('shareable URL preserves full-presentation locale and parses it back', () => {
+  const url = writeShareableUrl({
+    mode: 'date',
+    apiBase: '',
+    targetKind: 'gregorian',
+    target: '2026-09-20',
+    calculationMode: 'jdn',
+    calculation: '2461302',
+    presentation: 'full',
+    locale: 'he',
+  }, 'https://seer.example/web/');
+  const parsed = readInitialUrlState(url);
+  assert.equal(parsed.presentation, 'full');
+  assert.equal(parsed.locale, 'he');
 });

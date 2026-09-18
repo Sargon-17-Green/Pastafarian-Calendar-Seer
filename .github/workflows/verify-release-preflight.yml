@@ -73,7 +73,7 @@ jobs:
             sha256sum "pastafarian-calendar-seer-$VERSION.tgz" > "pastafarian-calendar-seer-$VERSION.tgz.sha256"
           )
           tar -tzf "$TGZ" > "$RUNNER_TEMP/release-files.txt"
-          for REQUIRED in package/index.mjs package/client/index.mjs package/api/openapi.json package/scripts/verify-release.mjs package/docs/SUPPLY_CHAIN.md; do
+          for REQUIRED in package/index.mjs package/client/index.mjs package/query/locales/catalog.mjs package/query/locales/en.mjs package/query/locales/he.mjs package/api/openapi.json package/api/schemas/locale-pack.schema.json package/scripts/verify-release.mjs package/docs/LOCALIZATION.md package/docs/SUPPLY_CHAIN.md; do
             grep -qx "$REQUIRED" "$RUNNER_TEMP/release-files.txt"
           done
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' "$RUNNER_TEMP/release-files.txt"; then
