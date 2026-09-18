@@ -31,7 +31,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Native dependencies
         run: |
           sudo apt-get update
@@ -109,23 +109,23 @@ jobs:
           import json, re
           err=open('/tmp/seer-publish.err','r',encoding='utf-8',errors='replace').read()
           err=re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', err)
+          assert 'npm auto-corrected some errors' not in err, err
+          assert 'npm warn publish errors corrected:' not in err, err
           corrections=[]
           for line in err.splitlines():
               if 'npm warn publish ' not in line: continue
               msg=line.split('npm warn publish ',1)[1].strip()
-              if msg.startswith('npm auto-corrected some errors') or msg == 'errors corrected:': continue
+              if msg.startswith('This command requires you to be logged in to '): continue
               corrections.append(msg)
-          expected={
-              '"bin[pastafarian-seer]" script name was cleaned',
-              '"bin[pastafarian-seer-http]" script name was cleaned',
-          }
-          assert set(corrections)==expected, corrections
+          assert not corrections, corrections
+          pkg=json.load(open('package.json',encoding='utf-8'))
+          package_id=f"{pkg['name']}@{pkg['version']}"
           payload=json.load(open('/tmp/seer-publish.json',encoding='utf-8'))
-          if isinstance(payload, dict) and payload.get('id') == 'pastafarian-calendar-seer@0.1.0': x=payload
-          elif isinstance(payload, dict) and 'pastafarian-calendar-seer' in payload: x=payload['pastafarian-calendar-seer']
-          elif isinstance(payload, list): x=next((item for item in payload if item.get('id') == 'pastafarian-calendar-seer@0.1.0'), None)
+          if isinstance(payload, dict) and payload.get('id') == package_id: x=payload
+          elif isinstance(payload, dict) and pkg['name'] in payload: x=payload[pkg['name']]
+          elif isinstance(payload, list): x=next((item for item in payload if item.get('id') == package_id), None)
           else: x=None
-          assert x and x['id']=='pastafarian-calendar-seer@0.1.0', payload
+          assert x and x['id']==package_id, payload
           modes={f['path']:f['mode'] for f in x['files']}
           assert modes['query/cli.mjs'] & 0o111
           assert modes['http/server.mjs'] & 0o111
@@ -211,7 +211,7 @@ jobs:
   verify-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
