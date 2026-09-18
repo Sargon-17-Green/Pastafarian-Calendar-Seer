@@ -75,6 +75,11 @@ jobs:
           grep -qx 'package/api/schemas/date-response.schema.json' /tmp/release-files.txt
           grep -qx 'package/api/schemas/locale-pack.schema.json' /tmp/release-files.txt
           grep -qx 'package/docs/LOCALIZATION.md' /tmp/release-files.txt
+          grep -qx 'package/docs/GATE_DOMAIN_EXTENSION.md' /tmp/release-files.txt
+          grep -qx 'package/prototype/data/gates_u16.bin' /tmp/release-files.txt
+          grep -qx 'package/prototype/data/gates_negative_u16.bin' /tmp/release-files.txt
+          grep -qx 'package/prototype/data/gates_100k_u16.bin' /tmp/release-files.txt
+          grep -qx 'package/prototype/data/gates_negative_100k_u16.bin' /tmp/release-files.txt
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' /tmp/release-files.txt; then
             echo 'repository-only material leaked into release tarball' >&2
             exit 1

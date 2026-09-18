@@ -110,9 +110,9 @@ Measured npm package size against v0.1.4:
 | Package | Packed | Unpacked |
 | --- | ---: | ---: |
 | v0.1.4 baseline | 245,351 B | 826,322 B |
-| with ±100k corpora | 544,390 B | 1,228,952 B |
+| v0.2.0 candidate with ±100k corpora and domain documentation | 546,557 B | 1,234,357 B |
 
-The packed increase is about 299 kB. At this scale compression, mmap,
+The packed increase is about 301 kB. At this scale compression, mmap,
 checkpoint serialization and an on-demand disk-cache protocol would add more
 complexity and failure surface than they save.
 

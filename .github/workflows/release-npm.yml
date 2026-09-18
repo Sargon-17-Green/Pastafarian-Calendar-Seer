@@ -150,6 +150,11 @@ jobs:
           grep -qx 'package/api/schemas/date-response.schema.json' "$RUNNER_TEMP/npm-package-files.txt"
           grep -qx 'package/api/schemas/locale-pack.schema.json' "$RUNNER_TEMP/npm-package-files.txt"
           grep -qx 'package/docs/LOCALIZATION.md' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/docs/GATE_DOMAIN_EXTENSION.md' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/prototype/data/gates_u16.bin' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/prototype/data/gates_negative_u16.bin' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/prototype/data/gates_100k_u16.bin' "$RUNNER_TEMP/npm-package-files.txt"
+          grep -qx 'package/prototype/data/gates_negative_100k_u16.bin' "$RUNNER_TEMP/npm-package-files.txt"
           grep -qx 'package/scripts/package-selftest.mjs' "$RUNNER_TEMP/npm-package-files.txt"
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/(deployment|examples)/|^package/api/(examples|tests)/|^package/(query|client|http|precompute)/test/' "$RUNNER_TEMP/npm-package-files.txt"; then
             echo 'repository-only material leaked into npm package' >&2

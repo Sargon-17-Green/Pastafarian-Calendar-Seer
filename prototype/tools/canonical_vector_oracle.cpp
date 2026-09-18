@@ -65,7 +65,7 @@ static bool in_legacy_calc_domain(int64_t calc,const Gates&G,int legacyRadius){
  if(legacyRadius<=0||legacyRadius>G.max_index()||-legacyRadius<G.min_index())return false;
  return calc>G.at(-legacyRadius)&&calc<=G.at(legacyRadius);
 }
-static Year anchor_year(int64_t calc,const Gates&G,bool saved,int legacyRadius){
+static Year anchor_year(int64_t calc,const Gates&G,bool saved,int legacyRadius=0){
  int k=G.contain(calc);bool legacy=in_legacy_calc_domain(calc,G,legacyRadius);
  int lo=legacy?-legacyRadius:G.min_index(),hi=legacy?legacyRadius:G.max_index();
  std::vector<Candidate>v;
@@ -77,7 +77,7 @@ static Year anchor_year(int64_t calc,const Gates&G,bool saved,int legacyRadius){
  auto so=reference::sauce(calc,calc,saved);BI rank=choose_ref(so,1,10,BI(v.size()));
  auto q=v[(rank-1).convert_to<size_t>()];return{5000,q.o,q.c,G.at(q.o),G.at(q.c)};
 }
-static Year adjacent_year(int64_t calc,const Gates&G,const Year&y,bool next,bool saved,int legacyRadius){
+static Year adjacent_year(int64_t calc,const Gates&G,const Year&y,bool next,bool saved,int legacyRadius=0){
  int fixed=next?y.c:y.o;bool legacy=in_legacy_calc_domain(calc,G,legacyRadius);
  if(next){
    int first=fixed+6;

@@ -105,7 +105,7 @@ const repeated = await time('date:persistent-repeat', () =>
     fixture.dateCases[2].calculationJdn,
     fixture.dateCases[2].targetJdn + 1,
   )));
-const negBytes = await readFile(path.join(root, 'prototype', 'data', 'gates_negative_u16.bin'));
+const negBytes = await readFile(path.join(root, 'prototype', 'data', 'gates_negative_100k_u16.bin'));
 let negativeSpan = 0;
 for (let i = 0; i < negBytes.length; i += 2) negativeSpan += negBytes.readUInt16LE(i);
 const lowerGateDay = fixture.foundationJdn - negativeSpan;
