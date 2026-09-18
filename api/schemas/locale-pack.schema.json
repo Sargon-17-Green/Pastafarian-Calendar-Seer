@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "locale-pack.schema.json",
+  "title": "LocalePack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "version", "code", "name", "selfName", "direction",
+    "properNamePolicy", "cutlets", "months", "formatDate"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "code": { "type": "string", "pattern": "^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$" },
+    "name": { "type": "string", "minLength": 1 },
+    "selfName": { "type": "string", "minLength": 1 },
+    "direction": { "type": "string", "enum": ["ltr", "rtl"] },
+    "properNamePolicy": { "type": "string", "enum": ["localized", "english-retained"] },
+    "cutlets": {
+      "type": "array", "minItems": 17, "maxItems": 17, "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "months": {
+      "type": "array", "minItems": 47, "maxItems": 47, "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "formatDate": {
+      "description": "Runtime formatter function. JavaScript loader validation enforces callable type."
+    }
+  }
+}

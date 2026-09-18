@@ -43,6 +43,7 @@ test('browser client maps GET query selectors', async () => {
   });
   await client.queryNow({
     observer: { preset: 'kisurra', longitude: 45.481 },
+    locale: 'he',
     presentation: 'canonical',
     include: ['resolution'],
   });
@@ -53,17 +54,20 @@ test('browser client maps GET query selectors', async () => {
   });
   await client.queryYear('5000', {
     calculation: { jdn: '2461302' },
+    locale: 'he',
     presentation: 'canonical',
     include: ['provenance'],
   });
   assert.match(urls[0], /^https:\/\/seer\.example\/v1\/now\?/);
   assert.match(urls[0], /observer=kisurra/);
   assert.match(urls[0], /longitude=45\.481/);
+  assert.match(urls[0], /locale=he/);
   assert.match(urls[0], /presentation=canonical/);
   assert.match(urls[1], /^https:\/\/seer\.example\/v1\/calculation-day\?/);
   assert.match(urls[1], /include=boundaries/);
   assert.match(urls[2], /^https:\/\/seer\.example\/v1\/year\/5000\?/);
   assert.match(urls[2], /calculationJdn=2461302/);
+  assert.match(urls[2], /locale=he/);
 });
 
 test('browser client exposes structured server errors', async () => {

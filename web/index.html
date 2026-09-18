@@ -56,7 +56,11 @@
           <label><input type="radio" name="presentation" value="full" checked> Full</label>
           <label><input type="radio" name="presentation" value="canonical"> Canonical</label>
         </fieldset>
-        <p class="hint">The service currently reports English as its presentation locale.</p>
+        <label for="presentation-locale">Presentation locale</label>
+        <select id="presentation-locale" disabled>
+          <option value="en">English</option>
+        </select>
+        <p class="hint">Locale choices are discovered from <code>/v1/locales</code>. Canonical presentation ignores locale.</p>
       </section>
 
       <section class="panel">

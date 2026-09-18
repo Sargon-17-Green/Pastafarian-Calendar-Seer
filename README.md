@@ -175,14 +175,17 @@ Example:
 
 ### Presentation and optional fields
 
-The default presentation is `full` with locale `en`.
+The default presentation is `full` with locale `en`. Supported locales are discovered at runtime through `listLocales()` in Node or `GET /v1/locales` over HTTP.
 
 ```js
 { presentation: 'full', locale: 'en' }
+{ presentation: 'full', locale: 'he' }
 { presentation: 'canonical' }
 ```
 
-`canonical` omits human-language names and formatting. It is the safest form for machine-to-machine use.
+Locale codes use canonical BCP 47 form. Casing aliases such as `EN` normalize to `en`; structurally valid but unsupported tags such as `en-US` fail with `LOCALE_NOT_SUPPORTED`, and malformed tags such as `en_us` fail with `INVALID_LOCALE`. The API is strict at locale level and does not silently fall back per string.
+
+`canonical` omits all human-language names and formatting and intentionally ignores `locale`. It is the safest form for machine-to-machine use.
 
 For date/reverse requests, `include` may contain:
 
@@ -200,6 +203,16 @@ Example:
 ```
 
 For `queryYear()`, supported includes are `days`, `provenance`, and `resolution`.
+
+## Localization
+
+Localization is presentation-only. English itself is a normal locale pack rather than a special code path. The HTTP API uses explicit `locale` only; `Accept-Language` is intentionally not negotiated in v1.
+
+`GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
+
+The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the 17 cutlet and 47 month proper names intentionally remain the verified English names until a documented Hebrew naming authority is available. This is explicit locale-pack data, not silent fallback.
+
+See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
 ## Node API
 
@@ -646,7 +659,7 @@ A normal date or reverse response contains:
 | `provenance` | Present when requested |
 | `resolution` | Present when requested |
 
-When `presentation: 'full'` is used, cutlet and month objects also contain their English `name`.
+When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The initial Hebrew pack localizes formatting and RTL metadata but deliberately retains the verified English Pastafarian proper names until an authoritative Hebrew naming source is supplied.
 
 The `resolution` object is useful for debugging defaults. It records how the calculation day, target, and observer were selected.
 
@@ -663,7 +676,7 @@ For `GET /v1/date`:
 | `calculationJdn=...` | `calculation.jdn` |
 | `observer=kisurra` | `observer.preset` |
 | `longitude=...` | `observer.longitude` |
-| `locale=en` | `locale` |
+| `locale=en` or `locale=he` | `locale` |
 | `presentation=full|canonical` | `presentation` |
 | `include=a,b,c` | `include: ['a','b','c']` |
 
@@ -735,7 +748,7 @@ Important status/code groups:
 | 406 | `LOCALE_NOT_SUPPORTED`, `NOT_ACCEPTABLE` | Unsupported locale or response representation |
 | 413 | `REQUEST_TOO_LARGE` | Batch/body limit exceeded |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | POST body is not JSON |
-| 422 | `INVALID_JDN`, `INVALID_GREGORIAN_DATE`, domain-range errors, reverse-coordinate errors | Syntactically valid request whose value cannot be resolved |
+| 422 | `INVALID_LOCALE`, `INVALID_JDN`, `INVALID_GREGORIAN_DATE`, domain-range errors, reverse-coordinate errors | Invalid or unresolvable request value |
 | 503 | `SEER_UNAVAILABLE` | Required provider/native runtime is unavailable |
 | 500 | `INTERNAL_ERROR` | Unexpected server failure |
 
@@ -1038,7 +1051,7 @@ The repository contains:
 Known limitations:
 
 - the exact engine has a finite bundled gate horizon;
-- presentation is currently English-only;
+- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - the verified container is x86-64 Linux, not ARM64;
 - public npm-registry publication is not configured yet.

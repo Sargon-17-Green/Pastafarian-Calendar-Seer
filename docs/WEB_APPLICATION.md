@@ -10,7 +10,7 @@ The application exposes:
 - Gregorian, JDN, and `offsetDays` date queries;
 - live, explicit-JDN, and explicit-instant calculation-day selection;
 - Kisurra and custom-longitude observer selection;
-- full and canonical presentation;
+- full and canonical presentation, with locale discovery from `/v1/locales`;
 - reverse conversion using the complete canonical tuple;
 - year structure, with `include=days` only after explicit opt-in;
 - range queries using count or `endInclusive`, step, and fixed or same-as-target calculation mode;
@@ -18,6 +18,8 @@ The application exposes:
 - raw request/response transport details and structured API errors.
 
 The year view does not synthesize fields that HTTP v1 does not expose. In particular, cutlet offsets are displayed from `YearResponse`; month offsets are shown as unavailable rather than recomputed in the browser.
+
+The locale selector is populated from `/v1/locales`; the web application does not bundle translations. It sends only the selected locale code to HTTP v1. Returned formatted text uses the locale metadata `direction` for rendering, while canonical presentation disables the locale control because locale is semantically irrelevant there.
 
 ## API base configuration
 

@@ -21,8 +21,9 @@ INVALID = API / "examples" / "invalid"
 RESP_VALID = API / "examples" / "responses" / "valid"
 RESP_INVALID = API / "examples" / "responses" / "invalid"
 EXPECT = json.loads((Path(__file__).with_name("expectations.json")).read_text(encoding="utf-8"))["invalid"]
-SUPPORTED_LOCALES = {"en"}
+SUPPORTED_LOCALES = {"en", "he"}
 EXACT_RE = re.compile(r"^(?:0|-[1-9][0-9]*|[1-9][0-9]*)$")
+LOCALE_RE = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
 
 class ContractError(Exception):
     def __init__(self, code: str, field: str | None = None):
@@ -33,6 +34,28 @@ class ContractError(Exception):
 
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def normalize_locale(value, field="locale"):
+    if not isinstance(value, str) or not value or value != value.strip() or not LOCALE_RE.fullmatch(value):
+        raise ContractError("INVALID_LOCALE", field)
+    parts = value.split("-")
+    normalized = [parts[0].lower()]
+    for part in parts[1:]:
+        if len(part) == 4 and part.isalpha():
+            normalized.append(part[0].upper() + part[1:].lower())
+        elif len(part) == 2 and part.isalpha():
+            normalized.append(part.upper())
+        else:
+            normalized.append(part.lower())
+    return "-".join(normalized)
+
+
+def validate_locale(value, field="locale"):
+    normalized = normalize_locale(value, field)
+    if normalized not in SUPPORTED_LOCALES:
+        raise ContractError("LOCALE_NOT_SUPPORTED", field)
+    return normalized
 
 
 def schema_registry():
@@ -206,9 +229,7 @@ def validate_date(req: dict, schema=True):
     if presentation not in {"full","canonical"}:
         raise ContractError("UNSUPPORTED_PRESENTATION", "presentation")
     if presentation == "full":
-        loc = req.get("locale", "en")
-        if loc not in SUPPORTED_LOCALES:
-            raise ContractError("LOCALE_NOT_SUPPORTED", "locale")
+        validate_locale(req.get("locale", "en"))
     inc = req.get("include", [])
     if not isinstance(inc, list) or any(x not in {"structure","boundaries","provenance","resolution"} for x in inc):
         raise ContractError("UNSUPPORTED_INCLUDE", "include")
@@ -242,8 +263,8 @@ def validate_reverse(req: dict):
     validate_observer(req.get("observer"), relevant)
     presentation=req.get("presentation","full")
     if presentation not in {"full","canonical"}: raise ContractError("UNSUPPORTED_PRESENTATION","presentation")
-    if presentation=="full" and req.get("locale","en") not in SUPPORTED_LOCALES:
-        raise ContractError("LOCALE_NOT_SUPPORTED","locale")
+    if presentation=="full":
+        validate_locale(req.get("locale","en"))
     inc=req.get("include",[])
     if not isinstance(inc,list) or any(x not in {"structure","boundaries","provenance","resolution"} for x in inc):
         raise ContractError("UNSUPPORTED_INCLUDE","include")
@@ -274,7 +295,7 @@ def validate_range(req: dict):
     relevant_observer = not (mode == "same-as-target" and "start" in req) or "boundaries" in include_set(req)
     validate_observer(req.get("observer"), relevant_observer)
     presentation=req.get("presentation","full")
-    if presentation == "full" and req.get("locale","en") not in SUPPORTED_LOCALES: raise ContractError("LOCALE_NOT_SUPPORTED","locale")
+    if presentation == "full": validate_locale(req.get("locale","en"))
     if has_end:
         a=target_to_test_jdn(req.get("start")); b=target_to_test_jdn(req.get("endInclusive"))
         if a is not None and b is not None and (b-a) % step != 0:

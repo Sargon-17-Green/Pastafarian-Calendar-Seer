@@ -16,6 +16,7 @@ Date options:
   --target YYYY-MM-DD | --target-jdn JDN | --offset-days N
   --calculation-at RFC3339 | --calculation-jdn JDN
   --longitude DEG | --preset kisurra
+  --locale CODE
   --canonical
   --include name,name
 
@@ -48,6 +49,7 @@ function parseCommon(args, request, state, { allowTarget = true, allowCalculatio
   else if (allowCalculation && arg === '--calculation-jdn') request.calculation = { jdn: next() };
   else if (arg === '--longitude') setObserver(request, 'longitude', Number(next()));
   else if (arg === '--preset') setObserver(request, 'preset', next());
+  else if (arg === '--locale') request.locale = next();
   else if (arg === '--canonical') request.presentation = 'canonical';
   else if (arg === '--include') request.include = next().split(',').filter(Boolean);
   else return false;

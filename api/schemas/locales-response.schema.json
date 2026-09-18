@@ -4,9 +4,7 @@
   "title": "LocalesResponse",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "locales"
-  ],
+  "required": ["locales"],
   "properties": {
     "locales": {
       "type": "array",
@@ -14,23 +12,21 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "tag",
-          "name",
-          "direction"
+          "tag", "code", "name", "selfName", "direction", "default",
+          "schemaVersion", "version", "properNamePolicy"
         ],
         "properties": {
-          "tag": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "direction": {
+          "tag": { "type": "string" },
+          "code": { "type": "string" },
+          "name": { "type": "string", "minLength": 1 },
+          "selfName": { "type": "string", "minLength": 1 },
+          "direction": { "type": "string", "enum": ["ltr", "rtl"] },
+          "default": { "type": "boolean" },
+          "schemaVersion": { "type": "integer", "const": 1 },
+          "version": { "type": "string" },
+          "properNamePolicy": {
             "type": "string",
-            "enum": [
-              "ltr",
-              "rtl"
-            ]
+            "enum": ["localized", "english-retained"]
           }
         }
       }

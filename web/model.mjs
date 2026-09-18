@@ -73,7 +73,7 @@ export function buildTarget(kind, values, label = 'Target') {
 function presentationFields(state) {
   const presentation = state.presentation === 'canonical' ? 'canonical' : 'full';
   return presentation === 'full'
-    ? { presentation, locale: 'en' }
+    ? { presentation, locale: String(state.locale ?? 'en') }
     : { presentation };
 }
 
@@ -224,6 +224,8 @@ export function readInitialUrlState(url = globalThis.location?.href ?? 'http://l
     target: params.get('target'),
     calculationMode: params.get('calculationMode'),
     calculation: params.get('calculation'),
+    presentation: params.get('presentation'),
+    locale: params.get('locale'),
   };
 }
 
@@ -237,6 +239,8 @@ export function writeShareableUrl(state, url = globalThis.location?.href ?? 'htt
   set('target', state.target);
   set('calculationMode', state.calculationMode);
   set('calculation', state.calculation);
+  set('presentation', state.presentation);
+  set('locale', state.presentation === 'full' ? state.locale : '');
   parsed.search = params.toString();
   return parsed.toString();
 }

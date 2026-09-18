@@ -68,8 +68,13 @@ jobs:
           TGZ="${{ steps.pack.outputs.tgz }}"
           tar -tf "$TGZ" > /tmp/release-files.txt
           grep -qx 'package/client/index.mjs' /tmp/release-files.txt
+          grep -qx 'package/query/locales/catalog.mjs' /tmp/release-files.txt
+          grep -qx 'package/query/locales/en.mjs' /tmp/release-files.txt
+          grep -qx 'package/query/locales/he.mjs' /tmp/release-files.txt
           grep -qx 'package/api/openapi.json' /tmp/release-files.txt
           grep -qx 'package/api/schemas/date-response.schema.json' /tmp/release-files.txt
+          grep -qx 'package/api/schemas/locale-pack.schema.json' /tmp/release-files.txt
+          grep -qx 'package/docs/LOCALIZATION.md' /tmp/release-files.txt
           if grep -Eiq '(^|/)HANDOFF_|^package/\.github/|^package/api/(examples|tests)/' /tmp/release-files.txt; then
             echo 'repository-only material leaked into release tarball' >&2
             exit 1

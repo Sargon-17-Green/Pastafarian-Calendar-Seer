@@ -1,5 +1,7 @@
 export {
   DEFAULT_GENERATED_DIR,
+  DEFAULT_LOCALE,
+  listLocales,
   SeerQueryError,
   gregorianToJdn,
   jdnToGregorian,
