@@ -48,8 +48,8 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.exports['./http'], './http/index.mjs');
   assert.equal(pkg.exports['./client'], './client/index.mjs');
   assert.equal(pkg.exports['./schemas/*'], './api/schemas/*');
-  assert.equal(pkg.bin['pastafarian-seer'], './query/cli.mjs');
-  assert.equal(pkg.bin['pastafarian-seer-http'], './http/server.mjs');
+  assert.equal(pkg.bin['pastafarian-seer'], 'query/cli.mjs');
+  assert.equal(pkg.bin['pastafarian-seer-http'], 'http/server.mjs');
   assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
   assert.equal(pkg.scripts.test, 'node ./scripts/package-selftest.mjs');
   assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
