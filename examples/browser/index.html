@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pastafarian Calendar Seer — Browser Example</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Pastafarian Calendar Seer</p>
+      <h1>Browser integration example</h1>
+      <p>This page talks only to the public HTTP v1 API through <code>client/index.mjs</code>.</p>
+    </header>
+
+    <form id="query-form">
+      <label>
+        Seer API base URL
+        <input id="api-base" name="apiBase" type="url" value="http://127.0.0.1:8080" spellcheck="false">
+      </label>
+      <div class="query-row">
+        <label>
+          Gregorian target
+          <input id="target-date" name="targetDate" type="date">
+        </label>
+        <button type="submit">Query date</button>
+        <button id="now-button" type="button">Query now</button>
+      </div>
+      <p class="hint">Leave the date empty and use “Query now” for the current Pastafarian date.</p>
+    </form>
+
+    <section id="status" class="status" aria-live="polite">Ready.</section>
+
+    <section id="answer" class="answer" hidden>
+      <h2>Canonical answer</h2>
+      <dl>
+        <div><dt>Target JDN</dt><dd id="target-jdn"></dd></div>
+        <div><dt>Gregorian</dt><dd id="target-gregorian"></dd></div>
+        <div><dt>Year</dt><dd id="pf-year"></dd></div>
+        <div><dt>Cutlet</dt><dd id="pf-cutlet"></dd></div>
+        <div><dt>Month</dt><dd id="pf-month"></dd></div>
+      </dl>
+      <details>
+        <summary>Raw JSON</summary>
+        <pre id="raw-json"></pre>
+      </details>
+    </section>
+
+    <footer>
+      <p>Start the Seer HTTP server separately, then serve this directory with any static web server.</p>
+    </footer>
+  </main>
+  <script type="module" src="./app.mjs"></script>
+</body>
+</html>

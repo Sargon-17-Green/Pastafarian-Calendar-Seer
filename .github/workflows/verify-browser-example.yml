@@ -1,0 +1,34 @@
+name: Verify browser integration example
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'client/**'
+      - 'examples/browser/**'
+      - '.github/workflows/verify-browser-example.yml'
+  pull_request:
+    paths:
+      - 'client/**'
+      - 'examples/browser/**'
+      - '.github/workflows/verify-browser-example.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '20'
+      - name: Syntax
+        run: |
+          node --check client/index.mjs
+          node --check examples/browser/app.mjs
+      - name: Static integration tests
+        run: |
+          node --test examples/browser/browser-example.test.mjs
+          node --test client/test/client.test.mjs

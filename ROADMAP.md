@@ -34,7 +34,7 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - dependency-free HTTP v1 service;
    - installable Node package and persistent-service deployment path (API Stage 6);
    - reverse conversion for a complete canonical Pastafarian tuple;
-   - browser/website integration foundation: dependency-free fetch client and CORS-capable HTTP API;
-   - remaining product work: additional locales and site-specific UI integration.
+   - browser/website integration foundation: dependency-free fetch client, CORS-capable HTTP API, and a no-build runnable browser example;
+   - remaining product work: additional locales and site-specific production UI/deployment integration.
 
 A faster answer is useful only if it remains the same answer.

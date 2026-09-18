@@ -1,0 +1,114 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: Canvas;
+  color: CanvasText;
+}
+
+main {
+  width: min(780px, calc(100% - 2rem));
+  margin: 3rem auto;
+}
+
+header,
+form,
+.answer,
+.status {
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 0.8rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+header {
+  border: 0;
+  padding-inline: 0;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+input,
+button {
+  font: inherit;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, CanvasText 28%, transparent);
+}
+
+input {
+  background: Canvas;
+  color: CanvasText;
+}
+
+button {
+  cursor: pointer;
+}
+
+.query-row {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) auto auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 1rem;
+}
+
+.hint,
+footer {
+  opacity: 0.72;
+}
+
+.status.error {
+  border-color: currentColor;
+  color: #b42318;
+}
+dl {
+  display: grid;
+  gap: 0.75rem;
+}
+
+dl div {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 1rem;
+}
+
+dt {
+  font-weight: 700;
+}
+
+dd {
+  margin: 0;
+}
+
+pre {
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, CanvasText 7%, Canvas);
+}
+
+@media (max-width: 620px) {
+  .query-row {
+    grid-template-columns: 1fr;
+  }
+
+  dl div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
