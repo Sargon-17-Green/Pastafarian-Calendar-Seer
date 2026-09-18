@@ -32,6 +32,7 @@ const STATUS_BY_CODE = new Map([
   ['MISSING_CALCULATION_SELECTOR', 400],
   ['CONFLICTING_CALCULATION', 400],
   ['MISSING_TARGET_SELECTOR', 400],
+  ['MISSING_PASTAFARIAN_DATE', 400],
   ['AMBIGUOUS_TARGET', 400],
   ['AMBIGUOUS_OBSERVER', 400],
   ['INVALID_OBSERVER', 400],
@@ -52,6 +53,9 @@ const STATUS_BY_CODE = new Map([
   ['CALCULATION_OUT_OF_SUPPORTED_DOMAIN', 422],
   ['TARGET_OUT_OF_SUPPORTED_DOMAIN', 422],
   ['YEAR_OUT_OF_SUPPORTED_DOMAIN', 422],
+  ['INVALID_PASTAFARIAN_DATE', 422],
+  ['PASTAFARIAN_DATE_NOT_IN_YEAR', 422],
+  ['PASTAFARIAN_DATE_CONFLICT', 422],
   ['LOCALE_NOT_SUPPORTED', 406],
   ['REQUEST_TOO_LARGE', 413],
   ['SEER_UNAVAILABLE', 503],
@@ -305,7 +309,7 @@ function rangeNdjson(results) {
 
 function knownPath(pathname) {
   return pathname === '/v1/now' || pathname === '/v1/date' || pathname === '/v1/batch' ||
-    pathname === '/v1/range' || pathname === '/v1/calculation-day' || pathname === '/v1/locales' ||
+    pathname === '/v1/range' || pathname === '/v1/reverse' || pathname === '/v1/calculation-day' || pathname === '/v1/locales' ||
     pathname === '/v1/meta' || pathname === '/v1/status' || pathname === '/openapi.json' ||
     pathname === '/openapi.yaml' || /^\/v1\/year\/[^/]+$/.test(pathname);
 }
@@ -359,7 +363,7 @@ export function createSeerHttpHandler(options = {}) {
           presentations: ['full', 'canonical'],
           includes: ['structure', 'boundaries', 'provenance', 'resolution'],
           observerPresets: [{ id: 'kisurra', longitude: KISURRA_LONGITUDE }],
-          reverse: { status: 'TBC' },
+          reverse: { status: 'implemented', endpoint: '/v1/reverse', requiresCompleteTuple: true },
         }, { 'cache-control': 'public, max-age=300' });
         return;
       }
@@ -411,6 +415,14 @@ export function createSeerHttpHandler(options = {}) {
         if (media === 'application/x-ndjson') send(res, 200, rangeNdjson(result.results), NDJSON_TYPE, { 'cache-control': 'no-store' });
         else if (media === 'text/csv') send(res, 200, rangeCsv(result.results), CSV_TYPE, { 'cache-control': 'no-store' });
         else sendJson(res, 200, result, { 'cache-control': 'no-store' });
+        return;
+      }
+      if (pathname === '/v1/reverse' && method === 'POST') {
+        ensureNoQuery(url.searchParams);
+        negotiate(req, ['application/json'], 'application/json');
+        const body = await readJsonBody(req, maxBodyBytes);
+        const result = await queryApi.queryReverse(body, queryOptions);
+        sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
       if (pathname === '/v1/calculation-day' && method === 'GET') {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile } from 'node:fs/promises';
-import { queryBatch, queryCalculationDay, queryDate, queryNow, queryRange, queryYear, SeerQueryError } from './index.mjs';
+import { queryBatch, queryCalculationDay, queryDate, queryNow, queryRange, queryReverse, queryYear, SeerQueryError } from './index.mjs';
 
 function usage() {
   console.error(`usage:
@@ -8,6 +8,7 @@ function usage() {
   node query/cli.mjs now [date presentation options]
   node query/cli.mjs calculation-day [--at RFC3339] [--longitude DEG] [--include boundaries]
   node query/cli.mjs range [range options]
+  node query/cli.mjs reverse --year YEAR --cutlet INDEX --day-in-cutlet DAY --month INDEX --day-in-month DAY [options]
   node query/cli.mjs year YEAR [year options]
   node query/cli.mjs batch REQUEST.json
 
@@ -82,6 +83,21 @@ function rangeRequest(args) {
   return request;
 }
 
+function reverseRequest(args) {
+  const request = { pastafarianDate: { cutlet: {}, month: {} } };
+  const state = { i: 0 };
+  for (; state.i < args.length; state.i += 1) {
+    const arg = args[state.i];
+    const next = () => valueAfter(args, state);
+    if (arg === '--year') request.pastafarianDate.year = next();
+    else if (arg === '--cutlet') request.pastafarianDate.cutlet.canonicalIndex = next();
+    else if (arg === '--day-in-cutlet') request.pastafarianDate.cutlet.day = next();
+    else if (arg === '--month') request.pastafarianDate.month.canonicalIndex = next();
+    else if (arg === '--day-in-month') request.pastafarianDate.month.day = next();
+    else if (!parseCommon(args, request, state, { allowTarget: false })) throw new Error(`unknown argument: ${arg}`);
+  }
+  return request;
+}
 function calculationDayRequest(args) {
   const request = {};
   const state = { i: 0 };
@@ -99,12 +115,13 @@ function calculationDayRequest(args) {
 
 async function main() {
   const argv = process.argv.slice(2);
-  const known = new Set(['date', 'now', 'calculation-day', 'range', 'year', 'batch']);
+  const known = new Set(['date', 'now', 'calculation-day', 'range', 'reverse', 'year', 'batch']);
   const command = argv.length > 0 && known.has(argv[0]) ? argv.shift() : 'date';
   if (command === 'date') return queryDate(dateRequest(argv));
   if (command === 'now') return queryNow(dateRequest(argv));
   if (command === 'calculation-day') return queryCalculationDay(calculationDayRequest(argv));
   if (command === 'range') return queryRange(rangeRequest(argv));
+  if (command === 'reverse') return queryReverse(reverseRequest(argv));
   if (command === 'year') {
     if (argv.length === 0) throw new Error('year requires YEAR');
     const year = argv.shift();

@@ -3,7 +3,7 @@ info:
   title: Pastafarian Calendar Seer API
   version: 1.0.0-draft
   description: User-facing v1 contract. The calendar definition itself is normative; implementation details are
-    intentionally absent from ordinary date responses. Reverse conversion is TBC and is not part of v1.
+    intentionally absent from ordinary date responses. Reverse conversion is available at POST /v1/reverse for a complete canonical Pastafarian tuple.
 jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
 servers:
 - url: /
@@ -241,6 +241,47 @@ paths:
         '406': *id010
         '422': *id011
         '503': *id012
+  /v1/reverse:
+    post:
+      summary: Reverse a complete Pastafarian date to its target day
+      description: The calculation day remains independent. Supply year plus both canonical cutlet/day and month/day coordinates; both coordinate systems must identify the same day.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./schemas/reverse-request.schema.json
+      responses:
+        '200':
+          description: Resolved target day
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/date-response.schema.json
+        '400':
+          description: Invalid or incomplete request
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/error-response.schema.json
+        '406':
+          description: Requested active locale is unsupported
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/error-response.schema.json
+        '422':
+          description: Pastafarian coordinates are invalid, absent from the year, inconsistent, or outside the supported domain
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/error-response.schema.json
+        '503':
+          description: Seer cannot currently guarantee a correct answer
+          content:
+            application/json:
+              schema:
+                $ref: ./schemas/error-response.schema.json
   /v1/calculation-day:
     get:
       summary: Resolve the active calculation day
@@ -322,7 +363,16 @@ x-seer-semantics:
   defaultTarget: same-as-calculation-day
   requestInstant: captured-once-per-request
   boundaryInterval: '[start,end)'
-  reverse: TBC
+  reverse:
+    status: implemented
+    endpoint: /v1/reverse
+    requiresCompleteTuple: true
+    coordinates:
+    - year
+    - cutlet.canonicalIndex
+    - cutlet.day
+    - month.canonicalIndex
+    - month.day
   validationOrder:
   - parse
   - determine-mode

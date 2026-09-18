@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://seer.pastafarian.example/schemas/reverse-request.schema.json",
+  "title": "ReverseRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pastafarianDate"],
+  "properties": {
+    "observer": { "$ref": "./observer.schema.json" },
+    "calculation": { "$ref": "./calculation.schema.json" },
+    "pastafarianDate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["year", "cutlet", "month"],
+      "properties": {
+        "year": { "$ref": "./exact-integer.schema.json" },
+        "cutlet": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonicalIndex", "day"],
+          "properties": {
+            "canonicalIndex": { "$ref": "./exact-integer.schema.json" },
+            "day": { "$ref": "./exact-integer.schema.json" }
+          }
+        },
+        "month": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canonicalIndex", "day"],
+          "properties": {
+            "canonicalIndex": { "$ref": "./exact-integer.schema.json" },
+            "day": { "$ref": "./exact-integer.schema.json" }
+          }
+        }
+      }
+    },
+    "locale": { "type": "string", "minLength": 1 },
+    "presentation": { "type": "string", "enum": ["full", "canonical"] },
+    "include": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["structure", "boundaries", "provenance", "resolution"]
+      }
+    }
+  }
+}

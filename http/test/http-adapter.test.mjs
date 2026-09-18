@@ -26,6 +26,7 @@ function fakeApi(calls) {
     async queryDate(request, options) { calls.push(['date', request, options.now]); return dateResult(); },
     async queryBatch(request, options) { calls.push(['batch', request, options.now]); return { results: [] }; },
     async queryRange(request, options) { calls.push(['range', request, options.now]); return { results: [dateResult()] }; },
+    async queryReverse(request, options) { calls.push(['reverse', request, options.now]); return dateResult(); },
     async queryCalculationDay(request, options) { calls.push(['calculation-day', request, options.now]); return { at: options.now.toISOString(), jdn: '100', observer: { longitude: 45.481 } }; },
     async queryYear(year, request, options) { calls.push(['year', year, request, options.now]); throw queryError('SEER_UNAVAILABLE', 'no year'); },
   };
@@ -86,6 +87,28 @@ test('POST requires JSON and returns transport errors without stacks', async () 
   });
 });
 
+test('POST /v1/reverse delegates a complete Pastafarian tuple', async () => {
+  await withServer(async (base, calls, now) => {
+    const request = {
+      calculation: { jdn: '100' },
+      pastafarianDate: {
+        year: '5000',
+        cutlet: { canonicalIndex: 1, day: 2 },
+        month: { canonicalIndex: 1, day: 3 },
+      },
+    };
+    const r = await fetch(`${base}/v1/reverse`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).targetDay.jdn, '101');
+    assert.deepEqual(calls.at(-1)[0], 'reverse');
+    assert.deepEqual(calls.at(-1)[1], request);
+    assert.equal(calls.at(-1)[2].toISOString(), now.toISOString());
+  });
+});
 test('range supports JSON, NDJSON and CSV without changing query semantics', async () => {
   await withServer(async (base) => {
     for (const [accept, expectedType] of [
@@ -112,7 +135,10 @@ test('status probes the query provider and static endpoints are served', async (
     assert.equal(status.status, 200);
     assert.deepEqual(await status.json(), { status: 'ok' });
     const meta = await fetch(`${base}/v1/meta`);
-    assert.equal((await meta.json()).observerPresets[0].longitude, 45.481);
+    const metaBody = await meta.json();
+    assert.equal(metaBody.observerPresets[0].longitude, 45.481);
+    assert.equal(metaBody.reverse.status, 'implemented');
+    assert.equal(metaBody.reverse.endpoint, '/v1/reverse');
     const openapi = await fetch(`${base}/openapi.json`);
     assert.equal((await openapi.json()).openapi, '3.1.0');
   });

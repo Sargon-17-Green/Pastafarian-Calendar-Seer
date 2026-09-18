@@ -64,4 +64,4 @@ machine. Only the prefix needed for the target day is materialized.
 ## Non-goals of the current prototype
 
 The benchmark core remains non-normative. The public Node/HTTP v1 layer is stable, while localization
-and reverse conversion remain separate product work. The bundled gate data now covers indices -40000..40000.
+remain separate product work. Reverse conversion is now part of the shared query/HTTP layer and requires the complete canonical tuple. The bundled gate data now covers indices -40000..40000.

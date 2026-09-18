@@ -219,6 +219,36 @@ def validate_date(req: dict, schema=True):
         validate_schema("date-request", req)
 
 
+def validate_reverse(req: dict):
+    if not isinstance(req, dict): raise ContractError("INVALID_JSON")
+    allowed={"observer","calculation","pastafarianDate","locale","presentation","include"}
+    unknown=set(req)-allowed
+    if unknown: raise ContractError("UNKNOWN_PARAMETER", sorted(unknown)[0])
+    if "pastafarianDate" not in req: raise ContractError("MISSING_PASTAFARIAN_DATE","pastafarianDate")
+    p=req["pastafarianDate"]
+    if not isinstance(p,dict) or set(p)!={"year","cutlet","month"}:
+        raise ContractError("MISSING_PASTAFARIAN_DATE","pastafarianDate")
+    exact(p["year"],"pastafarianDate.year")
+    for name,max_index,max_day in (("cutlet",17,5778),("month",47,123)):
+        c=p[name]
+        if not isinstance(c,dict) or set(c)!={"canonicalIndex","day"}:
+            raise ContractError("MISSING_PASTAFARIAN_DATE",f"pastafarianDate.{name}")
+        index=exact(c["canonicalIndex"],f"pastafarianDate.{name}.canonicalIndex")
+        day=exact(c["day"],f"pastafarianDate.{name}.day")
+        if not 1 <= index <= max_index or not 1 <= day <= max_day:
+            raise ContractError("INVALID_PASTAFARIAN_DATE",f"pastafarianDate.{name}")
+    validate_calculation(req.get("calculation"))
+    relevant=not (isinstance(req.get("calculation"),dict) and set(req["calculation"])=={"jdn"} and "boundaries" not in include_set(req))
+    validate_observer(req.get("observer"), relevant)
+    presentation=req.get("presentation","full")
+    if presentation not in {"full","canonical"}: raise ContractError("UNSUPPORTED_PRESENTATION","presentation")
+    if presentation=="full" and req.get("locale","en") not in SUPPORTED_LOCALES:
+        raise ContractError("LOCALE_NOT_SUPPORTED","locale")
+    inc=req.get("include",[])
+    if not isinstance(inc,list) or any(x not in {"structure","boundaries","provenance","resolution"} for x in inc):
+        raise ContractError("UNSUPPORTED_INCLUDE","include")
+    validate_schema("reverse-request",req)
+
 def target_to_test_jdn(t):
     if not isinstance(t, dict) or set(t) != {"jdn"}: return None
     return exact(t["jdn"])
@@ -275,6 +305,7 @@ def validate_example(path: Path):
     n=path.name
     if n.startswith("range-"): validate_range(data)
     elif n.startswith("batch-"): validate_batch(data)
+    elif n.startswith("reverse-"): validate_reverse(data)
     else: validate_date(data)
 
 
@@ -288,7 +319,7 @@ def check_openapi():
     y=yaml.safe_load((API/"openapi.yaml").read_text(encoding="utf-8"))
     if j != y: raise AssertionError("openapi.json and openapi.yaml differ")
     if j.get("openapi") != "3.1.0": raise AssertionError("OpenAPI version is not 3.1.0")
-    required={"/v1/now","/v1/date","/v1/batch","/v1/range","/v1/year/{year}","/v1/calculation-day","/v1/locales","/v1/meta","/v1/status","/openapi.json","/openapi.yaml"}
+    required={"/v1/now","/v1/date","/v1/batch","/v1/range","/v1/reverse","/v1/year/{year}","/v1/calculation-day","/v1/locales","/v1/meta","/v1/status","/openapi.json","/openapi.yaml"}
     if set(j.get("paths",{})) != required: raise AssertionError("OpenAPI path set mismatch")
     # Every external schema ref in OpenAPI must exist locally.
     text=json.dumps(j)

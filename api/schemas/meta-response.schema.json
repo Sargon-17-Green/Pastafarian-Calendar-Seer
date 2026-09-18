@@ -58,11 +58,19 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "status"
+        "status",
+        "endpoint",
+        "requiresCompleteTuple"
       ],
       "properties": {
         "status": {
-          "const": "TBC"
+          "const": "implemented"
+        },
+        "endpoint": {
+          "const": "/v1/reverse"
+        },
+        "requiresCompleteTuple": {
+          "const": true
         }
       }
     }

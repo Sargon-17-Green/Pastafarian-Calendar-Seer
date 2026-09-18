@@ -112,5 +112,5 @@ repository repair artifacts, benchmark result directories, and every `HANDOFF_*`
 The Stage 6 CI installs the packed tarball in a fresh consumer project before testing it. This catches
 missing package files and deep relative-import assumptions that repository-local tests cannot catch.
 
-Reverse conversion remains `TBC`. Localization beyond the existing English presentation is not added
+Reverse conversion was added after Stage 6 through the shared query/HTTP layer. Localization beyond the existing English presentation is not added
 by this stage. Those are separate product capabilities, not deployment prerequisites.

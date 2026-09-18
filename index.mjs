@@ -7,6 +7,7 @@ export {
   queryNow,
   queryBatch,
   queryRange,
+  queryReverse,
   queryCalculationDay,
   queryYear,
 } from './query/index.mjs';

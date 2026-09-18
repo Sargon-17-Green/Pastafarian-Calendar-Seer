@@ -1,0 +1,75 @@
+name: Verify reverse conversion
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'index.mjs'
+      - 'query/index.mjs'
+      - 'query/cli.mjs'
+      - 'query/provider-precomputed.mjs'
+      - 'query/test/reverse.test.mjs'
+      - 'query/test/repository-integration.test.mjs'
+      - 'http/app.mjs'
+      - 'http/test/http-adapter.test.mjs'
+      - 'api/**'
+      - 'deployment/test/reverse-native-smoke.test.mjs'
+      - '.github/workflows/verify-reverse-conversion.yml'
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Native and contract dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev python3-venv
+          python3 -m venv .reverse-contract-venv
+          .reverse-contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+      - name: Build exact runtime
+        run: bash scripts/build-runtime.sh
+      - name: Reverse query, HTTP, CLI and exact-provider verification
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          node --check query/index.mjs
+          node --check query/cli.mjs
+          node --check http/app.mjs
+          node --test query/test/reverse.test.mjs query/test/repository-integration.test.mjs http/test/http-adapter.test.mjs deployment/test/reverse-native-smoke.test.mjs
+      - name: API contract verification
+        run: .reverse-contract-venv/bin/python api/tests/test_contract.py
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export MSYS2 UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build exact Windows runtime
+        shell: pwsh
+        run: |
+          node scripts/build-runtime.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Windows exact runtime build failed: $LASTEXITCODE" }
+      - name: Reverse query, HTTP, CLI and exact-provider verification on Windows
+        shell: pwsh
+        env:
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          node --check query/index.mjs
+          node --check query/cli.mjs
+          node --check http/app.mjs
+          node --test query/test/reverse.test.mjs query/test/repository-integration.test.mjs http/test/http-adapter.test.mjs deployment/test/reverse-native-smoke.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw "Windows reverse conversion verification failed: $LASTEXITCODE" }

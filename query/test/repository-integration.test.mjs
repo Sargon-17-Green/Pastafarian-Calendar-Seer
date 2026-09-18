@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { queryBatch, queryDate, queryRange, queryYear, SeerQueryError } from '../index.mjs';
+import { queryBatch, queryDate, queryRange, queryReverse, queryYear, SeerQueryError } from '../index.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const generatedDir = path.resolve(here, '..', '..', 'generated');
@@ -78,4 +78,22 @@ test('rolling provider falls through to the exact engine for a complete year', a
   );
   assert.ok(Array.isArray(result.year.cutlets) && result.year.cutlets.length >= 1);
   assert.ok(Array.isArray(result.year.months) && result.year.months.length >= 1);
+});
+
+test('reverse conversion round-trips a real generated record through the exact year provider', async () => {
+  const { descriptor, cache } = await fixture();
+  const record = cache.records[Math.min(2, cache.records.length - 1)];
+  const reversed = await queryReverse({
+    calculation: { jdn: String(descriptor.calcJdn) },
+    pastafarianDate: {
+      year: String(record.year),
+      cutlet: { canonicalIndex: record.cutletIndex + 1, day: record.dayInCutlet },
+      month: { canonicalIndex: record.monthIndex + 1, day: record.dayInMonth },
+    },
+    presentation: 'canonical',
+  }, { generatedDir });
+  assert.equal(reversed.targetDay.jdn, String(record.targetJdn));
+  assert.equal(reversed.pastafarianDate.year, String(record.year));
+  assert.equal(reversed.pastafarianDate.cutlet.canonicalIndex, record.cutletIndex + 1);
+  assert.equal(reversed.pastafarianDate.month.canonicalIndex, record.monthIndex + 1);
 });

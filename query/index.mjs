@@ -22,6 +22,9 @@ const CALCULATION_DAY_KEYS = new Set(['at', 'observer', 'include']);
 const CALCULATION_DAY_INCLUDES = new Set(['boundaries']);
 const YEAR_KEYS = new Set(['observer', 'calculation', 'locale', 'presentation', 'include']);
 const YEAR_INCLUDES = new Set(['days', 'provenance', 'resolution']);
+const REVERSE_KEYS = new Set(['observer', 'calculation', 'pastafarianDate', 'locale', 'presentation', 'include']);
+const PASTAFARIAN_DATE_KEYS = new Set(['year', 'cutlet', 'month']);
+const PASTAFARIAN_COORD_KEYS = new Set(['canonicalIndex', 'day']);
 const DEFAULT_MAX_BATCH_ITEMS = 10_000;
 const DEFAULT_MAX_RANGE_ITEMS = 10_000;
 
@@ -152,6 +155,32 @@ function presentRecord(record, presentation) {
   return date;
 }
 
+function parsePastafarianCoordinate(value, field, maxIndex, maxDay) {
+  assertObject(value, field);
+  rejectUnknown(value, PASTAFARIAN_COORD_KEYS, `${field}.`);
+  if (!own(value, 'canonicalIndex') || !own(value, 'day')) {
+    throw queryError('MISSING_PASTAFARIAN_DATE', `${field} requires canonicalIndex and day.`, { field });
+  }
+  const canonicalIndex = parseExactInteger(value.canonicalIndex, `${field}.canonicalIndex`);
+  const day = parseExactInteger(value.day, `${field}.day`);
+  if (canonicalIndex < 1n || canonicalIndex > BigInt(maxIndex) || day < 1n || day > BigInt(maxDay)) {
+    throw queryError('INVALID_PASTAFARIAN_DATE', `${field} is outside the canonical calendar bounds.`, { field });
+  }
+  return { canonicalIndex: Number(canonicalIndex), day: Number(day) };
+}
+
+function normalizePastafarianDateInput(value) {
+  assertObject(value, 'pastafarianDate');
+  rejectUnknown(value, PASTAFARIAN_DATE_KEYS, 'pastafarianDate.');
+  if (!own(value, 'year') || !own(value, 'cutlet') || !own(value, 'month')) {
+    throw queryError('MISSING_PASTAFARIAN_DATE', 'pastafarianDate requires year, cutlet and month.', { field: 'pastafarianDate' });
+  }
+  return {
+    year: parseExactInteger(value.year, 'pastafarianDate.year'),
+    cutlet: parsePastafarianCoordinate(value.cutlet, 'pastafarianDate.cutlet', 17, 5778),
+    month: parsePastafarianCoordinate(value.month, 'pastafarianDate.month', 47, 123),
+  };
+}
 function structureFromSupplied(supplied) {
   const result = {};
   const raw = supplied.structure ?? {};
@@ -201,6 +230,73 @@ export async function queryDate(request = {}, options = {}) {
   return response;
 }
 
+export async function queryReverse(request = {}, options = {}) {
+  assertObject(request, 'request');
+  rejectUnknown(request, REVERSE_KEYS);
+  if (!own(request, 'pastafarianDate')) {
+    throw queryError('MISSING_PASTAFARIAN_DATE', 'pastafarianDate is required.', { field: 'pastafarianDate' });
+  }
+  const include = normalizeInclude(request.include, DATE_INCLUDES);
+  const { presentation, locale } = resolvePresentation(request);
+  const now = requestNow(options);
+  const boundaryService = boundaryServiceFromOptions(options);
+  const calculation = await resolveCalculation(request.calculation, request.observer, include, now, boundaryService);
+  const wanted = normalizePastafarianDateInput(request.pastafarianDate);
+  const provider = await providerFromOptions(options);
+  if (typeof provider.year !== 'function') {
+    throw queryError('SEER_UNAVAILABLE', 'The configured Seer provider cannot locate a complete Pastafarian year.', { details: { provider: provider.id ?? 'unknown' } });
+  }
+  const yearSupplied = await provider.year({ calculationJdn: calculation.calculationJdn, year: wanted.year, includeDays: false });
+  const rawYear = yearSupplied?.year;
+  if (!rawYear || BigInt(rawYear.number) !== wanted.year || !Array.isArray(rawYear.cutlets) || !Array.isArray(rawYear.months)) {
+    throw queryError('SEER_UNAVAILABLE', 'The configured Seer provider returned an inconsistent year structure.');
+  }
+  const rawCutlet = rawYear.cutlets.find((item) => item.cutletIndex === wanted.cutlet.canonicalIndex - 1);
+  if (!rawCutlet || wanted.cutlet.day > rawCutlet.lengthDays) {
+    throw queryError('PASTAFARIAN_DATE_NOT_IN_YEAR', 'The requested cutlet coordinate does not occur in that Pastafarian year.', { field: 'pastafarianDate.cutlet' });
+  }
+  const rawMonth = rawYear.months.find((item) => item.monthIndex === wanted.month.canonicalIndex - 1);
+  if (!rawMonth || wanted.month.day > rawMonth.lengthDays) {
+    throw queryError('PASTAFARIAN_DATE_NOT_IN_YEAR', 'The requested month coordinate does not occur in that Pastafarian year.', { field: 'pastafarianDate.month' });
+  }
+  if (!Number.isInteger(rawCutlet.startOffset) || rawCutlet.startOffset < 0) {
+    throw queryError('SEER_UNAVAILABLE', 'The configured Seer provider returned an invalid cutlet offset.');
+  }
+  const targetJdn = BigInt(rawYear.startJdn) + BigInt(rawCutlet.startOffset + wanted.cutlet.day - 1);
+  const supplied = await provider.query({ calculationJdn: calculation.calculationJdn, targetJdn });
+  const record = supplied?.record;
+  if (!record || BigInt(record.year) !== wanted.year || record.cutletIndex !== wanted.cutlet.canonicalIndex - 1 || record.dayInCutlet !== wanted.cutlet.day) {
+    throw queryError('SEER_UNAVAILABLE', 'The configured Seer provider returned a day inconsistent with its year structure.');
+  }
+  if (record.monthIndex !== wanted.month.canonicalIndex - 1 || record.dayInMonth !== wanted.month.day) {
+    throw queryError('PASTAFARIAN_DATE_CONFLICT', 'The supplied cutlet and month coordinates identify different Pastafarian days.', { field: 'pastafarianDate' });
+  }
+  const pastafarianDate = presentRecord(record, presentation);
+  const response = {
+    ...(calculation.calculationAt ? { calculationAt: calculation.calculationAt.toISOString() } : {}),
+    calculationDay: { jdn: exactIntegerString(calculation.calculationJdn) },
+    ...(calculation.observer ? { observer: { longitude: calculation.observer.longitude } } : {}),
+    targetDay: { jdn: exactIntegerString(targetJdn), gregorian: jdnToGregorian(targetJdn) },
+    pastafarianDate,
+  };
+  if (presentation === 'full') {
+    response.locale = locale ?? 'en';
+    response.formatted = formatEnglish(pastafarianDate);
+  }
+  if (include.has('structure')) {
+    const structure = structureFromSupplied(supplied);
+    if (Object.keys(structure).length === 0) throw queryError('SEER_UNAVAILABLE', 'The configured Seer provider did not supply requested structure information.');
+    response.structure = structure;
+  }
+  if (include.has('boundaries')) response.boundaries = await boundaryService.dayBoundaries(calculation.calculationJdn, calculation.observer.longitude);
+  if (include.has('provenance')) response.provenance = supplied.provenance ?? yearSupplied.provenance ?? {};
+  if (include.has('resolution')) response.resolution = {
+    calculationSource: calculation.calculationSource,
+    targetSource: 'pastafarian-date',
+    ...(calculation.observer ? { observerSource: calculation.observer.source } : {}),
+  };
+  return response;
+}
 export async function queryNow(options = {}) {
   const { generatedDir, provider, now, dayBoundaryService, ...requestOptions } = options;
   return queryDate(requestOptions, { generatedDir, provider, now, dayBoundaryService });

@@ -33,6 +33,7 @@ usability and reproducibility **without importing spaghetti doctrine into the Se
    - shared query API and CLI;
    - dependency-free HTTP v1 service;
    - installable Node package and persistent-service deployment path (API Stage 6);
+   - reverse conversion for a complete canonical Pastafarian tuple;
    - remaining product work: additional locales and website integration.
 
 A faster answer is useful only if it remains the same answer.

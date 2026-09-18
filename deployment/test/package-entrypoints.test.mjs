@@ -11,7 +11,7 @@ import * as httpApi from '../../http/index.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 const queryNames = [
-  'queryDate', 'queryNow', 'queryBatch', 'queryRange',
+  'queryDate', 'queryNow', 'queryBatch', 'queryRange', 'queryReverse',
   'queryCalculationDay', 'queryYear', 'gregorianToJdn', 'jdnToGregorian',
 ];
 

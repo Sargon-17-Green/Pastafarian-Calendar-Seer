@@ -53,8 +53,8 @@ bowl-order table, exact 320-bit
 month-length dynamic programming, RNS/CRT weave counting and prefix unranking, AVX-512IFMA and portable
 backends, and no memoization or predictive precomputation across separate queries.
 
-Known limitations include the finite bundled gate horizon, English-only presentation, the native
-build/toolchain requirements for exact out-of-cache computation, and reverse conversion remaining TBC.
+Known limitations include the finite bundled gate horizon, English-only presentation, and the native
+build/toolchain requirements for exact out-of-cache computation.
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
 
 ## Application and HTTP API
@@ -62,6 +62,11 @@ The public Node/HTTP contract is stable at v1; this does not make the Seer norma
 API Stage 6 exposes stable ESM package entry points: import `pastafarian-calendar-seer` for the shared
 query API or `pastafarian-calendar-seer/http` for the HTTP handler/server. The package also installs the
 `pastafarian-seer` and `pastafarian-seer-http` commands. It has no npm runtime dependencies.
+
+Reverse conversion is available as `queryReverse(...)`, the `pastafarian-seer reverse` command, and
+`POST /v1/reverse`. Reverse requests require the complete canonical tuple: year, cutlet index/day, and
+month index/day. The calculation day remains an independent input, and the two coordinate systems are
+cross-checked before a target JDN is returned.
 
 Exact out-of-cache operation requires the native runtime. On a supported Linux/WSL deployment run
 `npm run build:native`; the build selects AVX2 when available and otherwise uses the exact portable scalar RNS backend. Set `SEER_RNS_BACKEND=avx2` or `portable` to force a backend, and set `SEER_REQUIRE_ENGINE_SERVICE=1` when the persistent OPT-06 service is a hard deployment requirement. See `docs/DEPLOYMENT_STAGE6.md`.
