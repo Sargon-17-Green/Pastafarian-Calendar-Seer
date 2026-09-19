@@ -9,8 +9,9 @@ $Build = Join-Path $Root 'prototype\build'
 $ToolchainBin = if ($env:SEER_TOOLCHAIN_BIN) { $env:SEER_TOOLCHAIN_BIN } else { 'C:\msys64\ucrt64\bin' }
 $Cxx = if ($env:CXX) { $env:CXX } else { Join-Path $ToolchainBin 'g++.exe' }
 $Objdump = Join-Path $ToolchainBin 'objdump.exe'
-$Bash = 'C:\msys64\usr\bin\bash.exe'
-$Cygpath = 'C:\msys64\usr\bin\cygpath.exe'
+$MsysRoot = Split-Path -Parent (Split-Path -Parent $ToolchainBin)
+$Bash = Join-Path $MsysRoot 'usr\bin\bash.exe'
+$Cygpath = Join-Path $MsysRoot 'usr\bin\cygpath.exe'
 if (-not (Test-Path $Cxx)) { throw "C++ compiler not found: $Cxx" }
 if (-not (Test-Path $Objdump)) { throw "objdump not found: $Objdump" }
 if (-not (Test-Path $Bash)) { throw "MSYS2 bash not found: $Bash" }
@@ -20,7 +21,24 @@ $ExpectedGmpSha256 = 'a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43
 if (-not $GmpSourceArchive) {
     $GmpSourceArchive = Join-Path $env:TEMP 'gmp-6.3.0.tar.xz'
     if (-not (Test-Path $GmpSourceArchive)) {
-        Invoke-WebRequest -UseBasicParsing 'https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz' -OutFile $GmpSourceArchive
+        $Downloaded = $false
+        foreach ($Url in @(
+            'https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz',
+            'https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz'
+        )) {
+            Remove-Item -Force $GmpSourceArchive -ErrorAction SilentlyContinue
+            try {
+                Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $GmpSourceArchive -TimeoutSec 180
+                $CandidateSha256 = (Get-FileHash $GmpSourceArchive -Algorithm SHA256).Hash.ToLowerInvariant()
+                if ($CandidateSha256 -eq $ExpectedGmpSha256) {
+                    $Downloaded = $true
+                    break
+                }
+            } catch {
+                Write-Warning ('GMP download failed from {0}: {1}' -f $Url, $_.Exception.Message)
+            }
+        }
+        if (-not $Downloaded) { throw 'Unable to download verified GMP 6.3.0 source archive' }
     }
 }
 $ActualGmpSha256 = (Get-FileHash $GmpSourceArchive -Algorithm SHA256).Hash.ToLowerInvariant()
@@ -45,7 +63,7 @@ $env:SEER_GMP_CPU_BASELINE = 'x86_64-generic'
 $env:SEER_STATIC_GNU_RUNTIME = '1'
 $env:Path = $ToolchainBin + ';' + $env:Path
 $env:SEER_NATIVE_TOOLCHAIN = (& $Cxx --version | Select-Object -First 1)
-$Pacman = 'C:\msys64\usr\bin\pacman.exe'
+$Pacman = Join-Path $MsysRoot 'usr\bin\pacman.exe'
 if (Test-Path $Pacman) {
     $env:SEER_NATIVE_RUNTIME_PACKAGES = ((& $Pacman -Q mingw-w64-ucrt-x86_64-gcc-libs make m4 diffutils 2>$null) -join '; ')
 }

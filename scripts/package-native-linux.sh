@@ -25,10 +25,25 @@ if [[ "$ACTUAL_GLIBC" != "$EXPECTED_GLIBC" && "${SEER_ALLOW_NONBASELINE_GLIBC:-0
   exit 2
 fi
 
-GMP_URL="https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz"
+GMP_URLS=(
+  "https://ftp.gnu.org/gnu/gmp/gmp-6.3.0.tar.xz"
+  "https://gmplib.org/download/gmp/gmp-6.3.0.tar.xz"
+)
 GMP_SHA="a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898"
 GMP_SOURCE="${SEER_GMP_SOURCE_ARCHIVE:-${RUNNER_TEMP:-/tmp}/gmp-6.3.0.tar.xz}"
-if [[ ! -f "$GMP_SOURCE" ]]; then curl -fsSL "$GMP_URL" -o "$GMP_SOURCE"; fi
+if [[ ! -f "$GMP_SOURCE" ]]; then
+  downloaded=0
+  for url in "${GMP_URLS[@]}"; do
+    rm -f "$GMP_SOURCE"
+    if curl --fail --location --silent --show-error --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 "$url" -o "$GMP_SOURCE"; then
+      if echo "$GMP_SHA  $GMP_SOURCE" | sha256sum -c -; then
+        downloaded=1
+        break
+      fi
+    fi
+  done
+  (( downloaded == 1 )) || { echo "Unable to download verified GMP 6.3.0 source archive" >&2; exit 1; }
+fi
 echo "$GMP_SHA  $GMP_SOURCE" | sha256sum -c -
 
 if [[ -z "${SEER_GMP_PREFIX:-}" ]]; then

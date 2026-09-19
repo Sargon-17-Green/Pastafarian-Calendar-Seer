@@ -77,6 +77,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        id: msys2
         with:
           msystem: UCRT64
           update: true
@@ -89,8 +90,8 @@ jobs:
       - name: Build and stage portable exact package
         shell: pwsh
         env:
-          SEER_TOOLCHAIN_BIN: C:\msys64\ucrt64\bin
-          CXX: C:\msys64\ucrt64\bin\g++.exe
+          SEER_TOOLCHAIN_BIN: ${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin
+          CXX: ${{ steps.msys2.outputs.msys2-location }}\ucrt64\bin\g++.exe
         run: |
           ./scripts/package-native-windows.ps1 -OutputDir "$env:RUNNER_TEMP/native-package"
       - name: Registry-style thirty-day clean-install proof
