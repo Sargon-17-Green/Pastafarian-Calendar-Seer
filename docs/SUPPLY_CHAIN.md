@@ -119,7 +119,7 @@ Strict verification requires GitHub Release, npm, GHCR, and the release manifest
 
 ## Secrets and automation
 
-The rolling Venus-cache workflow currently uses the repository secret named `SEER_AUTOMATION_TOKEN` because it commits both generated cache data and a future workflow schedule. No secret value is logged or documented here. It must not be removed while that workflow still references it.
+The rolling Venus-cache workflow uses only the repository-scoped `GITHUB_TOKEN` with `contents: write` to advance the dedicated `cache-data` branch. It never edits a workflow, pushes `main`, or requires a long-lived cache secret. Rolling cache bytes are excluded from npm, release assets, and release images; see `docs/ROLLING_CACHE.md`.
 
 Release publication uses `GITHUB_TOKEN` and OIDC where GitHub-native authorization is sufficient. No npm PAT is required by the hardened release workflow.
 

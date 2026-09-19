@@ -13,16 +13,33 @@ assert.equal(exportedSchema.$id, 'date-response.schema.json');
 const packagedSchemaCount = (await readdir(path.join(packageRoot, 'api', 'schemas'))).filter((name) => name.endsWith('.json')).length;
 const packagedLocales = (await readdir(path.join(packageRoot, 'query', 'locales'))).filter((name) => name.endsWith('.mjs')).sort();
 assert.deepEqual(packagedLocales, ['catalog.mjs', 'en.mjs', 'he.mjs']);
-const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
-const cache = index.caches?.[0];
-assert.ok(cache, 'generated cache index must contain at least one cache');
-const calculationJdn = cache.calcJdn;
-const targetJdn = cache.targetStartJdn + Math.min(5, cache.targetCount - 1);
+
+const calculationJdn = 2461303;
+const targetJdn = 2461308;
 const request = {
   calculation: { jdn: calculationJdn },
   target: { jdn: targetJdn },
   presentation: 'canonical',
 };
+const fixtureProvider = Object.freeze({
+  id: 'package-selftest-fixture',
+  async query({ targetJdn: target }) {
+    return {
+      record: {
+        targetJdn: Number(target),
+        year: 5000,
+        cutletIndex: 2,
+        dayInCutlet: 7,
+        monthIndex: 4,
+        dayInMonth: 11,
+        cutletCount: 9,
+        monthCount: 23,
+      },
+      structure: { cutletCount: 9, monthCount: 23 },
+      provenance: { engineRevision: 'package-selftest-fixture' },
+    };
+  },
+});
 
 function collectRefs(value, out = []) {
   if (Array.isArray(value)) {
@@ -59,21 +76,22 @@ async function verifyOpenApiSchemaClosure(baseUrl) {
   return seen.size;
 }
 
-const direct = await queryDate(request);
+const queryOptions = { provider: fixtureProvider };
+const direct = await queryDate(request, queryOptions);
 assert.equal(direct.targetDay.jdn, String(targetJdn));
-const localizedDirect = await queryDate({ ...request, presentation: 'full', locale: 'he' });
+const localizedDirect = await queryDate({ ...request, presentation: 'full', locale: 'he' }, queryOptions);
 assert.equal(localizedDirect.locale, 'he');
 assert.match(localizedDirect.formatted, /^שנה /);
 
 const boundary = await queryCalculationDay({
-  at: index.generatedForInstantUtc,
+  at: '2026-09-19T12:00:00Z',
   include: ['boundaries'],
 });
-assert.equal(boundary.jdn, String(index.activeCalcJdn));
+assert.equal(typeof boundary.jdn, 'string');
 assert.equal(typeof boundary.boundaries?.startsAt, 'string');
 assert.equal(typeof boundary.boundaries?.endsAt, 'string');
 
-const server = await listen({ host: '127.0.0.1', port: 0 });
+const server = await listen({ host: '127.0.0.1', port: 0, queryOptions });
 try {
   const port = server.address().port;
   const url = `http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}&presentation=canonical`;
@@ -119,5 +137,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['cache-query', 'venus-boundary', 'localized-direct', 'localized-http', 'accept-language-explicit-only', 'locale-errors', 'browser-client', 'locale-discovery', 'openapi-schema-closure'],
+  checks: ['fixture-query', 'venus-boundary', 'localized-direct', 'localized-http', 'accept-language-explicit-only', 'locale-errors', 'browser-client', 'locale-discovery', 'openapi-schema-closure'],
 }));

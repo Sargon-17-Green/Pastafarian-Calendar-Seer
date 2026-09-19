@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          CALC="$(node -e "const x=require('./generated/index.json');process.stdout.write(String(x.caches[0].calcJdn))")"
+          CALC=2461303
           (
             cd prototype/data
             ../build/seer_year_structure "$CALC" 5000 1 > /tmp/structure.json

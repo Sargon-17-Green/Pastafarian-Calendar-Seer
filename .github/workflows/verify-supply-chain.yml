@@ -64,7 +64,6 @@ jobs:
           node --check scripts/verify-release.mjs
           node --check scripts/generate-release-manifest.mjs
           npm test
-          npm run validate:cache
           npm pack --dry-run --json > "$RUNNER_TEMP/npm-pack-dry-run.json"
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"

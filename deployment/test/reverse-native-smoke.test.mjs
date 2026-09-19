@@ -1,38 +1,51 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
+import { access } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { queryReverse } from '../../index.mjs';
+import { queryDate, queryReverse } from '../../index.mjs';
 import { listen } from '../../http/index.mjs';
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-async function reverseFixture() {
-  const index = JSON.parse(await readFile(path.join(root, 'generated', 'index.json'), 'utf8'));
-  const descriptor = index.caches[0];
-  const cache = JSON.parse(await readFile(path.join(root, 'generated', descriptor.path), 'utf8'));
-  const record = cache.records[Math.min(2, cache.records.length - 1)];
-  const request = {
-    calculation: { jdn: String(descriptor.calcJdn) },
-    pastafarianDate: {
-      year: String(record.year),
-      cutlet: { canonicalIndex: record.cutletIndex + 1, day: record.dayInCutlet },
-      month: { canonicalIndex: record.monthIndex + 1, day: record.dayInMonth },
-    },
-    presentation: 'canonical',
-  };
-  return { descriptor, record, request };
+async function nativeAvailable() {
+  const suffix = process.platform === 'win32' ? '.exe' : '';
+  try {
+    await Promise.all([
+      access(path.join(root, 'prototype', 'build', `seer_year_batch${suffix}`)),
+      access(path.join(root, 'prototype', 'build', `seer_year_structure${suffix}`)),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 test('native reverse conversion agrees across library, CLI and HTTP', async (t) => {
-  const { record, request } = await reverseFixture();
+  if (!(await nativeAvailable())) return t.skip('native exact runtime is not built');
+  const calculationJdn = 2461303;
+  const targetJdn = calculationJdn + 30;
+  const forward = await queryDate({
+    calculation: { jdn: String(calculationJdn) },
+    target: { jdn: String(targetJdn) },
+    presentation: 'canonical',
+  });
+  const date = forward.pastafarianDate;
+  const request = {
+    calculation: { jdn: String(calculationJdn) },
+    pastafarianDate: {
+      year: date.year,
+      cutlet: { canonicalIndex: date.cutlet.canonicalIndex, day: date.cutlet.day },
+      month: { canonicalIndex: date.month.canonicalIndex, day: date.month.day },
+    },
+    presentation: 'canonical',
+  };
 
   const direct = await queryReverse(request);
-  assert.equal(direct.targetDay.jdn, String(record.targetJdn));
+  assert.equal(direct.targetDay.jdn, String(targetJdn));
 
   const cliArgs = [
     path.join(root, 'query', 'cli.mjs'), 'reverse',
@@ -47,7 +60,7 @@ test('native reverse conversion agrees across library, CLI and HTTP', async (t) 
   const cli = JSON.parse((await execFileAsync(process.execPath, cliArgs, {
     cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
   })).stdout);
-  assert.equal(cli.targetDay.jdn, String(record.targetJdn));
+  assert.equal(cli.targetDay.jdn, String(targetJdn));
 
   const server = await listen({ host: '127.0.0.1', port: 0 });
   t.after(() => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())));
@@ -58,5 +71,5 @@ test('native reverse conversion agrees across library, CLI and HTTP', async (t) 
   });
   const text = await response.text();
   assert.equal(response.status, 200, text);
-  assert.equal(JSON.parse(text).targetDay.jdn, String(record.targetJdn));
+  assert.equal(JSON.parse(text).targetDay.jdn, String(targetJdn));
 });

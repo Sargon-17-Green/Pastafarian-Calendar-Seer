@@ -20,7 +20,6 @@ on:
       - 'query/**'
       - 'precompute/**'
       - 'package.json'
-      - 'generated/**'
       - '.github/workflows/verify-gate-domain-extension.yml'
 
 permissions:
@@ -143,8 +142,6 @@ jobs:
         run: |
           npm test
           npm run test:repo
-          npm run validate:cache
-
       - name: Package boundary and installed exact runtime
         shell: bash
         run: |

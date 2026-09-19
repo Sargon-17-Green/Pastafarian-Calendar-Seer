@@ -15,6 +15,7 @@ const allowedWrites = new Map([
   ['release-container.yml', new Set(['packages', 'id-token', 'attestations'])],
   ['release-github-package.yml', new Set(['contents', 'packages', 'id-token', 'attestations'])],
   ['release-npm.yml', new Set(['id-token'])],
+  ['precompute-seer-cache.yml', new Set(['contents'])],
 ]);
 let useCount = 0;
 let qemuUses = 0;
@@ -54,12 +55,18 @@ for (const name of names) {
   }
 }
 
-const forbiddenSecret = secretRefs.filter((x) => !x.endsWith(': SEER_AUTOMATION_TOKEN'));
+const forbiddenSecret = [...secretRefs];
 const docker = await readFile(path.join(root, 'Dockerfile'), 'utf8');
 const fromLines = docker.split(/\r?\n/).filter((line) => /^FROM\s+/i.test(line));
 const mutableBase = fromLines.filter((line) => !/@sha256:[0-9a-f]{64}\b/.test(line));
 const tracked = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split(/\r?\n/).filter(Boolean);
 const handoff = tracked.filter((name) => path.basename(name).startsWith('HANDOFF_'));
+const trackedRollingData = tracked.filter((name) => name === 'generated' || name.startsWith('generated/'));
+const cacheWorkflowText = await readFile(path.join(workflowDir, 'precompute-seer-cache.yml'), 'utf8');
+const cacheWorkflowProblems = [];
+if (/SEER_AUTOMATION_TOKEN|\[skip ci\]/i.test(cacheWorkflowText)) cacheWorkflowProblems.push('legacy cache credential or skip-ci marker remains');
+if (/BEGIN GENERATED VENUS BOUNDARIES|rewriteGeneratedSchedule/.test(cacheWorkflowText)) cacheWorkflowProblems.push('self-modifying cache schedule remains');
+if (/git\s+push[^\r\n]*(?:main|DEFAULT_BRANCH)/i.test(cacheWorkflowText)) cacheWorkflowProblems.push('cache workflow pushes source/default branch');
 
 const runtimeToolProblems = [];
 if (qemuDigestPins !== qemuUses) runtimeToolProblems.push(`QEMU binfmt digest pins ${qemuDigestPins}/${qemuUses}`);
@@ -75,6 +82,8 @@ const problems = [
   ...mutableBase.map((x) => `mutable Docker base: ${x}`),
   ...runtimeToolProblems.map((x) => `mutable runtime tool dependency: ${x}`),
   ...handoff.map((x) => `tracked HANDOFF file: ${x}`),
+  ...trackedRollingData.map((x) => `tracked rolling cache data: ${x}`),
+  ...cacheWorkflowProblems.map((x) => `cache architecture violation: ${x}`),
 ];
 
 console.log(JSON.stringify({ workflows: names.length, actionUses: useCount, secretRefs, dockerBases: fromLines, runtimeTools: { qemuUses, qemuDigestPins, buildxUses, buildxVersionPins, sbomUses, syftVersionPins, trivyUses, trivyVersionPins, trivyReusePins } }, null, 2));

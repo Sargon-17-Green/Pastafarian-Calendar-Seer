@@ -27,8 +27,7 @@ async function nativeAvailable() {
 }
 
 async function canonicalCalc() {
-  const index = JSON.parse(await readFile(path.join(generatedDir, 'index.json'), 'utf8'));
-  return Number(index.caches[0].calcJdn);
+  return 2461303;
 }
 
 async function lowerGateDay() {

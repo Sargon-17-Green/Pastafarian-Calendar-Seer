@@ -2,22 +2,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createExternalCacheFixture } from './helpers/external-cache-fixture.mjs';
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const cli = path.join(root, 'query', 'cli.mjs');
-const index = JSON.parse(await readFile(path.join(root, 'generated', 'index.json'), 'utf8'));
-const cache = index.caches[0];
-const targetJdn = cache.targetStartJdn + Math.min(2, cache.targetCount - 1);
+const fixture = await createExternalCacheFixture();
+const targetJdn = fixture.targetStartJdn + Math.min(2, fixture.targetCount - 1);
 
 async function run(args) {
   const { stdout, stderr } = await execFileAsync(
     process.execPath,
     [cli, ...args],
-    { cwd: root, encoding: 'utf8' },
+    { cwd: root, encoding: 'utf8', env: { ...process.env, SEER_CACHE_DIR: fixture.generatedDir } },
   );
   assert.equal(stderr, '');
   return JSON.parse(stdout);
@@ -26,7 +25,7 @@ async function run(args) {
 test('CLI date accepts --locale and returns localized full presentation', async () => {
   const body = await run([
     'date',
-    '--calculation-jdn', String(cache.calcJdn),
+    '--calculation-jdn', String(fixture.calcJdn),
     '--target-jdn', String(targetJdn),
     '--locale', 'he',
   ]);
@@ -38,7 +37,7 @@ test('CLI date accepts --locale and returns localized full presentation', async 
 test('CLI canonical mode keeps locale semantically irrelevant', async () => {
   const body = await run([
     'date',
-    '--calculation-jdn', String(cache.calcJdn),
+    '--calculation-jdn', String(fixture.calcJdn),
     '--target-jdn', String(targetJdn),
     '--locale', '../../not-a-locale',
     '--canonical',
@@ -55,11 +54,11 @@ test('CLI reports malformed full-presentation locale with the query error code',
       process.execPath,
       [
         cli, 'date',
-        '--calculation-jdn', String(cache.calcJdn),
+        '--calculation-jdn', String(fixture.calcJdn),
         '--target-jdn', String(targetJdn),
         '--locale', 'en_us',
       ],
-      { cwd: root, encoding: 'utf8' },
+      { cwd: root, encoding: 'utf8', env: { ...process.env, SEER_CACHE_DIR: fixture.generatedDir } },
     ),
     (error) => {
       assert.equal(error.code, 2);

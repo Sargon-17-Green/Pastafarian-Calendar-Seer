@@ -51,12 +51,11 @@ jobs:
             git merge-base --is-ancestor "$GITHUB_SHA" origin/main
           fi
 
-      - name: Package self-test and cache validation
+      - name: Package self-test
         shell: bash
         run: |
           set -euo pipefail
           npm test
-          npm run validate:cache
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then

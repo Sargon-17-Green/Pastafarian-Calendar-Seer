@@ -1,76 +1,143 @@
-name: Seer rolling-year Venus cache
+name: Refresh rolling cache data
 
 on:
   workflow_dispatch:
   schedule:
-    # BEGIN GENERATED VENUS BOUNDARIES
-    - cron: '7 23 19 9 *' # calc 2461304 begins 2026-09-19T23:06:34.790Z
-    - cron: '5 23 20 9 *' # calc 2461305 begins 2026-09-20T23:04:09.386Z
-    # END GENERATED VENUS BOUNDARIES
+    - cron: '17 */6 * * *'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
-  group: seer-venus-cache
+  group: rolling-cache-data
   cancel-in-progress: false
 
 jobs:
-  precompute:
+  refresh:
+    if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer'
     runs-on: ubuntu-24.04
-    timeout-minutes: 350
-    env:
-      SEER_AUTOMATION_TOKEN: ${{ secrets.SEER_AUTOMATION_TOKEN }}
-      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    timeout-minutes: 90
     steps:
-      - name: Checkout
+      - name: Check out current source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event.repository.default_branch }}
-          fetch-depth: 1
-          persist-credentials: false
+          ref: main
+          fetch-depth: 0
 
-      - name: Require workflow-capable automation token
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Restore current cache-data snapshot
+        id: restore
         shell: bash
         run: |
-          if [[ -z "${SEER_AUTOMATION_TOKEN}" ]]; then
-            echo "SEER_AUTOMATION_TOKEN is required because this job commits a changed file under .github/workflows/." >&2
-            echo "Use a fine-grained PAT/GitHub App token with repository Contents write and Workflows write." >&2
-            exit 2
+          set -euo pipefail
+          SOURCE_SHA="$(git rev-parse HEAD)"
+          CACHE_DIR="$RUNNER_TEMP/rolling-cache"
+          CACHE_ARCHIVE="$RUNNER_TEMP/cache-archive"
+          mkdir -p "$CACHE_DIR/calc" "$CACHE_ARCHIVE"
+          EXISTS=false
+          if git ls-remote --exit-code --heads origin refs/heads/cache-data >/dev/null 2>&1; then
+            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+            git archive refs/remotes/origin/cache-data | tar -x -C "$CACHE_ARCHIVE"
+            if [[ -f "$CACHE_ARCHIVE/index.json" ]]; then
+              cp "$CACHE_ARCHIVE/index.json" "$CACHE_DIR/index.json"
+            fi
+            if [[ -d "$CACHE_ARCHIVE/calc" ]]; then
+              find "$CACHE_ARCHIVE/calc" -maxdepth 1 -type f -name '*.json' -exec cp {} "$CACHE_DIR/calc/" \;
+            fi
+            EXISTS=true
           fi
+          echo "source_sha=$SOURCE_SHA" >> "$GITHUB_OUTPUT"
+          echo "cache_dir=$CACHE_DIR" >> "$GITHUB_OUTPUT"
+          echo "branch_exists=$EXISTS" >> "$GITHUB_OUTPUT"
 
-      - name: Install native dependencies
+      - name: Decide whether refresh is required
+        id: plan
         shell: bash
+        run: |
+          set -euo pipefail
+          node precompute/refresh-plan.mjs --cache-dir="${{ steps.restore.outputs.cache_dir }}" > "$RUNNER_TEMP/cache-plan.json"
+          cat "$RUNNER_TEMP/cache-plan.json"
+          REFRESH="$(node -e "const p=require(process.argv[1]);process.stdout.write(String(p.refreshRequired))" "$RUNNER_TEMP/cache-plan.json")"
+          echo "refresh=$REFRESH" >> "$GITHUB_OUTPUT"
+          {
+            echo '### Rolling cache refresh plan'
+            echo
+            echo '```json'
+            cat "$RUNNER_TEMP/cache-plan.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install native build dependencies
+        if: steps.plan.outputs.refresh == 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
 
-      - name: Unit-test astronomical boundary and cache switching
-        run: node --test precompute/test/*.test.mjs
-
-      - name: Build rolling-year Seer batch backend
+      - name: Build exact batch engine
+        if: steps.plan.outputs.refresh == 'true'
         run: bash prototype/scripts/build_year_batch.sh
 
-      - name: Check one canonical saved-sum vector through the batch backend
-        run: bash prototype/scripts/check_year_batch_vector.sh
-
-      - name: Precompute current day plus two future calculation days
-        run: node precompute/generate-cache.mjs
-
-      - name: Validate generated cache, checksums, boundaries, and next schedules
-        run: node precompute/validate-generated.mjs
-
-      - name: Commit atomically published cache and next Venus triggers
+      - name: Generate and verify cache snapshot
+        if: steps.plan.outputs.refresh == 'true'
         shell: bash
         run: |
-          if [[ -z "$(git status --porcelain --untracked-files=all -- .github/workflows/precompute-seer-cache.yml generated)" ]]; then
-            echo "No cache/schedule changes to publish."
-            exit 0
+          set -euo pipefail
+          CACHE_DIR="${{ steps.restore.outputs.cache_dir }}"
+          SOURCE_SHA="${{ steps.restore.outputs.source_sha }}"
+          node precompute/generate-cache.mjs \
+            --output-dir="$CACHE_DIR" \
+            --source-commit="$SOURCE_SHA"
+          node precompute/validate-generated.mjs \
+            --generated-dir="$CACHE_DIR" \
+            --expected-source-commit="$SOURCE_SHA"
+          if find "$CACHE_DIR" -type f -iname 'HANDOFF_*' | grep -q .; then
+            echo 'HANDOFF_* material must never enter rolling cache data' >&2
+            exit 1
           fi
-          git config user.name "Pastafarian Seer cache bot"
-          git config user.email "seer-cache-bot@users.noreply.github.com"
-          git add .github/workflows/precompute-seer-cache.yml generated
-          git commit -m "cache: precompute Seer rolling year at Venus boundary [skip ci]"
-          git remote set-url origin "https://x-access-token:${SEER_AUTOMATION_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git push origin "HEAD:${DEFAULT_BRANCH}"
-          git remote set-url origin "https://github.com/${GITHUB_REPOSITORY}.git"
+
+      - name: Publish verified snapshot to cache-data
+        if: steps.plan.outputs.refresh == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          CACHE_DIR="${{ steps.restore.outputs.cache_dir }}"
+          SOURCE_SHA="${{ steps.restore.outputs.source_sha }}"
+          PUBLISH="$RUNNER_TEMP/cache-publish"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          if [[ "${{ steps.restore.outputs.branch_exists }}" == 'true' ]]; then
+            git worktree add --detach "$PUBLISH" refs/remotes/origin/cache-data
+          else
+            git worktree add --detach "$PUBLISH" "$SOURCE_SHA"
+            (
+              cd "$PUBLISH"
+              git switch --orphan cache-data-bootstrap
+              git rm -rf --ignore-unmatch .
+            )
+          fi
+
+          (
+            cd "$PUBLISH"
+            git rm -rf --ignore-unmatch .
+            mkdir -p calc
+            cp "$CACHE_DIR/index.json" index.json
+            cp "$CACHE_DIR"/calc/*.json calc/
+            git add index.json calc
+            if git diff --cached --quiet; then
+              echo 'Verified cache snapshot is unchanged; nothing to publish.'
+              exit 0
+            fi
+            ACTIVE="$(node -e "const x=require('./index.json');process.stdout.write(String(x.activeCalcJdn))")"
+            git commit -m "cache: refresh rolling data for calc $ACTIVE"
+            git push origin HEAD:refs/heads/cache-data
+          )
+
+      - name: No-op confirmation
+        if: steps.plan.outputs.refresh != 'true'
+        run: echo 'Existing cache-data snapshot is current and verified; no update required.'

@@ -86,7 +86,7 @@ process.stdout.write(JSON.stringify({schema:1,engine:'fake-batch',calcJdn:calc,t
       throw new RangeError('cache miss');
     },
   });
-  const provider = createPrecomputedProvider({ generatedDir, yearBatchBinary: batch, yearLocatorBinary: locator, dataDir, cacheContext, execFileRunner: nodeScriptExecFile });
+  const provider = createPrecomputedProvider({ generatedDir, yearBatchBinary: batch, yearLocatorBinary: locator, dataDir, cacheContext, expectedEngineFingerprint: 'cache-engine', execFileRunner: nodeScriptExecFile });
   const answers = await Promise.all([1000n,1001n,1002n].map((targetJdn) => provider.query({ calculationJdn: 900n, targetJdn })));
   assert.deepEqual(answers.map((x) => x.record.year), [4999,5001,5001]);
   const calls = (await readFile(callLog,'utf8')).trim().split(/\n+/).map(JSON.parse);

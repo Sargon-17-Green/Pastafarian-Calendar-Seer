@@ -26,12 +26,10 @@ jobs:
           node-version: '24'
           package-manager-cache: false
 
-      - name: Package self-test and cache validation
+      - name: Package self-test
         run: |
           set -euo pipefail
           npm test
-          npm run validate:cache
-
       - name: npm publication preflight
         shell: bash
         run: |
