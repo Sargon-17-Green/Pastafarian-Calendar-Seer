@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { activeCalcFromIndex, lookupRecord, validateBatchCache } from '../lib/cache-format.mjs';
-import { ceilToUtcMinute, cronForBoundary, rewriteGeneratedSchedule } from '../lib/schedule.mjs';
 
 const index = {
   schema: 1,
@@ -27,24 +26,8 @@ test('index switches calculation day at the exact precomputed instant', () => {
   assert.equal(activeCalcFromIndex(index, '2026-09-15T23:15:19.798Z'), 101);
 });
 
-test('lookup is O(1)-style indexed and has no calculation fallback', () => {
+test('lookup is indexed and rejects targets outside cache coverage', () => {
   validateBatchCache(cache, { calcJdn: 101, targetCount: 2 });
   assert.equal(lookupRecord(index, cache, '2026-09-15T23:15:20Z', 102).dayInMonth, 2);
   assert.throws(() => lookupRecord(index, cache, '2026-09-15T23:15:20Z', 103), /outside the precomputed/);
-});
-
-test('cron is rounded upward, never before the astronomical boundary', () => {
-  assert.equal(ceilToUtcMinute('2026-09-14T23:17:18.093Z').toISOString(), '2026-09-14T23:18:00.000Z');
-  assert.equal(cronForBoundary('2026-09-14T23:17:18.093Z'), '18 23 14 9 *');
-  assert.equal(cronForBoundary('2026-09-14T23:17:00.000Z'), '17 23 14 9 *');
-});
-
-test('workflow replacement keeps exactly two future Venus triggers', () => {
-  const input = `on:\n  workflow_dispatch:\n  schedule:\n    # BEGIN GENERATED VENUS BOUNDARIES\n    - cron: '0 0 1 1 *'\n    - cron: '0 0 2 1 *'\n    # END GENERATED VENUS BOUNDARIES\n`;
-  const output = rewriteGeneratedSchedule(input, [
-    { calcJdn: 101, utc: '2026-09-14T23:17:18.093Z' },
-    { calcJdn: 102, utc: '2026-09-15T23:15:19.798Z' },
-  ]);
-  assert.match(output, /cron: '18 23 14 9 \*'/);
-  assert.match(output, /cron: '16 23 15 9 \*'/);
 });

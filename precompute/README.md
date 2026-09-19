@@ -1,68 +1,53 @@
-# Seer Venus-boundary rolling-year precomputation
+# Seer rolling-cache tooling
 
-This layer precomputes Seer answers so a user query never launches the expensive calendar engine.
+This directory contains tooling for the optional Venus-boundary rolling cache.
 
-## Canonical day boundary
+The cache is no longer committed to `main`, bundled into npm, or embedded in immutable release artifacts. The canonical exact engine remains authoritative; cache data is only a performance hint.
 
-The calculation day changes at the **topocentric lower meridian transit of the center of Venus** for Kisurra.
-The astronomical implementation is pinned to Pastafarian Calendar `1.4.1`, model
-`venus-lower-transit-jpl-approx-1`.
+See [`docs/ROLLING_CACHE.md`](../docs/ROLLING_CACHE.md) for the architecture, option analysis, runtime contract, migration and recovery policy.
 
-Kisurra is pinned to latitude `31.8383`, longitude `45.481`, elevation `0 m`.
-The vendored source provenance is recorded in `provenance.json`.
+## Local generation
 
-The solved boundary is a floating-point Julian Date. Because JavaScript `Date` has millisecond resolution and
-may TimeClip a fractional millisecond downward, `generated/index.json` activates a cache at the **ceiling
-millisecond** of the solved JD. This can delay activation by less than 1 ms but can never activate it before the
-astronomical root. GitHub cron is likewise rounded upward to the first UTC minute not earlier than the event.
+Build the batch engine, then generate into an untracked directory:
 
-## Cache horizon
+```bash
+npm run build:native
+node precompute/generate-cache.mjs --output-dir=.cache-build/rolling
+node precompute/validate-generated.mjs --generated-dir=.cache-build/rolling
+```
 
-At every maintenance run the repository contains caches for three calculation days:
+`generate-cache.mjs` maintains caches for the active calculation day and the next two calculation days. Each file covers 366 target days. It reuses compatible files already present in the output directory.
 
-- active calculation day `c`;
-- `c + 1`;
-- `c + 2`.
+`refresh-plan.mjs` performs the cheap pre-build decision used by CI:
 
-Each cache contains a rolling **366-target-day year**, starting at that calculation JDN. The next maintenance
-run normally reuses the two still-valid caches and computes the newly entering `c + 2` cache as one batch.
-A changed engine fingerprint invalidates and rebuilds all three.
+```bash
+node precompute/refresh-plan.mjs --cache-dir=.cache-build/rolling
+```
 
-Only these three current cache files remain in the checked-out tree. Git history retains older committed versions.
+## Production maintenance
 
-## Query contract
+`.github/workflows/precompute-seer-cache.yml` uses a stable six-hour cron. It restores the `cache-data` branch, checks whether refresh is needed, generates and validates only when necessary, then advances `cache-data`.
 
-`precompute/cache-lookup.mjs` reads the exact precomputed boundary index, selects the calculation day, and
-returns the record by array offset. `precompute/query.mjs <target_jdn>` is a thin query entry point that uses this
-lookup automatically; callers do not name, warm, or otherwise manage cache files. There is deliberately **no compute-on-miss fallback**. A missing or stale
-cache is an operational failure that must be caught by CI/maintenance, not paid by an end user.
+The workflow:
 
-## Self-scheduling
+- never edits itself;
+- never pushes `main`;
+- never uses `[skip ci]`;
+- needs only `contents: write`;
+- does not require `SEER_AUTOMATION_TOKEN`;
+- never includes `HANDOFF_*`.
 
-`.github/workflows/precompute-seer-cache.yml` contains two generated cron entries. Every successful run computes
-the next two Venus lower-transit instants and rewrites those entries. Cron has minute resolution, so each entry is
-the ceiling UTC minute after the exact event. The cache index itself holds millisecond boundary instants; query
-switching does not depend on the GitHub job starting promptly.
+A failed run leaves the prior cache snapshot intact and the next fixed cron still exists.
 
-The workflow modifies a file under `.github/workflows/`. Configure repository secret
-`SEER_AUTOMATION_TOKEN` with a fine-grained PAT or GitHub App token that has **Contents: write** and
-**Workflows: write** for this repository. The normal `GITHUB_TOKEN` is intentionally not relied upon for this
-self-modification.
+## Runtime use
 
-After first installing this delta, run the workflow once with `workflow_dispatch`. That bootstraps the three cache
-files and rewrites the two schedule entries from the actual execution instant. Thereafter the Venus schedule is
-self-maintaining.
+Set `SEER_CACHE_DIR` to a local directory containing a verified `cache-data` snapshot. No runtime network fetch occurs.
 
-## Local commands
+If cache data is missing, stale, corrupt, incompatible, or outside coverage, the query provider treats it as a miss and uses the exact engine. The cache therefore cannot be the source of a canonical answer when verification fails.
+
+## Tests
 
 ```bash
 node --test precompute/test/*.test.mjs
-prototype/scripts/build_year_batch.sh
-prototype/scripts/check_year_batch_vector.sh
-node precompute/generate-cache.mjs
-node precompute/validate-generated.mjs
-node precompute/query.mjs <target_jdn>
+node scripts/audit-supply-chain.mjs
 ```
-
-The native executable must run with `prototype/data` as its working directory because the current Seer prototype
-opens `gates_u16.bin` from the working directory. `generate-cache.mjs` handles this automatically.

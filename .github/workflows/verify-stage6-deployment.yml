@@ -10,7 +10,6 @@ on:
       - 'http/**'
       - 'api/**'
       - 'precompute/**'
-      - 'generated/**'
       - 'prototype/src/**'
       - 'prototype/data/**'
       - 'prototype/scripts/build_year_*.sh'
@@ -57,8 +56,7 @@ jobs:
           tar -tzf "$TGZ" | tee /tmp/seer-package-files.txt
           grep -qx 'package/index.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/http/index.mjs' /tmp/seer-package-files.txt
-          grep -qx 'package/generated/index.json' /tmp/seer-package-files.txt
-          test "$(grep -Ec '^package/generated/calc/-?[0-9]+\.json$' /tmp/seer-package-files.txt)" -eq 3
+
           grep -qx 'package/api/openapi.json' /tmp/seer-package-files.txt
           grep -qx 'package/api/openapi.yaml' /tmp/seer-package-files.txt
           grep -qx 'package/query/locales/catalog.mjs' /tmp/seer-package-files.txt
@@ -70,10 +68,8 @@ jobs:
           diff -u /tmp/seer-expected-schemas.txt /tmp/seer-actual-schemas.txt
           grep -qx 'package/precompute/cache-lookup.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/lib/cache-format.mjs' /tmp/seer-package-files.txt
-          grep -qx 'package/precompute/lib/schedule.mjs' /tmp/seer-package-files.txt
-          grep -qx 'package/precompute/validate-generated.mjs' /tmp/seer-package-files.txt
           grep -qx 'package/precompute/vendor/pastafari-calendar-1.4.1/venus-day-boundary.js' /tmp/seer-package-files.txt
-          if grep -Eq '^package/api/(examples|tests)/|^package/precompute/(generate-cache|query)\.mjs$' /tmp/seer-package-files.txt; then
+          if grep -Eq '^package/generated/|^package/api/(examples|tests)/|^package/precompute/(generate-cache|refresh-plan|validate-generated|query)\.mjs$|^package/precompute/lib/(cache-refresh|schedule)\.mjs$' /tmp/seer-package-files.txt; then
             echo 'verification/generation material leaked into npm package' >&2
             exit 1
           fi
@@ -151,7 +147,6 @@ jobs:
           test -f node_modules/pastafarian-calendar-seer/client/index.mjs
           cd node_modules/pastafarian-calendar-seer
           npm test
-          npm run validate:cache
           npm run build:native
       - name: Installed command shims smoke
         shell: bash
@@ -167,15 +162,8 @@ jobs:
           rm -f "$SEER_TEST_SERVICE_SPAWN_COUNTER_FILE"
           node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises';
-          import path from 'node:path';
-          import { fileURLToPath } from 'node:url';
-
-          const packageJson = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/package.json'));
-          const packageRoot = path.dirname(packageJson);
-          const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
-          const cache = index.caches[0];
-          const calculationJdn = cache.calcJdn;
-          const targetJdn = cache.targetStartJdn + cache.targetCount + 25;
+          const calculationJdn = 2461303;
+          const targetJdn = 2461676;
           const queryApi = await import('pastafarian-calendar-seer');
           const httpApi = await import('pastafarian-calendar-seer/http');
           const request = (target) => ({
@@ -235,7 +223,6 @@ jobs:
       - name: Full repository regressions
         run: |
           node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs
-          node precompute/validate-generated.mjs
           python -m venv .contract-venv
           .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
           .contract-venv/bin/python api/tests/test_contract.py
@@ -276,7 +263,6 @@ jobs:
           if (-not (Test-Path (Join-Path $packageRoot 'package.json'))) { throw 'installed package missing' }
           Set-Location $packageRoot
           npm test
-          npm run validate:cache
           npm run build:native
           foreach ($bin in @('seer_year_batch.exe','seer_year_locator.exe','seer_year_structure.exe','seer_engine_service.exe')) {
             if (-not (Test-Path (Join-Path $packageRoot "prototype\build\$bin"))) { throw "missing $bin" }
@@ -298,14 +284,8 @@ jobs:
           Remove-Item -Force -ErrorAction SilentlyContinue $env:SEER_TEST_SERVICE_SPAWN_COUNTER_FILE
           @'
           import { readFile } from 'node:fs/promises';
-          import path from 'node:path';
-          import { fileURLToPath } from 'node:url';
-          const packageJson = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/package.json'));
-          const packageRoot = path.dirname(packageJson);
-          const index = JSON.parse(await readFile(path.join(packageRoot, 'generated/index.json'), 'utf8'));
-          const cache = index.caches[0];
-          const calculationJdn = cache.calcJdn;
-          const targetJdn = cache.targetStartJdn + cache.targetCount + 25;
+          const calculationJdn = 2461303;
+          const targetJdn = 2461676;
           const queryApi = await import('pastafarian-calendar-seer');
           const httpApi = await import('pastafarian-calendar-seer/http');
           const request = (target) => ({

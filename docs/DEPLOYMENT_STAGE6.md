@@ -93,11 +93,10 @@ The build does not download runtime JavaScript dependencies and does not alter A
 
 ## Installed-package self-test
 
-`npm test` is intentionally a package self-test: it exercises a bundled-cache `queryDate()` call, the
-packaged Venus day-boundary model, and an HTTP loopback without requiring the native toolchain.
-`npm run validate:cache` verifies bundled cache shape/checksums; in a source checkout it additionally checks
-the scheduled cache workflow. Repository maintainers use `npm run test:repo` for the full source-tree suites.
-CI also invokes both installed command shims from `node_modules/.bin`.
+`npm test` is intentionally a package self-test: it exercises `queryDate()` through a deterministic fixture provider, the packaged Venus day-boundary model, and an HTTP loopback without requiring the native toolchain or rolling cache data.
+Repository maintainers use `npm run test:repo` for the full source-tree suites. CI also invokes both installed command shims from `node_modules/.bin`.
+
+Rolling cache data is an external performance artifact. Production may mount a verified cache-data snapshot read-only and set `SEER_CACHE_DIR`; release images remain immutable and work correctly with the exact engine when no cache is mounted.
 
 ## Persistent service policy
 

@@ -75,12 +75,11 @@ jobs:
             test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
           done
 
-      - name: Package self-test and cache validation
+      - name: Package self-test
         shell: bash
         run: |
           set -euo pipefail
           npm test
-          npm run validate:cache
           NAME="$(node -p "require('./package.json').name")"
           VERSION="$(node -p "require('./package.json').version")"
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
@@ -228,7 +227,6 @@ jobs:
           node "$GITHUB_WORKSPACE/deployment/test/installed-bins.mjs" "$CONSUMER"
           npm explore "$NAME" -- npm run build:native
           npm explore "$NAME" -- npm test
-          npm explore "$NAME" -- npm run validate:cache
           npm audit signatures --json --include-attestations > "$RUNNER_TEMP/npm-signatures.json"
           cat "$RUNNER_TEMP/npm-signatures.json"
           node --input-type=module <<'NODE'

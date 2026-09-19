@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -13,7 +13,6 @@ import {
   validateBatchCache,
   writeJsonAtomic,
 } from './lib/cache-format.mjs';
-import { rewriteGeneratedSchedule } from './lib/schedule.mjs';
 import { KISURRA_OBSERVER } from './vendor/pastafari-calendar-1.4.1/observer-location.js';
 import {
   DAY_BOUNDARY_MODEL_VERSION,
@@ -23,18 +22,24 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
-const generatedDir = path.join(root, 'generated');
-const calcDir = path.join(generatedDir, 'calc');
-const workflowPath = path.join(root, '.github', 'workflows', 'precompute-seer-cache.yml');
-const binaryPath = process.env.SEER_YEAR_BATCH_BIN || path.join(root, 'prototype', 'build', 'seer_year_batch');
 const dataDir = path.join(root, 'prototype', 'data');
+const binaryPath = process.env.SEER_YEAR_BATCH_BIN || path.join(root, 'prototype', 'build', process.platform === 'win32' ? 'seer_year_batch.exe' : 'seer_year_batch');
+const argv = process.argv.slice(2);
 
-const args = new Set(process.argv.slice(2));
-const force = args.has('--force');
-const noWorkflowRewrite = args.has('--no-workflow-rewrite');
-const nowArg = process.argv.slice(2).find((arg) => arg.startsWith('--now='));
-const now = nowArg ? new Date(nowArg.slice('--now='.length)) : new Date();
+function option(name) {
+  const prefix = `${name}=`;
+  return argv.find((arg) => arg.startsWith(prefix))?.slice(prefix.length);
+}
+
+const force = argv.includes('--force');
+const nowText = option('--now');
+const now = nowText === undefined ? new Date() : new Date(nowText);
 if (!Number.isFinite(now.getTime())) throw new RangeError('invalid --now instant');
+
+const generatedDir = path.resolve(option('--output-dir') || process.env.SEER_CACHE_OUTPUT_DIR || path.join(root, '.cache-build', 'rolling'));
+const calcDir = path.join(generatedDir, 'calc');
+const sourceCommit = option('--source-commit') || process.env.GITHUB_SHA || null;
+if (sourceCommit !== null && !/^[0-9a-f]{40}$/i.test(sourceCommit)) throw new Error('source commit must be a full 40-character Git SHA');
 
 await mkdir(calcDir, { recursive: true });
 
@@ -55,9 +60,6 @@ const MS_PER_DAY = 86_400_000;
 const boundaries = [0, 1, 2, 3].map((offset) => {
   const calcJdn = activeCalc + offset;
   const boundary = boundaryForDayJdn(BigInt(calcJdn), KISURRA_OBSERVER);
-  // Date uses millisecond resolution and TimeClip may land fractionally before the
-  // solved JD.  Cache activation is therefore rounded UP to the first millisecond
-  // that is certainly not earlier than the astronomical root.
   const activationMs = Math.ceil((boundary.jd - UNIX_EPOCH_JD) * MS_PER_DAY);
   return {
     calcJdn,
@@ -94,6 +96,8 @@ function runBatch(calcJdn) {
 }
 
 const cacheDescriptors = [];
+const builtCalcs = [];
+const reusedCalcs = [];
 for (const calcJdn of requiredCalcs) {
   const filename = `${calcJdn}.json`;
   const absolute = path.join(calcDir, filename);
@@ -106,7 +110,12 @@ for (const calcJdn of requiredCalcs) {
       needsBuild = true;
     }
   }
-  if (needsBuild) await writeJsonAtomic(absolute, runBatch(calcJdn));
+  if (needsBuild) {
+    await writeJsonAtomic(absolute, runBatch(calcJdn));
+    builtCalcs.push(calcJdn);
+  } else {
+    reusedCalcs.push(calcJdn);
+  }
   cacheDescriptors.push({
     calcJdn,
     path: `calc/${filename}`,
@@ -116,7 +125,6 @@ for (const calcJdn of requiredCalcs) {
   });
 }
 
-// Keep only the active day and the two-day look-ahead in the current tree.
 const keep = new Set(requiredCalcs.map((value) => `${value}.json`));
 for (const entry of await readdir(calcDir, { withFileTypes: true })) {
   if (entry.isFile() && /^-?\d+\.json$/.test(entry.name) && !keep.has(entry.name)) {
@@ -131,6 +139,10 @@ const index = {
   boundaryModel: DAY_BOUNDARY_MODEL_VERSION,
   astronomyFingerprint,
   engineFingerprint,
+  producer: {
+    repository: process.env.GITHUB_REPOSITORY || 'Sargon-17-Green/Pastafarian-Calendar-Seer',
+    ...(sourceCommit ? { sourceCommit: sourceCommit.toLowerCase() } : {}),
+  },
   observer: {
     name: 'Kisurra',
     latitude: KISURRA_OBSERVER.latitude,
@@ -145,17 +157,13 @@ const index = {
 };
 await writeJsonAtomic(path.join(generatedDir, 'index.json'), index);
 
-if (!noWorkflowRewrite) {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const nextWorkflow = rewriteGeneratedSchedule(workflow, boundaries.slice(1, 3));
-  if (nextWorkflow !== workflow) await writeFile(workflowPath, nextWorkflow, 'utf8');
-}
-
 process.stdout.write(`${JSON.stringify({
+  outputDir: generatedDir,
   activeCalcJdn: activeCalc,
   caches: requiredCalcs,
+  builtCalcs,
+  reusedCalcs,
   nextBoundaryUtc: boundaries[1].utc,
-  followingBoundaryUtc: boundaries[2].utc,
   engineFingerprint,
   astronomyFingerprint,
 }, null, 2)}\n`);

@@ -92,7 +92,6 @@ jobs:
           npm install --ignore-scripts "$pack_dir/$tgz"
           cd node_modules/pastafarian-calendar-seer
           npm test
-          npm run validate:cache
           npm run build:native
           for bin in seer_year_batch seer_year_locator seer_year_structure seer_engine_service; do
             test -x "prototype/build/$bin"

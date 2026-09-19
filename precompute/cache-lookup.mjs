@@ -50,7 +50,8 @@ export function createCacheRequestContext({ generatedDir, readFileImpl = readFil
         const { index, indexSha256 } = await loadIndex();
         const descriptor = index.caches.find((item) => item.calcJdn === calcJdn);
         if (!descriptor) throw new RangeError(`no precomputed cache for calculation day ${calcJdn}`);
-        if (typeof descriptor.path !== 'string' || !descriptor.path || typeof descriptor.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(descriptor.sha256)) {
+        const expectedPath = `calc/${calcJdn}.json`;
+        if (descriptor.path !== expectedPath || typeof descriptor.sha256 !== 'string' || !/^[0-9a-f]{64}$/i.test(descriptor.sha256)) {
           throw new Error(`invalid cache descriptor for calculation day ${calcJdn}`);
         }
         const cachePath = path.join(generatedDir, descriptor.path);

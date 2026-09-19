@@ -8,7 +8,8 @@ import { queryError, SeerQueryError } from './errors.mjs';
 import { defaultDayBoundaryService } from './day-boundary.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-export const DEFAULT_GENERATED_DIR = path.resolve(here, '..', 'generated');
+const runtimeRoot = path.resolve(here, '..');
+export const DEFAULT_GENERATED_DIR = path.join(runtimeRoot, 'generated');
 
 const DATE_KEYS = new Set(['observer', 'calculation', 'target', 'locale', 'presentation', 'include']);
 const CALC_KEYS = new Set(['jdn', 'at']);
@@ -79,7 +80,10 @@ function resolvePresentation(request) {
 async function providerFromOptions(options = {}) {
   if (options.provider) return options.provider;
   const { createPrecomputedProvider } = await import('./provider-precomputed.mjs');
-  return createPrecomputedProvider({ generatedDir: options.generatedDir ?? DEFAULT_GENERATED_DIR });
+  return createPrecomputedProvider({
+    generatedDir: options.generatedDir ?? process.env.SEER_CACHE_DIR ?? DEFAULT_GENERATED_DIR,
+    runtimeRoot,
+  });
 }
 function boundaryServiceFromOptions(options = {}) {
   return options.dayBoundaryService ?? defaultDayBoundaryService;

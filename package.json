@@ -1,6 +1,6 @@
 {
   "name": "pastafarian-calendar-seer",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Exact high-performance query and HTTP runtime for the Pastafarian Calendar Seer",
   "type": "module",
   "main": "./index.mjs",
@@ -32,12 +32,8 @@
     "api/openapi.yaml",
     "api/schemas/*.json",
     "precompute/cache-lookup.mjs",
-    "precompute/validate-generated.mjs",
     "precompute/lib/cache-format.mjs",
-    "precompute/lib/schedule.mjs",
     "precompute/vendor/pastafari-calendar-1.4.1/venus-day-boundary.js",
-    "generated/index.json",
-    "generated/calc/*.json",
     "prototype/src/pastafarian_year_batch.cpp",
     "prototype/src/rns_micro8_avx2_32x8.cpp",
     "prototype/src/rns_micro8_portable.cpp",
@@ -68,14 +64,14 @@
     "LICENSE",
     "NOTICE.md",
     "scripts/verify-release.mjs",
-    "docs/SUPPLY_CHAIN.md"
+    "docs/SUPPLY_CHAIN.md",
+    "docs/ROLLING_CACHE.md"
   ],
   "scripts": {
     "build:native": "node ./scripts/build-runtime.mjs",
     "start": "node ./http/server.mjs",
     "cli": "node ./query/cli.mjs",
     "test": "node ./scripts/package-selftest.mjs",
-    "validate:cache": "node ./precompute/validate-generated.mjs",
     "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
     "verify:release": "node ./scripts/verify-release.mjs"
   },

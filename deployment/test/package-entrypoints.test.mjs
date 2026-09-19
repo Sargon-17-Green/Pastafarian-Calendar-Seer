@@ -63,9 +63,7 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
 test('package file allowlist excludes repository-only material', async () => {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   const files = pkg.files.map(String);
-  assert.ok(files.includes('generated/index.json'));
-  assert.ok(files.includes('generated/calc/*.json'));
-  assert.equal(files.includes('generated'), false);
+  assert.equal(files.some((entry) => entry === 'generated' || entry.startsWith('generated/')), false);
   assert.ok(files.includes('client/*.mjs'));
   assert.equal(files.some((entry) => entry === 'web' || entry.startsWith('web/')), false);
   assert.ok(files.includes('api/openapi.json'));
@@ -73,8 +71,8 @@ test('package file allowlist excludes repository-only material', async () => {
   assert.equal(files.includes('api'), false);
   assert.ok(files.includes('precompute/cache-lookup.mjs'));
   assert.ok(files.includes('precompute/lib/cache-format.mjs'));
-  assert.ok(files.includes('precompute/lib/schedule.mjs'));
-  assert.ok(files.includes('precompute/validate-generated.mjs'));
+  assert.equal(files.includes('precompute/lib/schedule.mjs'), false);
+  assert.equal(files.includes('precompute/validate-generated.mjs'), false);
   assert.ok(files.includes('precompute/vendor/pastafari-calendar-1.4.1/venus-day-boundary.js'));
   assert.equal(files.includes('precompute/*.mjs'), false);
   assert.ok(files.includes('prototype/data/gates_u16.bin'));

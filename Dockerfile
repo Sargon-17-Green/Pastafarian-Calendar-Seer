@@ -18,8 +18,7 @@ RUN npm init -y >/dev/null \
     && npm install --omit=dev --ignore-scripts /tmp/seer.tgz \
     && cd node_modules/pastafarian-calendar-seer \
     && SEER_ARCH="$TARGETARCH" SEER_RNS_BACKEND=portable npm run build:native \
-    && npm test \
-    && npm run validate:cache
+    && npm test
 
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
 RUN apt-get update \

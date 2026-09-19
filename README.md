@@ -32,19 +32,14 @@ For source development instead:
 git clone https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer.git
 cd Pastafarian-Calendar-Seer
 npm test
-npm run validate:cache
+npm run test:repo
 ```
 
 ### When do I need the native runtime?
 
-The package includes a rolling precomputed cache, so covered `queryDate()`, `queryNow()`, batch, and range requests can work immediately after installation.
+Rolling cache data is no longer bundled with the package. It is an optional performance artifact stored separately from source and release identity.
 
-Build the exact native runtime when you need any of the following:
-
-- a date outside the bundled rolling cache;
-- a complete Pastafarian year via `queryYear()`;
-- reverse conversion via `queryReverse()`;
-- a service that must provide exact cache-miss fallback rather than return `SEER_UNAVAILABLE`.
+Build the exact native runtime for local calendar computation. A separately obtained verified cache snapshot may be supplied with `SEER_CACHE_DIR`; missing or invalid cache data always falls back to the exact engine.
 
 From an installed dependency:
 
@@ -1079,13 +1074,7 @@ Installed package self-test:
 npm test
 ```
 
-It exercises the bundled-cache query path, Venus day-boundary model, HTTP loopback, browser client, and the packaged OpenAPI schema closure without requiring the native toolchain.
-
-Validate generated cache data:
-
-```bash
-npm run validate:cache
-```
+It exercises the public query adapter with a deterministic fixture provider, Venus day-boundary model, HTTP loopback, browser client, and the packaged OpenAPI schema closure without requiring the native toolchain or rolling cache.
 
 Repository maintainers use:
 
@@ -1119,9 +1108,8 @@ api/                  OpenAPI, JSON Schemas, semantic rules and contract fixture
 client/               browser-safe HTTP client
 docs/                 architecture, deployment, conformance and data provenance
 examples/browser/     no-build browser integration example
-generated/            rolling generated cache
+precompute/           rolling-cache lookup/generation/validation tooling; data itself lives outside source/release identity
 http/                 HTTP v1 adapter/server
-precompute/           cache lookup, validation and boundary support
 prototype/            exact/native engine, data and benchmark lineage
 query/                shared semantic query layer and CLI
 scripts/              package/native build and self-test entry points

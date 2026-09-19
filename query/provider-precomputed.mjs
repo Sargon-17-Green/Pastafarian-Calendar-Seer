@@ -1,6 +1,10 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createCacheRequestContext } from '../precompute/cache-lookup.mjs';
+import { sha256EngineInputs } from '../precompute/lib/cache-format.mjs';
 import { createExactEngine } from './exact-engine.mjs';
-import { queryError } from './errors.mjs';
+
+const moduleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const MAX_EXACT_BATCH_COUNT = 10_000;
 
@@ -39,10 +43,24 @@ export function createPrecomputedProvider({
   exactMaxBuffer,
   execFileRunner,
   cacheContext,
+  runtimeRoot = moduleRoot,
+  expectedEngineFingerprint,
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
-  const exact = createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer, execFileRunner });
+  const exact = createExactEngine({ generatedDir: path.join(runtimeRoot, 'generated'), yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer, execFileRunner });
+  let engineFingerprintPromise;
+  async function localEngineFingerprint() {
+    if (expectedEngineFingerprint !== undefined) return expectedEngineFingerprint;
+    if (!engineFingerprintPromise) engineFingerprintPromise = sha256EngineInputs({
+      sourceDir: path.join(runtimeRoot, 'prototype', 'src'),
+      dataFiles: {
+        positiveGates: path.join(runtimeRoot, 'prototype', 'data', 'gates_100k_u16.bin'),
+        negativeGates: path.join(runtimeRoot, 'prototype', 'data', 'gates_negative_100k_u16.bin'),
+      },
+    });
+    return engineFingerprintPromise;
+  }
 
   let queue = [];
   let flushScheduled = false;
@@ -125,6 +143,7 @@ export function createPrecomputedProvider({
       if (calcJdn !== null && target !== null) {
         try {
           const loaded = await cache.loadRecord(calcJdn, target);
+          if (loaded.index.engineFingerprint !== await localEngineFingerprint()) throw new Error('cache engine fingerprint mismatch');
           return {
             record: loaded.record,
             structure: {
@@ -133,10 +152,8 @@ export function createPrecomputedProvider({
             },
             provenance: cleanProvenance(loaded.index, loaded.descriptor),
           };
-        } catch (error) {
-          if (!(error instanceof RangeError)) {
-            throw queryError('SEER_UNAVAILABLE', 'The precomputed cache is present but could not be verified.', { details: { provider: 'precomputed' }, cause: error });
-          }
+        } catch {
+          // Rolling cache data is a performance hint only. Every cache failure is an exact-engine miss.
         }
       }
       return queuedExactQuery(calculationJdn, targetJdn);
