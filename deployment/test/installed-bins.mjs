@@ -6,13 +6,18 @@ const consumer = path.resolve(process.argv[2] ?? '');
 if (!process.argv[2]) throw new Error('usage: node deployment/test/installed-bins.mjs CONSUMER_DIR');
 const binDir = path.join(consumer, 'node_modules', '.bin');
 const isWindows = process.platform === 'win32';
-const binPath = (name) => path.join(binDir, `${name}${isWindows ? '.cmd' : ''}`);
+const binPath = (name) => path.join(binDir, `${name}${isWindows ? '.ps1' : ''}`);
 
 function runBin(name, args = [], options = {}) {
   const executable = binPath(name);
   if (isWindows) {
-    return spawn(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', 'call', executable, ...args], {
-      cwd: consumer, windowsHide: true, ...options,
+    return spawn('powershell.exe', [
+      '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', executable, ...args,
+    ], {
+      cwd: consumer,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      ...options,
     });
   }
   return spawn(executable, args, { cwd: consumer, windowsHide: true, ...options });

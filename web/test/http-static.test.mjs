@@ -28,7 +28,8 @@ async function withWebServer(fn) {
       };
     },
   };
-  const server = http.createServer(createSeerHttpHandler({ webRoot, clientDir, queryApi }));
+  const healthProbe = { async probe() { return { status: 'ok' }; } };
+  const server = http.createServer(createSeerHttpHandler({ webRoot, clientDir, queryApi, healthProbe }));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   try {

@@ -10,8 +10,14 @@ export class SeerClientError extends Error {
   }
 }
 
+function stripTrailingSlashes(value) {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) end -= 1;
+  return end === value.length ? value : value.slice(0, end);
+}
+
 function basePath(baseUrl, pathname) {
-  const base = String(baseUrl ?? '').replace(/\/+$/, '');
+  const base = stripTrailingSlashes(String(baseUrl ?? ''));
   return `${base}${pathname}`;
 }
 
@@ -117,7 +123,7 @@ function calculationDayParams(request = {}) {
 export function createSeerClient(baseUrl = '', options = {}) {
   const fetchImpl = options.fetch ?? globalThis.fetch;
   if (typeof fetchImpl !== 'function') throw new TypeError('A fetch implementation is required.');
-  const fixedBase = String(baseUrl ?? '').replace(/\/+$/, '');
+  const fixedBase = stripTrailingSlashes(String(baseUrl ?? ''));
 
   return Object.freeze({
     baseUrl: fixedBase,
