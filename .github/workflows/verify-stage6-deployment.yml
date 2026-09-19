@@ -161,6 +161,7 @@ jobs:
           cd /tmp/seer-consumer
           rm -f "$SEER_TEST_SERVICE_SPAWN_COUNTER_FILE"
           node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
           const calculationJdn = 2461303;
           const targetJdn = 2461676;
           const queryApi = await import('pastafarian-calendar-seer');
@@ -282,6 +283,7 @@ jobs:
           $env:SEER_TEST_SERVICE_SPAWN_COUNTER_FILE = Join-Path $env:RUNNER_TEMP 'seer-stage6-win-spawns.txt'
           Remove-Item -Force -ErrorAction SilentlyContinue $env:SEER_TEST_SERVICE_SPAWN_COUNTER_FILE
           @'
+          import { readFile } from 'node:fs/promises';
           const calculationJdn = 2461303;
           const targetJdn = 2461676;
           const queryApi = await import('pastafarian-calendar-seer');
