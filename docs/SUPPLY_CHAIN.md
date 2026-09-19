@@ -39,7 +39,7 @@ The immutable GHCR manifest digest, not a mutable tag, is the container source o
 ## Publication order
 
 1. The tagged commit must be reachable from `main` and its tag must exactly match `package.json`.
-2. Exact-head Stage 6, native ARM64 parity, multi-architecture container verification, production-web verification, release preflight, and supply-chain verification must already be green.
+2. The exact tag commit must have a successful unified release-candidate manifest whose gate set and authority digest match `.github/release-gates.json` at that commit.
 3. `release-native-npm.yml` builds the portable exact runtime natively on Linux x64,
    Linux arm64, and Windows x64, runs a registry-style long-lived clean-install
    proof, and publishes the three exact-version platform packages through OIDC
@@ -116,6 +116,12 @@ exist. Bootstrap only an inert prerelease such as `0.0.0-bootstrap.0`, configure
 `release-native-npm.yml` as the Trusted Publisher for each name, and do not point a
 supported root-package version at the bootstrap release. Real runtime versions are
 then published only by OIDC and are required to match the root version exactly.
+
+## Release-candidate gate authority
+
+`.github/release-gates.json` is the sole source of truth for pre-tag verification gates. `.github/workflows/verify-release-candidate.yml` binds those gates to one exact commit and emits a machine-readable `release-candidate-verification.json`. Tag publication fails closed unless that manifest names the exact tag SHA, carries the current authority digest, contains the complete required gate set, and records every gate as successful.
+
+This release-candidate verification manifest is distinct from the final `release-manifest.json`: the former proves the required source/test gates before publication; the latter records the identities and digests of the artifacts actually published afterward. See `docs/RELEASE_CANDIDATE_VERIFICATION.md`.
 
 ## Release manifest and one-command verification
 

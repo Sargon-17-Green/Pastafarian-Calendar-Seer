@@ -135,31 +135,22 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Require exact-head verification and published channels
-        if: github.ref_type == 'tag'
+      - name: Require unified release-candidate verification
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-container-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-web-application.yml verify-supply-chain.yml verify-release-preflight.yml; do
-            ok=0
-            for _ in $(seq 1 120); do
-              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
-              if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
-          const [sha, raw] = process.argv.slice(2);
-          const runs = JSON.parse(raw);
-          process.exit(runs.some((run) =>
-            run.headSha === sha &&
-            run.status === 'completed' &&
-            run.conclusion === 'success'
-          ) ? 0 : 1);
-          NODE
-              then ok=1; break; fi
-              sleep 15
-            done
-            test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
-          done
+          node scripts/verify-release-candidate-manifest.mjs \
+            --sha "$GITHUB_SHA" \
+            --download-dir "$RUNNER_TEMP/release-candidate-verification"
+
+      - name: Require exact-SHA published channels
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
           for WORKFLOW in release-npm.yml release-container.yml; do
             ok=0
             for _ in $(seq 1 120); do
@@ -167,12 +158,17 @@ jobs:
               if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
           const [sha, raw] = process.argv.slice(2);
           const runs = JSON.parse(raw);
-          process.exit(runs.some((run) => run.headSha === sha && run.event === 'push' && run.status === 'completed' && run.conclusion === 'success') ? 0 : 1);
+          process.exit(runs.some((run) =>
+            run.headSha === sha &&
+            run.event === 'push' &&
+            run.status === 'completed' &&
+            run.conclusion === 'success'
+          ) ? 0 : 1);
           NODE
               then ok=1; break; fi
               sleep 15
             done
-            test "$ok" -eq 1 || { echo "No successful publication run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+            test "$ok" -eq 1 || { echo "No successful exact-SHA publication run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
           done
 
       - name: Inspect existing GitHub Release

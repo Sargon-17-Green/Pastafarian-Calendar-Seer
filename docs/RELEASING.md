@@ -10,11 +10,15 @@ The package version in `package.json` is the release version. The release tag mu
 
 ## Pre-tag verification
 
-Before creating a version tag, the exact commit must already pass the relevant source checks on `main`. A tag push then waits for successful exact-head runs rather than assuming concurrently started workflows have finished.
+`.github/release-gates.json` is the single machine-readable authority for release-candidate source verification. Do not maintain a separate gate list in a release workflow or QA checklist.
 
-The release gates include Stage 6, native ARM64 parity, multi-architecture container verification, supply-chain verification, release preflight, and production-web verification. Package self-test and cache validation are also repeated inside the publication workflows.
+Before creating a version tag, dispatch `.github/workflows/verify-release-candidate.yml` on the exact commit intended for the tag. It reuses successful or already-running exact-head gate runs and invokes only missing gates through reusable workflows. A successful full run emits `release-candidate-verification.json`, bound to the candidate SHA and to the SHA-256 of the authority file.
 
-`.github/workflows/verify-release-preflight.yml` runs on every push to `main` and can also be dispatched manually. It has read-only repository permissions and performs package tests, cache validation, publication dry-run, deterministic packing, boundary checks, checksum creation, **version-pinned Syft CycloneDX generation with explicit root package identity validation**, and upload of the exact-head preflight artifact. The privileged GitHub Release workflow runs only for a version tag.
+All tag publication workflows call `scripts/verify-release-candidate-manifest.mjs` before publishing. A manifest for an ancestor, another SHA, a different authority revision, or an incomplete gate set is rejected. The root npm workflow still waits for native-runtime publication, and the final GitHub Release still waits for npm and GHCR publication; those are post-tag publication dependencies rather than source-verification gates.
+
+`Release verification policy` is the lightweight required branch check. It validates that the authority, reusable workflows, orchestrator, release workflows, and release documentation remain wired together. The full expensive matrix is intentionally an exact-SHA release-candidate operation rather than a PR-required matrix, because a PR head is not necessarily the eventual merge/tag SHA.
+
+See `docs/RELEASE_CANDIDATE_VERIFICATION.md` for the orchestration and manifest contract.
 
 ## npm Trusted Publishing
 

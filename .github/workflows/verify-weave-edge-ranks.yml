@@ -1,7 +1,9 @@
 name: Verify difficult weave edge ranks
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/src/rns_micro8_avx2_32x8.cpp'
       - 'prototype/tools/weave_edge_rank_probe.cpp'

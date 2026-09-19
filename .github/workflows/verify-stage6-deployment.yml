@@ -1,7 +1,9 @@
 name: Verify API Stage 6 deployment package
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'package.json'
       - 'index.mjs'

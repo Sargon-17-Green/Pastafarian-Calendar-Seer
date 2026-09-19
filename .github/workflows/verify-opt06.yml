@@ -1,7 +1,9 @@
 name: Verify OPT-06 persistent engine service
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/src/seer_engine_service.cpp'
       - 'prototype/src/seer_year_structure.cpp'

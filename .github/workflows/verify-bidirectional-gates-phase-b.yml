@@ -1,7 +1,9 @@
 name: Verify bidirectional gate domain Phase B
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/data/gates_negative_u16.bin'
       - 'prototype/src/year_fast_bench_v12.cpp'

@@ -1,7 +1,9 @@
 name: Verify exact domain error contract
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'query/exact-engine.mjs'
       - 'query/test/exact-domain-errors.test.mjs'

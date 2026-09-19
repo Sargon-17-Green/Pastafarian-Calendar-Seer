@@ -1,7 +1,9 @@
 name: Verify portable production fallback
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/src/pastafarian_year_batch.cpp'
       - 'prototype/src/rns_micro8_portable.cpp'

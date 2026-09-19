@@ -1,8 +1,10 @@
 name: Verify OPT-01 request cache
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'precompute/cache-lookup.mjs'
       - 'precompute/test/cache-request-context.test.mjs'

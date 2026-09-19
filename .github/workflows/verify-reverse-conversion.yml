@@ -1,7 +1,9 @@
 name: Verify reverse conversion
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'index.mjs'
       - 'query/index.mjs'

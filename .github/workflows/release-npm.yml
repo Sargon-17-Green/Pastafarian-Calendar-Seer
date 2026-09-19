@@ -50,30 +50,39 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
-      - name: Wait for exact-head package verification
+      - name: Require unified release-candidate verification
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-supply-chain.yml verify-release-preflight.yml verify-prebuilt-native-packages.yml release-native-npm.yml; do
-            ok=0
-            for _ in $(seq 1 120); do
-              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
-              if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
+          node scripts/verify-release-candidate-manifest.mjs \
+            --sha "$GITHUB_SHA" \
+            --download-dir "$RUNNER_TEMP/release-candidate-verification"
+
+      - name: Require exact-SHA native runtime publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for _ in $(seq 1 120); do
+            RUNS="$(gh run list --workflow release-native-npm.yml --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion,event)"
+            if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
           const [sha, raw] = process.argv.slice(2);
           const runs = JSON.parse(raw);
           process.exit(runs.some((run) =>
             run.headSha === sha &&
+            run.event === 'push' &&
             run.status === 'completed' &&
             run.conclusion === 'success'
           ) ? 0 : 1);
           NODE
-              then ok=1; break; fi
-              sleep 15
-            done
-            test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+            then ok=1; break; fi
+            sleep 15
           done
+          test "$ok" -eq 1 || { echo "No successful exact-SHA native runtime publication at $GITHUB_SHA" >&2; exit 1; }
 
       - name: Require exact-version prebuilt runtimes
         shell: bash
