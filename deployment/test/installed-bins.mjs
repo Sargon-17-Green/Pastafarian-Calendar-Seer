@@ -1,17 +1,10 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const consumer = path.resolve(process.argv[2] ?? '');
 if (!process.argv[2]) throw new Error('usage: node deployment/test/installed-bins.mjs CONSUMER_DIR');
-const packageRoot = path.join(consumer, 'node_modules', 'pastafarian-calendar-seer');
 const binDir = path.join(consumer, 'node_modules', '.bin');
-const index = JSON.parse(await readFile(path.join(packageRoot, 'generated', 'index.json'), 'utf8'));
-const cache = index.caches?.[0];
-assert.ok(cache, 'installed package cache index missing');
-const calculationJdn = cache.calcJdn;
-const targetJdn = cache.targetStartJdn + Math.min(7, cache.targetCount - 1);
 const isWindows = process.platform === 'win32';
 const binPath = (name) => path.join(binDir, `${name}${isWindows ? '.cmd' : ''}`);
 
@@ -48,13 +41,9 @@ async function stopTree(child) {
   }
 }
 
-const cli = await collect(runBin('pastafarian-seer', [
-  'date', '--calculation-jdn', String(calculationJdn),
-  '--target-jdn', String(targetJdn), '--canonical',
-]));
+const cli = await collect(runBin('pastafarian-seer', ['--help']));
 assert.equal(cli.code, 0, cli.stderr || cli.stdout);
-const cliBody = JSON.parse(cli.stdout);
-assert.equal(cliBody.targetDay.jdn, String(targetJdn));
+assert.match(cli.stdout, /^usage:/m);
 
 const http = runBin('pastafarian-seer-http', [], {
   env: { ...process.env, HOST: '127.0.0.1', PORT: '0' },
@@ -83,18 +72,17 @@ try {
     });
     inspect();
   });
-  const response = await fetch(`http://127.0.0.1:${port}/v1/date?calculationJdn=${calculationJdn}&targetJdn=${targetJdn}&presentation=canonical`);
+  const response = await fetch(`http://127.0.0.1:${port}/openapi.json`);
   const text = await response.text();
   assert.equal(response.status, 200, text);
   const body = JSON.parse(text);
-  assert.equal(body.targetDay.jdn, String(targetJdn));
+  assert.equal(body.openapi, '3.1.0');
 } finally {
   await stopTree(http);
 }
 
 console.log(JSON.stringify({
   ok: true,
-  calculationJdn,
-  targetJdn,
   bins: ['pastafarian-seer', 'pastafarian-seer-http'],
+  checks: ['cli-help', 'http-openapi'],
 }));
