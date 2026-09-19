@@ -1,8 +1,8 @@
-#define main seer_year_fast_embedded_main
-#include "year_fast_bench_v12.cpp"
-#undef main
+#include "seer_year_core.hpp"
 
 #include <iostream>
+#include <stdexcept>
+#include <string>
 
 int main(int argc, char** argv) {
     try {
@@ -12,11 +12,11 @@ int main(int argc, char** argv) {
         }
         const int64_t calc = std::stoll(argv[1]);
         const long long requested = std::stoll(argv[2]);
-        FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
+        seer_native::detail::FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
         auto S = fast_stones();
-        FY y = fanchor(calc, G, S);
-        while (y.num < requested) y = fadj(calc, G, S, y, true);
-        while (y.num > requested) y = fadj(calc, G, S, y, false);
+        auto y = seer_native::detail::fanchor(calc, G, S);
+        while (y.num < requested) y = seer_native::detail::fadj(calc, G, S, y, true);
+        while (y.num > requested) y = seer_native::detail::fadj(calc, G, S, y, false);
         const int64_t start = y.a + 1;
         const int64_t end = y.b;
         const int64_t length = y.b - y.a;

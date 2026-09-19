@@ -47,5 +47,5 @@ if [[ "${SEER_ORIGIN_RPATH:-0}" == 1 ]]; then
 fi
 printf '#include <gmpxx.h>\n#include <boost/multiprecision/cpp_int.hpp>\nint main(){}\n' \
   | "$CXX" -std=c++20 "${COMMON[@]}" -x c++ - "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/deps_probe_year_locator"
-"$CXX" "${COMMON[@]}" "$ROOT/src/seer_year_locator.cpp" "${RUNTIME_LINK_FLAGS[@]}" "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/seer_year_locator"
+"$CXX" "${COMMON[@]}" "$ROOT/src/seer_year_core.cpp" "$ROOT/src/seer_year_locator.cpp" "${RUNTIME_LINK_FLAGS[@]}" "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/seer_year_locator"
 echo "Built $ROOT/build/seer_year_locator (arch: $EFFECTIVE_ARCH; march: $MARCH)"
