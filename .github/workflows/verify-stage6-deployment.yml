@@ -82,16 +82,22 @@ jobs:
           test "$(grep -c '^package/prototype/data/' /tmp/seer-package-files.txt)" -eq 4
           cat > /tmp/seer-expected-runtime-sources.txt <<'EOF'
           package/prototype/src/pastafarian_year_batch.cpp
-          package/prototype/src/rns_micro8_avx2_32x8.cpp
-          package/prototype/src/rns_micro8_portable.cpp
           package/prototype/src/rns_primes.hpp
           package/prototype/src/rns_primes32.hpp
           package/prototype/src/sauce_fast127_v12.hpp
           package/prototype/src/short_selection_o1.hpp
+          package/prototype/src/seer_calendar_core.cpp
+          package/prototype/src/seer_calendar_core.hpp
           package/prototype/src/seer_engine_service.cpp
+          package/prototype/src/seer_month_dp_internal.hpp
+          package/prototype/src/seer_selection_core.hpp
+          package/prototype/src/seer_weave_avx2.cpp
+          package/prototype/src/seer_weave_core.hpp
+          package/prototype/src/seer_weave_portable.cpp
+          package/prototype/src/seer_year_core.cpp
+          package/prototype/src/seer_year_core.hpp
           package/prototype/src/seer_year_locator.cpp
           package/prototype/src/seer_year_structure.cpp
-          package/prototype/src/year_fast_bench_v12.cpp
           EOF
           sed -i 's/^          //' /tmp/seer-expected-runtime-sources.txt
           grep '^package/prototype/src/' /tmp/seer-package-files.txt | sort > /tmp/seer-actual-runtime-sources.txt

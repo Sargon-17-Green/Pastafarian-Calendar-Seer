@@ -16,10 +16,12 @@ const queryNames = [
 ];
 
 const runtimeSources = [
-  'pastafarian_year_batch.cpp', 'rns_micro8_avx2_32x8.cpp', 'rns_micro8_portable.cpp',
-  'rns_primes.hpp', 'rns_primes32.hpp', 'sauce_fast127_v12.hpp', 'short_selection_o1.hpp',
-  'seer_engine_service.cpp',
-  'seer_year_locator.cpp', 'seer_year_structure.cpp', 'year_fast_bench_v12.cpp',
+  'pastafarian_year_batch.cpp', 'rns_primes.hpp', 'rns_primes32.hpp',
+  'sauce_fast127_v12.hpp', 'short_selection_o1.hpp',
+  'seer_calendar_core.cpp', 'seer_calendar_core.hpp', 'seer_engine_service.cpp',
+  'seer_month_dp_internal.hpp', 'seer_selection_core.hpp',
+  'seer_weave_avx2.cpp', 'seer_weave_core.hpp', 'seer_weave_portable.cpp',
+  'seer_year_core.cpp', 'seer_year_core.hpp', 'seer_year_locator.cpp', 'seer_year_structure.cpp',
 ].map((name) => `prototype/src/${name}`);
 
 test('root package entry point is the verified query API', () => {

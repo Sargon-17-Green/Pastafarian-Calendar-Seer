@@ -40,7 +40,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -E 'immintrin|_mm_|__m(128|256|512)|cpuid|mavx2' prototype/src/rns_micro8_portable.cpp; then
+          if grep -E 'immintrin|_mm_|__m(128|256|512)|cpuid|mavx2' prototype/src/seer_weave_portable.cpp; then
             echo "x86-only primitive leaked into portable backend" >&2
             exit 1
           fi
