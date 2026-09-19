@@ -69,6 +69,15 @@ else
   fi
 fi
 BACKEND_FLAGS=()
-if [[ "$BACKEND" == portable ]]; then BACKEND_FLAGS=(-DSEER_USE_PORTABLE_RNS=1); else BACKEND_FLAGS=(-mavx2); fi
-"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" -Wno-return-type "$ROOT/src/seer_year_structure.cpp" "${RUNTIME_LINK_FLAGS[@]}" "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/seer_year_structure"
+if [[ "$BACKEND" == portable ]]; then
+  BACKEND_FLAGS=(-DSEER_USE_PORTABLE_RNS=1)
+  WEAVE_SOURCE="$ROOT/src/seer_weave_portable.cpp"
+else
+  BACKEND_FLAGS=(-mavx2)
+  WEAVE_SOURCE="$ROOT/src/seer_weave_avx2.cpp"
+fi
+"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" \
+  "$ROOT/src/seer_year_core.cpp" "$ROOT/src/seer_calendar_core.cpp" "$WEAVE_SOURCE" \
+  "$ROOT/src/seer_year_structure.cpp" "${RUNTIME_LINK_FLAGS[@]}" "${GMP_LINK_FLAGS[@]}" \
+  -lgmp -o "$ROOT/build/seer_year_structure"
 echo "Built $ROOT/build/seer_year_structure (arch: $EFFECTIVE_ARCH; RNS backend: $BACKEND; march: $MARCH)"

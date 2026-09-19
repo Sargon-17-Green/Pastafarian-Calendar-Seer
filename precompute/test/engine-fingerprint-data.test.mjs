@@ -6,11 +6,17 @@ import path from 'node:path';
 import { ENGINE_SOURCE_FILES, sha256EngineInputs } from '../lib/cache-format.mjs';
 
 
-test('runtime fingerprint closure includes both selectable RNS backends', () => {
-  assert.ok(ENGINE_SOURCE_FILES.includes('rns_micro8_avx2_32x8.cpp'));
-  assert.ok(ENGINE_SOURCE_FILES.includes('rns_micro8_portable.cpp'));
+test('runtime fingerprint closure includes the production core and both selectable weave backends', () => {
+  assert.ok(ENGINE_SOURCE_FILES.includes('short_selection_o1.hpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('seer_calendar_core.cpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('seer_year_core.cpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('seer_weave_avx2.cpp'));
+  assert.ok(ENGINE_SOURCE_FILES.includes('seer_weave_portable.cpp'));
   assert.ok(ENGINE_SOURCE_FILES.includes('rns_primes32.hpp'));
   assert.ok(ENGINE_SOURCE_FILES.includes('rns_primes.hpp'));
+  assert.equal(ENGINE_SOURCE_FILES.includes('rns_micro8_avx2_32x8.cpp'), false);
+  assert.equal(ENGINE_SOURCE_FILES.includes('rns_micro8_portable.cpp'), false);
+  assert.equal(ENGINE_SOURCE_FILES.includes('year_fast_bench_v12.cpp'), false);
 });
 
 test('engine fingerprint includes both gate corpora deterministically', async () => {

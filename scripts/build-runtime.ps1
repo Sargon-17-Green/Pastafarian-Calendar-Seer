@@ -60,7 +60,13 @@ int main() {
 }
 if ($Backend -eq 'auto') { $Backend = if ($HasAvx2) { 'avx2' } else { 'portable' } }
 if ($Backend -eq 'avx2' -and -not $HasAvx2) { throw 'AVX2 was requested but is unavailable.' }
-$BackendFlags = if ($Backend -eq 'portable') { @('-DSEER_USE_PORTABLE_RNS=1') } else { @() }
+if ($Backend -eq 'portable') {
+    $BackendFlags = @('-DSEER_USE_PORTABLE_RNS=1')
+    $WeaveSource = Join-Path $Source 'seer_weave_portable.cpp'
+} else {
+    $BackendFlags = @('-mavx2')
+    $WeaveSource = Join-Path $Source 'seer_weave_avx2.cpp'
+}
 $March = if ($env:SEER_MARCH) { $env:SEER_MARCH } else { 'native' }
 $StaticGnuRuntime = ($env:SEER_STATIC_GNU_RUNTIME -eq '1')
 $Common = @('-O3', '-DNDEBUG', '-std=c++20', '-fopenmp')
@@ -74,19 +80,19 @@ $RuntimeLinkFlags = if ($StaticGnuRuntime) {
     @()
 }
 $Libraries = $RuntimeLinkFlags + $GmpLinkFlags + @('-lgmp')
+$YearCore = Join-Path $Source 'seer_year_core.cpp'
+$CalendarCore = Join-Path $Source 'seer_calendar_core.cpp'
 $Targets = @(
-    @('pastafarian_year_batch.cpp', 'seer_year_batch.exe'),
-    @('seer_year_locator.cpp', 'seer_year_locator.exe'),
-    @('seer_year_structure.cpp', 'seer_year_structure.exe'),
-    @('seer_engine_service.cpp', 'seer_engine_service.exe')
+    @{ Output = 'seer_year_batch.exe'; Sources = @($YearCore, $CalendarCore, $WeaveSource, (Join-Path $Source 'pastafarian_year_batch.cpp')) },
+    @{ Output = 'seer_year_locator.exe'; Sources = @($YearCore, (Join-Path $Source 'seer_year_locator.cpp')) },
+    @{ Output = 'seer_year_structure.exe'; Sources = @($YearCore, $CalendarCore, $WeaveSource, (Join-Path $Source 'seer_year_structure.cpp')) },
+    @{ Output = 'seer_engine_service.exe'; Sources = @($YearCore, $CalendarCore, $WeaveSource, (Join-Path $Source 'seer_engine_service.cpp')) }
 )
 
 foreach ($Target in $Targets) {
-    $Input = Join-Path $Source $Target[0]
-    $Output = Join-Path $Build $Target[1]
-    $EmbeddedMainWarningFlags = if ($Target[0] -in @('pastafarian_year_batch.cpp', 'seer_year_structure.cpp', 'seer_engine_service.cpp')) { @('-Wno-return-type') } else { @() }
-    $Args = $Common + $BackendFlags + $EmbeddedMainWarningFlags + @($Input) + $Libraries + @('-o', $Output)
-    Invoke-Cxx $Args "Build $($Target[1])"
+    $Output = Join-Path $Build $Target.Output
+    $Args = $Common + $BackendFlags + $Target.Sources + $Libraries + @('-o', $Output)
+    Invoke-Cxx $Args "Build $($Target.Output)"
     if (-not (Test-Path $Output)) { throw "Missing runtime binary after build: $Output" }
     Write-Host "Built $Output"
 }
