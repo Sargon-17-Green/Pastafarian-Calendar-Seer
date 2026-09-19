@@ -101,3 +101,16 @@ test('browser client supports same-origin relative endpoints with injected fetch
   await client.getLocales();
   assert.equal(seen, '/v1/locales');
 });
+
+test('browser client trims arbitrarily long trailing slash runs in linear code', async () => {
+  let seen;
+  const client = createSeerClient(`https://seer.example${'/'.repeat(100_000)}`, {
+    fetch: async (url) => {
+      seen = url;
+      return response(200, { ok: true });
+    },
+  });
+  assert.equal(client.baseUrl, 'https://seer.example');
+  await client.queryDate({ target: { jdn: '1' } });
+  assert.equal(seen, 'https://seer.example/v1/date');
+});
