@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <algorithm>
+#include "short_selection_o1.hpp"
 using U128=unsigned __int128;
 static constexpr U128 F127_M=(U128(1)<<127)-1;
 static constexpr uint64_t F127_HIMASK=(uint64_t(1)<<63)-1;
@@ -56,4 +57,4 @@ static FSauce fast_sauce(int64_t cj,int64_t tj,const FStones&S,FSauceTrace* trac
 }
 struct FDesc{U128 first;bool forward;};
 static FDesc fast_desc(const FSauce&s,int bowl,uint64_t seal){int pl=0;while(s.last[pl]!=bowl)pl++;int ni=s.last[(pl+1)%6]-1;U128 first=fsum({fsq(fsum({s.bowls[bowl-1],U128(seal+181)})),fmul_small(s.bowls[ni],179),U128(seal)});U128 dn=fsum({fsq(fsum({first,U128(seal+194)})),fmul_small(first,193),fmul_small(s.bowls[5],197)});return{first,(frep(dn)&1)!=0};}
-static uint64_t fast_choose_small(const FSauce&s,int bowl,uint64_t seal,uint64_t n){auto d=fast_desc(s,bowl,seal);U128 lim=(F127_M/n)*n,c=frep(d.first);while(c>lim)c=d.forward?(c==F127_M?1:c+1):(c==1?F127_M:c-1);return (uint64_t)((c-1)%n)+1;}
+static uint64_t fast_choose_small(const FSauce&s,int bowl,uint64_t seal,uint64_t n){auto d=fast_desc(s,bowl,seal);U128 c=frep(d.first),accepted=seer_short_selection_accepted_o1(F127_M,U128(n),c,d.forward);return (uint64_t)((accepted-1)%n)+1;}

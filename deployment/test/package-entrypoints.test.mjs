@@ -17,7 +17,8 @@ const queryNames = [
 
 const runtimeSources = [
   'pastafarian_year_batch.cpp', 'rns_micro8_avx2_32x8.cpp', 'rns_micro8_portable.cpp',
-  'rns_primes.hpp', 'rns_primes32.hpp', 'sauce_fast127_v12.hpp', 'seer_engine_service.cpp',
+  'rns_primes.hpp', 'rns_primes32.hpp', 'sauce_fast127_v12.hpp', 'short_selection_o1.hpp',
+  'seer_engine_service.cpp',
   'seer_year_locator.cpp', 'seer_year_structure.cpp', 'year_fast_bench_v12.cpp',
 ].map((name) => `prototype/src/${name}`);
 
