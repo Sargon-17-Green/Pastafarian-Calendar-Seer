@@ -1,6 +1,15 @@
-#define SEER_YEAR_STRUCTURE_NO_MAIN
-#include "seer_year_structure.cpp"
-#undef SEER_YEAR_STRUCTURE_NO_MAIN
+#include "seer_calendar_core.hpp"
+
+using seer_native::BatchRecord;
+using seer_native::ExecutionParams;
+using seer_native::detail::FGates;
+using seer_native::detail::FY;
+using seer_native::detail::YBStructResult;
+using seer_native::detail::build_nonweave;
+using seer_native::detail::compute_full_year_days;
+using seer_native::detail::compute_segment;
+using seer_native::detail::fadj;
+using seer_native::detail::fanchor;
 
 #include <algorithm>
 #include <cstdint>
@@ -245,7 +254,7 @@ class SeerEngineService {
         int64_t cursor = start;
         while (cursor <= end) {
             const int64_t segmentEnd = std::min<int64_t>(end, y.b);
-            auto part = compute_segment(calc, cursor, segmentEnd, gates_, stones_, y, 3, 512, 3);
+            auto part = compute_segment(calc, cursor, segmentEnd, gates_, stones_, y, ExecutionParams{});
             records.insert(records.end(), part.begin(), part.end());
             if (segmentEnd == end) break;
             cursor = segmentEnd + 1;
@@ -293,9 +302,9 @@ class SeerEngineService {
         if (length < 1 || length > 10000) throw std::runtime_error("located year length is outside supported limit");
 
         const FSauce structSauce = fast_sauce(calc, start, stones_);
-        const YBStructResult st = yb_build_nonweave(calc, gates_, y, structSauce);
+        const YBStructResult st = build_nonweave(calc, gates_, y, structSauce);
         std::vector<BatchRecord> days;
-        if (includeDays) days = ys_compute_days(calc, gates_, y, structSauce, st, 3, 512, 3);
+        if (includeDays) days = compute_full_year_days(calc, gates_, y, structSauce, st, ExecutionParams{});
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
                   << ",\"year\":" << y.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end
