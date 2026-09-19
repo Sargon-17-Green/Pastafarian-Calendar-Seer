@@ -9,7 +9,12 @@ on:
       - 'query/exact-engine.mjs'
       - 'query/provider-precomputed.mjs'
       - 'query/test/provider-exact-fallback.test.mjs'
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/sauce_fast127_v12.hpp'
+      - 'prototype/src/short_selection_o1.hpp'
       - 'prototype/src/seer_year_locator.cpp'
+      - 'prototype/tools/short_selection_o1_test.cpp'
+      - 'prototype/scripts/check_short_selection_o1.sh'
       - 'prototype/scripts/build_year_locator.sh'
       - 'http/**'
       - 'api/**'
@@ -33,6 +38,32 @@ jobs:
         run: |
           bash prototype/scripts/build_year_batch.sh
           bash prototype/scripts/build_year_locator.sh
+
+      - name: Verify O(1) short-selection lemma and production paths
+        run: bash prototype/scripts/check_short_selection_o1.sh
+
+      - name: Pathological short-selection exact regressions
+        run: |
+          node --input-type=module <<'NODE'
+          import path from 'node:path';
+          import { performance } from 'node:perf_hooks';
+          import { createExactEngine } from './query/exact-engine.mjs';
+          const root = process.cwd();
+          const engine = createExactEngine({
+            generatedDir: path.join(root, 'generated'),
+            yearBatchBinary: path.join(root, 'prototype', 'build', 'seer_year_batch'),
+            yearLocatorBinary: path.join(root, 'prototype', 'build', 'seer_year_locator'),
+            dataDir: path.join(root, 'prototype', 'data'),
+            timeoutMs: 120000,
+          });
+          const witnesses = [2448569,2448683,2448806,2448900,2448959,2449014,2449020,2449085,2449291,2449570,2449659,2449670,2449680,2449765,2449904,2450030];
+          for (const calc of witnesses) {
+            const started = performance.now();
+            const result = await engine.query({ calculationJdn: BigInt(calc), targetJdn: BigInt(calc) });
+            if (result.record.targetJdn !== calc) throw new Error(`target mismatch for ${calc}`);
+            console.log(JSON.stringify({ calcJdn: calc, elapsedMs: Math.round(performance.now() - started) }));
+          }
+          NODE
 
       - name: Syntax checks
         run: |
