@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as defaultQueryApi from '../query/index.mjs';
+import { DEFAULT_HEALTH_TIMEOUT_MS, createSeerHealthProbe } from '../query/health.mjs';
 import { isSeerQueryError, queryError } from '../query/errors.mjs';
 import { KISURRA_LONGITUDE } from '../query/observer.mjs';
 
@@ -419,13 +420,33 @@ function rangeNdjson(results) {
   return results.map((item) => JSON.stringify(item)).join('\n') + (results.length ? '\n' : '');
 }
 
+async function boundedHealthStatus(healthProbe, now, timeoutMs) {
+  let timer;
+  try {
+    const result = await Promise.race([
+      healthProbe.probe({ now }),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('health probe deadline exceeded')), timeoutMs);
+        timer.unref?.();
+      }),
+    ]);
+    return result?.status === 'ok' || result?.status === 'degraded' || result?.status === 'unavailable'
+      ? result.status
+      : 'unavailable';
+  } catch {
+    return 'unavailable';
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 const SCHEMA_PATH_RE = /^\/schemas\/([A-Za-z0-9.-]+\.schema\.json)$/;
 
 function knownPath(pathname) {
   return pathname === '/v1/now' || pathname === '/v1/date' || pathname === '/v1/batch' ||
     pathname === '/v1/range' || pathname === '/v1/reverse' || pathname === '/v1/calculation-day' || pathname === '/v1/locales' ||
-    pathname === '/v1/meta' || pathname === '/v1/status' || pathname === '/openapi.json' ||
-    pathname === '/openapi.yaml' || SCHEMA_PATH_RE.test(pathname) || /^\/v1\/year\/[^/]+$/.test(pathname);
+    pathname === '/v1/meta' || pathname === '/v1/status' || pathname === '/_health/live' || pathname === '/_health/ready' ||
+    pathname === '/openapi.json' || pathname === '/openapi.yaml' || SCHEMA_PATH_RE.test(pathname) || /^\/v1\/year\/[^/]+$/.test(pathname);
 }
 
 export function createSeerHttpHandler(options = {}) {
@@ -435,6 +456,13 @@ export function createSeerHttpHandler(options = {}) {
   const nowFactory = options.nowFactory ?? (() => new Date());
   const logger = options.logger ?? console;
   const baseQueryOptions = options.queryOptions ?? {};
+  const healthTimeoutMs = Number.isFinite(options.healthTimeoutMs) && options.healthTimeoutMs > 0
+    ? Math.max(1, Math.floor(options.healthTimeoutMs))
+    : DEFAULT_HEALTH_TIMEOUT_MS;
+  const healthProbe = options.healthProbe ?? createSeerHealthProbe({
+    generatedDir: baseQueryOptions.generatedDir ?? process.env.SEER_CACHE_DIR,
+    timeoutMs: healthTimeoutMs,
+  });
   const webRoot = options.webRoot ? path.resolve(options.webRoot) : null;
   const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
 
@@ -452,6 +480,20 @@ export function createSeerHttpHandler(options = {}) {
       if (!knownPath(pathname)) throw new HttpAdapterError('NOT_FOUND', 'Endpoint not found.', 404);
 
       const queryOptions = { ...baseQueryOptions, now: requestInstant };
+
+      if (pathname === '/_health/live' && method === 'GET') {
+        ensureNoQuery(url.searchParams);
+        negotiate(req, ['application/json'], 'application/json');
+        sendJson(res, 200, { status: 'ok' }, { 'cache-control': 'no-store' });
+        return;
+      }
+      if ((pathname === '/_health/ready' || pathname === '/v1/status') && method === 'GET') {
+        ensureNoQuery(url.searchParams);
+        negotiate(req, ['application/json'], 'application/json');
+        const status = await boundedHealthStatus(healthProbe, requestInstant, healthTimeoutMs);
+        sendJson(res, status === 'unavailable' ? 503 : 200, { status }, { 'cache-control': 'no-store' });
+        return;
+      }
 
       if (pathname === '/openapi.json' && method === 'GET') {
         ensureNoQuery(url.searchParams);
@@ -503,18 +545,7 @@ export function createSeerHttpHandler(options = {}) {
         }, { 'cache-control': 'public, max-age=300' });
         return;
       }
-      if (pathname === '/v1/status' && method === 'GET') {
-        ensureNoQuery(url.searchParams);
-        negotiate(req, ['application/json'], 'application/json');
-        try {
-          await queryApi.queryDate({}, queryOptions);
-          sendJson(res, 200, { status: 'ok' }, { 'cache-control': 'no-store' });
-        } catch {
-          sendJson(res, 503, { status: 'unavailable' }, { 'cache-control': 'no-store' });
-        }
-        return;
-      }
-
+      // /v1/status is handled above by the bounded health probe; it never performs a calendar query.
       if (pathname === '/v1/now' && method === 'GET') {
         negotiate(req, ['application/json'], 'application/json');
         const result = await queryApi.queryDate(dateRequestFromGet(url.searchParams, { nowOnly: true }), queryOptions);

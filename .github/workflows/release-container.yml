@@ -233,7 +233,7 @@ jobs:
 
             ready=0
             for _ in $(seq 1 90); do
-              if curl -fsS "http://127.0.0.1:$port/v1/status" > "/tmp/status-$arch.json"; then
+              if curl -fsS "http://127.0.0.1:$port/_health/live" > "/tmp/live-$arch.json"; then
                 ready=1
                 break
               fi
@@ -243,8 +243,19 @@ jobs:
             python - "$arch" <<'PY'
           import json, sys
           arch=sys.argv[1]
-          x=json.load(open(f'/tmp/status-{arch}.json', encoding='utf-8'))
-          assert x['status'] == 'ok', x
+          x=json.load(open(f'/tmp/live-{arch}.json', encoding='utf-8'))
+          assert x == {'status': 'ok'}, x
+          PY
+            curl -fsS "http://127.0.0.1:$port/_health/ready" > "/tmp/ready-$arch.json"
+            curl -fsS "http://127.0.0.1:$port/v1/status" > "/tmp/status-$arch.json"
+            python - "$arch" <<'PY'
+          import json, sys
+          arch=sys.argv[1]
+          ready=json.load(open(f'/tmp/ready-{arch}.json', encoding='utf-8'))
+          status=json.load(open(f'/tmp/status-{arch}.json', encoding='utf-8'))
+          assert ready == status, (ready, status)
+          assert status['status'] in ('ok', 'degraded'), status
+          assert set(status) == {'status'}, status
           PY
             test "$(docker exec "$name" id -u)" != '0'
             curl -fsS "http://127.0.0.1:$port/web/" | grep -q 'Pastafarian Calendar Seer'

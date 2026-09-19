@@ -41,7 +41,7 @@ The web application is copied into the image separately from the npm package. Th
 
 ## Health
 
-The image healthcheck calls `GET /v1/status` on the loopback interface.
+The image healthcheck calls provider-private `GET /_health/live` on the loopback interface. It has a 3-second Docker deadline and a 1.5-second request deadline, and it never checks the rolling cache or executes an exact calendar conversion. Orchestration may use `GET /_health/ready` for bounded engine readiness. Public clients use `/v1/status`, which exposes only `ok`, `degraded`, or `unavailable`. The release image is intentionally exact-only unless cache data is mounted: an absent unconfigured cache is therefore healthy, while stale/corrupt cache data or an explicitly configured missing cache is `degraded` when the required exact engine remains usable.
 
 The repository workflow `Verify container deployment` runs this smoke natively on both `linux/amd64` and `linux/arm64`. It performs an exact HTTP request whose calculation JDN is after the Seer Foundation while its target JDN is before it, then verifies reverse conversion and the corresponding year structure. It also performs a request that crosses the historical +40,000-gate boundary, proving that the packaged image contains and uses the extended corpus rather than merely the rolling cache or the old gate horizon.
 

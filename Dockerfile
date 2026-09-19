@@ -33,6 +33,6 @@ ENV HOST=0.0.0.0 \
     SEER_WEB_ROOT=/opt/seer-web
 USER node
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:8080/v1/status').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:8080/_health/live',{signal:AbortSignal.timeout(1500)}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
 CMD ["node", "node_modules/pastafarian-calendar-seer/http/server.mjs"]

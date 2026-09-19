@@ -35,7 +35,7 @@ function fakeApi(calls) {
   };
 }
 
-async function withServer(fn) {
+async function withServer(fn, handlerOptions = {}) {
   const calls = [];
   const apiDir = await mkdtemp(path.join(os.tmpdir(), 'seer-http-test-'));
   await writeFile(path.join(apiDir, 'openapi.json'), '{"openapi":"3.1.0"}\n');
@@ -43,7 +43,13 @@ async function withServer(fn) {
   await mkdir(path.join(apiDir, 'schemas'));
   await writeFile(path.join(apiDir, 'schemas', 'date-response.schema.json'), '{"$id":"fixture-date-response"}\n');
   const now = new Date('2026-09-15T12:34:56.000Z');
-  const server = http.createServer(createSeerHttpHandler({ queryApi: fakeApi(calls), apiDir, nowFactory: () => new Date(now) }));
+  const server = http.createServer(createSeerHttpHandler({
+    queryApi: fakeApi(calls),
+    apiDir,
+    nowFactory: () => new Date(now),
+    healthProbe: { probe: async () => ({ status: 'ok' }) },
+    ...handlerOptions,
+  }));
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address();
   try { await fn(`http://127.0.0.1:${port}`, calls, now); }
@@ -135,7 +141,7 @@ test('range supports JSON, NDJSON and CSV without changing query semantics', asy
   });
 });
 
-test('status probes the query provider and static endpoints are served', async () => {
+test('public status and static endpoints are served without semantic work', async () => {
   await withServer(async (base) => {
     const status = await fetch(`${base}/v1/status`);
     assert.equal(status.status, 200);
@@ -191,4 +197,56 @@ test('OPTIONS, 404, 405, 406 and provider errors map cleanly', async () => {
     assert.equal(yearError.code, 'SEER_UNAVAILABLE');
     assert.deepEqual(yearError.details, { provider: 'fixture' });
   });
+});
+
+
+test('liveness, readiness and public status have separate bounded semantics', async () => {
+  let probes = 0;
+  const healthProbe = {
+    async probe() {
+      probes += 1;
+      return { status: 'degraded', internalPath: 'C:/secret', pid: 1234, queueDepth: 99 };
+    },
+  };
+  await withServer(async (base, calls) => {
+    const live = await fetch(`${base}/_health/live`);
+    assert.equal(live.status, 200);
+    assert.deepEqual(await live.json(), { status: 'ok' });
+    assert.equal(probes, 0);
+    assert.equal(calls.length, 0);
+
+    const ready = await fetch(`${base}/_health/ready`);
+    assert.equal(ready.status, 200);
+    assert.deepEqual(await ready.json(), { status: 'degraded' });
+    assert.equal(probes, 1);
+    assert.equal(calls.length, 0);
+
+    const publicStatus = await fetch(`${base}/v1/status`);
+    assert.equal(publicStatus.status, 200);
+    assert.deepEqual(await publicStatus.json(), { status: 'degraded' });
+    assert.equal(probes, 2);
+    assert.equal(calls.length, 0);
+  }, { healthProbe });
+});
+
+
+test('readiness and public status fail closed on a hung health probe while liveness stays live', async () => {
+  const healthProbe = { probe: async () => new Promise(() => {}) };
+  await withServer(async (base, calls) => {
+    const started = Date.now();
+    const ready = await fetch(`${base}/_health/ready`);
+    const readyMs = Date.now() - started;
+    assert.equal(ready.status, 503);
+    assert.deepEqual(await ready.json(), { status: 'unavailable' });
+    assert.ok(readyMs < 1000, `readiness exceeded bounded deadline: ${readyMs} ms`);
+
+    const status = await fetch(`${base}/v1/status`);
+    assert.equal(status.status, 503);
+    assert.deepEqual(await status.json(), { status: 'unavailable' });
+
+    const live = await fetch(`${base}/_health/live`);
+    assert.equal(live.status, 200);
+    assert.deepEqual(await live.json(), { status: 'ok' });
+    assert.equal(calls.length, 0);
+  }, { healthProbe, healthTimeoutMs: 25 });
 });

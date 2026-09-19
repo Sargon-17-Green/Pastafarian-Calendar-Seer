@@ -263,6 +263,9 @@ const readline = require('node:readline');
 const behavior = ${JSON.stringify(behavior)};
 function response(line) {
   const f = line.split(String.fromCharCode(9));
+  if (f[0] === 'S' && f.length === 1) {
+    return JSON.stringify({ schema: 1, engine: 'fake-service', stats: { requests: 1 } });
+  }
   if (f[0] !== 'R' || f.length !== 4) {
     return JSON.stringify({ schema: 1, ok: false, error: 'bad fake command' });
   }
@@ -712,4 +715,28 @@ test('persistent service queue is bounded and overload never falls back to child
     'only timed-out accepted requests may use one-shot fallback',
   );
   assert.equal(runner.spawnCount(), 1);
+});
+
+
+test('engine health probe uses the cheap service stats command without calendar work', async (t) => {
+  configureServiceRequirement(t, true);
+  const runner = makeFakeServiceSpawnRunner([{ mode: 'ok' }]);
+  const oneShot = makeFakeExecFileRunner();
+  const engine = fakeEngine({ runner, timeoutMs: 2000, execFileRunner: oneShot });
+  assert.deepEqual(await engine.probe({ timeoutMs: 2000 }), { mode: 'service' });
+  assert.equal(runner.spawnCount(), 1);
+  assert.equal(oneShot.callCount(), 0);
+});
+
+
+test('engine health probe times out a nonresponsive service', async (t) => {
+  configureServiceRequirement(t, true);
+  const runner = makeFakeServiceSpawnRunner([{ mode: 'hang' }]);
+  const engine = fakeEngine({ runner, timeoutMs: 40 });
+  const started = Date.now();
+  await assert.rejects(
+    engine.probe({ timeoutMs: 40 }),
+    (error) => isServiceFailure(error, 'timeout'),
+  );
+  assert.ok(Date.now() - started < 1000);
 });

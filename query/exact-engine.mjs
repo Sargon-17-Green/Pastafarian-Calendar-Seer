@@ -597,8 +597,45 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     return admission.run(() => PROCESS_EXACT_ADMISSION.run(task));
   }
 
+  async function probe({ timeoutMs: probeTimeoutMs = Math.min(timeoutMs, 1000) } = {}) {
+    const deadlineMs = Number.isFinite(probeTimeoutMs) && probeTimeoutMs > 0
+      ? Math.max(1, Math.floor(probeTimeoutMs))
+      : 1000;
+    const serviceBinary = await optionalServiceBinary();
+    if (serviceBinary) {
+      try {
+        const client = await getEngineServiceClient(serviceBinary, cwd, { spawnRunner: serviceSpawnRunner });
+        const response = await client.request(['S'], { timeoutMs: deadlineMs });
+        if (!response || response.schema !== 1 || typeof response.engine !== 'string' || !response.stats || typeof response.stats !== 'object') {
+          throw serviceFailure('protocol', 'persistent Seer engine service health response was invalid');
+        }
+        return Object.freeze({ mode: 'service' });
+      } catch (error) {
+        if (requireService) {
+          const failure = typeof error?.serviceFailure === 'string' ? error.serviceFailure : 'failed';
+          throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service health probe failed.', {
+            details: { serviceFailure: failure }, cause: error,
+          });
+        }
+      }
+    } else if (requireService) {
+      throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service is required but unavailable.');
+    }
+
+    await Promise.all([
+      batchBinary(),
+      locatorBinary(),
+      access(path.join(cwd, 'gates_100k_u16.bin')),
+      access(path.join(cwd, 'gates_negative_100k_u16.bin')),
+    ]).catch((error) => {
+      throw queryError('SEER_UNAVAILABLE', 'Exact Seer engine runtime is unavailable.', { cause: error });
+    });
+    return Object.freeze({ mode: 'oneshot' });
+  }
+
   return Object.freeze({
     id: 'seer-v12-exact-process',
+    probe,
     queryRange(args) {
       return runAdmitted(() => queryRangeRaw(args));
     },
