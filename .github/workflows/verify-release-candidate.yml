@@ -97,7 +97,7 @@ jobs:
   gate_prebuilt_packages:
     name: Prebuilt native package/runtime verification
     needs: plan
-    if: ${{ neds.plan.outputs.prebuilt_packages_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.prebuilt_packages_reuse != 'true' }}
     uses: ./.github/workflows/verify-prebuilt-native-packages.yml
   gate_negative_gate_corpus:
     name: Negative gate corpus Phase A
@@ -117,7 +117,7 @@ jobs:
   gate_gate_domain_extension:
     name: 100k gate-domain extension
     needs: plan
-    if: ${{ neds.plan.outputs.gate_domain_extension_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.gate_domain_extension_reuse != 'true' }}
     uses: ./.github/workflows/verify-gate-domain-extension.yml
   gate_reverse_conversion:
     name: Reverse conversion
@@ -127,7 +127,7 @@ jobs:
   gate_exact_domain_errors:
     name: Exact domain error contract
     needs: plan
-    if: ${{ neds.plan.outputs.exact_domain_errors_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.exact_domain_errors_reuse != 'true' }}
     uses: ./.github/workflows/verify-domain-error-contract.yml
   gate_difficult_weave:
     name: Difficult weave edge ranks
@@ -142,12 +142,12 @@ jobs:
   gate_portable_fallback:
     name: Portable production fallback
     needs: plan
-    if: ${{ neds.plan.outputs.portable_fallback_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.portable_fallback_reuse != 'true' }}
     uses: ./.github/workflows/verify-portable-production-fallback.yml
   gate_arm64_parity:
     name: Native amd64/ARM64 parity
     needs: plan
-    if: ${{ neds.plan.outputs.arm64_parity_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.arm64_parity_reuse != 'true' }}
     uses: ./.github/workflows/verify-arm64-runtime.yml
   gate_stage5_exact_provider:
     name: Stage 5 exact provider
@@ -167,7 +167,7 @@ jobs:
   gate_container_deployment:
     name: Container deployment
     needs: plan
-    if: ${{ neds.plan.outputs.container_deployment_reuse != 'true' }}
+    if: ${{ needs.plan.outputs.container_deployment_reuse != 'true' }}
     uses: ./.github/workflows/verify-container-deployment.yml
   gate_supply_chain:
     name: Supply-chain hardening
