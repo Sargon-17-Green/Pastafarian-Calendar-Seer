@@ -1,6 +1,5 @@
-#define SEER_YEAR_BATCH_NO_MAIN
-#include "pastafarian_year_batch.cpp"
-#undef SEER_YEAR_BATCH_NO_MAIN
+#include "seer_month_dp_internal.hpp"
+using namespace seer_native::detail;
 #include <chrono>
 #include <iostream>
 using C=std::chrono::steady_clock;
