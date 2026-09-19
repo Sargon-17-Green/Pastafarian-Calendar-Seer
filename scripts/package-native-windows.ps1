@@ -10,8 +10,10 @@ $ToolchainBin = if ($env:SEER_TOOLCHAIN_BIN) { $env:SEER_TOOLCHAIN_BIN } else { 
 $Cxx = if ($env:CXX) { $env:CXX } else { Join-Path $ToolchainBin 'g++.exe' }
 $Objdump = Join-Path $ToolchainBin 'objdump.exe'
 $MsysRoot = Split-Path -Parent (Split-Path -Parent $ToolchainBin)
-$Bash = Join-Path $MsysRoot 'usr\bin\bash.exe'
-$Cygpath = Join-Path $MsysRoot 'usr\bin\cygpath.exe'
+$MsysUsrBin = Join-Path $MsysRoot 'usr\bin'
+$Bash = Join-Path $MsysUsrBin 'bash.exe'
+$Cygpath = Join-Path $MsysUsrBin 'cygpath.exe'
+$env:Path = $ToolchainBin + ';' + $MsysUsrBin + ';' + $env:Path
 if (-not (Test-Path $Cxx)) { throw "C++ compiler not found: $Cxx" }
 if (-not (Test-Path $Objdump)) { throw "objdump not found: $Objdump" }
 if (-not (Test-Path $Bash)) { throw "MSYS2 bash not found: $Bash" }
@@ -61,7 +63,6 @@ $env:SEER_RNS_BACKEND = 'portable'
 $env:SEER_MARCH = 'x86-64'
 $env:SEER_GMP_CPU_BASELINE = 'x86_64-generic'
 $env:SEER_STATIC_GNU_RUNTIME = '1'
-$env:Path = $ToolchainBin + ';' + $env:Path
 $env:SEER_NATIVE_TOOLCHAIN = (& $Cxx --version | Select-Object -First 1)
 $Pacman = Join-Path $MsysRoot 'usr\bin\pacman.exe'
 if (Test-Path $Pacman) {

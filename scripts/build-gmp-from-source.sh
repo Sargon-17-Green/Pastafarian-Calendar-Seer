@@ -32,9 +32,9 @@ export CXXFLAGS="${CXXFLAGS:--O2}"
 case "$TARGET" in
   win32-x64)
     export ABI=64
-    : "${CC:=/ucrt64/bin/gcc}"
-    : "${CXX:=/ucrt64/bin/g++}"
-    CONFIGURE_ARGS+=(--host=x86_64-w64-mingw32 "CC=$CC" "CXX=$CXX")
+    export CC=/ucrt64/bin/gcc
+    export CXX=/ucrt64/bin/g++
+    CONFIGURE_ARGS+=(--host=x86_64-w64-mingw32)
     ;;
   linux-x64)
     [[ "$(uname -m)" == x86_64 || "$(uname -m)" == amd64 ]] || {
