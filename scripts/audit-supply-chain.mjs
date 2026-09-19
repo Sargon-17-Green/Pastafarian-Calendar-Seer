@@ -11,6 +11,7 @@ const mutable = [];
 const missingPermissions = [];
 const broad = [];
 const secretRefs = [];
+const legacyCacheConsumers = [];
 const allowedWrites = new Map([
   ['release-container.yml', new Set(['packages', 'id-token', 'attestations'])],
   ['release-github-package.yml', new Set(['contents', 'packages', 'id-token', 'attestations'])],
@@ -30,6 +31,7 @@ let trivyReusePins = 0;
 
 for (const name of names) {
   const text = await readFile(path.join(workflowDir, name), 'utf8');
+  if (name !== 'precompute-seer-cache.yml' && /precompute\/(?:generate-cache|validate-generated)\.mjs/.test(text)) legacyCacheConsumers.push(name);
   if (!/^permissions:\s*$/m.test(text)) missingPermissions.push(name);
   if (/\bwrite-all\b/.test(text)) broad.push(`${name}: write-all`);
   qemuUses += (text.match(/docker\/setup-qemu-action@/g) ?? []).length;
@@ -83,6 +85,7 @@ const problems = [
   ...runtimeToolProblems.map((x) => `mutable runtime tool dependency: ${x}`),
   ...handoff.map((x) => `tracked HANDOFF file: ${x}`),
   ...trackedRollingData.map((x) => `tracked rolling cache data: ${x}`),
+  ...legacyCacheConsumers.map((x) => `legacy checkout-local cache validation remains: ${x}`),
   ...cacheWorkflowProblems.map((x) => `cache architecture violation: ${x}`),
 ];
 
