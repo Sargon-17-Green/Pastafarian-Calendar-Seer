@@ -1,0 +1,104 @@
+schema_version: 1
+decision_date: "2026-09-19"
+repository_baseline: "af3596bae0cf975cc8071c879e8a1d0a42bf43c0"
+package_version: "0.2.2"
+constraint:
+  payment_method_allowed: false
+  paid_services_allowed: false
+launch_classification: "public-beta-no-sla"
+production_contract_status: "conditional-pending-live-provider-gates"
+
+primary:
+  provider: "back4app-containers"
+  plan: "free"
+  region: "USA"
+  price_usd_per_month: 0
+  cpu: "0.25 shared CPU"
+  memory: "256 MB"
+  transfer: "100 GB/month"
+  instances:
+    initial: 1
+    max_zero_cost: 1
+  public_url: "provider b4a.run HTTPS URL"
+  custom_domain_required: false
+  persistent_storage: false
+  database: false
+runtime:
+  os: "linux-container"
+  architecture: "amd64-expected-live-verification-required"
+  node_major: 24
+  http_processes_per_container: 1
+  engine_processes_per_container: 1
+  persistent_engine_service: true
+  rns_backend: "portable"
+  heavy_work_concurrency: 1
+  native_exact_default_timeout_ms: 120000
+  hosted_application_deadline_ms: null
+  provider_request_timeout_ms: null
+  deadline_rule: "choose hosted deadline after live benchmark; application deadline must expire before provider/gateway deadline"
+  provider_request_timeout_verified: false
+
+capacity:
+  planning_exact_requests_per_minute: "5-10"
+  horizontal_scaling_zero_cost: false
+  measured_simulation:
+    cpu_quota: "25%"
+    memory_limit: "256 MiB"
+    swap: "disabled"
+    exact_representative_seconds:
+      - 6.938
+      - 6.085
+      - 6.489
+      - 6.485
+      - 6.085
+    range_10000_seconds: 22.328
+    range_10000_bytes: 2395061
+    peak_memory_range_bytes: 143261696
+    repeat_portable_exact_seconds:
+      - 3.720
+      - 4.390
+      - 4.389
+      - 3.800
+      - 3.297
+    repeat_portable_peak_memory_bytes: 115314688
+cost:
+  idle_usd_per_month: 0
+  typical_usd_per_month: 0
+  exact_1000_monetary_cost_usd: 0
+  caveat: "capacity and transfer limits replace monetary scaling; no paid overage path is allowed"
+
+fallback:
+  provider: "render"
+  plan: "free-web-service"
+  price_usd_per_month: 0
+  cpu: "0.1 CPU"
+  memory: "512 MB"
+  instances_max: 1
+  idle_spin_down_minutes: 15
+  cold_start_documented: "about one minute"
+  free_instance_hours_per_workspace_month: 750
+  production_recommended_by_provider: false
+  measured_simulation:
+    cpu_quota: "10%"
+    memory_limit: "512 MiB"
+    exact_representative_seconds:
+      - 10.965
+      - 9.101
+      - 8.887
+    cheap_query_seconds: 0.006
+    peak_memory_bytes: 85807104
+
+workstream_3_gates:
+  - "Back4app build succeeds from the current Dockerfile without any paid feature"
+  - "TARGETARCH behavior and actual runtime architecture are recorded"
+  - "Provider ingress/gateway timeout is measured and a shorter hosted application deadline is selected"
+  - "Representative exact, concurrency, and 10k-range benchmarks pass on-provider"
+  - "A cheap non-calendar liveness endpoint is added and used for frequent health checks"
+  - "No payment method or billing account is requested"
+  - "Overload/rate-limit behavior is explicit before broad publicity"
+
+fallback_trigger:
+  - "Back4app requests a payment method"
+  - "Docker build cannot complete on Free plan"
+  - "Provider request timeout cannot satisfy the API contract"
+  - "Measured Free-tier runtime is unstable or exceeds safe memory limits"
