@@ -17,6 +17,7 @@ using seer_native::detail::fanchor;
 #include <deque>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <list>
 #include <memory>
 #include <sstream>
