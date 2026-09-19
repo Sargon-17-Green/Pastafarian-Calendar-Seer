@@ -34,7 +34,7 @@ echo "$GMP_SHA  $GMP_SOURCE" | sha256sum -c -
 if [[ -z "${SEER_GMP_PREFIX:-}" ]]; then
   export SEER_GMP_PREFIX="${RUNNER_TEMP:-/tmp}/seer-gmp-prefix-$TARGET"
   GMP_WORK="${RUNNER_TEMP:-/tmp}/seer-gmp-work-$TARGET"
-  scripts/build-gmp-from-source.sh "$TARGET" "$GMP_SOURCE" "$GMP_WORK" "$SEER_GMP_PREFIX"
+  bash scripts/build-gmp-from-source.sh "$TARGET" "$GMP_SOURCE" "$GMP_WORK" "$SEER_GMP_PREFIX"
 fi
 test -f "$SEER_GMP_PREFIX/include/gmp.h"
 
