@@ -171,7 +171,7 @@ jobs:
           push-to-registry: true
 
       - name: Scan amd64 image and retain HIGH/CRITICAL report
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.amd64 }}
           version: v0.70.0
@@ -182,7 +182,7 @@ jobs:
           exit-code: '0'
 
       - name: Scan arm64 image and retain HIGH/CRITICAL report
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.arm64 }}
           severity: HIGH,CRITICAL
@@ -193,7 +193,7 @@ jobs:
           skip-setup-trivy: true
 
       - name: Enforce amd64 unfixed-aware CRITICAL vulnerability gate
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.amd64 }}
           severity: CRITICAL
@@ -203,7 +203,7 @@ jobs:
           skip-setup-trivy: true
 
       - name: Enforce arm64 unfixed-aware CRITICAL vulnerability gate
-        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ env.IMAGE }}@${{ steps.image.outputs.arm64 }}
           severity: CRITICAL
