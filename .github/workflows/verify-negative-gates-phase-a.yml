@@ -1,7 +1,9 @@
 name: Verify negative-gate corpus Phase A
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/tools/generate_gates_saved_sum.cpp'
       - 'prototype/tools/gate_validate_saved_sum.cpp'

@@ -1,0 +1,218 @@
+name: Verify release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_all:
+        description: Run every gate even when exact-head evidence already exists
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      force_all:
+        description: Run every gate even when exact-head evidence already exists
+        required: false
+        default: false
+        type: boolean
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-candidate-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  policy:
+    name: Release verification policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Validate release-gate authority and wiring
+        run: node scripts/validate-release-gates.mjs
+
+  plan:
+    name: Plan exact-head release verification
+    needs: policy
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      package_cache_reuse: ${{ steps.plan.outputs.package_cache_reuse }}
+      prebuilt_packages_reuse: ${{ steps.plan.outputs.prebuilt_packages_reuse }}
+      negative_gate_corpus_reuse: ${{ steps.plan.outputs.negative_gate_corpus_reuse }}
+      bidirectional_gate_domain_reuse: ${{ steps.plan.outputs.bidirectional_gate_domain_reuse }}
+      full_finite_domain_reuse: ${{ steps.plan.outputs.full_finite_domain_reuse }}
+      gate_domain_extension_reuse: ${{ steps.plan.outputs.gate_domain_extension_reuse }}
+      reverse_conversion_reuse: ${{ steps.plan.outputs.reverse_conversion_reuse }}
+      exact_domain_errors_reuse: ${{ steps.plan.outputs.exact_domain_errors_reuse }}
+      difficult_weave_reuse: ${{ steps.plan.outputs.difficult_weave_reuse }}
+      persistent_service_reuse: ${{ steps.plan.outputs.persistent_service_reuse }}
+      portable_fallback_reuse: ${{ steps.plan.outputs.portable_fallback_reuse }}
+      arm64_parity_reuse: ${{ steps.plan.outputs.arm64_parity_reuse }}
+      stage5_exact_provider_reuse: ${{ steps.plan.outputs.stage5_exact_provider_reuse }}
+      stage6_deployment_reuse: ${{ steps.plan.outputs.stage6_deployment_reuse }}
+      web_application_reuse: ${{ steps.plan.outputs.web_application_reuse }}
+      container_deployment_reuse: ${{ steps.plan.outputs.container_deployment_reuse }}
+      supply_chain_reuse: ${{ steps.plan.outputs.supply_chain_reuse }}
+      release_preflight_reuse: ${{ steps.plan.outputs.release_preflight_reuse }}
+      plan_b64: ${{ steps.plan.outputs.plan_b64 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Freeze candidate SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git diff --exit-code
+      - name: Select reusable exact-head gates
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_ALL: ${{ inputs.force_all || false }}
+        run: node scripts/release-candidate-plan.mjs --sha "$GITHUB_SHA" --output "$RUNNER_TEMP/release-candidate-plan.json"
+
+  gate_package_cache:
+    name: OPT-01 request/cache verification
+    needs: plan
+    if: ${{ needs.plan.outputs.package_cache_reuse != 'true' }}
+    uses: ./.github/workflows/verify-opt01.yml
+  gate_prebuilt_packages:
+    name: Prebuilt native package/runtime verification
+    needs: plan
+    if: ${{ needs.plan.outputs.prebuilt_packages_reuse != 'true' }}
+    uses: ./.github/workflows/verify-prebuilt-native-packages.yml
+  gate_negative_gate_corpus:
+    name: Negative gate corpus Phase A
+    needs: plan
+    if: ${{ needs.plan.outputs.negative_gate_corpus_reuse != 'true' }}
+    uses: ./.github/workflows/verify-negative-gates-phase-a.yml
+  gate_bidirectional_gate_domain:
+    name: Bidirectional gate domain Phase B
+    needs: plan
+    if: ${{ needs.plan.outputs.bidirectional_gate_domain_reuse != 'true' }}
+    uses: ./.github/workflows/verify-bidirectional-gates-phase-b.yml
+  gate_full_finite_domain:
+    name: Full finite gate domain Phase C
+    needs: plan
+    if: ${{ needs.plan.outputs.full_finite_domain_reuse != 'true' }}
+    uses: ./.github/workflows/verify-full-domain-walk-phase-c.yml
+  gate_gate_domain_extension:
+    name: 100k gate-domain extension
+    needs: plan
+    if: ${{ needs.plan.outputs.gate_domain_extension_reuse != 'true' }}
+    uses: ./.github/workflows/verify-gate-domain-extension.yml
+  gate_reverse_conversion:
+    name: Reverse conversion
+    needs: plan
+    if: ${{ needs.plan.outputs.reverse_conversion_reuse != 'true' }}
+    uses: ./.github/workflows/verify-reverse-conversion.yml
+  gate_exact_domain_errors:
+    name: Exact domain error contract
+    needs: plan
+    if: ${{ needs.plan.outputs.exact_domain_errors_reuse != 'true' }}
+    uses: ./.github/workflows/verify-domain-error-contract.yml
+  gate_difficult_weave:
+    name: Difficult weave edge ranks
+    needs: plan
+    if: ${{ needs.plan.outputs.difficult_weave_reuse != 'true' }}
+    uses: ./.github/workflows/verify-weave-edge-ranks.yml
+  gate_persistent_service:
+    name: Persistent exact engine service
+    needs: plan
+    if: ${{ needs.plan.outputs.persistent_service_reuse != 'true' }}
+    uses: ./.github/workflows/verify-opt06.yml
+  gate_portable_fallback:
+    name: Portable production fallback
+    needs: plan
+    if: ${{ needs.plan.outputs.portable_fallback_reuse != 'true' }}
+    uses: ./.github/workflows/verify-portable-production-fallback.yml
+  gate_arm64_parity:
+    name: Native amd64/ARM64 parity
+    needs: plan
+    if: ${{ needs.plan.outputs.arm64_parity_reuse != 'true' }}
+    uses: ./.github/workflows/verify-arm64-runtime.yml
+  gate_stage5_exact_provider:
+    name: Stage 5 exact provider
+    needs: plan
+    if: ${{ needs.plan.outputs.stage5_exact_provider_reuse != 'true' }}
+    uses: ./.github/workflows/verify-stage5-exact-provider.yml
+  gate_stage6_deployment:
+    name: Stage 6 deployment package
+    needs: plan
+    if: ${{ needs.plan.outputs.stage6_deployment_reuse != 'true' }}
+    uses: ./.github/workflows/verify-stage6-deployment.yml
+  gate_web_application:
+    name: Production web application
+    needs: plan
+    if: ${{ needs.plan.outputs.web_application_reuse != 'true' }}
+    uses: ./.github/workflows/verify-web-application.yml
+  gate_container_deployment:
+    name: Container deployment
+    needs: plan
+    if: ${{ needs.plan.outputs.container_deployment_reuse != 'true' }}
+    uses: ./.github/workflows/verify-container-deployment.yml
+  gate_supply_chain:
+    name: Supply-chain hardening
+    needs: plan
+    if: ${{ needs.plan.outputs.supply_chain_reuse != 'true' }}
+    uses: ./.github/workflows/verify-supply-chain.yml
+  gate_release_preflight:
+    name: Release preflight
+    needs: plan
+    if: ${{ needs.plan.outputs.release_preflight_reuse != 'true' }}
+    uses: ./.github/workflows/verify-release-preflight.yml
+
+  manifest:
+    name: Release candidate manifest
+    needs: [plan, gate_package_cache, gate_prebuilt_packages, gate_negative_gate_corpus, gate_bidirectional_gate_domain, gate_full_finite_domain, gate_gate_domain_extension, gate_reverse_conversion, gate_exact_domain_errors, gate_difficult_weave, gate_persistent_service, gate_portable_fallback, gate_arm64_parity, gate_stage5_exact_provider, gate_stage6_deployment, gate_web_application, gate_container_deployment, gate_supply_chain, gate_release_preflight]
+    if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && needs.plan.result == 'success' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Build exact-SHA verification manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLAN_B64: ${{ needs.plan.outputs.plan_b64 }}
+          GATE_RESULTS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node scripts/release-candidate-manifest.mjs \
+            --sha "$GITHUB_SHA" \
+            --output release-candidate-verification.json
+      - name: Verify manifest locally
+        run: |
+          node scripts/verify-release-candidate-manifest.mjs \
+            --sha "$GITHUB_SHA" \
+            --manifest release-candidate-verification.json
+      - name: Upload exact-SHA release-candidate manifest
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-candidate-verification-${{ github.sha }}
+          path: release-candidate-verification.json
+          if-no-files-found: error
+          retention-days: 90

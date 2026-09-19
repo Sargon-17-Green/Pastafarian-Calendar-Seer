@@ -1,8 +1,10 @@
 name: Verify prebuilt native packages
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'package.json'
       - 'query/exact-engine.mjs'

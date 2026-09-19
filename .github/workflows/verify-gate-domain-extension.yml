@@ -1,8 +1,10 @@
 name: Verify gate domain extension 100k
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/data/gates_100k_u16.bin'
       - 'prototype/data/gates_negative_100k_u16.bin'

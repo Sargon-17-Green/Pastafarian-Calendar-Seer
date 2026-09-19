@@ -1,8 +1,10 @@
 name: Verify Stage 5 exact provider
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'query/exact-engine.mjs'
       - 'query/provider-precomputed.mjs'

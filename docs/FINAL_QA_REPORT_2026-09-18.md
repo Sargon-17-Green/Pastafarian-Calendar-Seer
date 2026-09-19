@@ -586,3 +586,7 @@ For release subject commit `4c8e683af9aeba43daf29e9e752ada4bae14458b`, version `
 There are no open BLOCKER or HIGH findings.
 
 **FINAL VERIFIED**
+
+## Post-v0.2.2 release-candidate orchestration
+
+This report preserves the historical v0.2.2 evidence, including the manually dispatched exact-head closure runs. Subsequent releases must not reconstruct that matrix from this report. The current release gate authority is `.github/release-gates.json`; `.github/workflows/verify-release-candidate.yml` produces the exact-SHA machine-readable verification manifest consumed by tag publication workflows. See `docs/RELEASE_CANDIDATE_VERIFICATION.md`.

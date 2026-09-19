@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "orchestratorWorkflow": ".github/workflows/verify-release-candidate.yml",
+  "requiredCheckContext": "Release verification policy",
+  "artifactNamePrefix": "release-candidate-verification-",
+  "manifestFilename": "release-candidate-verification.json",
+  "gates": [
+    {
+      "id": "package_cache",
+      "category": "package/cache",
+      "workflow": "verify-opt01.yml",
+      "job": "gate_package_cache",
+      "name": "OPT-01 request/cache verification",
+      "required": true
+    },
+    {
+      "id": "prebuilt_packages",
+      "category": "package/cache",
+      "workflow": "verify-prebuilt-native-packages.yml",
+      "job": "gate_prebuilt_packages",
+      "name": "Prebuilt native package/runtime verification",
+      "required": true
+    },
+    {
+      "id": "negative_gate_corpus",
+      "category": "semantic/full domain",
+      "workflow": "verify-negative-gates-phase-a.yml",
+      "job": "gate_negative_gate_corpus",
+      "name": "Negative gate corpus Phase A",
+      "required": true
+    },
+    {
+      "id": "bidirectional_gate_domain",
+      "category": "semantic/full domain",
+      "workflow": "verify-bidirectional-gates-phase-b.yml",
+      "job": "gate_bidirectional_gate_domain",
+      "name": "Bidirectional gate domain Phase B",
+      "required": true
+    },
+    {
+      "id": "full_finite_domain",
+      "category": "semantic/full domain",
+      "workflow": "verify-full-domain-walk-phase-c.yml",
+      "job": "gate_full_finite_domain",
+      "name": "Full finite gate domain Phase C",
+      "required": true
+    },
+    {
+      "id": "gate_domain_extension",
+      "category": "semantic/full domain",
+      "workflow": "verify-gate-domain-extension.yml",
+      "job": "gate_gate_domain_extension",
+      "name": "100k gate-domain extension",
+      "required": true
+    },
+    {
+      "id": "reverse_conversion",
+      "category": "reverse",
+      "workflow": "verify-reverse-conversion.yml",
+      "job": "gate_reverse_conversion",
+      "name": "Reverse conversion",
+      "required": true
+    },
+    {
+      "id": "exact_domain_errors",
+      "category": "exact errors",
+      "workflow": "verify-domain-error-contract.yml",
+      "job": "gate_exact_domain_errors",
+      "name": "Exact domain error contract",
+      "required": true
+    },
+    {
+      "id": "difficult_weave",
+      "category": "difficult weave",
+      "workflow": "verify-weave-edge-ranks.yml",
+      "job": "gate_difficult_weave",
+      "name": "Difficult weave edge ranks",
+      "required": true
+    },
+    {
+      "id": "persistent_service",
+      "category": "persistent service",
+      "workflow": "verify-opt06.yml",
+      "job": "gate_persistent_service",
+      "name": "Persistent exact engine service",
+      "required": true
+    },
+    {
+      "id": "portable_fallback",
+      "category": "portable fallback",
+      "workflow": "verify-portable-production-fallback.yml",
+      "job": "gate_portable_fallback",
+      "name": "Portable production fallback",
+      "required": true
+    },
+    {
+      "id": "arm64_parity",
+      "category": "ARM64 parity",
+      "workflow": "verify-arm64-runtime.yml",
+      "job": "gate_arm64_parity",
+      "name": "Native amd64/ARM64 parity",
+      "required": true
+    },
+    {
+      "id": "stage5_exact_provider",
+      "category": "Stage 5/6",
+      "workflow": "verify-stage5-exact-provider.yml",
+      "job": "gate_stage5_exact_provider",
+      "name": "Stage 5 exact provider",
+      "required": true
+    },
+    {
+      "id": "stage6_deployment",
+      "category": "Stage 5/6",
+      "workflow": "verify-stage6-deployment.yml",
+      "job": "gate_stage6_deployment",
+      "name": "Stage 6 deployment package",
+      "required": true
+    },
+    {
+      "id": "web_application",
+      "category": "web",
+      "workflow": "verify-web-application.yml",
+      "job": "gate_web_application",
+      "name": "Production web application",
+      "required": true
+    },
+    {
+      "id": "container_deployment",
+      "category": "container",
+      "workflow": "verify-container-deployment.yml",
+      "job": "gate_container_deployment",
+      "name": "Container deployment",
+      "required": true
+    },
+    {
+      "id": "supply_chain",
+      "category": "supply chain",
+      "workflow": "verify-supply-chain.yml",
+      "job": "gate_supply_chain",
+      "name": "Supply-chain hardening",
+      "required": true
+    },
+    {
+      "id": "release_preflight",
+      "category": "release preflight",
+      "workflow": "verify-release-preflight.yml",
+      "job": "gate_release_preflight",
+      "name": "Release preflight",
+      "required": true
+    }
+  ]
+}

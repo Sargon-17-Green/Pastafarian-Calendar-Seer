@@ -1,8 +1,10 @@
 name: Verify ARM64 exact runtime
 
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
   pull_request:
 
 permissions:

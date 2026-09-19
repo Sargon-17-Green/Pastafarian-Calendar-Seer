@@ -1,7 +1,9 @@
 name: Verify full finite gate domain Phase C
 on:
+  workflow_call:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - 'prototype/data/gates_u16.bin'
       - 'prototype/data/gates_negative_u16.bin'
