@@ -103,8 +103,10 @@ jobs:
           done
           test "$ready" -eq 1
           test "$(docker exec seer-container id -u)" != "0"
-          curl -fsS http://127.0.0.1:18080/web/ | grep -q 'Pastafarian Calendar Seer'
-          curl -fsS http://127.0.0.1:18080/client/index.mjs | grep -q 'createSeerClient'
+          curl -fsS http://127.0.0.1:18080/web/ -o /tmp/seer-web.html
+          grep -q 'Pastafarian Calendar Seer' /tmp/seer-web.html
+          curl -fsS http://127.0.0.1:18080/client/index.mjs -o /tmp/seer-client.mjs
+          grep -q 'createSeerClient' /tmp/seer-client.mjs
 
           curl -fsS             -H 'content-type: application/json'             -H 'accept: application/json'             --data '{"calculation":{"jdn":"-13334146"},"target":{"jdn":"-13337246"},"presentation":"canonical"}'             http://127.0.0.1:18080/v1/date >/tmp/seer-negative.json
           python - <<'PY'
