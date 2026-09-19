@@ -19,6 +19,8 @@ const DOMAIN_ERROR_CODES = new Set([
 const SERVICE_REGISTRY = new Map();
 const SERVICE_HASH_CACHE = new Map();
 const DEFAULT_SERVICE_REGISTRY_MAX = 4;
+const SERVICE_STDOUT_BUFFER_MAX = 32 * 1024 * 1024;
+const SERVICE_STDERR_TAIL_MAX = 8192;
 
 function envPositiveInteger(name, fallback, min = 1, max = 64) {
   const raw = process.env[name];
@@ -49,16 +51,25 @@ async function engineServiceIdentity(binary, cwd) {
   return `${binaryHash}:${positiveHash}:${negativeHash}`;
 }
 
+function serviceFailure(kind, message, cause) {
+  const error = new Error(message, cause === undefined ? undefined : { cause });
+  error.name = 'EngineServiceError';
+  error.serviceFailure = kind;
+  return error;
+}
+
 class EngineServiceClient {
-  constructor(binary, cwd, onDead) {
+  constructor(binary, cwd, onDead, spawnRunner = spawn) {
     this.binary = binary;
     this.cwd = cwd;
     this.onDead = onDead;
-    this.pending = [];
+    this.writeQueue = [];
+    this.inFlight = [];
     this.stdoutBuffer = '';
     this.stderrTail = '';
+    this.waitingForDrain = false;
     this.dead = false;
-    this.child = spawn(binary, [], {
+    this.child = spawnRunner(binary, [], {
       cwd,
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -67,13 +78,28 @@ class EngineServiceClient {
     this.child.stderr.setEncoding('utf8');
     this.child.stdout.on('data', (chunk) => this.#onStdout(chunk));
     this.child.stderr.on('data', (chunk) => {
-      this.stderrTail = (this.stderrTail + chunk).slice(-8192);
+      if (this.dead) return;
+      this.stderrTail = (this.stderrTail + chunk).slice(-SERVICE_STDERR_TAIL_MAX);
     });
-    this.child.on('error', (error) => this.#fail(error));
+    this.child.stdin.on('error', (error) => {
+      this.#fail(serviceFailure('io', 'persistent Seer engine service stdin failed', error));
+    });
+    this.child.stdout.on('error', (error) => {
+      this.#fail(serviceFailure('io', 'persistent Seer engine service stdout failed', error));
+    });
+    this.child.stderr.on('error', (error) => {
+      this.#fail(serviceFailure('io', 'persistent Seer engine service stderr failed', error));
+    });
+    this.child.on('error', (error) => {
+      this.#fail(serviceFailure('spawn', 'persistent Seer engine service process failed', error));
+    });
     this.child.on('exit', (code, signal) => {
       if (!this.dead) {
         const suffix = this.stderrTail.trim();
-        this.#fail(new Error(`persistent Seer engine service exited (${code ?? 'null'}, ${signal ?? 'none'})${suffix ? `: ${suffix}` : ''}`));
+        this.#fail(serviceFailure(
+          'exit',
+          `persistent Seer engine service exited (${code ?? 'null'}, ${signal ?? 'none'})${suffix ? `: ${suffix}` : ''}`,
+        ));
       }
     });
   }
@@ -86,68 +112,156 @@ class EngineServiceClient {
     this.child?.stderr?.[method]?.();
   }
 
+  #settle(waiter, method, value) {
+    if (!waiter || waiter.settled) return;
+    waiter.settled = true;
+    if (waiter.timer) {
+      clearTimeout(waiter.timer);
+      waiter.timer = null;
+    }
+    waiter[method](value);
+  }
+
+  #maybeUnref() {
+    if (!this.dead && this.writeQueue.length === 0 && this.inFlight.length === 0) {
+      this.#setReferenced(false);
+    }
+  }
+
   #onStdout(chunk) {
+    if (this.dead) return;
     this.stdoutBuffer += chunk;
     for (;;) {
       const newline = this.stdoutBuffer.indexOf('\n');
       if (newline < 0) break;
+      if (newline > SERVICE_STDOUT_BUFFER_MAX) {
+        this.#fail(serviceFailure('protocol', 'persistent Seer engine service emitted an oversized response line'));
+        return;
+      }
       const line = this.stdoutBuffer.slice(0, newline).replace(/\r$/, '');
       this.stdoutBuffer = this.stdoutBuffer.slice(newline + 1);
       if (!line) continue;
-      const waiter = this.pending.shift();
+      const waiter = this.inFlight[0];
       if (!waiter) {
-        this.#fail(new Error('persistent Seer engine service emitted an unsolicited response'));
+        this.#fail(serviceFailure('protocol', 'persistent Seer engine service emitted an unsolicited response'));
         return;
       }
+
+      let parsed;
       try {
-        const parsed = JSON.parse(line);
-        if (parsed?.ok === false) {
-          const error = new Error(typeof parsed.error === 'string' ? parsed.error : 'persistent Seer engine service rejected the request');
-          if (typeof parsed.code === 'string') error.seerCode = parsed.code;
-          waiter.reject(error);
-        } else {
-          waiter.resolve(parsed);
-        }
+        parsed = JSON.parse(line);
       } catch (error) {
-        waiter.reject(error);
+        this.#fail(serviceFailure('protocol', 'persistent Seer engine service emitted invalid JSON', error));
+        return;
       }
-      if (this.pending.length === 0) this.#setReferenced(false);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        this.#fail(serviceFailure('protocol', 'persistent Seer engine service emitted a non-object response'));
+        return;
+      }
+
+      this.inFlight.shift();
+      if (parsed.ok === false) {
+        const error = new Error(typeof parsed.error === 'string' ? parsed.error : 'persistent Seer engine service rejected the request');
+        if (typeof parsed.code === 'string') error.seerCode = parsed.code;
+        error.serviceFailure = 'request';
+        this.#settle(waiter, 'reject', error);
+      } else {
+        this.#settle(waiter, 'resolve', parsed);
+      }
+      this.#maybeUnref();
+    }
+
+    if (this.stdoutBuffer.length > SERVICE_STDOUT_BUFFER_MAX) {
+      this.#fail(serviceFailure('protocol', 'persistent Seer engine service stdout line exceeded the bounded buffer'));
+    }
+  }
+
+  #flushWrites() {
+    if (this.dead || this.waitingForDrain) return;
+    while (!this.dead && this.writeQueue.length > 0) {
+      const waiter = this.writeQueue.shift();
+      if (!waiter || waiter.settled) continue;
+      this.inFlight.push(waiter);
+      let accepted;
+      try {
+        accepted = this.child.stdin.write(waiter.payload);
+      } catch (error) {
+        this.#fail(serviceFailure('io', 'persistent Seer engine service request write failed', error));
+        return;
+      }
+      if (!accepted) {
+        this.waitingForDrain = true;
+        this.child.stdin.once('drain', () => {
+          if (this.dead) return;
+          this.waitingForDrain = false;
+          this.#flushWrites();
+        });
+        return;
+      }
+    }
+  }
+
+  #terminateChild() {
+    try { this.child.stdin.destroy(); } catch {}
+    try { this.child.stdout.destroy(); } catch {}
+    try { this.child.stderr.destroy(); } catch {}
+    try {
+      if (!this.child.killed) this.child.kill('SIGKILL');
+    } catch {
+      try { this.child.kill(); } catch {}
     }
   }
 
   #fail(error) {
     if (this.dead) return;
     this.dead = true;
-    for (const waiter of this.pending.splice(0)) waiter.reject(error);
-    try { this.child.stdin.destroy(); } catch {}
-    try { this.child.kill(); } catch {}
+    this.stdoutBuffer = '';
+    this.waitingForDrain = false;
+    const failure = error?.serviceFailure
+      ? error
+      : serviceFailure('process', error?.message ?? 'persistent Seer engine service failed', error);
+    const waiters = [...this.inFlight.splice(0), ...this.writeQueue.splice(0)];
+    for (const waiter of waiters) this.#settle(waiter, 'reject', failure);
+    this.#setReferenced(false);
+    this.#terminateChild();
     this.onDead?.(this);
   }
 
-  request(fields) {
-    if (this.dead) return Promise.reject(new Error('persistent Seer engine service is unavailable'));
+  request(fields, { timeoutMs } = {}) {
+    if (this.dead) {
+      return Promise.reject(serviceFailure('unavailable', 'persistent Seer engine service is unavailable'));
+    }
     this.#setReferenced(true);
     return new Promise((resolve, reject) => {
-      this.pending.push({ resolve, reject });
-      try {
-        this.child.stdin.write(`${fields.join('\t')}\n`);
-      } catch (error) {
-        this.#fail(error);
+      const waiter = {
+        resolve,
+        reject,
+        settled: false,
+        timer: null,
+        payload: `${fields.join('\t')}\n`,
+      };
+      if (Number.isFinite(timeoutMs) && timeoutMs > 0) {
+        waiter.timer = setTimeout(() => {
+          if (waiter.settled || this.dead) return;
+          this.#fail(serviceFailure(
+            'timeout',
+            `persistent Seer engine service exceeded the ${timeoutMs} ms request deadline`,
+          ));
+        }, timeoutMs);
+        waiter.timer.unref?.();
       }
+      this.writeQueue.push(waiter);
+      this.#flushWrites();
     });
   }
 
   close() {
     if (this.dead) return;
-    this.dead = true;
-    for (const waiter of this.pending.splice(0)) waiter.reject(new Error('persistent Seer engine service closed'));
-    try { this.child.stdin.end(); } catch {}
-    try { this.child.kill(); } catch {}
-    this.onDead?.(this);
+    this.#fail(serviceFailure('closed', 'persistent Seer engine service closed'));
   }
 }
 
-async function getEngineServiceClient(binary, cwd) {
+async function getEngineServiceClient(binary, cwd, { spawnRunner = spawn } = {}) {
   const identity = await engineServiceIdentity(binary, cwd);
   const existing = SERVICE_REGISTRY.get(identity);
   if (existing && !existing.client.dead) {
@@ -156,15 +270,11 @@ async function getEngineServiceClient(binary, cwd) {
     return existing.client;
   }
 
-  if (process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE) {
-    await appendFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, `${identity}\n`, 'utf8').catch(() => {});
-  }
-
   let client;
   client = new EngineServiceClient(binary, cwd, () => {
     const current = SERVICE_REGISTRY.get(identity);
     if (current?.client === client) SERVICE_REGISTRY.delete(identity);
-  });
+  }, spawnRunner);
   SERVICE_REGISTRY.set(identity, { client });
 
   const maxEntries = envPositiveInteger('SEER_SERVICE_REGISTRY_MAX', DEFAULT_SERVICE_REGISTRY_MAX);
@@ -173,6 +283,10 @@ async function getEngineServiceClient(binary, cwd) {
     const oldest = SERVICE_REGISTRY.get(oldestKey);
     SERVICE_REGISTRY.delete(oldestKey);
     oldest?.client.close();
+  }
+
+  if (process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE) {
+    await appendFile(process.env.SEER_TEST_SERVICE_SPAWN_COUNTER_FILE, `${identity}\n`, 'utf8').catch(() => {});
   }
   return client;
 }
@@ -359,7 +473,7 @@ function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) 
   };
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync } = {}) {
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync, serviceSpawnRunner = spawn } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
@@ -399,14 +513,19 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       return null;
     }
     try {
-      const client = await getEngineServiceClient(binary, cwd);
-      return await client.request(fields);
+      const client = await getEngineServiceClient(binary, cwd, { spawnRunner: serviceSpawnRunner });
+      return await client.request(fields, { timeoutMs });
     } catch (error) {
       if (DOMAIN_ERROR_CODES.has(error?.seerCode)) {
         throw queryError(error.seerCode, domainErrorMessage(error.seerCode), { cause: error });
       }
       if (requireService) {
-        throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service failed.', { cause: error });
+        const failure = typeof error?.serviceFailure === 'string' ? error.serviceFailure : 'failed';
+        throw queryError(
+          'SEER_UNAVAILABLE',
+          failure === 'timeout' ? 'Persistent Seer engine service timed out.' : 'Persistent Seer engine service failed.',
+          { details: { serviceFailure: failure }, cause: error },
+        );
       }
       return null;
     }

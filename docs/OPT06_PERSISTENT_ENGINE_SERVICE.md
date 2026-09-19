@@ -28,10 +28,20 @@ Requests are processed serially inside the service. That serialization is the sy
 `query/exact-engine.mjs` prefers `seer_engine_service` when present and falls back to the pre-OPT-06 process binaries if the service is unavailable. A module-level service registry is keyed by SHA-256 of:
 
 1. the service binary;
-2. `gates_u16.bin`;
-3. `gates_negative_u16.bin`.
+2. `gates_100k_u16.bin`;
+3. `gates_negative_100k_u16.bin`.
 
-The registry is bounded (default 4 identities). Multiple request-scoped providers therefore reuse the same native service only when engine/data identity is exactly the same.
+The registry is bounded (default 4 identities). Multiple request-scoped providers therefore reuse the same native service only when engine/data identity is exactly the same. Registry insertion/eviction is synchronous after identity resolution, so concurrent callers cannot create an untracked extra service for one identity.
+
+### Per-request deadlines and recovery
+
+`timeoutMs` applies to each persistent-service request as well as to the one-shot fallback binaries. The deadline starts when the request is queued for the persistent child.
+
+The wire protocol is FIFO and intentionally has no request IDs. Therefore a timeout cannot safely be handled by dropping only one waiter: a later response from the same child could otherwise be mistaken for the next request. Any timeout, malformed JSON/non-object response, unsolicited response, stream I/O failure, or child exit marks that entire child generation unusable. The JavaScript client then rejects and clears every queued/in-flight waiter for that child, removes it from the registry, closes its pipes and kills the process. A later request creates a fresh child; bytes arriving from the retired child are never eligible to satisfy a new request.
+
+With `SEER_REQUIRE_ENGINE_SERVICE=1`, a persistent-service timeout is surfaced as `SeerQueryError` with code `SEER_UNAVAILABLE` and `details.serviceFailure === "timeout"`. With fallback allowed, the failed service attempt is discarded and the existing one-shot exact path is tried instead.
+
+The persistent transport is resource-bounded: an unterminated stdout line is capped at 32 MiB, stderr keeps only the last 8192 characters, and writes stop when `stdin.write()` reports backpressure until the corresponding `drain` event. Timers are cleared when waiters settle or when a child is retired.
 
 `SEER_REQUIRE_ENGINE_SERVICE=1` is test/deployment-only and disables fallback. `SEER_TEST_SERVICE_SPAWN_COUNTER_FILE` and `SEER_TEST_CHAIN_COUNTER_FILE` are test-only diagnostics.
 
