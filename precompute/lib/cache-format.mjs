@@ -34,6 +34,7 @@ export const ENGINE_SOURCE_FILES = Object.freeze([
   'rns_primes.hpp',
   'rns_primes32.hpp',
   'sauce_fast127_v12.hpp',
+  'short_selection_o1.hpp',
   'seer_calendar_core.cpp',
   'seer_calendar_core.hpp',
   'seer_engine_service.cpp',

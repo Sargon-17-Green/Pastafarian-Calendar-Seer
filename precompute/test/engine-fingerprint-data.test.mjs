@@ -7,6 +7,7 @@ import { ENGINE_SOURCE_FILES, sha256EngineInputs } from '../lib/cache-format.mjs
 
 
 test('runtime fingerprint closure includes the production core and both selectable weave backends', () => {
+  assert.ok(ENGINE_SOURCE_FILES.includes('short_selection_o1.hpp'));
   assert.ok(ENGINE_SOURCE_FILES.includes('seer_calendar_core.cpp'));
   assert.ok(ENGINE_SOURCE_FILES.includes('seer_year_core.cpp'));
   assert.ok(ENGINE_SOURCE_FILES.includes('seer_weave_avx2.cpp'));
