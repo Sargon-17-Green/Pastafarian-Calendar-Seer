@@ -194,49 +194,31 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
-      - name: Set up Buildx
+      - name: Test registry visibility retry policy
         if: steps.release_state.outputs.state != 'published'
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-        with:
-          version: v0.37.1
+        shell: bash
+        run: node --test deployment/test/release-registry-identity.test.mjs
 
       - name: Resolve npm and container identities
         if: steps.release_state.outputs.state != 'published'
         id: channels
+        env:
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          NAME="${{ steps.meta.outputs.name }}"
-          VERSION="${{ steps.meta.outputs.version }}"
-          npm view "$NAME@$VERSION" dist --json > "$RUNNER_TEMP/npm-dist.json"
-          NPM_INTEGRITY="$(node -e "const x=require(process.argv[1]);process.stdout.write(x.integrity)" "$RUNNER_TEMP/npm-dist.json")"
-          NPM_TARBALL="$(node -e "const x=require(process.argv[1]);process.stdout.write(x.tarball)" "$RUNNER_TEMP/npm-dist.json")"
-          curl -fsSL "$NPM_TARBALL" -o "$RUNNER_TEMP/npm-registry.tgz"
-          NPM_SHA="$(sha256sum "$RUNNER_TEMP/npm-registry.tgz" | awk '{print $1}')"
-          test "$NPM_SHA" = "${{ steps.pack.outputs.sha256 }}"
-          CONTAINER_DIGEST="$(docker buildx imagetools inspect "$IMAGE:$VERSION" | awk '/^Digest:/ {print $2; exit}')"
-          test -n "$CONTAINER_DIGEST"
-          test "$(docker buildx imagetools inspect "$IMAGE:v$VERSION" | awk '/^Digest:/ {print $2; exit}')" = "$CONTAINER_DIGEST"
-          RAW="$(docker buildx imagetools inspect "$IMAGE@$CONTAINER_DIGEST" --raw)"
-          mapfile -t PLATFORM_DIGESTS < <(node --input-type=module - "$RAW" <<'NODE'
-          const raw=JSON.parse(process.argv[2]);
-          for (const arch of ['amd64','arm64']) {
-            const m=raw.manifests?.find((x)=>x.platform?.os==='linux' && x.platform?.architecture===arch);
-            if(!m?.digest) throw new Error(`linux/${arch} digest missing`);
-            console.log(`${arch}=${m.digest}`);
-          }
-          NODE
-          )
-          declare -A P
-          for line in "${PLATFORM_DIGESTS[@]}"; do
-            P["${line%%=*}"]="${line#*=}"
-          done
-          test -n "${P[amd64]:-}" && test -n "${P[arm64]:-}"
-          echo "npm_integrity=$NPM_INTEGRITY" >> "$GITHUB_OUTPUT"
-          echo "npm_tarball=$NPM_TARBALL" >> "$GITHUB_OUTPUT"
-          echo "container_digest=$CONTAINER_DIGEST" >> "$GITHUB_OUTPUT"
-          echo "amd64_digest=${P[amd64]}" >> "$GITHUB_OUTPUT"
-          echo "arm64_digest=${P[arm64]}" >> "$GITHUB_OUTPUT"
+          node scripts/resolve-release-identities.mjs \
+            --npm-name "${{ steps.meta.outputs.name }}" \
+            --version "${{ steps.meta.outputs.version }}" \
+            --image "$IMAGE" \
+            --expected-npm-sha256 "${{ steps.pack.outputs.sha256 }}" \
+            --max-attempts 8 \
+            --base-delay-ms 2000 \
+            --max-delay-ms 20000 \
+            --request-timeout-ms 10000 \
+            --github-output "$GITHUB_OUTPUT" \
+            --output-json "$RUNNER_TEMP/release-identities.json"
 
       - name: Extract npm package for SBOM generation
         if: steps.release_state.outputs.state != 'published'
