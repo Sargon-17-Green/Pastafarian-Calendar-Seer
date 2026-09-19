@@ -1,57 +1,19 @@
-#define SEER_YEAR_BATCH_NO_MAIN
-#include "pastafarian_year_batch.cpp"
-#undef SEER_YEAR_BATCH_NO_MAIN
+#include "seer_calendar_core.hpp"
 
-#include <iostream>
-#include <fstream>
 #include <cstdlib>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
 
-static std::vector<BatchRecord> ys_compute_days(
-    int64_t calc, const FGates& G, const FY& y, const FSauce& structSauce,
-    const YBStructResult& st, int threads, int sb, int replayThreads) {
-    const int yearLen = (int)(y.b - y.a);
-    if (const char* counter = std::getenv("SEER_TEST_WEAVE_COUNTER_FILE")) {
-        std::ofstream out(counter, std::ios::app);
-        out << "weave\n";
-    }
-    int npr = yb_conservative_npr(st.monthLen);
-    RnsEngine eng(st.monthLen, npr, threads);
-    mpz_class N = eng.crt(eng.Nres, eng.npr);
-    int initk = eng.basis_for(N, eng.npr);
-    auto coeff = init_coeff(eng, initk);
-    int width = 0;
-    mpz_class rank = yb_fast_choose_mpz(structSauce, 4, 32, N, &width);
-    ExactTable gtDummy(std::vector<int>{1});
-    std::vector<int> dummyGold(yearLen, -1); dummyGold[0] = 0;
-    ApproxTable ap(st.monthLen);
-    ReplayPool pool(eng, replayThreads);
-    FastState fs;
-    fs.st = initial_struct(st.monthLen); fs.pack = eng.initPacks; fs.k = initk;
-    fs.coeff = coeff; fs.rank = rank; fs.total = N; set_rank_resid(eng, fs);
-    Unknown u{eng, ap, gtDummy, dummyGold, pool, sb};
-    u.run(fs, yearLen);
-    if ((int)u.out.size() < yearLen) throw std::runtime_error("weave shorter than full year");
-
-    std::vector<int> seen(st.monthCount, 0);
-    std::vector<BatchRecord> out; out.reserve((size_t)yearLen);
-    for (int offset = 0; offset < yearLen; ++offset) {
-        int mi = u.out[offset];
-        if (mi < 0 || mi >= st.monthCount) throw std::runtime_error("invalid month index from weave");
-        int dim = ++seen[mi];
-        int ci = -1;
-        for (int i = 0; i < st.cutletCount; ++i) {
-            if (offset >= st.cutStart[i] && offset <= st.cutEnd[i]) { ci = i; break; }
-        }
-        if (ci < 0) throw std::runtime_error("cutlet lost");
-        BatchRecord r;
-        r.targetJdn = y.a + 1 + offset; r.year = (long long)y.num;
-        r.cutletIndex = st.cutName[ci]; r.dayInCutlet = offset - st.cutStart[ci] + 1;
-        r.monthIndex = st.monthName[mi]; r.dayInMonth = dim;
-        r.cutletCount = st.cutletCount; r.monthCount = st.monthCount;
-        out.push_back(r);
-    }
-    return out;
-}
+using seer_native::BatchRecord;
+using seer_native::ExecutionParams;
+using seer_native::detail::FGates;
+using seer_native::detail::FY;
+using seer_native::detail::YBStructResult;
+using seer_native::detail::build_nonweave;
+using seer_native::detail::compute_full_year_days;
+using seer_native::detail::fadj;
+using seer_native::detail::fanchor;
 
 #ifndef SEER_YEAR_STRUCTURE_NO_MAIN
 int main(int argc, char** argv) {
@@ -63,39 +25,51 @@ int main(int argc, char** argv) {
         const int64_t calc = std::stoll(argv[1]);
         const long long requested = std::stoll(argv[2]);
         const int includeDays = std::stoi(argv[3]);
-        if (includeDays != 0 && includeDays != 1) throw std::runtime_error("include_days must be 0 or 1");
-        const int threads = argc > 4 ? atoi(argv[4]) : 3;
-        const int sb = argc > 5 ? atoi(argv[5]) : 512;
-        const int replayThreads = argc > 6 ? atoi(argv[6]) : threads;
-        if (threads < 1 || replayThreads < 1 || sb < 1) throw std::runtime_error("invalid execution parameters");
+        if (includeDays != 0 && includeDays != 1) {
+            throw std::runtime_error("include_days must be 0 or 1");
+        }
+        ExecutionParams params;
+        params.threads = argc > 4 ? atoi(argv[4]) : 3;
+        params.superblock = argc > 5 ? atoi(argv[5]) : 512;
+        params.replayThreads = argc > 6 ? atoi(argv[6]) : params.threads;
+        if (params.threads < 1 || params.replayThreads < 1 || params.superblock < 1) {
+            throw std::runtime_error("invalid execution parameters");
+        }
 
-        FGates G("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
-        auto S = fast_stones();
-        FY y = fanchor(calc, G, S);
-        while (y.num < requested) y = fadj(calc, G, S, y, true);
-        while (y.num > requested) y = fadj(calc, G, S, y, false);
-        const int64_t start = y.a + 1, end = y.b, length = y.b - y.a;
-        if (length < 1 || length > 10000) throw std::runtime_error("located year length is outside supported limit");
+        FGates gates("gates_100k_u16.bin", "gates_negative_100k_u16.bin");
+        const auto stones = fast_stones();
+        FY year = fanchor(calc, gates, stones);
+        while (year.num < requested) year = fadj(calc, gates, stones, year, true);
+        while (year.num > requested) year = fadj(calc, gates, stones, year, false);
+        const int64_t start = year.a + 1;
+        const int64_t end = year.b;
+        const int64_t length = year.b - year.a;
+        if (length < 1 || length > 10000) {
+            throw std::runtime_error("located year length is outside supported limit");
+        }
 
-        FSauce structSauce = fast_sauce(calc, start, S);
-        YBStructResult st = yb_build_nonweave(calc, G, y, structSauce);
+        const FSauce structSauce = fast_sauce(calc, start, stones);
+        const YBStructResult structure = build_nonweave(calc, gates, year, structSauce);
         std::vector<BatchRecord> days;
-        if (includeDays) days = ys_compute_days(calc, G, y, structSauce, st, threads, sb, replayThreads);
+        if (includeDays) {
+            days = compute_full_year_days(calc, gates, year, structSauce, structure, params);
+        }
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
-                  << ",\"year\":" << y.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end
+                  << ",\"year\":" << year.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end
                   << ",\"lengthDays\":" << length << ",\"cutlets\":[";
-        for (int i = 0; i < st.cutletCount; ++i) {
+        for (int i = 0; i < structure.cutletCount; ++i) {
             if (i) std::cout << ',';
-            std::cout << "{\"cutletIndex\":" << st.cutName[i]
-                      << ",\"startOffset\":" << st.cutStart[i]
-                      << ",\"endOffset\":" << st.cutEnd[i]
-                      << ",\"lengthDays\":" << (st.cutEnd[i] - st.cutStart[i] + 1) << '}';
+            std::cout << "{\"cutletIndex\":" << structure.cutName[i]
+                      << ",\"startOffset\":" << structure.cutStart[i]
+                      << ",\"endOffset\":" << structure.cutEnd[i]
+                      << ",\"lengthDays\":" << (structure.cutEnd[i] - structure.cutStart[i] + 1) << '}';
         }
         std::cout << "],\"months\":[";
-        for (int i = 0; i < st.monthCount; ++i) {
+        for (int i = 0; i < structure.monthCount; ++i) {
             if (i) std::cout << ',';
-            std::cout << "{\"monthIndex\":" << st.monthName[i] << ",\"lengthDays\":" << st.monthLen[i] << '}';
+            std::cout << "{\"monthIndex\":" << structure.monthName[i]
+                      << ",\"lengthDays\":" << structure.monthLen[i] << '}';
         }
         std::cout << ']';
         if (includeDays) {
