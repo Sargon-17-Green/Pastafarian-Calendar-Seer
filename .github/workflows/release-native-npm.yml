@@ -1,0 +1,200 @@
+name: Publish prebuilt exact runtimes to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+
+concurrency:
+  group: npm-native-publish-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer' && github.ref_type == 'tag'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Validate immutable release ref
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --tags
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
+          test "$(git rev-list -n 1 "$GITHUB_REF_NAME")" = "$GITHUB_SHA"
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Wait for exact-head verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-supply-chain.yml verify-release-preflight.yml verify-prebuilt-native-packages.yml; do
+            ok=0
+            for _ in $(seq 1 120); do
+              RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
+              if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
+          const [sha, raw] = process.argv.slice(2);
+          const runs = JSON.parse(raw);
+          process.exit(runs.some((run) =>
+            run.headSha === sha &&
+            run.status === 'completed' &&
+            run.conclusion === 'success'
+          ) ? 0 : 1);
+          NODE
+              then ok=1; break; fi
+              sleep 15
+            done
+            test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+          done
+  linux:
+    needs: gate
+    name: Publish ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-24.04
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+    timeout-minutes: 240
+    steps:
+      - name: Install pinned-baseline build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates curl xz-utils make m4 diffutils g++ libboost-dev
+          rm -rf /var/lib/apt/lists/*
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - name: Assert release glibc baseline
+        run: test "$(getconf GNU_LIBC_VERSION)" = "glibc 2.36"
+      - run: npm install --global npm@11.19.0
+      - name: Build verified package
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/package-native-linux.sh
+          scripts/package-native-linux.sh "${{ matrix.target }}" "$RUNNER_TEMP/native-package"
+          node deployment/test/registry-style-install.mjs "$GITHUB_WORKSPACE" "$RUNNER_TEMP/native-package"
+      - name: Pack native package
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/native-pack"
+          JSON="$(npm pack "$RUNNER_TEMP/native-package" --pack-destination "$RUNNER_TEMP/native-pack" --json)"
+          FILE="$(node -e "const x=JSON.parse(process.argv[1]);process.stdout.write(x[0].filename)" "$JSON")"
+          NAME="$(node -p "require(process.argv[1]).name" "$RUNNER_TEMP/native-package/package.json")"
+          VERSION="$(node -p "require(process.argv[1]).version" "$RUNNER_TEMP/native-package/package.json")"
+          TGZ="$RUNNER_TEMP/native-pack/$FILE"
+          SHA="$(sha256sum "$TGZ" | awk '{print $1}')"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tgz=$TGZ" >> "$GITHUB_OUTPUT"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+      - name: Publish or verify native package
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.pack.outputs.name }}"
+          VERSION="${{ steps.pack.outputs.version }}"
+          TGZ="${{ steps.pack.outputs.tgz }}"
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "$NAME@$VERSION already exists; verifying immutable bytes."
+          else
+            npm publish "$TGZ" --access public --provenance
+          fi
+          DIST="$(npm view "$NAME@$VERSION" dist --json)"
+          URL="$(node -e "const x=JSON.parse(process.argv[1]);process.stdout.write(x.tarball)" "$DIST")"
+          curl -fsSL "$URL" -o "$RUNNER_TEMP/registry-native.tgz"
+          test "$(sha256sum "$RUNNER_TEMP/registry-native.tgz" | awk '{print $1}')" = "${{ steps.pack.outputs.sha256 }}"
+          cmp --silent "$TGZ" "$RUNNER_TEMP/registry-native.tgz"
+  windows:
+    needs: gate
+    name: Publish win32-x64
+    runs-on: windows-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-boost
+            make
+            m4
+            diffutils
+      - shell: pwsh
+        run: npm install --global npm@11.19.0
+      - name: Build verified package
+        shell: pwsh
+        env:
+          SEER_TOOLCHAIN_BIN: C:\msys64\ucrt64\bin
+          CXX: C:\msys64\ucrt64\bin\g++.exe
+        run: |
+          ./scripts/package-native-windows.ps1 -OutputDir "$env:RUNNER_TEMP/native-package"
+          node deployment/test/registry-style-install.mjs "$env:GITHUB_WORKSPACE" "$env:RUNNER_TEMP/native-package"
+      - name: Pack native package
+        id: pack
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/native-pack" | Out-Null
+          $json = npm pack "$env:RUNNER_TEMP/native-package" --pack-destination "$env:RUNNER_TEMP/native-pack" --json | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "npm pack failed: $LASTEXITCODE" }
+          $pkg = Get-Content "$env:RUNNER_TEMP/native-package/package.json" -Raw | ConvertFrom-Json
+          $tgz = Join-Path "$env:RUNNER_TEMP/native-pack" $json[0].filename
+          $sha = (Get-FileHash $tgz -Algorithm SHA256).Hash.ToLowerInvariant()
+          "name=$($pkg.name)" >> $env:GITHUB_OUTPUT
+          "version=$($pkg.version)" >> $env:GITHUB_OUTPUT
+          "tgz=$tgz" >> $env:GITHUB_OUTPUT
+          "sha256=$sha" >> $env:GITHUB_OUTPUT
+      - name: Publish or verify native package
+        shell: pwsh
+        run: |
+          $name = "${{ steps.pack.outputs.name }}"
+          $version = "${{ steps.pack.outputs.version }}"
+          $tgz = "${{ steps.pack.outputs.tgz }}"
+          npm view "$name@$version" version *> $null
+          if ($LASTEXITCODE -ne 0) {
+            npm publish $tgz --access public --provenance
+            if ($LASTEXITCODE -ne 0) { throw "npm publish failed: $LASTEXITCODE" }
+          }
+          $dist = npm view "$name@$version" dist --json | ConvertFrom-Json
+          Invoke-WebRequest -UseBasicParsing $dist.tarball -OutFile "$env:RUNNER_TEMP/registry-native.tgz"
+          $sha = (Get-FileHash "$env:RUNNER_TEMP/registry-native.tgz" -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($sha -ne "${{ steps.pack.outputs.sha256 }}") { throw "registry native tarball hash mismatch" }
+          if ((Compare-Object (Get-Content $tgz -AsByteStream) (Get-Content "$env:RUNNER_TEMP/registry-native.tgz" -AsByteStream))) {
+            throw "registry native tarball differs from tagged build"
+          }

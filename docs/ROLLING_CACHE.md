@@ -95,9 +95,16 @@ The runtime does **not** auto-download cache data. This prevents network availab
 
 ## npm users
 
-The npm package contains the exact runtime source/data and build scripts, but no rolling cache snapshot.
+The npm root package contains no rolling cache snapshot. On Linux x64, Linux
+arm64, and Windows x64, a normal install also selects an exact-version prebuilt
+runtime through platform-constrained `optionalDependencies`. No compiler,
+`postinstall`, or query-time binary download is required.
 
-For local exact queries:
+The exact runtime remains available months after publication because it computes
+cache misses directly; it is not bounded by a release-day cache horizon.
+
+An explicit source build is still available as a fallback or maintainer
+override:
 
 ```bash
 npm explore pastafarian-calendar-seer -- npm run build:native
@@ -111,7 +118,14 @@ SEER_CACHE_DIR=/path/to/cache-data
 
 If that directory disappears or becomes invalid, queries use the exact engine.
 
-Browser users of `pastafarian-calendar-seer/client` are unaffected because the browser package talks to a remote HTTP service.
+Consumers that intentionally install with `--omit=optional`, and consumers on
+unsupported OS/architecture combinations, can still use
+`pastafarian-calendar-seer/client`. A local exact cache miss in such an
+installation returns explicit `SEER_UNAVAILABLE`; it never changes calendar
+semantics.
+
+See `docs/NPM_LOCAL_RUNTIME.md` for the binary packaging, provenance, licensing,
+and long-lived clean-install contract.
 
 ## Source checkouts
 

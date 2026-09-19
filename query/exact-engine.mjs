@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { queryError } from './errors.mjs';
+import { prebuiltRuntimeHint, resolvePrebuiltBinary } from './prebuilt-runtime.mjs';
 
 const execFileAsync = promisify(execFile);
 const DEFAULT_MAX_BUFFER = 32 * 1024 * 1024;
@@ -194,8 +195,22 @@ async function resolveBinary({ explicit, envName, rootDir, basename }) {
   if (process.platform === 'win32') candidates.push(path.join(rootDir, 'prototype', 'build', `${basename}.exe`));
   candidates.push(path.join(rootDir, 'prototype', 'build', basename));
   const found = await firstExisting(candidates);
-  if (!found) throw queryError('SEER_UNAVAILABLE', `Exact Seer engine binary is unavailable: ${basename}.`, { details: { binary: basename, env: envName } });
-  return found;
+  if (found) return found;
+
+  try {
+    const prebuilt = await resolvePrebuiltBinary({ rootDir, basename });
+    if (prebuilt) return prebuilt;
+  } catch (error) {
+    throw queryError('SEER_UNAVAILABLE', error.message, {
+      details: { binary: basename, env: envName, ...(error.details ?? {}) },
+      cause: error,
+    });
+  }
+
+  const hint = await prebuiltRuntimeHint({ rootDir });
+  throw queryError('SEER_UNAVAILABLE', `Exact Seer engine binary is unavailable: ${basename}. ${hint.message}`, {
+    details: { binary: basename, env: envName, ...hint.details },
+  });
 }
 
 function safeInteger(value, field, code) {
@@ -354,14 +369,25 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     const candidates = [yearStructureBinary, process.env.SEER_YEAR_STRUCTURE_BIN];
     if (process.platform === 'win32') candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_year_structure.exe'));
     candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_year_structure'));
-    return firstExisting(candidates);
+    const found = await firstExisting(candidates);
+    if (found) return found;
+    try {
+      return await resolvePrebuiltBinary({ rootDir, basename: 'seer_year_structure' });
+    } catch (error) {
+      throw queryError('SEER_UNAVAILABLE', error.message, {
+        details: { binary: 'seer_year_structure', env: 'SEER_YEAR_STRUCTURE_BIN', ...(error.details ?? {}) },
+        cause: error,
+      });
+    }
   }
 
   async function optionalServiceBinary() {
     const candidates = [engineServiceBinary, process.env.SEER_ENGINE_SERVICE_BIN];
     if (process.platform === 'win32') candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_engine_service.exe'));
     candidates.push(path.join(rootDir, 'prototype', 'build', 'seer_engine_service'));
-    return firstExisting(candidates);
+    const found = await firstExisting(candidates);
+    if (found) return found;
+    return resolvePrebuiltBinary({ rootDir, basename: 'seer_engine_service' });
   }
 
   const requireService = process.env.SEER_REQUIRE_ENGINE_SERVICE === '1';

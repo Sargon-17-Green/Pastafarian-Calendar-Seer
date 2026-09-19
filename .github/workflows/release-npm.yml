@@ -56,7 +56,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-supply-chain.yml verify-release-preflight.yml; do
+          for WORKFLOW in verify-stage6-deployment.yml verify-arm64-runtime.yml verify-full-domain-walk-phase-c.yml verify-gate-domain-extension.yml verify-supply-chain.yml verify-release-preflight.yml verify-prebuilt-native-packages.yml release-native-npm.yml; do
             ok=0
             for _ in $(seq 1 120); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion)"
@@ -73,6 +73,19 @@ jobs:
               sleep 15
             done
             test "$ok" -eq 1 || { echo "No successful exact-head run for $WORKFLOW at $GITHUB_SHA" >&2; exit 1; }
+          done
+
+      - name: Require exact-version prebuilt runtimes
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.meta.outputs.version }}"
+          for PACKAGE in \
+            pastafarian-calendar-seer-linux-x64 \
+            pastafarian-calendar-seer-linux-arm64 \
+            pastafarian-calendar-seer-win32-x64; do
+            FOUND="$(npm view "$PACKAGE@$VERSION" version)"
+            test "$FOUND" = "$VERSION"
           done
 
       - name: Package self-test
@@ -202,12 +215,7 @@ jobs:
           echo "integrity=$INTEGRITY" >> "$GITHUB_OUTPUT"
           echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
 
-      - name: Install native build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
-
-      - name: Clean registry install and installed-package verification
+      - name: Clean registry install proves long-lived exact execution
         shell: bash
         run: |
           set -euo pipefail
@@ -218,14 +226,25 @@ jobs:
           cd "$CONSUMER"
           npm init -y >/dev/null
           npm install --ignore-scripts "$NAME@$VERSION"
+          test -d "node_modules/pastafarian-calendar-seer-linux-x64"
           node --input-type=module <<'NODE'
           const rootApi = await import('pastafarian-calendar-seer');
           const clientApi = await import('pastafarian-calendar-seer/client');
           if (typeof rootApi.queryDate !== 'function') throw new Error('queryDate export missing');
           if (typeof clientApi.createSeerClient !== 'function') throw new Error('createSeerClient export missing');
+          const result = await rootApi.queryNow({
+            now: '2026-10-19T12:00:00Z',
+            presentation: 'canonical',
+          });
+          if (!/^-?\d+$/.test(result.calculationDay.jdn)) throw new Error('long-lived queryNow calculation day missing');
+          if (!/^-?\d+$/.test(result.pastafarianDate.year)) throw new Error('long-lived queryNow result missing');
+          console.log(JSON.stringify({
+            longLivedExact: true,
+            calculationDayJdn: result.calculationDay.jdn,
+            pastafarianYear: result.pastafarianDate.year,
+          }));
           NODE
           node "$GITHUB_WORKSPACE/deployment/test/installed-bins.mjs" "$CONSUMER"
-          npm explore "$NAME" -- npm run build:native
           npm explore "$NAME" -- npm test
           npm audit signatures --json --include-attestations > "$RUNNER_TEMP/npm-signatures.json"
           cat "$RUNNER_TEMP/npm-signatures.json"
@@ -238,8 +257,8 @@ jobs:
           if (!Array.isArray(report.missing) || report.missing.length !== 0) {
             throw new Error(`missing signatures/attestations: ${JSON.stringify(report.missing)}`);
           }
-          if (!Array.isArray(report.verified) || report.verified.length < 1) {
-            throw new Error('expected at least one verified npm provenance attestation');
+          if (!Array.isArray(report.verified) || report.verified.length < 2) {
+            throw new Error('expected provenance attestations for root plus the installed platform runtime');
           }
           console.log(`verified npm attestations: ${report.verified.length}`);
           NODE

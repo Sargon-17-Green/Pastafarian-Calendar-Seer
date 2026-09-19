@@ -24,7 +24,10 @@ npm install pastafarian-calendar-seer@X.Y.Z
 
 The same npm-format tarball is attached to the matching immutable GitHub Release as `pastafarian-calendar-seer-X.Y.Z.tgz`; its SHA-256, SBOMs, provenance, container digest, and cross-channel verification procedure are documented in [Supply-chain verification](docs/SUPPLY_CHAIN.md).
 
-The package is ESM-only, requires Node `>=20`, has no npm runtime dependencies, and is not install-time OS/CPU gated.
+The package is ESM-only and requires Node `>=20`. The root package is not
+install-time OS/CPU gated and has no required npm runtime dependencies. On
+supported local-execution targets, npm selects an exact-version native runtime
+through platform-constrained optional dependencies.
 
 For source development instead:
 
@@ -37,11 +40,21 @@ npm run test:repo
 
 ### When do I need the native runtime?
 
-Rolling cache data is no longer bundled with the package. It is an optional performance artifact stored separately from source and release identity.
+Rolling cache data is no longer bundled with the package. It is an optional
+performance artifact stored separately from source and release identity.
 
-Build the exact native runtime for local calendar computation. A separately obtained verified cache snapshot may be supplied with `SEER_CACHE_DIR`; missing or invalid cache data always falls back to the exact engine.
+A normal npm install on Linux x64, Linux arm64, or Windows x64 installs the
+matching prebuilt exact runtime automatically as an `optionalDependency`.
+There is no compiler-running `postinstall`, and a cache miss weeks or months
+after publication still falls through to exact local computation.
 
-From an installed dependency:
+If optional dependencies were intentionally omitted, or the platform is not
+supported for local execution, `pastafarian-calendar-seer/client` remains
+usable. Local exact use then fails explicitly with `SEER_UNAVAILABLE` rather
+than changing semantics.
+
+An explicit source build remains available as a maintainer/unusual-environment
+fallback:
 
 ```bash
 npm explore pastafarian-calendar-seer -- npm run build:native
@@ -53,7 +66,9 @@ From a source checkout:
 npm run build:native
 ```
 
-The exact native runtime is verified on x64 Linux/WSL, ARM64 Linux, and x64 Windows. See [Native runtime and deployment](#native-runtime-and-deployment).
+The exact native runtime is verified on x64 Linux/WSL, ARM64 Linux, and x64
+Windows. See [Long-lived npm local runtime](docs/NPM_LOCAL_RUNTIME.md) and
+[Native runtime and deployment](#native-runtime-and-deployment).
 
 ## 30-second Node example
 
@@ -880,6 +895,20 @@ pastafarian-seer-http
 Use `HOST` and `PORT` to change the bind address.
 
 ## Native runtime and deployment
+
+### Prebuilt npm runtime
+
+Supported npm installs use one of three exact-version optional packages:
+`pastafarian-calendar-seer-linux-x64`,
+`pastafarian-calendar-seer-linux-arm64`, or
+`pastafarian-calendar-seer-win32-x64`.
+
+Published prebuilt binaries force the exact portable backend and generic CPU
+baselines. The packages carry their required non-system runtime libraries,
+binary SHA-256 manifest, third-party licenses, and GMP corresponding source.
+No compiler or toolchain PATH is required on the consumer machine.
+
+See [docs/NPM_LOCAL_RUNTIME.md](docs/NPM_LOCAL_RUNTIME.md).
 
 ### Exact engine build
 

@@ -32,8 +32,21 @@ esac
 COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread)
 if [[ -n "$MARCH" && "$MARCH" != "none" ]]; then COMMON+=("-march=$MARCH"); fi
 COMMON+=(-I"$ROOT/src")
+GMP_LINK_FLAGS=()
+if [[ -n "${SEER_GMP_PREFIX:-}" ]]; then
+  [[ -f "$SEER_GMP_PREFIX/include/gmp.h" ]] || { echo "SEER_GMP_PREFIX is missing include/gmp.h: $SEER_GMP_PREFIX" >&2; exit 2; }
+  COMMON+=("-I$SEER_GMP_PREFIX/include")
+  GMP_LINK_FLAGS+=("-L$SEER_GMP_PREFIX/lib")
+fi
+RUNTIME_LINK_FLAGS=()
+if [[ "${SEER_STATIC_GNU_RUNTIME:-0}" == 1 ]]; then
+  RUNTIME_LINK_FLAGS=(-static-libgcc -static-libstdc++ -Wl,--as-needed -Wl,-Bstatic -lgomp -Wl,-Bdynamic)
+fi
+if [[ "${SEER_ORIGIN_RPATH:-0}" == 1 ]]; then
+  RUNTIME_LINK_FLAGS+=('-Wl,-rpath,$ORIGIN')
+fi
 printf '#include <gmpxx.h>\n#include <boost/multiprecision/cpp_int.hpp>\nint main(){}\n' \
-  | "$CXX" -std=c++20 -x c++ - -lgmpxx -lgmp -o "$ROOT/build/deps_probe_year_batch"
+  | "$CXX" -std=c++20 "${COMMON[@]}" -x c++ - "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/deps_probe_year_batch"
 BACKEND="${SEER_RNS_BACKEND:-auto}"
 if [[ "$EFFECTIVE_ARCH" == arm64 ]]; then
   if [[ "$BACKEND" == auto ]]; then
@@ -57,5 +70,5 @@ else
 fi
 BACKEND_FLAGS=()
 if [[ "$BACKEND" == portable ]]; then BACKEND_FLAGS=(-DSEER_USE_PORTABLE_RNS=1); else BACKEND_FLAGS=(-mavx2); fi
-"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" -Wno-return-type "$ROOT/src/pastafarian_year_batch.cpp" -lgmpxx -lgmp -o "$ROOT/build/seer_year_batch"
+"$CXX" "${COMMON[@]}" "${BACKEND_FLAGS[@]}" -Wno-return-type "$ROOT/src/pastafarian_year_batch.cpp" "${RUNTIME_LINK_FLAGS[@]}" "${GMP_LINK_FLAGS[@]}" -lgmp -o "$ROOT/build/seer_year_batch"
 echo "Built $ROOT/build/seer_year_batch (arch: $EFFECTIVE_ARCH; RNS backend: $BACKEND; march: $MARCH)"

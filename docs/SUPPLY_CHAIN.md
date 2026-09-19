@@ -28,6 +28,9 @@ A hardened release uses one version and one commit across:
 - `package.json` version `X.Y.Z`;
 - GitHub Release `vX.Y.Z`;
 - npm package `pastafarian-calendar-seer@X.Y.Z`;
+- exact-version npm runtime packages `pastafarian-calendar-seer-linux-x64@X.Y.Z`,
+  `pastafarian-calendar-seer-linux-arm64@X.Y.Z`, and
+  `pastafarian-calendar-seer-win32-x64@X.Y.Z`;
 - GHCR tags `X.Y.Z` and `vX.Y.Z`;
 - `release-manifest.json`.
 
@@ -37,11 +40,19 @@ The immutable GHCR manifest digest, not a mutable tag, is the container source o
 
 1. The tagged commit must be reachable from `main` and its tag must exactly match `package.json`.
 2. Exact-head Stage 6, native ARM64 parity, multi-architecture container verification, production-web verification, release preflight, and supply-chain verification must already be green.
-3. npm publishes the byte-reproducible tarball through OIDC Trusted Publishing with provenance.
-4. GHCR publishes the final image, BuildKit provenance/SBOM attestations, and a GitHub artifact attestation for the image digest.
-5. The GitHub Release workflow independently rebuilds the npm tarball and requires it to be byte-identical to the registry tarball.
-6. It generates npm CycloneDX and container SPDX SBOMs, a release manifest, checksums, and GitHub attestations.
-7. Assets are accumulated in a draft release without replacing an existing asset. Only after verification succeeds is the draft published and made immutable.
+3. `release-native-npm.yml` builds the portable exact runtime natively on Linux x64,
+   Linux arm64, and Windows x64, runs a registry-style long-lived clean-install
+   proof, and publishes the three exact-version platform packages through OIDC
+   Trusted Publishing with provenance.
+4. `release-npm.yml` waits for that workflow and refuses to publish the root
+   package until all three platform versions exist. It then publishes the
+   byte-reproducible root tarball through OIDC and proves a clean
+   `--ignore-scripts` registry install can execute an exact cache miss without
+   `build:native`.
+5. GHCR publishes the final image, BuildKit provenance/SBOM attestations, and a GitHub artifact attestation for the image digest.
+6. The GitHub Release workflow independently rebuilds the npm tarball and requires it to be byte-identical to the registry tarball.
+7. It generates npm CycloneDX and container SPDX SBOMs, a release manifest, checksums, and GitHub attestations.
+8. Assets are accumulated in a draft release without replacing an existing asset. Only after verification succeeds is the draft published and made immutable.
 
 Publication workflows use per-version concurrency groups and never overwrite an existing npm version or GHCR version tag. A retry may reuse an existing version only after proving that the published bytes/digest and source identity match the tagged commit.
 
@@ -97,7 +108,14 @@ npm audit signatures --include-attestations
 
 `dist.integrity` is an npm SHA-512 SRI value. It is intentionally different in format and algorithm from the GitHub Release SHA-256 checksum. The release pipeline downloads the npm tarball and verifies both its SRI and byte identity with the independently packed GitHub tarball.
 
-The one-time npm bootstrap is complete: the package was created from the verified `v0.1.2` GitHub tarball, then the GitHub Actions Trusted Publisher for `release-npm.yml` was configured. The temporary interactive npm credential was revoked, and the repository contains no long-lived npm publication secret.
+The one-time root-package npm bootstrap is complete: the package was created from the verified `v0.1.2` GitHub tarball, then the GitHub Actions Trusted Publisher for `release-npm.yml` was configured. The temporary interactive npm credential was revoked, and the repository contains no long-lived npm publication secret.
+
+The three platform-runtime package names require their own one-time bootstrap because
+npm does not permit configuring a Trusted Publisher for a package that does not yet
+exist. Bootstrap only an inert prerelease such as `0.0.0-bootstrap.0`, configure
+`release-native-npm.yml` as the Trusted Publisher for each name, and do not point a
+supported root-package version at the bootstrap release. Real runtime versions are
+then published only by OIDC and are required to match the root version exactly.
 
 ## Release manifest and one-command verification
 

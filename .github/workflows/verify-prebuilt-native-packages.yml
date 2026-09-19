@@ -1,0 +1,106 @@
+name: Verify prebuilt native packages
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package.json'
+      - 'query/exact-engine.mjs'
+      - 'query/prebuilt-runtime.mjs'
+      - 'query/test/prebuilt-runtime.test.mjs'
+      - 'scripts/build-runtime.*'
+      - 'scripts/build-gmp-from-source.sh'
+      - 'scripts/package-native-*'
+      - 'scripts/write-native-package.mjs'
+      - 'deployment/test/registry-style-install.mjs'
+      - 'prototype/src/**'
+      - 'prototype/data/gates_100k_u16.bin'
+      - 'prototype/data/gates_negative_100k_u16.bin'
+      - 'third_party/licenses/**'
+      - '.github/workflows/verify-prebuilt-native-packages.yml'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-24.04
+            uname: x86_64
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+            uname: aarch64
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553
+    timeout-minutes: 240
+    steps:
+      - name: Install pinned-baseline build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates curl xz-utils make m4 diffutils g++ libboost-dev
+          rm -rf /var/lib/apt/lists/*
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Assert native architecture and glibc baseline
+        run: |
+          test "$(uname -m)" = "${{ matrix.uname }}"
+          test "$(getconf GNU_LIBC_VERSION)" = "glibc 2.36"
+          node --version
+      - name: Build and stage portable exact package
+        run: |
+          chmod +x scripts/package-native-linux.sh
+          scripts/package-native-linux.sh "${{ matrix.target }}" "$RUNNER_TEMP/native-package"
+      - name: Registry-style thirty-day clean-install proof
+        run: |
+          node deployment/test/registry-style-install.mjs "$GITHUB_WORKSPACE" "$RUNNER_TEMP/native-package"
+      - name: Upload native package staging tree
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-${{ matrix.target }}-${{ github.sha }}
+          path: ${{ runner.temp }}/native-package
+          if-no-files-found: error
+          retention-days: 14
+  windows:
+    name: Windows win32-x64
+    runs-on: windows-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-boost
+            make
+            m4
+            diffutils
+      - name: Build and stage portable exact package
+        shell: pwsh
+        env:
+          SEER_TOOLCHAIN_BIN: C:\msys64\ucrt64\bin
+          CXX: C:\msys64\ucrt64\bin\g++.exe
+        run: |
+          ./scripts/package-native-windows.ps1 -OutputDir "$env:RUNNER_TEMP/native-package"
+      - name: Registry-style thirty-day clean-install proof
+        shell: pwsh
+        run: |
+          node deployment/test/registry-style-install.mjs "$env:GITHUB_WORKSPACE" "$env:RUNNER_TEMP/native-package"
+      - name: Upload native package staging tree
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-win32-x64-${{ github.sha }}
+          path: ${{ runner.temp }}/native-package
+          if-no-files-found: error
+          retention-days: 14

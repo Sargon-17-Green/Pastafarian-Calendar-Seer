@@ -10,6 +10,16 @@ if (-not (Get-Command $Cxx -ErrorAction SilentlyContinue)) {
     throw 'g++ was not found. Install an MSYS2/MinGW toolchain with GMP/GMPXX and Boost headers.'
 }
 
+$GmpCompileFlags = @()
+$GmpLinkFlags = @()
+if ($env:SEER_GMP_PREFIX) {
+    $GmpInclude = Join-Path $env:SEER_GMP_PREFIX 'include'
+    $GmpLib = Join-Path $env:SEER_GMP_PREFIX 'lib'
+    if (-not (Test-Path (Join-Path $GmpInclude 'gmp.h'))) { throw "SEER_GMP_PREFIX is missing include\gmp.h: $env:SEER_GMP_PREFIX" }
+    $GmpCompileFlags += ('-I' + $GmpInclude)
+    $GmpLinkFlags += ('-L' + $GmpLib)
+}
+
 function Invoke-Cxx {
     param([string[]]$Arguments, [string]$Label)
     & $Cxx @Arguments
@@ -23,7 +33,8 @@ $ProbeSource = Join-Path $Build 'deps_probe_runtime.cpp'
 int main() { return 0; }
 '@ | Set-Content -Encoding Ascii $ProbeSource
 $ProbeExe = Join-Path $Build 'deps_probe_runtime.exe'
-Invoke-Cxx @('-std=c++20', $ProbeSource, '-lgmpxx', '-lgmp', '-o', $ProbeExe) 'Dependency probe'
+$ProbeArgs = @('-std=c++20') + $GmpCompileFlags + @($ProbeSource) + $GmpLinkFlags + @('-lgmp', '-o', $ProbeExe)
+Invoke-Cxx $ProbeArgs 'Dependency probe'
 $Backend = if ($env:SEER_RNS_BACKEND) { $env:SEER_RNS_BACKEND.ToLowerInvariant() } else { 'auto' }
 if ($Backend -notin @('auto', 'avx2', 'portable')) {
     throw 'SEER_RNS_BACKEND must be auto, avx2, or portable.'
@@ -50,11 +61,19 @@ int main() {
 if ($Backend -eq 'auto') { $Backend = if ($HasAvx2) { 'avx2' } else { 'portable' } }
 if ($Backend -eq 'avx2' -and -not $HasAvx2) { throw 'AVX2 was requested but is unavailable.' }
 $BackendFlags = if ($Backend -eq 'portable') { @('-DSEER_USE_PORTABLE_RNS=1') } else { @() }
-$Common = @(
-    '-O3', '-DNDEBUG', '-std=c++20', '-fopenmp', '-pthread', '-march=native',
-    ('-I' + $Source)
-)
-$Libraries = @('-lgmpxx', '-lgmp')
+$March = if ($env:SEER_MARCH) { $env:SEER_MARCH } else { 'native' }
+$StaticGnuRuntime = ($env:SEER_STATIC_GNU_RUNTIME -eq '1')
+$Common = @('-O3', '-DNDEBUG', '-std=c++20', '-fopenmp')
+if (-not $StaticGnuRuntime) { $Common += '-pthread' }
+if ($March -and $March -ne 'none') { $Common += ('-march=' + $March) }
+$Common += ('-I' + $Source)
+$Common += $GmpCompileFlags
+$RuntimeLinkFlags = if ($StaticGnuRuntime) {
+    @('-static-libgcc', '-static-libstdc++', '-Wl,--as-needed', '-Wl,-Bstatic', '-lgomp', '-Wl,--whole-archive', '-lwinpthread', '-Wl,--no-whole-archive', '-Wl,-Bdynamic')
+} else {
+    @()
+}
+$Libraries = $RuntimeLinkFlags + $GmpLinkFlags + @('-lgmp')
 $Targets = @(
     @('pastafarian_year_batch.cpp', 'seer_year_batch.exe'),
     @('seer_year_locator.cpp', 'seer_year_locator.exe'),

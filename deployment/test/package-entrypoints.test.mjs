@@ -40,7 +40,7 @@ test('HTTP package entry point delegates to the Stage 4 modules', async () => {
   assert.equal(httpApi.listen, server.listen);
 });
 
-test('package metadata exposes stable zero-dependency entry points', async () => {
+test('package metadata exposes stable entry points with platform-native optional dependencies', async () => {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.main, './index.mjs');
@@ -51,6 +51,9 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.bin['pastafarian-seer'], 'query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], 'http/server.mjs');
   assert.equal(pkg.scripts['build:native'], 'node ./scripts/build-runtime.mjs');
+  assert.equal(pkg.scripts.preinstall, undefined);
+  assert.equal(pkg.scripts.install, undefined);
+  assert.equal(pkg.scripts.postinstall, undefined);
   assert.equal(pkg.scripts.test, 'node ./scripts/package-selftest.mjs');
   assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
   assert.equal(pkg.engines.node, '>=20');
@@ -58,7 +61,13 @@ test('package metadata exposes stable zero-dependency entry points', async () =>
   assert.equal(pkg.cpu, undefined);
   assert.equal(pkg.repository.url, 'git+https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer.git');
   assert.deepEqual(pkg.dependencies ?? {}, {});
-  assert.deepEqual(pkg.optionalDependencies ?? {}, {});
+  assert.deepEqual(pkg.optionalDependencies, {
+    'pastafarian-calendar-seer-linux-x64': pkg.version,
+    'pastafarian-calendar-seer-linux-arm64': pkg.version,
+    'pastafarian-calendar-seer-win32-x64': pkg.version,
+  });
+  assert.equal(pkg.os, undefined);
+  assert.equal(pkg.cpu, undefined);
 });
 test('package file allowlist excludes repository-only material', async () => {
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));

@@ -16,6 +16,7 @@ const allowedWrites = new Map([
   ['release-container.yml', new Set(['packages', 'id-token', 'attestations'])],
   ['release-github-package.yml', new Set(['contents', 'packages', 'id-token', 'attestations'])],
   ['release-npm.yml', new Set(['id-token'])],
+  ['release-native-npm.yml', new Set(['id-token'])],
   ['precompute-seer-cache.yml', new Set(['contents'])],
 ]);
 let useCount = 0;
