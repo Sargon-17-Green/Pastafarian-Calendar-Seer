@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { queryError } from './errors.mjs';
+import { createExactAdmission } from './concurrency.mjs';
 import { prebuiltRuntimeHint, resolvePrebuiltBinary } from './prebuilt-runtime.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -16,9 +17,11 @@ const DOMAIN_ERROR_CODES = new Set([
   'YEAR_OUT_OF_SUPPORTED_DOMAIN',
 ]);
 
+const PROCESS_EXACT_ADMISSION = createExactAdmission();
 const SERVICE_REGISTRY = new Map();
 const SERVICE_HASH_CACHE = new Map();
 const DEFAULT_SERVICE_REGISTRY_MAX = 4;
+const DEFAULT_SERVICE_QUEUE_MAX = 64;
 const SERVICE_STDOUT_BUFFER_MAX = 32 * 1024 * 1024;
 const SERVICE_STDERR_TAIL_MAX = 8192;
 
@@ -69,6 +72,7 @@ class EngineServiceClient {
     this.stderrTail = '';
     this.waitingForDrain = false;
     this.dead = false;
+    this.maxPending = envPositiveInteger('SEER_SERVICE_QUEUE_MAX', DEFAULT_SERVICE_QUEUE_MAX, 1, 4096);
     this.child = spawnRunner(binary, [], {
       cwd,
       windowsHide: true,
@@ -231,6 +235,12 @@ class EngineServiceClient {
     if (this.dead) {
       return Promise.reject(serviceFailure('unavailable', 'persistent Seer engine service is unavailable'));
     }
+    if (this.inFlight.length + this.writeQueue.length >= this.maxPending) {
+      return Promise.reject(serviceFailure(
+        'overloaded',
+        `persistent Seer engine service queue is full (limit ${this.maxPending})`,
+      ));
+    }
     this.#setReferenced(true);
     return new Promise((resolve, reject) => {
       const waiter = {
@@ -328,6 +338,12 @@ async function resolveBinary({ explicit, envName, rootDir, basename }) {
 }
 
 function safeInteger(value, field, code) {
+  if (typeof value === 'string') {
+    const unsigned = value[0] === '-' ? value.slice(1) : value;
+    if (/^[0-9]+$/.test(unsigned) && unsigned.length > 16) {
+      throw queryError(code, `${field} is outside the exact engine's currently supported integer domain.`, { field });
+    }
+  }
   const asBigInt = typeof value === 'bigint' ? value : BigInt(value);
   if (asBigInt < BigInt(Number.MIN_SAFE_INTEGER) || asBigInt > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw queryError(code, `${field} is outside the exact engine's currently supported integer domain.`, { field });
@@ -473,10 +489,11 @@ function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) 
   };
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync, serviceSpawnRunner = spawn } = {}) {
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync, serviceSpawnRunner = spawn, maxConcurrency, maxQueue } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
+  const admission = createExactAdmission({ maxConcurrency, maxQueue });
   async function batchBinary() { return resolveBinary({ explicit: yearBatchBinary, envName: 'SEER_YEAR_BATCH_BIN', rootDir, basename: 'seer_year_batch' }); }
   async function locatorBinary() { return resolveBinary({ explicit: yearLocatorBinary, envName: 'SEER_YEAR_LOCATOR_BIN', rootDir, basename: 'seer_year_locator' }); }
   async function optionalStructureBinary() {
@@ -519,11 +536,15 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       if (DOMAIN_ERROR_CODES.has(error?.seerCode)) {
         throw queryError(error.seerCode, domainErrorMessage(error.seerCode), { cause: error });
       }
-      if (requireService) {
-        const failure = typeof error?.serviceFailure === 'string' ? error.serviceFailure : 'failed';
+      const failure = typeof error?.serviceFailure === 'string' ? error.serviceFailure : 'failed';
+      if (requireService || failure === 'overloaded') {
         throw queryError(
           'SEER_UNAVAILABLE',
-          failure === 'timeout' ? 'Persistent Seer engine service timed out.' : 'Persistent Seer engine service failed.',
+          failure === 'timeout'
+            ? 'Persistent Seer engine service timed out.'
+            : failure === 'overloaded'
+              ? 'Persistent Seer engine service is overloaded.'
+              : 'Persistent Seer engine service failed.',
           { details: { serviceFailure: failure }, cause: error },
         );
       }
@@ -531,7 +552,7 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     }
   }
 
-  async function queryRange({ calculationJdn, targetStartJdn, count }) {
+  async function queryRangeRaw({ calculationJdn, targetStartJdn, count }) {
     const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
     const start = safeInteger(targetStartJdn, 'target.jdn', 'TARGET_OUT_OF_SUPPORTED_DOMAIN');
     const size = safeCount(count);
@@ -545,39 +566,51 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     };
   }
 
+  async function yearRaw({ calculationJdn, year, includeDays = false }) {
+    const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+    const requestedYear = safeInteger(year, 'year', 'YEAR_OUT_OF_SUPPORTED_DOMAIN');
+    const serviceParsed = await serviceRequest(['Y', String(calc), String(requestedYear), includeDays ? '1' : '0']);
+    if (serviceParsed) {
+      return {
+        year: yearFromStructurePayload(serviceParsed, { calc, requestedYear, includeDays }),
+        provenance: { ...(typeof serviceParsed.engine === 'string' ? { engineRevision: serviceParsed.engine } : {}) },
+      };
+    }
+    const structureBinary = await optionalStructureBinary();
+    if (structureBinary) {
+      const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
+      return {
+        year: yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }),
+        provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
+      };
+    }
+    // Compatibility fallback while older build environments have not yet built seer_year_structure.
+    const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
+    if (!located || located.schema !== 1 || located.calcJdn !== calc || located.year !== requestedYear || !Number.isInteger(located.startJdn) || !Number.isInteger(located.endJdn) || !Number.isInteger(located.lengthDays)) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned an unexpected payload.');
+    if (located.lengthDays < 1 || located.lengthDays > MAX_BATCH_COUNT || located.endJdn - located.startJdn + 1 !== located.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned invalid boundaries.');
+    const supplied = await queryRangeRaw({ calculationJdn: calc, targetStartJdn: located.startJdn, count: located.lengthDays });
+    const batch = { records: supplied.records };
+    return { year: structureFromYearRecords(located, batch, includeDays), provenance: supplied.provenance };
+  }
+
+  function runAdmitted(task) {
+    return admission.run(() => PROCESS_EXACT_ADMISSION.run(task));
+  }
+
   return Object.freeze({
     id: 'seer-v12-exact-process',
-    queryRange,
-    async query({ calculationJdn, targetJdn }) {
-      const supplied = await queryRange({ calculationJdn, targetStartJdn: targetJdn, count: 1 });
-      const record = supplied.records[0];
-      return { record, structure: { cutletCount: record.cutletCount, monthCount: record.monthCount }, provenance: supplied.provenance };
+    queryRange(args) {
+      return runAdmitted(() => queryRangeRaw(args));
     },
-    async year({ calculationJdn, year, includeDays = false }) {
-      const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
-      const requestedYear = safeInteger(year, 'year', 'YEAR_OUT_OF_SUPPORTED_DOMAIN');
-      const serviceParsed = await serviceRequest(['Y', String(calc), String(requestedYear), includeDays ? '1' : '0']);
-      if (serviceParsed) {
-        return {
-          year: yearFromStructurePayload(serviceParsed, { calc, requestedYear, includeDays }),
-          provenance: { ...(typeof serviceParsed.engine === 'string' ? { engineRevision: serviceParsed.engine } : {}) },
-        };
-      }
-      const structureBinary = await optionalStructureBinary();
-      if (structureBinary) {
-        const parsed = await runJson(structureBinary, [String(calc), String(requestedYear), includeDays ? '1' : '0'], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
-        return {
-          year: yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }),
-          provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
-        };
-      }
-      // Compatibility fallback while older build environments have not yet built seer_year_structure.
-      const located = await runJson(await locatorBinary(), [String(calc), String(requestedYear)], { cwd, timeoutMs, maxBuffer, execFileRunner, domainKind: 'year' });
-      if (!located || located.schema !== 1 || located.calcJdn !== calc || located.year !== requestedYear || !Number.isInteger(located.startJdn) || !Number.isInteger(located.endJdn) || !Number.isInteger(located.lengthDays)) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned an unexpected payload.');
-      if (located.lengthDays < 1 || located.lengthDays > MAX_BATCH_COUNT || located.endJdn - located.startJdn + 1 !== located.lengthDays) throw queryError('SEER_UNAVAILABLE', 'Exact Seer year locator returned invalid boundaries.');
-      const supplied = await queryRange({ calculationJdn: calc, targetStartJdn: located.startJdn, count: located.lengthDays });
-      const batch = { records: supplied.records };
-      return { year: structureFromYearRecords(located, batch, includeDays), provenance: supplied.provenance };
+    query({ calculationJdn, targetJdn }) {
+      return runAdmitted(async () => {
+        const supplied = await queryRangeRaw({ calculationJdn, targetStartJdn: targetJdn, count: 1 });
+        const record = supplied.records[0];
+        return { record, structure: { cutletCount: record.cutletCount, monthCount: record.monthCount }, provenance: supplied.provenance };
+      });
+    },
+    year(args) {
+      return runAdmitted(() => yearRaw(args));
     },
   });
 }

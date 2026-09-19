@@ -556,6 +556,8 @@ HOST=0.0.0.0 PORT=8080 pastafarian-seer-http
 
 Set `SEER_REQUIRE_ENGINE_SERVICE=1` if startup/query behavior must require the persistent exact native engine instead of allowing compatibility fallbacks.
 
+Exact work is admission-controlled. `SEER_EXACT_CONCURRENCY` sets the process-wide native concurrency cap and defaults to 8; `SEER_EXACT_QUEUE_MAX` bounds queued exact work and defaults to 256. The precomputed provider uses the same concurrency default when scheduling independent calculation-day groups, so contiguous runs can still be coalesced while unrelated groups are bounded. `SEER_SERVICE_QUEUE_MAX` separately bounds pending requests on the persistent service and defaults to 64. Queue saturation is reported as typed `SEER_UNAVAILABLE` overload instead of growing memory or spawning an unbounded fallback fan-out. Node callers may use `maxExactConcurrency` and `maxExactQueue` to apply a stricter provider/engine-local bound; the process-wide native cap remains controlled by the environment.
+
 ### Routes
 
 | Method | Path | Purpose |

@@ -43,6 +43,10 @@ With `SEER_REQUIRE_ENGINE_SERVICE=1`, a persistent-service timeout is surfaced a
 
 The persistent transport is resource-bounded: an unterminated stdout line is capped at 32 MiB, stderr keeps only the last 8192 characters, and writes stop when `stdin.write()` reports backpressure until the corresponding `drain` event. Timers are cleared when waiters settle or when a child is retired.
 
+The request queue itself is bounded as well. `SEER_SERVICE_QUEUE_MAX` defaults to 64 pending wire requests. If that queue is full, the request fails as `SEER_UNAVAILABLE` with `details.serviceFailure === "overloaded"`; overload is never converted into a one-shot child-process fallback.
+
+A separate process-wide exact admission gate protects both persistent and one-shot execution. `SEER_EXACT_CONCURRENCY` defaults to 8 and `SEER_EXACT_QUEUE_MAX` defaults to 256. The precomputed provider also schedules independent calculation-day groups with that concurrency default while retaining target deduplication and contiguous-run coalescing. This prevents batch/range fan-out from turning the public 10,000-item logical limit into 10,000 simultaneous native jobs.
+
 `SEER_REQUIRE_ENGINE_SERVICE=1` is test/deployment-only and disables fallback. `SEER_TEST_SERVICE_SPAWN_COUNTER_FILE` and `SEER_TEST_CHAIN_COUNTER_FILE` are test-only diagnostics.
 
 ## Preserved optimizations

@@ -93,20 +93,23 @@ process.stdout.write(JSON.stringify({schema:1,engine:'fake-batch',calcJdn:calc,t
   assert.deepEqual(calls,[{calc:900,start:1001,count:2}]);
 });
 
-test('bulk native failure falls back to individual queries and preserves per-item failures', async () => {
+test('provider-wide native failure rejects the run without per-item retry amplification', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'seer-opt02-fallback-'));
   const generatedDir = path.join(root, 'generated');
   const dataDir = path.join(root, 'prototype', 'data');
+  const callLog = path.join(root, 'calls.log');
   await mkdir(generatedDir, { recursive: true }); await mkdir(dataDir, { recursive: true });
   const batch = await fakeNodeExecutable(root, 'fake-batch', `
+const fs = require('fs');
 const [calc,start,count]=process.argv.slice(2).map(Number);
-if(count>1 || start===1001) process.exit(7);
-const records=[{targetJdn:start,year:5000,cutletIndex:0,dayInCutlet:1,monthIndex:0,dayInMonth:1,cutletCount:1,monthCount:1}];
-process.stdout.write(JSON.stringify({schema:1,engine:'fake-batch',calcJdn:calc,targetStartJdn:start,targetCount:1,records}));`);
+fs.appendFileSync(${JSON.stringify(callLog)}, JSON.stringify({calc,start,count})+'\\n');
+process.exit(7);`);
   const locator = await fakeNodeExecutable(root, 'fake-locator', 'process.exit(2);');
   const cacheContext = Object.freeze({ async loadRecord() { throw new RangeError('cache miss'); } });
   const provider = createPrecomputedProvider({ generatedDir, yearBatchBinary: batch, yearLocatorBinary: locator, dataDir, cacheContext, execFileRunner: nodeScriptExecFile });
   const settled = await Promise.allSettled([1000n,1001n,1002n].map((targetJdn)=>provider.query({calculationJdn:900n,targetJdn})));
-  assert.deepEqual(settled.map((x)=>x.status), ['fulfilled','rejected','fulfilled']);
-  assert.equal(settled[1].reason.code, 'SEER_UNAVAILABLE');
+  assert.deepEqual(settled.map((x)=>x.status), ['rejected','rejected','rejected']);
+  assert.ok(settled.every((x) => x.reason?.code === 'SEER_UNAVAILABLE'));
+  const calls = (await readFile(callLog, 'utf8')).trim().split(/\n+/).filter(Boolean).map(JSON.parse);
+  assert.deepEqual(calls, [{ calc: 900, start: 1000, count: 3 }]);
 });

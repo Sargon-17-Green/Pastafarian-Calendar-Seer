@@ -339,7 +339,14 @@ function configureServiceRequirement(t, required) {
   });
 }
 
-function fakeEngine({ runner, timeoutMs = 60, execFileRunner, dataDirOverride = dataDir } = {}) {
+function fakeEngine({
+  runner,
+  timeoutMs = 60,
+  execFileRunner,
+  dataDirOverride = dataDir,
+  maxConcurrency,
+  maxQueue,
+} = {}) {
   return createExactEngine({
     generatedDir,
     dataDir: dataDirOverride,
@@ -348,6 +355,8 @@ function fakeEngine({ runner, timeoutMs = 60, execFileRunner, dataDirOverride = 
     timeoutMs,
     serviceSpawnRunner: runner,
     ...(execFileRunner ? { execFileRunner } : {}),
+    ...(maxConcurrency !== undefined ? { maxConcurrency } : {}),
+    ...(maxQueue !== undefined ? { maxQueue } : {}),
   });
 }
 
@@ -665,4 +674,42 @@ test('unterminated persistent-service stdout is bounded', async (t) => {
     engine.queryRange({ calculationJdn: 2461303, targetStartJdn: 1100, count: 1 }),
     (error) => isServiceFailure(error, 'protocol'),
   );
+});
+
+
+test('persistent service queue is bounded and overload never falls back to child spawning', async (t) => {
+  configureServiceRequirement(t, false);
+  const oldQueueMax = process.env.SEER_SERVICE_QUEUE_MAX;
+  process.env.SEER_SERVICE_QUEUE_MAX = '2';
+  t.after(() => {
+    if (oldQueueMax == null) delete process.env.SEER_SERVICE_QUEUE_MAX;
+    else process.env.SEER_SERVICE_QUEUE_MAX = oldQueueMax;
+  });
+
+  const runner = makeFakeServiceSpawnRunner([{ mode: 'hang' }]);
+  const execFileRunner = makeFakeExecFileRunner();
+  const engine = fakeEngine({
+    runner,
+    execFileRunner,
+    timeoutMs: 90,
+    maxConcurrency: 8,
+    maxQueue: 8,
+  });
+  const pending = [1200, 1201, 1202].map((targetStartJdn) =>
+    engine.queryRange({
+      calculationJdn: 2461303,
+      targetStartJdn,
+      count: 1,
+    }));
+
+  const settled = await Promise.allSettled(pending);
+  const overloads = settled.filter((item) =>
+    item.status === 'rejected' && isServiceFailure(item.reason, 'overloaded'));
+  assert.equal(overloads.length, 1);
+  assert.equal(
+    execFileRunner.callCount(),
+    2,
+    'only timed-out accepted requests may use one-shot fallback',
+  );
+  assert.equal(runner.spawnCount(), 1);
 });

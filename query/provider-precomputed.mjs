@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { createCacheRequestContext } from '../precompute/cache-lookup.mjs';
 import { sha256EngineInputs } from '../precompute/lib/cache-format.mjs';
 import { createExactEngine } from './exact-engine.mjs';
+import { mapConcurrent, resolveExactConcurrency } from './concurrency.mjs';
 
 const moduleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -45,10 +46,26 @@ export function createPrecomputedProvider({
   cacheContext,
   runtimeRoot = moduleRoot,
   expectedEngineFingerprint,
+  maxExactConcurrency,
+  maxExactQueue,
+  exactEngine,
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
-  const exact = createExactEngine({ generatedDir: path.join(runtimeRoot, 'generated'), yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs: exactTimeoutMs, maxBuffer: exactMaxBuffer, execFileRunner });
+  const exactConcurrency = resolveExactConcurrency(maxExactConcurrency);
+  const exact = exactEngine ?? createExactEngine({
+    generatedDir: path.join(runtimeRoot, 'generated'),
+    yearBatchBinary,
+    yearLocatorBinary,
+    yearStructureBinary,
+    engineServiceBinary,
+    dataDir,
+    timeoutMs: exactTimeoutMs,
+    maxBuffer: exactMaxBuffer,
+    execFileRunner,
+    maxConcurrency: exactConcurrency,
+    maxQueue: maxExactQueue,
+  });
   let engineFingerprintPromise;
   async function localEngineFingerprint() {
     if (expectedEngineFingerprint !== undefined) return expectedEngineFingerprint;
@@ -76,14 +93,31 @@ export function createPrecomputedProvider({
       }
       return;
     } catch (bulkError) {
-      // Preserve per-item error classification by retrying each unique target independently.
-      const settled = await Promise.allSettled(targets.map((targetJdn) => exact.query({ calculationJdn: calc, targetJdn })));
+      if (bulkError?.code !== 'TARGET_OUT_OF_SUPPORTED_DOMAIN') {
+        for (const targetJdn of targets) {
+          const waiters = waitersByTarget.get(targetJdn.toString());
+          for (const waiter of waiters) waiter.reject(bulkError);
+        }
+        return;
+      }
+
+      // A target-domain bulk error can be item-specific. Retry only this case, sequentially
+      // inside the calculation-day worker so fallback cannot multiply exact concurrency.
       for (let i = 0; i < targets.length; i += 1) {
-        const waiters = waitersByTarget.get(targets[i].toString());
-        const item = settled[i];
-        for (const waiter of waiters) {
-          if (item.status === 'fulfilled') waiter.resolve(item.value);
-          else waiter.reject(item.reason);
+        const targetJdn = targets[i];
+        const waiters = waitersByTarget.get(targetJdn.toString());
+        try {
+          const item = await exact.query({ calculationJdn: calc, targetJdn });
+          for (const waiter of waiters) waiter.resolve(item);
+        } catch (itemError) {
+          for (const waiter of waiters) waiter.reject(itemError);
+          if (itemError?.code !== 'TARGET_OUT_OF_SUPPORTED_DOMAIN') {
+            for (let j = i + 1; j < targets.length; j += 1) {
+              const remaining = waitersByTarget.get(targets[j].toString());
+              for (const waiter of remaining) waiter.reject(itemError);
+            }
+            break;
+          }
         }
       }
     }
@@ -108,7 +142,7 @@ export function createPrecomputedProvider({
         waiters.push(item);
       }
 
-      await Promise.all([...byCalculation.values()].map(async (group) => {
+      await mapConcurrent([...byCalculation.values()], exactConcurrency, async (group) => {
         const targets = [...group.waitersByTarget.keys()].map(BigInt).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
         let run = [];
         const runs = [];
@@ -118,7 +152,7 @@ export function createPrecomputedProvider({
         }
         if (run.length) runs.push(run);
         for (const targetsInRun of runs) await resolveRun(group.calculationJdn, targetsInRun, group.waitersByTarget);
-      }));
+      });
     } catch (error) {
       for (const waiter of work) waiter.reject(error);
     }

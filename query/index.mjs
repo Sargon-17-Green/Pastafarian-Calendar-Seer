@@ -30,6 +30,18 @@ const DEFAULT_MAX_BATCH_ITEMS = 10_000;
 const DEFAULT_MAX_RANGE_ITEMS = 10_000;
 
 function own(object, key) { return Object.prototype.hasOwnProperty.call(object, key); }
+function parseRangeCount(value, maxItems) {
+  if (typeof value === 'string' && /^(?:0|[1-9][0-9]*)$/.test(value)) {
+    if (value === '0') throw queryError('INVALID_RANGE_COUNT', 'count must be positive.', { field: 'count' });
+    const limit = maxItems.toString();
+    if (value.length > limit.length || (value.length === limit.length && value > limit)) {
+      throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: 'count' });
+    }
+  }
+  const count = parseExactInteger(value, 'count');
+  if (count <= 0n) throw queryError('INVALID_RANGE_COUNT', 'count must be positive.', { field: 'count' });
+  return count;
+}
 function assertObject(value, field) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw queryError('UNKNOWN_PARAMETER', `${field} must be an object.`, { field });
@@ -83,6 +95,8 @@ async function providerFromOptions(options = {}) {
   return createPrecomputedProvider({
     generatedDir: options.generatedDir ?? process.env.SEER_CACHE_DIR ?? DEFAULT_GENERATED_DIR,
     runtimeRoot,
+    maxExactConcurrency: options.maxExactConcurrency,
+    maxExactQueue: options.maxExactQueue,
   });
 }
 function boundaryServiceFromOptions(options = {}) {
@@ -303,8 +317,23 @@ export async function queryReverse(request = {}, options = {}) {
   return response;
 }
 export async function queryNow(options = {}) {
-  const { generatedDir, provider, now, dayBoundaryService, ...requestOptions } = options;
-  return queryDate(requestOptions, { generatedDir, provider, now, dayBoundaryService });
+  const {
+    generatedDir,
+    provider,
+    now,
+    dayBoundaryService,
+    maxExactConcurrency,
+    maxExactQueue,
+    ...requestOptions
+  } = options;
+  return queryDate(requestOptions, {
+    generatedDir,
+    provider,
+    now,
+    dayBoundaryService,
+    maxExactConcurrency,
+    maxExactQueue,
+  });
 }
 
 function publicError(error) {
@@ -386,10 +415,10 @@ export async function queryRange(request, options = {}) {
     : { calculationJdn: 0n };
   const start = resolveTarget(request.start, baseCalculation.calculationJdn, 'start');
 
+  const maxItems = BigInt(options.maxRangeItems ?? DEFAULT_MAX_RANGE_ITEMS);
   let count;
   if (hasCount) {
-    count = parseExactInteger(request.count, 'count');
-    if (count <= 0n) throw queryError('INVALID_RANGE_COUNT', 'count must be positive.', { field: 'count' });
+    count = parseRangeCount(request.count, maxItems);
   } else {
     const end = resolveTarget(request.endInclusive, baseCalculation.calculationJdn, 'endInclusive');
     const diff = end.jdn - start.jdn;
@@ -400,7 +429,6 @@ export async function queryRange(request, options = {}) {
     if (count <= 0n) throw queryError('UNREACHABLE_RANGE_END', 'endInclusive is not reachable exactly from start using stepDays.', { field: 'endInclusive' });
   }
 
-  const maxItems = BigInt(options.maxRangeItems ?? DEFAULT_MAX_RANGE_ITEMS);
   if (count > maxItems) throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: hasCount ? 'count' : 'endInclusive' });
 
   const pending = [];
