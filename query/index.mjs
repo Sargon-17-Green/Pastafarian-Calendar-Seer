@@ -436,7 +436,36 @@ export async function queryRange(request, options = {}) {
 
   const pending = [];
   const provider = await providerFromOptions(options);
-  const sharedOptions = { ...options, now, provider };
+  let rangeProvider = provider;
+  if (mode === 'same-as-target' && count >= 8n && count <= 10_000n &&
+      typeof provider.queryDiagonal === 'function') {
+    const prefetched = await provider.queryDiagonal({
+      targetStartJdn: start.jdn,
+      count: Number(count),
+      stepDays: step,
+    });
+    if (!Array.isArray(prefetched) || prefetched.length !== Number(count)) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact diagonal provider returned an unexpected result count.');
+    }
+    const byTarget = new Map();
+    for (let i = 0; i < prefetched.length; i += 1) {
+      byTarget.set((start.jdn + BigInt(i) * step).toString(), prefetched[i]);
+    }
+    rangeProvider = Object.freeze({
+      id: `${provider.id ?? 'provider'}:diagonal-prefetch`,
+      async query({ calculationJdn, targetJdn }) {
+        const calc = BigInt(calculationJdn);
+        const target = BigInt(targetJdn);
+        if (calc === target) {
+          const supplied = byTarget.get(target.toString());
+          if (supplied) return supplied;
+        }
+        return provider.query({ calculationJdn, targetJdn });
+      },
+      ...(typeof provider.year === 'function' ? { year: (...args) => provider.year(...args) } : {}),
+    });
+  }
+  const sharedOptions = { ...options, now, provider: rangeProvider };
   for (let i = 0n; i < count; i += 1n) {
     const targetJdn = start.jdn + i * step;
     let dateRequest;

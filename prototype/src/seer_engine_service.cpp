@@ -12,16 +12,20 @@ using seer_native::detail::fadj;
 using seer_native::detail::fanchor;
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <cstdlib>
 #include <deque>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -277,6 +281,88 @@ class SeerEngineService {
         std::cout << "]}\n";
     }
 
+    void handleDiagonal(const std::vector<std::string>& f) {
+        if (f.size() != 4) throw std::runtime_error("D expects target_start, count and step_days");
+        const int64_t start = std::stoll(f[1]);
+        const long long count = std::stoll(f[2]);
+        const int64_t step = std::stoll(f[3]);
+        if (count < 1 || count > 10000) throw std::runtime_error("count must be in 1..10000");
+        if (step == 0) throw std::runtime_error("step_days must not be zero");
+
+        const __int128 lastWide = static_cast<__int128>(start) +
+            static_cast<__int128>(count - 1) * static_cast<__int128>(step);
+        if (lastWide < std::numeric_limits<int64_t>::min() ||
+            lastWide > std::numeric_limits<int64_t>::max()) {
+            throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", "diagonal range overflow");
+        }
+        const int64_t last = static_cast<int64_t>(lastWide);
+        const int64_t minDay = gates_.at(gates_.min_index());
+        const int64_t maxDay = gates_.at(gates_.max_index());
+        const int64_t lo = std::min(start, last);
+        const int64_t hi = std::max(start, last);
+        if (lo <= minDay || hi > maxDay) {
+            throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", "calculation day beyond bidirectional gate corpus");
+        }
+
+        std::vector<BatchRecord> records(static_cast<size_t>(count));
+        std::atomic<size_t> next{0};
+        std::atomic<bool> failed{false};
+        std::mutex errorMutex;
+        std::exception_ptr firstError;
+        const size_t requestedWorkers = svc_env_limit("SEER_DIAGONAL_THREADS", 3, 1, 16);
+        const size_t hardware = std::max<unsigned>(1, std::thread::hardware_concurrency());
+        const size_t workers = std::min({requestedWorkers, hardware, static_cast<size_t>(count)});
+
+        auto work = [&]() {
+            while (!failed.load(std::memory_order_relaxed)) {
+                const size_t i = next.fetch_add(1, std::memory_order_relaxed);
+                if (i >= static_cast<size_t>(count)) return;
+                try {
+                    const __int128 dayWide = static_cast<__int128>(start) +
+                        static_cast<__int128>(i) * static_cast<__int128>(step);
+                    const int64_t day = static_cast<int64_t>(dayWide);
+                    const FY anchor = fanchor(day, gates_, stones_);
+                    auto one = compute_segment(day, day, day, gates_, stones_, anchor,
+                                               ExecutionParams{1, 512, 1});
+                    if (one.size() != 1 || one[0].targetJdn != day) {
+                        throw std::runtime_error("diagonal record mismatch");
+                    }
+                    records[i] = one[0];
+                } catch (...) {
+                    if (!failed.exchange(true, std::memory_order_relaxed)) {
+                        std::lock_guard<std::mutex> lock(errorMutex);
+                        firstError = std::current_exception();
+                    }
+                    return;
+                }
+            }
+        };
+
+        std::vector<std::thread> pool;
+        pool.reserve(workers > 0 ? workers - 1 : 0);
+        for (size_t i = 1; i < workers; ++i) pool.emplace_back(work);
+        work();
+        for (auto& thread : pool) thread.join();
+        if (firstError) {
+            try {
+                std::rethrow_exception(firstError);
+            } catch (const std::exception& e) {
+                if (svc_is_domain_boundary(e)) {
+                    throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", e.what());
+                }
+                throw;
+            }
+        }
+
+        std::cout << "{\"schema\":1,\"engine\":\"seer-v12-avx2-batch\",\"targetStartJdn\":" << start
+                  << ",\"targetCount\":" << count << ",\"stepDays\":" << step << ",\"records\":[";
+        for (size_t i = 0; i < records.size(); ++i) {
+            if (i) std::cout << ',';
+            printRecord(records[i]);
+        }
+        std::cout << "]}\n";
+    }
+
     void handleYear(const std::vector<std::string>& f) {
         if (f.size() != 4) throw std::runtime_error("Y expects calc, year and include_days");
         const int64_t calc = std::stoll(f[1]);
@@ -368,6 +454,7 @@ public:
         if (f.empty() || f[0].empty()) return;
         counters_.requests++;
         if (f[0] == "R") handleRange(f);
+        else if (f[0] == "D") handleDiagonal(f);
         else if (f[0] == "Y") handleYear(f);
         else if (f[0] == "S" && f.size() == 1) handleStats();
         else throw std::runtime_error("unknown service command");

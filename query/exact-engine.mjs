@@ -409,6 +409,22 @@ function ensureBatch(parsed, { calc, start, count }) {
   return parsed;
 }
 
+function ensureDiagonal(parsed, { start, count, step }) {
+  if (!parsed || parsed.schema !== 1 || parsed.targetStartJdn !== start ||
+      parsed.targetCount !== count || parsed.stepDays !== step ||
+      !Array.isArray(parsed.records) || parsed.records.length !== count) {
+    throw queryError('SEER_UNAVAILABLE', 'Exact Seer diagonal engine returned an unexpected payload.');
+  }
+  for (let i = 0; i < parsed.records.length; i += 1) {
+    const record = parsed.records[i];
+    const ints = ['targetJdn', 'year', 'cutletIndex', 'dayInCutlet', 'monthIndex', 'dayInMonth', 'cutletCount', 'monthCount'];
+    if (!record || typeof record !== 'object') throw queryError('SEER_UNAVAILABLE', 'Exact Seer diagonal engine returned a non-object record.');
+    for (const key of ints) if (!Number.isInteger(record[key])) throw queryError('SEER_UNAVAILABLE', `Exact Seer diagonal record has invalid ${key}.`);
+    if (record.targetJdn !== start + i * step) throw queryError('SEER_UNAVAILABLE', 'Exact Seer diagonal engine returned an unexpected target sequence.');
+  }
+  return parsed;
+}
+
 function structureFromYearRecords(locator, batch, includeDays) {
   const records = batch.records;
   const expectedYear = locator.year;
@@ -523,7 +539,7 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
 
   const requireService = process.env.SEER_REQUIRE_ENGINE_SERVICE === '1';
 
-  async function serviceRequest(fields) {
+  async function serviceRequest(fields, { allowUnsupportedCommand = false } = {}) {
     const binary = await optionalServiceBinary();
     if (!binary) {
       if (requireService) throw queryError('SEER_UNAVAILABLE', 'Persistent Seer engine service is required but unavailable.');
@@ -533,6 +549,10 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       const client = await getEngineServiceClient(binary, cwd, { spawnRunner: serviceSpawnRunner });
       return await client.request(fields, { timeoutMs });
     } catch (error) {
+      if (allowUnsupportedCommand && error?.serviceFailure === 'request' &&
+          /unknown service command/i.test(String(error?.message ?? ''))) {
+        return null;
+      }
       if (DOMAIN_ERROR_CODES.has(error?.seerCode)) {
         throw queryError(error.seerCode, domainErrorMessage(error.seerCode), { cause: error });
       }
@@ -566,6 +586,38 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     };
   }
 
+  async function queryDiagonalRaw({ targetStartJdn, count, stepDays = 1 }) {
+    const start = safeInteger(targetStartJdn, 'target.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+    const size = safeCount(count);
+    const step = safeInteger(stepDays, 'stepDays', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+    if (step === 0) throw queryError('INVALID_RANGE_STEP', 'stepDays must not be zero.', { field: 'stepDays' });
+    const last = BigInt(start) + BigInt(size - 1) * BigInt(step);
+    if (last < BigInt(Number.MIN_SAFE_INTEGER) || last > BigInt(Number.MAX_SAFE_INTEGER)) {
+      throw queryError('CALCULATION_OUT_OF_SUPPORTED_DOMAIN', 'Diagonal range is outside the exact engine integer domain.');
+    }
+
+    const serviceParsed = await serviceRequest(
+      ['D', String(start), String(size), String(step)],
+      { allowUnsupportedCommand: true },
+    );
+    if (serviceParsed) {
+      const parsed = ensureDiagonal(serviceParsed, { start, count: size, step });
+      return {
+        records: parsed.records,
+        provenance: { ...(typeof parsed.engine === 'string' ? { engineRevision: parsed.engine } : {}) },
+      };
+    }
+
+    const records = [];
+    let provenance = {};
+    for (let i = 0; i < size; i += 1) {
+      const day = start + i * step;
+      const supplied = await queryRangeRaw({ calculationJdn: day, targetStartJdn: day, count: 1 });
+      records.push(supplied.records[0]);
+      if (i === 0) provenance = supplied.provenance;
+    }
+    return { records, provenance };
+  }
   async function yearRaw({ calculationJdn, year, includeDays = false }) {
     const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
     const requestedYear = safeInteger(year, 'year', 'YEAR_OUT_OF_SUPPORTED_DOMAIN');
@@ -638,6 +690,9 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     probe,
     queryRange(args) {
       return runAdmitted(() => queryRangeRaw(args));
+    },
+    queryDiagonal(args) {
+      return runAdmitted(() => queryDiagonalRaw(args));
     },
     query({ calculationJdn, targetJdn }) {
       return runAdmitted(async () => {
