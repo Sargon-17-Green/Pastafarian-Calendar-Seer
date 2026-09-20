@@ -7,6 +7,7 @@ import { listen } from '../http/index.mjs';
 import { createSeerClient } from 'pastafarian-calendar-seer/client';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const packageManifest = JSON.parse(await readFile(path.join(packageRoot, 'package.json'), 'utf8'));
 const exportedSchemaPath = fileURLToPath(import.meta.resolve('pastafarian-calendar-seer/schemas/date-response.schema.json'));
 const exportedSchema = JSON.parse(await readFile(exportedSchemaPath, 'utf8'));
 assert.equal(exportedSchema.$id, 'date-response.schema.json');
@@ -128,6 +129,17 @@ try {
   assert.equal(clientLocalized.locale, 'he');
   const locales = await browserClient.getLocales();
   assert.deepEqual(locales.locales.map((item) => item.code), ['en', 'he']);
+  const metaResponse = await fetch('http://127.0.0.1:' + port + '/v1/meta');
+  const meta = await metaResponse.json();
+  assert.equal(metaResponse.status, 200);
+  assert.equal(meta.packageVersion, packageManifest.version);
+  assert.match(meta.engineFingerprint, /^[0-9a-f]{64}$/);
+  assert.ok(meta.supportedFeatures.includes('date-query'));
+  assert.ok(['source', 'package', 'container'].includes(meta.artifactMode));
+  assert.equal(typeof meta.cacheRevision === 'string' || meta.cacheRevision === null, true);
+  for (const forbidden of ['path', 'pid', 'hostname', 'secret']) {
+    assert.equal(Object.keys(meta).some((key) => key.toLowerCase().includes(forbidden)), false);
+  }
   const schemaCount = await verifyOpenApiSchemaClosure('http://127.0.0.1:' + port + '/');
   assert.equal(schemaCount, packagedSchemaCount);
 } finally {
@@ -138,5 +150,5 @@ console.log(JSON.stringify({
   ok: true,
   calculationJdn,
   targetJdn,
-  checks: ['fixture-query', 'venus-boundary', 'localized-direct', 'localized-http', 'accept-language-explicit-only', 'locale-errors', 'browser-client', 'locale-discovery', 'openapi-schema-closure'],
+  checks: ['fixture-query', 'venus-boundary', 'localized-direct', 'localized-http', 'accept-language-explicit-only', 'locale-errors', 'browser-client', 'locale-discovery', 'public-release-identity', 'openapi-schema-closure'],
 }));

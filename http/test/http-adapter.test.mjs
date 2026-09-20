@@ -142,6 +142,19 @@ test('range supports JSON, NDJSON and CSV without changing query semantics', asy
 });
 
 test('public status and static endpoints are served without semantic work', async () => {
+  const publicIdentityProvider = {
+    async snapshot() {
+      return {
+        packageVersion: '0.2.3',
+        releaseTag: 'v0.2.3',
+        commit: '0123456789abcdef0123456789abcdef01234567',
+        artifactMode: 'container',
+        engineFingerprint: 'a'.repeat(64),
+        supportedFeatures: ['date-query', 'reverse-query'],
+        cacheRevision: null,
+      };
+    },
+  };
   await withServer(async (base) => {
     const status = await fetch(`${base}/v1/status`);
     assert.equal(status.status, 200);
@@ -153,6 +166,13 @@ test('public status and static endpoints are served without semantic work', asyn
     assert.equal(localeBody.locales[1].direction, 'rtl');
     const meta = await fetch(`${base}/v1/meta`);
     const metaBody = await meta.json();
+    assert.equal(metaBody.packageVersion, '0.2.3');
+    assert.equal(metaBody.releaseTag, 'v0.2.3');
+    assert.equal(metaBody.commit, '0123456789abcdef0123456789abcdef01234567');
+    assert.equal(metaBody.artifactMode, 'container');
+    assert.equal(metaBody.engineFingerprint, 'a'.repeat(64));
+    assert.deepEqual(metaBody.supportedFeatures, ['date-query', 'reverse-query']);
+    assert.equal(metaBody.cacheRevision, null);
     assert.equal(metaBody.observerPresets[0].longitude, 45.481);
     assert.deepEqual(metaBody.exactDomain, {
       kind: 'finite',
@@ -168,7 +188,7 @@ test('public status and static endpoints are served without semantic work', asyn
     assert.equal((await schema.json()).$id, 'fixture-date-response');
     const missingSchema = await fetch(`${base}/schemas/missing.schema.json`);
     assert.equal(missingSchema.status, 404);
-  });
+  }, { publicIdentityProvider });
 });
 
 test('OPTIONS, 404, 405, 406 and provider errors map cleanly', async () => {
@@ -321,7 +341,7 @@ test('request correlation headers, structured logs and HTTP metrics are privacy-
     logger,
     metrics,
     requestIdFactory: () => ids[nextId++],
-    releaseIdentity: {
+    observabilityReleaseIdentity: {
       packageVersion: '9.9.9-test',
       releaseTag: 'v9.9.9-test',
       commit: 'abc123',

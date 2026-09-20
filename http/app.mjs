@@ -12,6 +12,7 @@ import {
   createStructuredLogger,
   defaultReleaseIdentity,
 } from './observability.mjs';
+import { createPublicIdentityProvider } from './public-identity.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_API_DIR = path.resolve(here, '..', 'api');
@@ -465,7 +466,7 @@ export function createSeerHttpHandler(options = {}) {
   const nowFactory = options.nowFactory ?? (() => new Date());
   const logger = createStructuredLogger(options.logger ?? console);
   const metrics = createMetricsHooks(options.metrics);
-  const releaseIdentity = options.releaseIdentity ?? defaultReleaseIdentity();
+  const observabilityReleaseIdentity = options.observabilityReleaseIdentity ?? defaultReleaseIdentity();
   const baseQueryOptions = options.queryOptions ?? {};
   const healthTimeoutMs = Number.isFinite(options.healthTimeoutMs) && options.healthTimeoutMs > 0
     ? Math.max(1, Math.floor(options.healthTimeoutMs))
@@ -473,6 +474,12 @@ export function createSeerHttpHandler(options = {}) {
   const healthProbe = options.healthProbe ?? createSeerHealthProbe({
     generatedDir: baseQueryOptions.generatedDir ?? process.env.SEER_CACHE_DIR,
     timeoutMs: healthTimeoutMs,
+  });
+  const publicIdentityProvider = options.publicIdentityProvider ?? createPublicIdentityProvider({
+    generatedDir: baseQueryOptions.generatedDir ?? process.env.SEER_CACHE_DIR,
+    releaseIdentity: options.releaseIdentity,
+    requireReleaseIdentity: options.requireReleaseIdentity,
+    artifactMode: options.artifactMode,
   });
   const webRoot = options.webRoot ? path.resolve(options.webRoot) : null;
   const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
@@ -483,7 +490,7 @@ export function createSeerHttpHandler(options = {}) {
       res,
       logger,
       metrics,
-      releaseIdentity,
+      releaseIdentity: observabilityReleaseIdentity,
       requestIdFactory: options.requestIdFactory,
       clock: options.monotonicClock,
     });
@@ -553,8 +560,10 @@ export function createSeerHttpHandler(options = {}) {
       if (pathname === '/v1/meta' && method === 'GET') {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
+        const publicIdentity = await publicIdentityProvider.snapshot();
         sendJson(res, 200, {
           apiVersion: 'v1',
+          ...publicIdentity,
           presentations: ['full', 'canonical'],
           includes: ['structure', 'boundaries', 'provenance', 'resolution'],
           observerPresets: [{ id: 'kisurra', longitude: KISURRA_LONGITUDE }],
