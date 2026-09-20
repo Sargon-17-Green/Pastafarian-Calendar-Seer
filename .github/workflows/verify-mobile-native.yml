@@ -48,6 +48,13 @@ jobs:
           # Keep all other warning classes fatal; suppress only that inherited header noise.
           clang++ -std=c++20 -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -Iprototype/include -Iprototype/src \
             -Wall -Wextra -Werror -Wno-unused-function -c prototype/src/seer_mobile.cpp -o /tmp/seer_mobile_warnings.o
+      - name: Record optimized mobile-backend performance evidence
+        run: |
+          set -euo pipefail
+          src=(prototype/src/seer_year_core.cpp prototype/src/seer_calendar_core.cpp prototype/src/seer_weave_portable.cpp prototype/src/seer_mobile.cpp)
+          clang++ -std=c++20 -O3 -DNDEBUG -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -Iprototype/include -Iprototype/src -pthread \
+            "${src[@]}" prototype/tests/seer_mobile_perf.cpp -o prototype/build/seer_mobile_perf
+          prototype/build/seer_mobile_perf prototype/data/gates_100k_u16.bin prototype/data/gates_negative_100k_u16.bin
       - name: libFuzzer smoke
         run: |
           set -euo pipefail
