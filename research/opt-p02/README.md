@@ -4,7 +4,7 @@ Status: **validation only; not adopted**.
 
 The production default remains one persistent exact-service worker. This branch carries the OPT-P02 candidate as a content-verified research patch rather than changing runtime source directly.
 
-`apply-candidate.mjs` reconstructs the candidate, verifies the canonical patch SHA-256 and every overlay file SHA-256 from the handoff, requires `git apply --check`, applies the corrected product-concurrency benchmark edits, and asserts that the default worker count is still 1.
+`apply-candidate.mjs` reconstructs the candidate, verifies the canonical patch SHA-256 and the ported file hashes, requires `git apply --check`, applies the corrected product-concurrency benchmark edits, and asserts that the default worker count is still 1. The only intentional byte-level port delta from the original overlay is `query/index.mjs`, which preserves the three-line locale validation added to `main` after the OPT-P02 baseline.
 
 `research-opt-p02-validation.yml` runs:
 - targeted candidate regression tests and package self-test;

@@ -16,7 +16,7 @@ const overlaySha256 = new Map(Object.entries({
   'http/app.mjs': '28b6466d7594169bab6be03024ab89ae7508c07d013f0355d52f99f9ed5f74b8',
   'query/concurrency.mjs': 'a2944b336687eab9a2d0ad23ec577c53075509466c159eab2322a39eab660793',
   'query/exact-engine.mjs': 'f8a70d5e5ff4424182adef4dd23627d68bab7c1354590b05fca839cc4802d881',
-  'query/index.mjs': '91c87ca2815aad969f0ac051be7ff53b213d3c9d617889fa63a1b52a45e84a28',
+  'query/index.mjs': 'c3cec80b146df68ab20bcc06115cfa23a80ba32ce54b7cbb32546b8bcd6dab5b',
   'query/performance.mjs': '66ff19d13e3e3706331572e3a61833786f4f68f899b29adf0e54a44c6a7e72c1',
   'query/provider-precomputed.mjs': '0bf46cfdb7d3996b38c6bdd65e21ba0b8ddb9e3f9355e6f45ae87ca9e1de719b',
   'query/test/fixtures/opt-p02-fake-engine-service.mjs': 'b7bee1b773e1f772cf0fe66203bb6270541a42055cf0d56ee89010fc2f49ad0e',
