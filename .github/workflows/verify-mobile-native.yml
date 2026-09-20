@@ -94,6 +94,8 @@ jobs:
           test -f prototype/build/mobile/SeerMobile.xcframework/Info.plist
           lipo -info prototype/build/mobile/ios-arm64/libseer_mobile.a
           lipo -info prototype/build/mobile/ios-simulator-arm64/libseer_mobile.a
+          ! nm -u prototype/build/mobile/ios-arm64/libseer_mobile.a | grep -Ei '(__gmp|gmp_|omp_|GOMP_)'
+          ! nm -u prototype/build/mobile/ios-simulator-arm64/libseer_mobile.a | grep -Ei '(__gmp|gmp_|omp_|GOMP_)'
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-mobile-ios
@@ -137,6 +139,10 @@ jobs:
           file prototype/build/mobile/android-x86_64/libseer_mobile.so
           readelf -h prototype/build/mobile/android-arm64/libseer_mobile.so | grep -E 'AArch64|ARM aarch64'
           readelf -h prototype/build/mobile/android-x86_64/libseer_mobile.so | grep -E 'X86-64|Advanced Micro Devices X86-64'
+          readelf -d prototype/build/mobile/android-arm64/libseer_mobile.so | tee "$RUNNER_TEMP/ws06-arm64-needed.txt"
+          readelf -d prototype/build/mobile/android-x86_64/libseer_mobile.so | tee "$RUNNER_TEMP/ws06-x86-needed.txt"
+          ! grep -Ei 'libgmp|libgomp|libomp' "$RUNNER_TEMP/ws06-arm64-needed.txt"
+          ! grep -Ei 'libgmp|libgomp|libomp' "$RUNNER_TEMP/ws06-x86-needed.txt"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-mobile-android
