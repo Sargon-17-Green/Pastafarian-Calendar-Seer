@@ -4,12 +4,33 @@
   "description": "Exact high-performance query and HTTP runtime for the Pastafarian Calendar Seer",
   "type": "module",
   "main": "./index.mjs",
+  "types": "./index.d.ts",
   "exports": {
-    ".": "./index.mjs",
-    "./query": "./query/index.mjs",
-    "./client": "./client/index.mjs",
-    "./http": "./http/index.mjs",
-    "./http/server": "./http/server.mjs",
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "default": "./index.mjs"
+    },
+    "./query": {
+      "types": "./query/index.d.ts",
+      "import": "./query/index.mjs",
+      "default": "./query/index.mjs"
+    },
+    "./client": {
+      "types": "./client/index.d.ts",
+      "import": "./client/index.mjs",
+      "default": "./client/index.mjs"
+    },
+    "./http": {
+      "types": "./http/index.d.ts",
+      "import": "./http/index.mjs",
+      "default": "./http/index.mjs"
+    },
+    "./http/server": {
+      "types": "./http/server.d.ts",
+      "import": "./http/server.mjs",
+      "default": "./http/server.mjs"
+    },
     "./openapi.json": "./api/openapi.json",
     "./openapi.yaml": "./api/openapi.yaml",
     "./schemas/*": "./api/schemas/*",
@@ -74,7 +95,12 @@
     "scripts/verify-release.mjs",
     "docs/SUPPLY_CHAIN.md",
     "docs/ROLLING_CACHE.md",
-    "docs/NPM_LOCAL_RUNTIME.md"
+    "docs/NPM_LOCAL_RUNTIME.md",
+    "index.d.ts",
+    "types/*.d.ts",
+    "query/*.d.ts",
+    "client/*.d.ts",
+    "http/*.d.ts"
   ],
   "optionalDependencies": {
     "pastafarian-calendar-seer-linux-x64": "0.2.3",
@@ -90,7 +116,8 @@
     "verify:release": "node ./scripts/verify-release.mjs",
     "bench:product": "node ./bench/product/run.mjs",
     "bench:compare": "node ./bench/product/compare.mjs",
-    "test:bench": "node --test bench/product/test/*.test.mjs"
+    "test:bench": "node --test bench/product/test/*.test.mjs",
+    "test:types": "tsc -p test/typescript-consumer/tsconfig.json --noEmit"
   },
   "keywords": [
     "pastafarian",
@@ -106,5 +133,9 @@
   "bugs": {
     "url": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/issues"
   },
-  "homepage": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer#readme"
+  "homepage": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer#readme",
+  "devDependencies": {
+    "@types/node": "20.19.17",
+    "typescript": "5.9.2"
+  }
 }

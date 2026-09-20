@@ -29,6 +29,10 @@ install-time OS/CPU gated and has no required npm runtime dependencies. On
 supported local-execution targets, npm selects an exact-version native runtime
 through platform-constrained optional dependencies.
 
+Official TypeScript declarations are bundled for the package root, `/query`,
+`/client`, `/http`, and `/http/server`; no separate `@types` package is
+required.
+
 For source development instead:
 
 ```bash

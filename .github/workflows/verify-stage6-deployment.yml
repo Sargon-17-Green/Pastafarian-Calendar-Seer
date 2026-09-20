@@ -7,9 +7,12 @@ on:
     paths:
       - 'package.json'
       - 'index.mjs'
+      - 'index.d.ts'
       - 'query/**'
       - 'client/**'
       - 'http/**'
+      - 'types/**'
+      - 'test/typescript-consumer/**'
       - 'api/**'
       - 'precompute/**'
       - 'prototype/src/**'
@@ -47,6 +50,10 @@ jobs:
           node --check deployment/test/installed-bins.mjs
           node --check deployment/test/package-entrypoints.test.mjs
           node --test deployment/test/package-entrypoints.test.mjs
+      - name: TypeScript consumer contract
+        run: |
+          npm install --ignore-scripts --omit=optional --no-package-lock
+          npm run test:types
       - name: Pack runtime boundary
         shell: bash
         run: |
@@ -57,7 +64,13 @@ jobs:
           echo "SEER_TGZ=$TGZ" >> "$GITHUB_ENV"
           tar -tzf "$TGZ" | tee /tmp/seer-package-files.txt
           grep -qx 'package/index.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/index.d.ts' /tmp/seer-package-files.txt
+          grep -qx 'package/types/public.d.ts' /tmp/seer-package-files.txt
+          grep -qx 'package/query/index.d.ts' /tmp/seer-package-files.txt
+          grep -qx 'package/client/index.d.ts' /tmp/seer-package-files.txt
           grep -qx 'package/http/index.mjs' /tmp/seer-package-files.txt
+          grep -qx 'package/http/index.d.ts' /tmp/seer-package-files.txt
+          grep -qx 'package/http/server.d.ts' /tmp/seer-package-files.txt
 
           grep -qx 'package/api/openapi.json' /tmp/seer-package-files.txt
           grep -qx 'package/api/openapi.yaml' /tmp/seer-package-files.txt
@@ -151,6 +164,9 @@ jobs:
           cd /tmp/seer-consumer
           npm init -y >/dev/null
           npm install --ignore-scripts "$SEER_TGZ"
+          npm install --ignore-scripts --save-dev typescript@5.9.2 @types/node@20.19.17
+          cp -R "$GITHUB_WORKSPACE/test/typescript-consumer" ./typescript-consumer
+          ./node_modules/.bin/tsc -p ./typescript-consumer/tsconfig.json --noEmit
           test -f node_modules/pastafarian-calendar-seer/package.json
           test -f node_modules/pastafarian-calendar-seer/api/schemas/date-response.schema.json
           test -f node_modules/pastafarian-calendar-seer/client/index.mjs
