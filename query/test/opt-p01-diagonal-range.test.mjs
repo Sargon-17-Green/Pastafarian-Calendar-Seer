@@ -72,6 +72,29 @@ test('same-as-target ranges of eight items use one diagonal prefetch while prese
   assert.ok(result.results.every((x) => x.provenance.engineRevision === 'exact-engine'));
 });
 
+test('invalid observer is rejected before diagonal prefetch', async () => {
+  let diagonalCalls = 0;
+  const provider = Object.freeze({
+    id: 'must-not-run',
+    async query() { throw new Error('provider must not run'); },
+    async queryDiagonal() {
+      diagonalCalls += 1;
+      throw new Error('diagonal prefetch must not run');
+    },
+  });
+  await assert.rejects(
+    queryRange({
+      start: { jdn: '1000' },
+      count: '8',
+      calculationMode: 'same-as-target',
+      observer: null,
+      presentation: 'canonical',
+    }, { provider }),
+    (error) => error?.code === 'INVALID_OBSERVER' && error?.field === 'observer',
+  );
+  assert.equal(diagonalCalls, 0);
+});
+
 test('cache hit inside a large diagonal range is preserved and exact misses split around it', async () => {
   const exactCalls = [];
   const exactEngine = Object.freeze({
