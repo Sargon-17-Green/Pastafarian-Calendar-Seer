@@ -1,0 +1,29 @@
+name: Contract tool environment
+description: Create the pinned Python environment used by API/schema contract checks.
+inputs:
+  venv-path:
+    description: Virtual environment path.
+    required: false
+    default: .contract-venv
+  python-command:
+    description: Python executable used to create the virtual environment.
+    required: false
+    default: python
+outputs:
+  python:
+    description: Python executable inside the virtual environment.
+    value: ${{ steps.env.outputs.python }}
+runs:
+  using: composite
+  steps:
+    - name: Create pinned contract environment
+      id: env
+      shell: bash
+      env:
+        VENV_PATH: ${{ inputs.venv-path }}
+        PYTHON_COMMAND: ${{ inputs.python-command }}
+      run: |
+        set -euo pipefail
+        "$PYTHON_COMMAND" -m venv "$VENV_PATH"
+        "$VENV_PATH/bin/python" -m pip install --disable-pip-version-check --no-deps --requirement ci/requirements-contract.txt
+        echo "python=$VENV_PATH/bin/python" >> "$GITHUB_OUTPUT"

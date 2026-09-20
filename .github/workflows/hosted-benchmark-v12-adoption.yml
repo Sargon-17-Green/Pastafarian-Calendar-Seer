@@ -18,10 +18,9 @@ jobs:
           mkdir -p prototype/results
           { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; } | tee prototype/results/v12-adoption-runner-info.txt
       - name: Install dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Verify v12 is the default across backends
         shell: bash
         run: bash ./prototype/scripts/check_v12_default_adoption.sh

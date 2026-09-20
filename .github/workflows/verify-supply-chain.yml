@@ -11,6 +11,8 @@ on:
       - '.dockerignore'
       - 'package.json'
       - 'scripts/audit-supply-chain.mjs'
+      - 'ci/verify-workflow-policy.mjs'
+      - 'ci/requirements-contract.txt'
       - 'scripts/verify-release.mjs'
       - 'scripts/generate-release-manifest.mjs'
       - 'docs/SUPPLY_CHAIN.md'
@@ -22,6 +24,8 @@ on:
       - '.dockerignore'
       - 'package.json'
       - 'scripts/audit-supply-chain.mjs'
+      - 'ci/verify-workflow-policy.mjs'
+      - 'ci/requirements-contract.txt'
       - 'scripts/verify-release.mjs'
       - 'scripts/generate-release-manifest.mjs'
       - 'docs/SUPPLY_CHAIN.md'
@@ -41,21 +45,24 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: ./.github/actions/node-setup
         with:
           node-version: '24'
           package-manager-cache: false
 
-      - name: Static workflow and Docker audit
-        run: node scripts/audit-supply-chain.mjs
+      - name: Static workflow, action and Docker audit
+        run: |
+          node scripts/audit-supply-chain.mjs
+          node ci/verify-workflow-policy.mjs
 
       - name: Parse every workflow as YAML
         shell: bash
         run: |
           ruby <<'RUBY'
           require 'yaml'
-          Dir['.github/workflows/*.{yml,yaml}'].sort.each { |path| YAML.load_file(path, aliases: true) }
-          puts 'workflow YAML parse PASS'
+          paths = Dir['.github/workflows/*.{yml,yaml}'] + Dir['.github/actions/**/*.{yml,yaml}']
+          paths.sort.each { |path| YAML.load_file(path, aliases: true) }
+          puts 'workflow/action YAML parse PASS'
           RUBY
 
       - name: Package and cache checks

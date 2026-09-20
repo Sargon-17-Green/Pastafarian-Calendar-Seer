@@ -1,0 +1,29 @@
+name: Canonical native build
+description: Run named production/native build scripts without duplicating workflow shell blocks.
+inputs:
+  targets:
+    description: "Space-separated targets: year-batch year-locator year-structure month-count-tools engine-service runtime."
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Build native targets
+      shell: bash
+      env:
+        TARGETS: ${{ inputs.targets }}
+      run: |
+        set -euo pipefail
+        for target in $TARGETS; do
+          case "$target" in
+            year-batch) script=prototype/scripts/build_year_batch.sh ;;
+            year-locator) script=prototype/scripts/build_year_locator.sh ;;
+            year-structure) script=prototype/scripts/build_year_structure.sh ;;
+            month-count-tools) script=prototype/scripts/build_month_count_tools.sh ;;
+            engine-service) script=prototype/scripts/build_engine_service.sh ;;
+            runtime) script=scripts/build-runtime.sh ;;
+            *) echo "Unknown native build target: $target" >&2; exit 2 ;;
+          esac
+          echo "::group::native-build $target"
+          bash "$script"
+          echo "::endgroup::"
+        done

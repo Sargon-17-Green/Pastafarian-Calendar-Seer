@@ -14,22 +14,16 @@ permissions:
   contents: read
 jobs:
   linux:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 120
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
-      - name: Build exact runtime
-        run: bash scripts/build-runtime.sh
-      - name: Domain error unit and native service tests
-        env:
-          SEER_REQUIRE_ENGINE_SERVICE: '1'
-        run: |
-          node --check query/exact-engine.mjs
-          node --test query/test/exact-domain-errors.test.mjs query/test/engine-service.test.mjs
+    uses: ./.github/workflows/_reusable-ci-job.yml
+    with:
+      runner: ubuntu-24.04
+      timeout-minutes: 120
+      native-profile: full-minimal
+      native-build-targets: runtime
+      command: |
+        export SEER_REQUIRE_ENGINE_SERVICE=1
+        node --check query/exact-engine.mjs
+        node --test query/test/exact-domain-errors.test.mjs query/test/engine-service.test.mjs
   windows:
     runs-on: windows-latest
     timeout-minutes: 120

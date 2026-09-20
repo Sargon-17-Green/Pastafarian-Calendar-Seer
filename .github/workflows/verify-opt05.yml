@@ -16,17 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ libgmp-dev libboost-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard
       - name: Build exact engines and prior verification tool
-        run: |
-          bash prototype/scripts/build_year_batch.sh
-          bash prototype/scripts/build_year_locator.sh
-          bash prototype/scripts/build_year_structure.sh
-          bash prototype/scripts/build_month_count_tools.sh
-          (cd prototype/data && ../build/month_count_table_verify)
-      - name: Canonical edge vectors — direct equals forced weave and expected TSV
+        uses: ./.github/actions/native-build
+        with:
+          targets: year-batch year-locator year-structure month-count-tools
+      - name: Verify prior month-count table
+        run: (cd prototype/data && ../build/month_count_table_verify)
+      - name: Canonical edge vectors ג€” direct equals forced weave and expected TSV
         shell: bash
         run: |
           set -euo pipefail
@@ -87,8 +86,8 @@ jobs:
           console.log('gate calculation day edge cases: PASS');
           NODE
       - name: Full regressions
-        run: |
-          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
-          python -m venv .contract-venv
-          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
-          .contract-venv/bin/python api/tests/test_contract.py
+        run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+      - name: API contract environment
+        uses: ./.github/actions/contract-environment
+      - name: API contract tests
+        run: .contract-venv/bin/python api/tests/test_contract.py

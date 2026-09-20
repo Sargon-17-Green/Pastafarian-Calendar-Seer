@@ -35,13 +35,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: full-minimal
       - name: Build forced-portable exact runtime
         env:
           SEER_RNS_BACKEND: portable
-        run: bash scripts/build-runtime.sh
+        uses: ./.github/actions/native-build
+        with:
+          targets: runtime
       - name: Build independent oracle
         run: |
           g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \

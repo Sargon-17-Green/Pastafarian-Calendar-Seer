@@ -1,0 +1,49 @@
+name: Verify GitHub Actions maintenance layer
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/_reusable-ci-job.yml'
+      - '.github/workflows/verify-actions-maintenance.yml'
+      - 'ci/requirements-contract.txt'
+      - 'ci/verify-workflow-policy.mjs'
+  pull_request:
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/_reusable-ci-job.yml'
+      - '.github/workflows/verify-actions-maintenance.yml'
+      - 'ci/requirements-contract.txt'
+      - 'ci/verify-workflow-policy.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    uses: ./.github/workflows/_reusable-ci-job.yml
+    with:
+      node-version: '20'
+      command: node ci/verify-workflow-policy.mjs
+
+  contract-and-native:
+    uses: ./.github/workflows/_reusable-ci-job.yml
+    with:
+      timeout-minutes: 120
+      native-profile: standard-minimal
+      node-version: '20'
+      native-build-targets: year-batch year-locator
+      contract-environment: true
+      command: |
+        .contract-venv/bin/python api/tests/test_contract.py
+        node --test query/test/*.test.mjs http/test/*.test.mjs
+
+  node24-smoke:
+    uses: ./.github/workflows/_reusable-ci-job.yml
+    with:
+      node-version: '24'
+      command: |
+        node --check index.mjs
+        npm test

@@ -24,14 +24,19 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Native and contract dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev python3-venv
-          python3 -m venv .reverse-contract-venv
-          .reverse-contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
+      - name: Native dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: full-venv-minimal
+      - name: Reverse API contract environment
+        uses: ./.github/actions/contract-environment
+        with:
+          venv-path: .reverse-contract-venv
+          python-command: python3
       - name: Build exact runtime
-        run: bash scripts/build-runtime.sh
+        uses: ./.github/actions/native-build
+        with:
+          targets: runtime
       - name: Reverse query, HTTP, CLI and exact-provider verification
         env:
           SEER_REQUIRE_ENGINE_SERVICE: '1'

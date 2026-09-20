@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: ./.github/actions/node-setup
         with:
           node-version: '24'
           package-manager-cache: false
@@ -74,13 +74,14 @@ jobs:
 
       - name: Install native build dependencies
         if: steps.plan.outputs.refresh == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
-
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
       - name: Build exact batch engine
         if: steps.plan.outputs.refresh == 'true'
-        run: bash prototype/scripts/build_year_batch.sh
+        uses: ./.github/actions/native-build
+        with:
+          targets: year-batch
 
       - name: Generate and verify cache snapshot
         if: steps.plan.outputs.refresh == 'true'

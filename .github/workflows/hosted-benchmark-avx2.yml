@@ -35,9 +35,9 @@ jobs:
           grep -m1 '^flags' /proc/cpuinfo | tee -a prototype/results/avx2-runner-lscpu.txt
           grep -qm1 -w avx2 /proc/cpuinfo || { echo 'AVX2 unavailable'; exit 3; }
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Build scalar portable baseline
         env:
           SEER_PORTABLE_CXXFLAGS: -march=native

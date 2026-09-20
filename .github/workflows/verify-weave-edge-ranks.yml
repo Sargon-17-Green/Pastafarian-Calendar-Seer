@@ -12,24 +12,16 @@ permissions:
   contents: read
 jobs:
   verify:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 350
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
-      - name: Require AVX2
-        shell: bash
-        run: grep -qm1 -w avx2 /proc/cpuinfo
-      - name: Build difficult edge-rank verifier
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p prototype/build
-          g++ -O3 -DNDEBUG -std=c++20 -fopenmp -pthread -march=native -Iprototype/src \
-            prototype/tools/weave_edge_rank_probe.cpp -lgmpxx -lgmp \
-            -o prototype/build/weave_edge_rank_probe
-      - name: Exact validation at both rank extremes
-        run: prototype/build/weave_edge_rank_probe 3
+    uses: ./.github/workflows/_reusable-ci-job.yml
+    with:
+      runner: ubuntu-24.04
+      timeout-minutes: 350
+      native-profile: full-minimal
+      command: |
+        set -euo pipefail
+        grep -qm1 -w avx2 /proc/cpuinfo
+        mkdir -p prototype/build
+        g++ -O3 -DNDEBUG -std=c++20 -fopenmp -pthread -march=native -Iprototype/src \
+          prototype/tools/weave_edge_rank_probe.cpp -lgmpxx -lgmp \
+          -o prototype/build/weave_edge_rank_probe
+        prototype/build/weave_edge_rank_probe 3

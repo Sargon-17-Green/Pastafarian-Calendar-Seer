@@ -1,0 +1,64 @@
+name: Reusable checked-out verification job
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        type: string
+        required: false
+        default: ubuntu-24.04
+      timeout-minutes:
+        type: number
+        required: false
+        default: 30
+      native-profile:
+        type: string
+        required: false
+        default: none
+      node-version:
+        type: string
+        required: false
+        default: ''
+      native-build-targets:
+        type: string
+        required: false
+        default: ''
+      contract-environment:
+        type: boolean
+        required: false
+        default: false
+      command:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Native dependencies
+        if: inputs.native-profile != 'none'
+        uses: ./.github/actions/native-deps
+        with:
+          profile: ${{ inputs.native-profile }}
+      - name: Node runtime
+        if: inputs.node-version != ''
+        uses: ./.github/actions/node-setup
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Native build
+        if: inputs.native-build-targets != ''
+        uses: ./.github/actions/native-build
+        with:
+          targets: ${{ inputs.native-build-targets }}
+      - name: Contract environment
+        if: inputs.contract-environment
+        uses: ./.github/actions/contract-environment
+      - name: Verification command
+        shell: bash
+        run: ${{ inputs.command }}

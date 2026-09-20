@@ -28,9 +28,9 @@ jobs:
           { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/mulsmall-runner-info.txt
           grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
       - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Verify adopted v12 default
         run: bash ./prototype/scripts/check_v12_default_adoption.sh
       - name: Build A-B

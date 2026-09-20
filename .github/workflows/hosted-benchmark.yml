@@ -55,10 +55,9 @@ jobs:
           rc=${PIPESTATUS[0]}; set -e
           if [[ "$rc" -eq 0 ]]; then echo "ifma=true" >> "$GITHUB_OUTPUT"; else echo "ifma=false" >> "$GITHUB_OUTPUT"; fi
       - name: Install build dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Canonical saved-sum conformance
         shell: bash
         run: bash ./prototype/scripts/check_saved_sum_conformance.sh
