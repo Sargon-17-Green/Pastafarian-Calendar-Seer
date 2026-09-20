@@ -65,7 +65,7 @@ case "$TARGET" in
       TRIPLE=x86_64-linux-android
     fi
     CXX="$TOOLCHAIN/${TRIPLE}${API}-clang++"
-    "$CXX" "${COMMON[@]}" -fPIC -pthread -shared "${SOURCES[@]}" -Wl,-soname,libseer_mobile.so -o "$OUT/libseer_mobile.so"
+    "$CXX" "${COMMON[@]}" -fPIC -pthread -static-libstdc++ -shared "${SOURCES[@]}" -Wl,-soname,libseer_mobile.so -o "$OUT/libseer_mobile.so"
     ;;
   *)
     echo "unknown target: $TARGET" >&2
