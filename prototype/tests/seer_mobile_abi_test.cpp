@@ -51,6 +51,8 @@ int main(int argc,char**argv){
 
     seer_mobile_cancel_token* token=nullptr;
     assert(seer_mobile_cancel_token_create(&token,&err)==SEER_MOBILE_OK);
+    seer_mobile_cancel_token_retain(token);
+    seer_mobile_cancel_token_destroy(token); // release caller ownership; retained call ref remains valid
     seer_mobile_cancel(token);
     seer_mobile_record cancelled{};
     assert(seer_mobile_query(ctx,-13334246LL,-13334246LL,token,&cancelled,&err)==SEER_MOBILE_CANCELLED);
