@@ -72,6 +72,44 @@ test('same-as-target ranges of eight items use one diagonal prefetch while prese
   assert.ok(result.results.every((x) => x.provenance.engineRevision === 'exact-engine'));
 });
 
+test('boundaries keep the canonical per-item path so boundary/exact error ordering is unchanged', async () => {
+  let diagonalCalls = 0;
+  let queryCalls = 0;
+  let boundaryCalls = 0;
+  const provider = Object.freeze({
+    id: 'fake-boundaries',
+    async query({ calculationJdn, targetJdn }) {
+      queryCalls += 1;
+      assert.equal(calculationJdn, targetJdn);
+      return shaped(targetJdn);
+    },
+    async queryDiagonal() {
+      diagonalCalls += 1;
+      throw new Error('boundary ranges must not use diagonal prefetch');
+    },
+  });
+  const dayBoundaryService = Object.freeze({
+    async dayBoundaries() {
+      boundaryCalls += 1;
+      return {
+        startsAt: '2026-09-20T00:00:00.000Z',
+        endsAt: '2026-09-21T00:00:00.000Z',
+      };
+    },
+  });
+  const result = await queryRange({
+    start: { jdn: '1000' },
+    count: '8',
+    calculationMode: 'same-as-target',
+    presentation: 'canonical',
+    include: ['boundaries'],
+  }, { provider, dayBoundaryService });
+  assert.equal(result.results.length, 8);
+  assert.equal(diagonalCalls, 0);
+  assert.equal(queryCalls, 8);
+  assert.equal(boundaryCalls, 8);
+});
+
 test('invalid observer is rejected before diagonal prefetch', async () => {
   let diagonalCalls = 0;
   const provider = Object.freeze({
