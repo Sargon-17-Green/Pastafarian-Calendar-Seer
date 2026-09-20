@@ -1,4 +1,4 @@
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const required = [
   'RELEASE_VERSION',
@@ -17,6 +17,11 @@ for (const key of required) {
 }
 
 const version = process.env.RELEASE_VERSION;
+const packageManifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+if (packageManifest.name !== 'pastafarian-calendar-seer' || packageManifest.version !== version) {
+  throw new Error(`release/package identity mismatch: ${packageManifest.name}@${packageManifest.version} != pastafarian-calendar-seer@${version}`);
+}
+if (!/^[0-9a-f]{40}$/.test(process.env.RELEASE_COMMIT)) throw new Error('RELEASE_COMMIT must be a full lowercase Git SHA');
 const tag = `v${version}`;
 const npmSbom = `pastafarian-calendar-seer-${version}.cdx.json`;
 const amd64Sbom = `pastafarian-calendar-seer-${version}-container-amd64.spdx.json`;
@@ -27,6 +32,11 @@ const manifest = {
   version,
   commit: process.env.RELEASE_COMMIT,
   tag,
+  runtimeIdentity: {
+    packageVersion: version,
+    releaseTag: tag,
+    commit: process.env.RELEASE_COMMIT.toLowerCase(),
+  },
   githubRelease: {
     url: `https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/releases/tag/${tag}`,
     tarball: `pastafarian-calendar-seer-${version}.tgz`,

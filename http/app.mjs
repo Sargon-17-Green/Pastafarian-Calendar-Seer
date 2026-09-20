@@ -5,6 +5,7 @@ import * as defaultQueryApi from '../query/index.mjs';
 import { DEFAULT_HEALTH_TIMEOUT_MS, createSeerHealthProbe } from '../query/health.mjs';
 import { isSeerQueryError, queryError } from '../query/errors.mjs';
 import { KISURRA_LONGITUDE } from '../query/observer.mjs';
+import { createPublicIdentityProvider } from './public-identity.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_API_DIR = path.resolve(here, '..', 'api');
@@ -463,6 +464,12 @@ export function createSeerHttpHandler(options = {}) {
     generatedDir: baseQueryOptions.generatedDir ?? process.env.SEER_CACHE_DIR,
     timeoutMs: healthTimeoutMs,
   });
+  const publicIdentityProvider = options.publicIdentityProvider ?? createPublicIdentityProvider({
+    generatedDir: baseQueryOptions.generatedDir ?? process.env.SEER_CACHE_DIR,
+    releaseIdentity: options.releaseIdentity,
+    requireReleaseIdentity: options.requireReleaseIdentity,
+    artifactMode: options.artifactMode,
+  });
   const webRoot = options.webRoot ? path.resolve(options.webRoot) : null;
   const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
 
@@ -531,8 +538,10 @@ export function createSeerHttpHandler(options = {}) {
       if (pathname === '/v1/meta' && method === 'GET') {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
+        const publicIdentity = await publicIdentityProvider.snapshot();
         sendJson(res, 200, {
           apiVersion: 'v1',
+          ...publicIdentity,
           presentations: ['full', 'canonical'],
           includes: ['structure', 'boundaries', 'provenance', 'resolution'],
           observerPresets: [{ id: 'kisurra', longitude: KISURRA_LONGITUDE }],
