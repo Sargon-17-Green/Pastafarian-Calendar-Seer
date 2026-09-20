@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { queryError } from './errors.mjs';
-import { createExactAdmission } from './concurrency.mjs';
+import { createExactAdmission, mapConcurrent } from './concurrency.mjs';
 import { prebuiltRuntimeHint, resolvePrebuiltBinary } from './prebuilt-runtime.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -608,15 +608,30 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
       };
     }
 
-    const records = [];
-    let provenance = {};
-    for (let i = 0; i < size; i += 1) {
-      const day = start + i * step;
-      const supplied = await queryRangeRaw({ calculationJdn: day, targetStartJdn: day, count: 1 });
-      records.push(supplied.records[0]);
-      if (i === 0) provenance = supplied.provenance;
-    }
-    return { records, provenance };
+    return null;
+  }
+
+  async function queryDiagonalFallback({ targetStartJdn, count, stepDays = 1 }) {
+    const start = safeInteger(targetStartJdn, 'target.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+    const size = safeCount(count);
+    const step = safeInteger(stepDays, 'stepDays', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
+    if (step === 0) throw queryError('INVALID_RANGE_STEP', 'stepDays must not be zero.', { field: 'stepDays' });
+    const supplied = await mapConcurrent(
+      Array.from({ length: size }, (_, i) => i),
+      admission.concurrency,
+      async (i) => {
+        const day = start + i * step;
+        return runAdmitted(() => queryRangeRaw({
+          calculationJdn: day,
+          targetStartJdn: day,
+          count: 1,
+        }));
+      },
+    );
+    return {
+      records: supplied.map((item) => item.records[0]),
+      provenance: supplied[0]?.provenance ?? {},
+    };
   }
   async function yearRaw({ calculationJdn, year, includeDays = false }) {
     const calc = safeInteger(calculationJdn, 'calculation.jdn', 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN');
@@ -691,8 +706,9 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
     queryRange(args) {
       return runAdmitted(() => queryRangeRaw(args));
     },
-    queryDiagonal(args) {
-      return runAdmitted(() => queryDiagonalRaw(args));
+    async queryDiagonal(args) {
+      const direct = await runAdmitted(() => queryDiagonalRaw(args));
+      return direct ?? queryDiagonalFallback(args);
     },
     query({ calculationJdn, targetJdn }) {
       return runAdmitted(async () => {
