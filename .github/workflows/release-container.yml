@@ -100,10 +100,16 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}
             ${{ env.IMAGE }}:v${{ steps.meta.outputs.version }}
+          build-args: |
+            SEER_RELEASE_VERSION=${{ steps.meta.outputs.version }}
+            SEER_RELEASE_TAG=${{ github.ref_name }}
+            SEER_RELEASE_COMMIT=${{ github.sha }}
+            SEER_REQUIRE_RELEASE_IDENTITY=1
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.ref.name=${{ github.ref_name }}
           provenance: mode=max
           sbom: true
 
@@ -144,8 +150,41 @@ jobs:
           docker pull --platform linux/amd64 "$IMAGE@${P[amd64]}"
           REVISION="$(docker image inspect "$IMAGE@${P[amd64]}" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')"
           VERSION_LABEL="$(docker image inspect "$IMAGE@${P[amd64]}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')"
+          REF_NAME="$(docker image inspect "$IMAGE@${P[amd64]}" --format '{{ index .Config.Labels "org.opencontainers.image.ref.name" }}')"
           test "$REVISION" = "$GITHUB_SHA"
           test "$VERSION_LABEL" = "$VERSION"
+          test "$REF_NAME" = "$GITHUB_REF_NAME"
+
+          CID="$(docker run -d -P --platform linux/amd64 "$IMAGE@${P[amd64]}")"
+          cleanup() { docker rm -f "$CID" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          PORT="$(docker port "$CID" 8080/tcp | awk -F: 'END { print $NF }')"
+          test -n "$PORT"
+          for _ in $(seq 1 60); do
+            if curl -fsS "http://127.0.0.1:$PORT/v1/meta" -o "$RUNNER_TEMP/release-meta.json"; then break; fi
+            if ! docker inspect -f '{{.State.Running}}' "$CID" | grep -qx true; then
+              docker logs "$CID" >&2 || true
+              exit 1
+            fi
+            sleep 1
+          done
+          test -s "$RUNNER_TEMP/release-meta.json"
+          node --input-type=module - "$RUNNER_TEMP/release-meta.json" "$VERSION" "$GITHUB_REF_NAME" "$GITHUB_SHA" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const [file, version, tag, commit] = process.argv.slice(2);
+          const meta = JSON.parse(readFileSync(file, 'utf8'));
+          if (meta.packageVersion !== version || meta.releaseTag !== tag || meta.commit !== commit.toLowerCase()) {
+            throw new Error('container /v1/meta release identity mismatch');
+          }
+          if (meta.artifactMode !== 'container') throw new Error('container /v1/meta artifactMode mismatch');
+          if (!/^[0-9a-f]{64}$/.test(meta.engineFingerprint)) throw new Error('container /v1/meta engineFingerprint invalid');
+          if (!Array.isArray(meta.supportedFeatures) || !meta.supportedFeatures.includes('date-query')) {
+            throw new Error('container /v1/meta supportedFeatures incomplete');
+          }
+          if (meta.cacheRevision !== null) throw new Error('release image unexpectedly embeds rolling cache identity');
+          NODE
+          cleanup
+          trap - EXIT
 
       - name: Attest published image digest
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2

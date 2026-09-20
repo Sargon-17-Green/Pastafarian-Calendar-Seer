@@ -349,18 +349,8 @@
               }
             }
           },
-          "422": {
-            "description": "Semantically invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Seer cannot currently guarantee a correct answer",
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -379,8 +369,18 @@
               }
             }
           },
-          "413": {
-            "description": "Request body or operation exceeds the configured limit",
+          "422": {
+            "description": "Semantically invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -426,8 +426,8 @@
               }
             }
           },
-          "413": {
-            "description": "Request body or operation exceeds the configured limit",
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
             "content": {
               "application/json": {
                 "schema": {
@@ -436,8 +436,8 @@
               }
             }
           },
-          "503": {
-            "description": "Seer cannot currently guarantee a correct answer",
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -456,8 +456,8 @@
               }
             }
           },
-          "406": {
-            "description": "Requested response representation or active locale is not acceptable",
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -533,6 +533,16 @@
               }
             }
           },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Semantically invalid request",
             "content": {
@@ -545,16 +555,6 @@
           },
           "503": {
             "description": "Seer cannot currently guarantee a correct answer",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "POST requests require Content-Type: application/json",
             "content": {
               "application/json": {
                 "schema": {
@@ -761,18 +761,8 @@
               }
             }
           },
-          "422": {
-            "description": "Pastafarian coordinates are invalid, absent from the year, inconsistent, or outside the supported domain",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Seer cannot currently guarantee a correct answer",
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
             "content": {
               "application/json": {
                 "schema": {
@@ -791,8 +781,18 @@
               }
             }
           },
-          "413": {
-            "description": "Request body or operation exceeds the configured limit",
+          "422": {
+            "description": "Pastafarian coordinates are invalid, absent from the year, inconsistent, or outside the supported domain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Seer cannot currently guarantee a correct answer",
             "content": {
               "application/json": {
                 "schema": {
@@ -953,10 +953,10 @@
     },
     "/v1/meta": {
       "get": {
-        "summary": "Describe v1 capabilities",
+        "summary": "Describe v1 capabilities and immutable runtime identity",
         "responses": {
           "200": {
-            "description": "Capabilities",
+            "description": "Capabilities and public-safe release/engine identity",
             "content": {
               "application/json": {
                 "schema": {
@@ -1002,16 +1002,6 @@
               }
             }
           },
-          "503": {
-            "description": "Unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/status-response.schema.json"
-                }
-              }
-            }
-          },
           "400": {
             "description": "Invalid or ambiguous request",
             "content": {
@@ -1028,6 +1018,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/status-response.schema.json"
                 }
               }
             }

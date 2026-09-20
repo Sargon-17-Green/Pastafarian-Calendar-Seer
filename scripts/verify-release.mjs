@@ -234,6 +234,11 @@ if (manifestAsset) {
   if (manifest.version !== version || manifest.tag !== tag || manifest.commit !== commit) {
     throw new Error('release manifest identity mismatch');
   }
+  if (manifest.runtimeIdentity?.packageVersion !== version ||
+      manifest.runtimeIdentity?.releaseTag !== tag ||
+      manifest.runtimeIdentity?.commit !== commit) {
+    throw new Error('release manifest runtime identity mismatch');
+  }
   if (githubSha256 && manifest.githubRelease?.tarballSha256 !== githubSha256) {
     throw new Error('release manifest GitHub checksum mismatch');
   }

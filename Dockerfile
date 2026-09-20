@@ -1,7 +1,20 @@
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS package
 WORKDIR /src
 COPY . .
+ARG SEER_RELEASE_VERSION=
+ARG SEER_RELEASE_TAG=
+ARG SEER_RELEASE_COMMIT=
 RUN set -eux; \
+    if [ -n "$SEER_RELEASE_VERSION$SEER_RELEASE_TAG$SEER_RELEASE_COMMIT" ]; then \
+      test -n "$SEER_RELEASE_VERSION"; \
+      test -n "$SEER_RELEASE_TAG"; \
+      test -n "$SEER_RELEASE_COMMIT"; \
+      node scripts/generate-runtime-identity.mjs \
+        --mode=container \
+        --version="$SEER_RELEASE_VERSION" \
+        --tag="$SEER_RELEASE_TAG" \
+        --commit="$SEER_RELEASE_COMMIT"; \
+    fi; \
     tgz="$(npm pack --silent)"; \
     test -n "$tgz"; \
     mv "$tgz" /tmp/seer.tgz
@@ -21,6 +34,7 @@ RUN npm init -y >/dev/null \
     && npm test
 
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
+ARG SEER_REQUIRE_RELEASE_IDENTITY=0
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgmp10 libgmpxx4ldbl libgomp1 \
     && rm -rf /var/lib/apt/lists/*
@@ -30,6 +44,8 @@ COPY --from=package --chown=node:node /src/web /opt/seer-web
 ENV HOST=0.0.0.0 \
     PORT=8080 \
     SEER_REQUIRE_ENGINE_SERVICE=1 \
+    SEER_ARTIFACT_MODE=container \
+    SEER_REQUIRE_RELEASE_IDENTITY=${SEER_REQUIRE_RELEASE_IDENTITY} \
     SEER_WEB_ROOT=/opt/seer-web
 USER node
 EXPOSE 8080

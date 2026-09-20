@@ -151,7 +151,11 @@ These values are public-safe. They must not contain filesystem paths, process ID
 
 In production, package version, release tag, commit, and immutable runtime artifact must identify the same selected release. The engine fingerprint must identify the exact semantic engine/data closure used by that deployment.
 
-The current `/v1/meta` implementation does not yet expose package/release/commit identity. Adding these fields is v1-compatible because the meta schema is intentionally extensible. Implementing and testing them is a pre-launch requirement.
+`/v1/meta` now exposes this identity additively within v1. `packageVersion` comes from the installed/source package manifest. Released npm/package artifacts carry an injected immutable `release-identity.json`; released containers inject the same version/tag/commit tuple at image build and require it at startup. A source checkout may resolve its full Git commit and the matching exact `v<packageVersion>` tag without exposing repository paths.
+
+`engineFingerprint` is the SHA-256 identity of the exact native Seer engine inputs and gate data used by the cache-compatibility contract. `supportedFeatures` is an allow-listed public capability set. `artifactMode` distinguishes source, package, and container execution.
+
+The rolling cache remains a separate mutable performance artifact. When a compatible mounted cache index is present, `cacheRevision` is the SHA-256 identity of that index; otherwise it is `null`. It is never substituted for `commit` or `engineFingerprint`, and cache producer metadata is not exposed through this endpoint. Production identity projection is allow-listed and never includes filesystem paths, process IDs, hostnames, secrets, or raw environment/configuration.
 
 ## 9. Public exact domain
 
