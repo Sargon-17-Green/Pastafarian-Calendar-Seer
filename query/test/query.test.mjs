@@ -95,3 +95,30 @@ test('duplicate include values are rejected rather than silently deduplicated', 
     (error) => error?.code === 'UNSUPPORTED_INCLUDE' && error?.field === 'include',
   );
 });
+
+
+test('structural request shape is enforced even when fields are semantically irrelevant', async () => {
+  for (const request of [
+    { calculation: { jdn: '2461299' }, observer: null },
+    { calculation: { jdn: '2461299' }, observer: { mystery: 1 } },
+    { calculation: { jdn: '2461299' }, presentation: 'canonical', locale: 7 },
+  ]) {
+    await assert.rejects(
+      () => queryDate(request, { provider: fakeProvider }),
+      (error) => ['INVALID_OBSERVER', 'UNKNOWN_PARAMETER', 'INVALID_LOCALE'].includes(error?.code),
+    );
+  }
+});
+
+test('null observer selectors are schema-valid no-ops when observer is relevant', async () => {
+  const result = await queryDate(
+    {
+      calculation: { at: '2026-01-01T12:00:00Z' },
+      observer: { preset: null, longitude: null },
+      presentation: 'canonical',
+    },
+    { provider: fakeProvider, dayBoundaryService: fakeBoundary },
+  );
+  assert.deepEqual(result.observer, { longitude: 45.481 });
+  assert.equal(result.calculationDay.jdn, '1000');
+});

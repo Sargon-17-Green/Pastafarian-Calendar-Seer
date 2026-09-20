@@ -235,6 +235,11 @@ jobs:
         uses: ./.github/actions/contract-environment
       - name: API contract tests
         run: .contract-venv/bin/python api/tests/test_contract.py
+      - name: Runtime/schema differential corpus
+        run: .contract-venv/bin/python api/tests/test_runtime_contract.py
+      - name: Print runtime/schema failure fixture
+        if: ${{ failure() && hashFiles('api/tests/runtime_contract_failure.json') != '' }}
+        run: cat api/tests/runtime_contract_failure.json
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:

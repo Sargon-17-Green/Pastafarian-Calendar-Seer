@@ -234,7 +234,7 @@ def validate_date(req: dict, schema=True):
     if not isinstance(inc, list) or any(x not in {"structure","boundaries","provenance","resolution"} for x in inc):
         raise ContractError("UNSUPPORTED_INCLUDE", "include")
     if len(inc) != len(set(inc)):
-        # Contract normalizes duplicates, so this is valid.
+        # JSON Schema owns the structural uniqueItems rule; runtime must reject it too.
         pass
     if schema:
         validate_schema("date-request", req)
