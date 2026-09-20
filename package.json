@@ -4,7 +4,6 @@
   "description": "Exact high-performance query and HTTP runtime for the Pastafarian Calendar Seer",
   "type": "module",
   "main": "./index.mjs",
-  "types": "./index.d.ts",
   "exports": {
     ".": {
       "types": "./index.d.ts",
@@ -114,9 +113,6 @@
     "test": "node ./scripts/package-selftest.mjs",
     "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
     "verify:release": "node ./scripts/verify-release.mjs",
-    "bench:product": "node ./bench/product/run.mjs",
-    "bench:compare": "node ./bench/product/compare.mjs",
-    "test:bench": "node --test bench/product/test/*.test.mjs",
     "test:types": "tsc -p test/typescript-consumer/tsconfig.json --noEmit"
   },
   "keywords": [
@@ -134,6 +130,7 @@
     "url": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/issues"
   },
   "homepage": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer#readme",
+  "types": "./index.d.ts",
   "devDependencies": {
     "@types/node": "20.19.17",
     "typescript": "5.9.2"

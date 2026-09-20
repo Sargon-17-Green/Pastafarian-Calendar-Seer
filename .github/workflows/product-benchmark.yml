@@ -67,7 +67,26 @@ env:
   BENCH_CONCURRENCY: ${{ github.event_name == 'pull_request' && '1,4' || inputs.concurrency || '1,8,32,128,300' }}
 
 jobs:
+  cache-snapshot:
+    name: Pin rolling cache snapshot
+    runs-on: ubuntu-24.04
+    outputs:
+      cache_commit: ${{ steps.pin.outputs.cache_commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Pin cache-data commit
+        id: pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          CACHE_COMMIT="$(git ls-remote --exit-code --heads origin refs/heads/cache-data | awk '{print $1}')"
+          [[ "$CACHE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          echo "cache_commit=$CACHE_COMMIT" >> "$GITHUB_OUTPUT"
+
   linux:
+    needs: cache-snapshot
     name: ${{ matrix.id }}
     strategy:
       fail-fast: false
@@ -106,17 +125,18 @@ jobs:
           SEER_MARCH: ${{ matrix.march }}
         with:
           targets: runtime
-      - name: Restore rolling cache snapshot
+      - name: Restore pinned rolling cache snapshot
         shell: bash
+        env:
+          CACHE_COMMIT: ${{ needs.cache-snapshot.outputs.cache_commit }}
         run: |
           set -euo pipefail
           CACHE_DIR="$RUNNER_TEMP/seer-bench-cache"
-          mkdir -p "$CACHE_DIR/calc"
-          if git ls-remote --exit-code --heads origin refs/heads/cache-data >/dev/null 2>&1; then
-            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
-            git archive refs/remotes/origin/cache-data | tar -x -C "$CACHE_DIR"
-          fi
+          git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+          git cat-file -e "$CACHE_COMMIT^{commit}"
+          node bench/product/restore-cache-snapshot.mjs --ref="$CACHE_COMMIT" --output-dir="$CACHE_DIR"
           echo "SEER_BENCH_CACHE=$CACHE_DIR" >> "$GITHUB_ENV"
+          echo "SEER_BENCH_CACHE_COMMIT=$CACHE_COMMIT" >> "$GITHUB_ENV"
       - name: Validate benchmark harness
         run: node --test bench/product/test/*.test.mjs
       - name: Run public product benchmark
@@ -152,6 +172,7 @@ jobs:
           if-no-files-found: error
 
   windows:
+    needs: cache-snapshot
     name: windows-x64-portable
     runs-on: windows-latest
     timeout-minutes: 120
@@ -183,22 +204,21 @@ jobs:
           SEER_RNS_BACKEND: portable
           SEER_MARCH: x86-64
         run: npm run build:native
-      - name: Restore rolling cache snapshot
+      - name: Restore pinned rolling cache snapshot
         shell: pwsh
+        env:
+          CACHE_COMMIT: ${{ needs.cache-snapshot.outputs.cache_commit }}
         run: |
           $ErrorActionPreference = 'Stop'
           $cacheDir = Join-Path $env:RUNNER_TEMP 'seer-bench-cache'
-          New-Item -ItemType Directory -Force (Join-Path $cacheDir 'calc') | Out-Null
-          git ls-remote --exit-code --heads origin refs/heads/cache-data | Out-Null
-          if ($LASTEXITCODE -eq 0) {
-            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
-            if ($LASTEXITCODE -ne 0) { throw 'cache-data fetch failed' }
-            $archive = Join-Path $env:RUNNER_TEMP 'seer-bench-cache.zip'
-            git archive --format=zip -o $archive refs/remotes/origin/cache-data
-            if ($LASTEXITCODE -ne 0) { throw 'cache-data archive failed' }
-            Expand-Archive -Path $archive -DestinationPath $cacheDir -Force
-          }
+          git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+          if ($LASTEXITCODE -ne 0) { throw 'cache-data fetch failed' }
+          git cat-file -e "$env:CACHE_COMMIT^{commit}"
+          if ($LASTEXITCODE -ne 0) { throw 'pinned cache-data commit is unavailable' }
+          node bench/product/restore-cache-snapshot.mjs "--ref=$env:CACHE_COMMIT" "--output-dir=$cacheDir"
+          if ($LASTEXITCODE -ne 0) { throw 'byte-exact cache restore failed' }
           "SEER_BENCH_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SEER_BENCH_CACHE_COMMIT=$env:CACHE_COMMIT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Validate benchmark harness
         run: node --test bench/product/test/*.test.mjs
       - name: Run public product benchmark

@@ -10,8 +10,8 @@ function option(name) {
 const generatedDir = option('generated-dir');
 const calculationJdn = option('calculation-jdn');
 const targetJdn = option('target-jdn');
-if (!generatedDir || !calculationJdn || !targetJdn) {
-  throw new Error('cold-worker requires --generated-dir, --calculation-jdn and --target-jdn');
+if (!calculationJdn || !targetJdn) {
+  throw new Error('cold-worker requires --calculation-jdn and --target-jdn');
 }
 
 const treeBefore = await snapshotProcessTree();
@@ -21,7 +21,7 @@ const result = await queryDate({
   calculation: { jdn: calculationJdn },
   target: { jdn: targetJdn },
   presentation: 'canonical',
-}, { generatedDir });
+}, generatedDir ? { generatedDir } : {});
 const end = process.hrtime.bigint();
 const cpu = process.cpuUsage(cpuBefore);
 const treeAfter = await snapshotProcessTree();

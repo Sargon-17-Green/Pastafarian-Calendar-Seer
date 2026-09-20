@@ -52,13 +52,14 @@ function validateDateTarget(expected) {
   };
 }
 
-export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) {
-  const missCalc = cacheFixture?.calcJdn ?? FAR_FUTURE_CALC_JDN;
-  const missTarget = cacheFixture?.missTargetJdn ?? FAR_FUTURE_TARGET_JDN;
+export async function buildScenarios(api, cacheFixture, { smoke = false, exactFixture = cacheFixture } = {}) {
+  const generatedDir = cacheFixture?.generatedDir;
+  const missCalc = exactFixture?.calcJdn ?? FAR_FUTURE_CALC_JDN;
+  const missTarget = exactFixture?.missTargetJdn ?? FAR_FUTURE_TARGET_JDN;
   const batchCount = smoke ? 8 : 128;
   const fixedRangeCount = smoke ? 8 : 128;
   const sameTargetCount = smoke ? 2 : 32;
-  const reverseSeed = await api.queryDate(dateRequest(STANDARD_CALC_JDN, STANDARD_TARGET_JDN), { generatedDir: cacheFixture?.generatedDir });
+  const reverseSeed = await api.queryDate(dateRequest(STANDARD_CALC_JDN, STANDARD_TARGET_JDN), { generatedDir });
   const reverseRequest = {
     calculation: { jdn: exact(STANDARD_CALC_JDN) },
     pastafarianDate: reverseSeed.pastafarianDate,
@@ -87,38 +88,38 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
     {
       id: 'cache_miss_exact_date',
       description: 'Out-of-cache exact date lookup in a warm process.',
-      operation: () => api.queryDate(dateRequest(missCalc, missTarget), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(missCalc, missTarget), { generatedDir }),
       validate: validateDateTarget(missTarget),
     },
     {
       id: 'c_equals_t',
       description: 'Exact date with calculation day equal to target day (c=t).',
-      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_CALC_JDN), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_CALC_JDN), { generatedDir }),
       validate: validateDateTarget(FAR_FUTURE_CALC_JDN),
     },
     {
       id: 'foundation_vicinity',
       description: 'Exact query in the immediate vicinity of the Foundation anchor.',
       profile: 'heavy',
-      operation: () => api.queryDate(dateRequest(FOUNDATION_JDN + 2n, FOUNDATION_JDN + 1n), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(FOUNDATION_JDN + 2n, FOUNDATION_JDN + 1n), { generatedDir }),
       validate: validateDateTarget(FOUNDATION_JDN + 1n),
     },
     {
       id: 'far_past',
       description: 'Known-valid far-past exact date query.',
-      operation: () => api.queryDate(dateRequest(FAR_PAST_CALC_JDN, FAR_PAST_TARGET_JDN), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(FAR_PAST_CALC_JDN, FAR_PAST_TARGET_JDN), { generatedDir }),
       validate: validateDateTarget(FAR_PAST_TARGET_JDN),
     },
     {
       id: 'far_future',
       description: 'Known-valid far-future exact date query.',
-      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_TARGET_JDN), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_TARGET_JDN), { generatedDir }),
       validate: validateDateTarget(FAR_FUTURE_TARGET_JDN),
     },
     {
       id: 'reverse',
       description: 'Public reverse conversion from a complete canonical Pastafarian tuple.',
-      operation: () => api.queryReverse(reverseRequest, { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryReverse(reverseRequest, { generatedDir }),
       validate: validateDateTarget(STANDARD_TARGET_JDN),
     },
     {
@@ -127,7 +128,7 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
       operation: () => api.queryYear('5000', {
         calculation: { jdn: exact(STANDARD_CALC_JDN) },
         presentation: 'canonical',
-      }, { generatedDir: cacheFixture?.generatedDir }),
+      }, { generatedDir }),
       validate(value) {
         if (value?.year?.number !== '5000' || !Number.isInteger(value?.year?.lengthDays)) {
           throw new Error('year_without_days returned an invalid year');
@@ -143,7 +144,7 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
         calculation: { jdn: exact(STANDARD_CALC_JDN) },
         presentation: 'canonical',
         include: ['days'],
-      }, { generatedDir: cacheFixture?.generatedDir }),
+      }, { generatedDir }),
       validate(value) {
         if (value?.year?.number !== '5000' || !Array.isArray(value?.year?.days) ||
             value.year.days.length !== value.year.lengthDays) {
@@ -163,7 +164,7 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
           id: `q${i}`,
           target: { jdn: exact(missTarget + BigInt(i)) },
         })),
-      }, { generatedDir: cacheFixture?.generatedDir }),
+      }, { generatedDir }),
       validate(value) {
         if (!Array.isArray(value?.results) || value.results.length !== batchCount ||
             value.results.some((item) => !item.ok)) {
@@ -180,7 +181,7 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
         count: String(fixedRangeCount),
         calculationMode: 'fixed',
         presentation: 'canonical',
-      }, { generatedDir: cacheFixture?.generatedDir }),
+      }, { generatedDir }),
       validate(value) {
         if (!Array.isArray(value?.results) || value.results.length !== fixedRangeCount) {
           throw new Error('fixed_range_128 returned the wrong result count');
@@ -196,7 +197,7 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
         count: String(sameTargetCount),
         calculationMode: 'same-as-target',
         presentation: 'canonical',
-      }, { generatedDir: cacheFixture?.generatedDir }),
+      }, { generatedDir }),
       validate(value) {
         if (!Array.isArray(value?.results) || value.results.length !== sameTargetCount ||
             value.results.some((item) => item.calculationDay.jdn !== item.targetDay.jdn)) {
@@ -208,9 +209,23 @@ export async function buildScenarios(api, cacheFixture, { smoke = false } = {}) 
       id: 'warm_persistent_service_date',
       description: 'Repeated exact date on an already-started persistent native service.',
       profile: 'cheap',
-      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_TARGET_JDN + 7n), { generatedDir: cacheFixture?.generatedDir }),
+      operation: () => api.queryDate(dateRequest(FAR_FUTURE_CALC_JDN, FAR_FUTURE_TARGET_JDN + 7n), { generatedDir }),
       validate: validateDateTarget(FAR_FUTURE_TARGET_JDN + 7n),
     },
   );
-  return { scenarios, missCalc, missTarget, reverseRequest };
+  return {
+    scenarios,
+    missCalc,
+    missTarget,
+    reverseRequest,
+    workload: {
+      exactMiss: {
+        calculationJdn: exact(missCalc),
+        targetJdn: exact(missTarget),
+      },
+      batchCount,
+      fixedRangeCount,
+      sameTargetCount,
+    },
+  };
 }

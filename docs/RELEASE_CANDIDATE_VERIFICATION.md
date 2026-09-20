@@ -22,9 +22,10 @@ For each gate, the orchestrator:
 `force_all=true` is a diagnostic escape hatch. It deliberately ignores reusable
 evidence and runs all gates again; it is not the normal release path.
 
-The authoritative gate categories are package/cache, semantic/full domain,
-reverse, exact errors, difficult weave, persistent service, portable fallback,
-ARM64 parity, Stage 5/6, web, container, supply chain, and release preflight.
+The authoritative gate categories are package/cache, Node compatibility,
+semantic/full domain, reverse, exact errors, difficult weave, persistent service,
+portable fallback, ARM64 parity, Stage 5/6, web, container, supply chain, and
+release preflight.
 The concrete workflow mapping is intentionally not duplicated here; read
 `.github/release-gates.json`.
 
@@ -75,7 +76,7 @@ on pull requests and `main` and executes
 `scripts/validate-release-gates.mjs`. It detects drift between the authority,
 the reusable workflows, the orchestrator, release workflows, and these docs.
 
-The entire 18-gate release matrix is intentionally **not** a pull-request
+The entire 19-gate release matrix is intentionally **not** a pull-request
 required check: the merged/tagged SHA can differ from the PR head, and repeating
 the expensive matrix on both SHAs would not prove the tag commit while wasting
 compute. The full matrix is an explicit exact-SHA release-candidate operation.
