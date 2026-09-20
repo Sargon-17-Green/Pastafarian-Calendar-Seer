@@ -1,58 +1,12 @@
-# Cold-conversion benchmark prototype — 2026-09-03 baseline, corrected 2026-09-10
+# Native runtime and verification harness
 
-This directory preserves the current high-performance baseline from which the Seer repository starts,
-with the canonical saved-sum correction layered onto it. It is a **benchmark prototype**, not a release
-and not yet a stable public API.
+`prototype/` is a legacy directory name. It now contains two distinct classes of material:
 
-## Included techniques
+1. **Production native closure** — the native sources, gate data, and build entry points explicitly shipped by `package.json` and used by the exact runtime.
+2. **Verification/baseline harness** — tools and scripts used to validate or benchmark that closure.
 
-- C++20.
-- Specialized arithmetic modulo `M = 2^127 - 1` on `__uint128_t` for Sauce and year walking.
-- Separate generated canonical positive/negative gate datasets: immutable 40k provenance corpora plus 100k production corpora.
-- Fixed 720-permutation table for bowl ordering.
-- Exact month-length DP in 5×64 bits (320 bits) rather than general big integers.
-- RNS weave counter/unrank with fixed primes, a `long double` predictor, micro-reset every 8 days, and exact CRT certification.
-- AVX-512IFMA, AVX2 experiments, and portable scalar-lane execution paths as already present in the baseline.
-- Prefix-only unranking up to the target day.
-- No memoization or predictive precomputation across separate queries.
+Experimental high-similarity A/B source variants are intentionally separated under `../research/benchmarks/`.
 
-## Canonical semantic gate
+The original benchmark-prototype README, status document, benchmark cases, and checksum ledger are preserved unchanged under `../docs/history/prototype/`.
 
-Before benchmarking or interpreting old witnesses, run:
-
-```bash
-bash ./scripts/check_saved_sum_conformance.sh
-```
-
-That check compares the real v3/v12 Sauce paths with an independent Boost `cpp_int` reference after
-visible drop 46 and after every final post-stir, kills the historical `rawSumMutant`, regenerates the full
-positive gate corpus, and verifies the canonical full-date vector corpus.
-
-Historical 40k gate SHA-256 values:
-- positive: `2321775cd22a1156751fe506320d4afc47b27f391092645921df4b54d9ab49bb`;
-- negative: `90a5cf809f19f62a87327b733d21572d739b83a383969765582cfb31cfb2b9ab`.
-
-Production 100k gate SHA-256 values:
-- positive: `4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8`;
-- negative: `40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884`.
-
-## Requirements
-
-GCC/g++ with C++20 and OpenMP, GMP/GMPXX development libraries, and Boost headers. The portable backend
-has no AVX-512 requirement. The preserved IFMA baseline requires AVX-512F, DQ, BW, VL, and AVX-512IFMA.
-
-## Standard benchmark witnesses
-
-See `BENCHMARK_CASES.md`. The corrected standard set contains several Year-5000 points plus a target
-3,540 Pastafarian years in the past. The former 3,576-year label belonged to the superseded raw-sum
-semantics and must not be reused as a canonical witness.
-
-Each benchmark case runs as a fresh process. Compare distributions/medians and inspect at least `walk`,
-`rns_count`, `prefix_total`, `replay`, and external wall time. Do not infer semantic correctness from
-performance A/B agreement.
-
-## Important limitation
-
-The program currently opens both gate-corpus files from its working directory. The provided runners therefore
-execute it from `data/`. The production finite horizon covers gate indices `-100000..100000`; the historical 40k files remain provenance fixtures. Treat the working-
-directory behavior and finite horizon as prototype constraints, not normative calendar limits.
+For current correctness and provenance claims, use `../docs/CONFORMANCE.md` and `../docs/DATA_PROVENANCE.md`.
