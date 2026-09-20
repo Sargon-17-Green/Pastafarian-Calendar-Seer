@@ -17,3 +17,11 @@ The request instant is captured once by the HTTP adapter and passed to the share
 OpenAPI's relative JSON Schema references are served under `/schemas/*.schema.json`, so the published contract can be resolved directly by HTTP tooling.
 
 When `SEER_WEB_ROOT` is set, the same server can also serve the production static application at `/web/` plus the existing browser client at `/client/index.mjs`. Static serving is optional, has no SPA fallback, and does not change any `/v1/*`, OpenAPI, or schema route. The repository container sets `SEER_WEB_ROOT=/opt/seer-web`.
+
+## Observability foundation
+
+Every HTTP request receives a server-generated opaque `X-Request-ID`; client-supplied values are not trusted or echoed. The header is returned on success and error responses and is exposed through CORS.
+
+The default structured request record contains only the request ID, method, route template, status, latency, coarse resource class, typed outcome/error code, and public release identity. It intentionally excludes raw URLs, request/response bodies, queried dates, observer coordinates, authorization/cookie headers, secrets, and full client IP addresses.
+
+`createSeerHttpHandler` accepts vendor-neutral `logger` and `metrics` sinks. Metrics hooks cover HTTP counts/latency/errors plus cache hit/miss, exact work, and exact-admission queue/saturation. Observability hooks are fail-open: a logger or metrics backend failure must not change API semantics.

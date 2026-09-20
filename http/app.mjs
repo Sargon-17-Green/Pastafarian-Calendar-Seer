@@ -5,6 +5,13 @@ import * as defaultQueryApi from '../query/index.mjs';
 import { DEFAULT_HEALTH_TIMEOUT_MS, createSeerHealthProbe } from '../query/health.mjs';
 import { isSeerQueryError, queryError } from '../query/errors.mjs';
 import { KISURRA_LONGITUDE } from '../query/observer.mjs';
+import {
+  CORS_EXPOSE_HEADERS,
+  beginHttpRequest,
+  createMetricsHooks,
+  createStructuredLogger,
+  defaultReleaseIdentity,
+} from './observability.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_API_DIR = path.resolve(here, '..', 'api');
@@ -29,6 +36,7 @@ const WEB_CONTENT_TYPES = new Map([
 function webSecurityHeaders(contentType) {
   const headers = {
     'access-control-allow-origin': '*',
+    'access-control-expose-headers': CORS_EXPOSE_HEADERS,
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'no-referrer',
     'x-frame-options': 'DENY',
@@ -189,6 +197,7 @@ function corsHeaders() {
     'access-control-allow-origin': '*',
     'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-allow-headers': 'Accept, Content-Type',
+    'access-control-expose-headers': CORS_EXPOSE_HEADERS,
     'access-control-max-age': '86400',
     'x-content-type-options': 'nosniff',
   };
@@ -454,7 +463,9 @@ export function createSeerHttpHandler(options = {}) {
   const apiDir = options.apiDir ?? DEFAULT_API_DIR;
   const maxBodyBytes = options.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES;
   const nowFactory = options.nowFactory ?? (() => new Date());
-  const logger = options.logger ?? console;
+  const logger = createStructuredLogger(options.logger ?? console);
+  const metrics = createMetricsHooks(options.metrics);
+  const releaseIdentity = options.releaseIdentity ?? defaultReleaseIdentity();
   const baseQueryOptions = options.queryOptions ?? {};
   const healthTimeoutMs = Number.isFinite(options.healthTimeoutMs) && options.healthTimeoutMs > 0
     ? Math.max(1, Math.floor(options.healthTimeoutMs))
@@ -467,10 +478,20 @@ export function createSeerHttpHandler(options = {}) {
   const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
 
   return async function seerHttpHandler(req, res) {
-    const requestInstant = nowFactory();
+    const requestTelemetry = beginHttpRequest({
+      req,
+      res,
+      logger,
+      metrics,
+      releaseIdentity,
+      requestIdFactory: options.requestIdFactory,
+      clock: options.monotonicClock,
+    });
     try {
+      const requestInstant = nowFactory();
       const url = new URL(req.url ?? '/', 'http://seer.invalid');
       const pathname = url.pathname;
+      requestTelemetry.setRoute(pathname);
       const method = String(req.method ?? 'GET').toUpperCase();
       if (method === 'OPTIONS') {
         send(res, 204, '', null);
@@ -479,7 +500,7 @@ export function createSeerHttpHandler(options = {}) {
       if (await serveWebRequest(req, res, pathname, { webRoot, clientDir })) return;
       if (!knownPath(pathname)) throw new HttpAdapterError('NOT_FOUND', 'Endpoint not found.', 404);
 
-      const queryOptions = { ...baseQueryOptions, now: requestInstant };
+      const queryOptions = { ...baseQueryOptions, now: requestInstant, telemetry: requestTelemetry.queryTelemetry };
 
       if (pathname === '/_health/live' && method === 'GET') {
         ensureNoQuery(url.searchParams);
@@ -491,6 +512,7 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
         const status = await boundedHealthStatus(healthProbe, requestInstant, healthTimeoutMs);
+        if (status === 'unavailable') requestTelemetry.markError('HEALTH_UNAVAILABLE', 'unavailable');
         sendJson(res, status === 'unavailable' ? 503 : 200, { status }, { 'cache-control': 'no-store' });
         return;
       }
@@ -610,8 +632,11 @@ export function createSeerHttpHandler(options = {}) {
       throw new HttpAdapterError('METHOD_NOT_ALLOWED', 'Method not allowed for this endpoint.', 405);
     } catch (error) {
       const status = statusForError(error);
+      const errorCode = error instanceof HttpAdapterError || isSeerQueryError(error)
+        ? (error.code ?? 'INTERNAL_ERROR')
+        : 'INTERNAL_ERROR';
+      requestTelemetry.markError(errorCode);
       if (status === 500 && !isSeerQueryError(error) && !(error instanceof HttpAdapterError)) {
-        logger.error?.('Seer HTTP internal error', error);
         sendJson(res, 500, { error: { code: 'INTERNAL_ERROR', message: 'Internal server error.' } }, { 'cache-control': 'no-store' });
         return;
       }

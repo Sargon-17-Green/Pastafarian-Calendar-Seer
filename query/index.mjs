@@ -6,6 +6,7 @@ import { resolveObserver } from './observer.mjs';
 import { DEFAULT_LOCALE, getLocalePack, listLocales, localizedName } from './locales/catalog.mjs';
 import { queryError, SeerQueryError } from './errors.mjs';
 import { defaultDayBoundaryService } from './day-boundary.mjs';
+import { emitTelemetry } from './telemetry.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const runtimeRoot = path.resolve(here, '..');
@@ -97,6 +98,7 @@ async function providerFromOptions(options = {}) {
     runtimeRoot,
     maxExactConcurrency: options.maxExactConcurrency,
     maxExactQueue: options.maxExactQueue,
+    telemetry: options.telemetry,
   });
 }
 function boundaryServiceFromOptions(options = {}) {
@@ -324,6 +326,7 @@ export async function queryNow(options = {}) {
     dayBoundaryService,
     maxExactConcurrency,
     maxExactQueue,
+    telemetry,
     ...requestOptions
   } = options;
   return queryDate(requestOptions, {
@@ -333,6 +336,7 @@ export async function queryNow(options = {}) {
     dayBoundaryService,
     maxExactConcurrency,
     maxExactQueue,
+    telemetry,
   });
 }
 
@@ -379,6 +383,7 @@ export async function queryBatch(request, options = {}) {
       return { ...(id !== undefined ? { id } : {}), ok: true, result };
     } catch (error) {
       if (!(error instanceof SeerQueryError)) throw error;
+      emitTelemetry(options.telemetry, 'error', { code: error.code, scope: 'query-batch-item' });
       return { ...(id !== undefined ? { id } : {}), ok: false, error: publicError(error) };
     }
   }));
