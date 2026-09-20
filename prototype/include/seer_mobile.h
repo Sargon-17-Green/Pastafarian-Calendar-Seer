@@ -77,6 +77,7 @@ SEER_MOBILE_API seer_mobile_status seer_mobile_create(
     seer_mobile_context** out_context,
     seer_mobile_error* error);
 
+SEER_MOBILE_API void seer_mobile_context_retain(seer_mobile_context* context);
 SEER_MOBILE_API void seer_mobile_destroy(seer_mobile_context* context);
 
 SEER_MOBILE_API seer_mobile_status seer_mobile_cancel_token_create(
