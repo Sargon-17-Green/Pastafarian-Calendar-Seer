@@ -37,6 +37,11 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1
         run: python prototype/scripts/check_mobile_parity.py prototype/build/seer_mobile_dump prototype/build/seer_engine_service prototype/data
+      - name: Fixed canonical known-answer corpus
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: python prototype/scripts/check_mobile_known_answers.py prototype/build/seer_mobile_dump prototype/data
       - name: Native warning gate for ABI translation unit
         run: |
           # sauce_fast127_v12.hpp contains TU-local static helpers used by other native TUs.
