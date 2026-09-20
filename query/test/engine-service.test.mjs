@@ -156,6 +156,30 @@ test('native service preserves exact outputs and caches contiguous year chains',
   assert.match(counterText, /^next\t/m);
 });
 
+test('OPT-P01 native diagonal is record-identical to canonical R(c,c,1)', async (t) => {
+  if (!(await nativeAvailable())) {
+    t.skip('native runtime is not built in this environment');
+    return;
+  }
+  const calc = await canonicalCalc();
+  const svc = startProtocolService();
+  t.after(() => svc.close());
+
+  for (const step of [1, -1]) {
+    const diagonal = await svc.request(['D', String(calc), '3', String(step)]);
+    assert.equal(diagonal.targetStartJdn, calc);
+    assert.equal(diagonal.targetCount, 3);
+    assert.equal(diagonal.stepDays, step);
+    const canonical = [];
+    for (let i = 0; i < 3; i += 1) {
+      const day = calc + i * step;
+      const one = await svc.request(['R', String(day), String(day), '1']);
+      canonical.push(one.records[0]);
+    }
+    assert.deepEqual(diagonal.records, canonical);
+  }
+});
+
 test('JS exact engine reuses one persistent service across engine instances', async (t) => {
   if (!(await nativeAvailable())) {
     t.skip('native OPT-06 binaries are not built in this environment');

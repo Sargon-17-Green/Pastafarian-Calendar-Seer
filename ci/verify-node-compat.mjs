@@ -59,6 +59,7 @@ runNpm(['test']);
 const compatibilityTests = [
   'query/test/query.test.mjs',
   'query/test/batch-range.test.mjs',
+  'query/test/opt-p01-diagonal-range.test.mjs',
   'query/test/calculation-year.test.mjs',
   'query/test/gregorian.test.mjs',
   'query/test/contract-index.test.mjs',
