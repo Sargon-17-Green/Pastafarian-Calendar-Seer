@@ -51,6 +51,7 @@ jobs:
     outputs:
       package_cache_reuse: ${{ steps.plan.outputs.package_cache_reuse }}
       prebuilt_packages_reuse: ${{ steps.plan.outputs.prebuilt_packages_reuse }}
+      node_compatibility_reuse: ${{ steps.plan.outputs.node_compatibility_reuse }}
       negative_gate_corpus_reuse: ${{ steps.plan.outputs.negative_gate_corpus_reuse }}
       bidirectional_gate_domain_reuse: ${{ steps.plan.outputs.bidirectional_gate_domain_reuse }}
       full_finite_domain_reuse: ${{ steps.plan.outputs.full_finite_domain_reuse }}
@@ -99,6 +100,11 @@ jobs:
     needs: plan
     if: ${{ needs.plan.outputs.prebuilt_packages_reuse != 'true' }}
     uses: ./.github/workflows/verify-prebuilt-native-packages.yml
+  gate_node_compatibility:
+    name: Node 20/22/24 compatibility
+    needs: plan
+    if: ${{ needs.plan.outputs.node_compatibility_reuse != 'true' }}
+    uses: ./.github/workflows/verify-node-compatibility.yml
   gate_negative_gate_corpus:
     name: Negative gate corpus Phase A
     needs: plan
@@ -182,7 +188,7 @@ jobs:
 
   manifest:
     name: Release candidate manifest
-    needs: [plan, gate_package_cache, gate_prebuilt_packages, gate_negative_gate_corpus, gate_bidirectional_gate_domain, gate_full_finite_domain, gate_gate_domain_extension, gate_reverse_conversion, gate_exact_domain_errors, gate_difficult_weave, gate_persistent_service, gate_portable_fallback, gate_arm64_parity, gate_stage5_exact_provider, gate_stage6_deployment, gate_web_application, gate_container_deployment, gate_supply_chain, gate_release_preflight]
+    needs: [plan, gate_package_cache, gate_prebuilt_packages, gate_node_compatibility, gate_negative_gate_corpus, gate_bidirectional_gate_domain, gate_full_finite_domain, gate_gate_domain_extension, gate_reverse_conversion, gate_exact_domain_errors, gate_difficult_weave, gate_persistent_service, gate_portable_fallback, gate_arm64_parity, gate_stage5_exact_provider, gate_stage6_deployment, gate_web_application, gate_container_deployment, gate_supply_chain, gate_release_preflight]
     if: ${{ always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call') && needs.plan.result == 'success' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 360

@@ -24,8 +24,10 @@ npm install pastafarian-calendar-seer@X.Y.Z
 
 The same npm-format tarball is attached to the matching immutable GitHub Release as `pastafarian-calendar-seer-X.Y.Z.tgz`; its SHA-256, SBOMs, provenance, container digest, and cross-channel verification procedure are documented in [Supply-chain verification](docs/SUPPLY_CHAIN.md).
 
-The package is ESM-only and requires Node `>=20`. The root package is not
-install-time OS/CPU gated and has no required npm runtime dependencies. On
+The package is ESM-only and requires Node `>=20`. Lightweight compatibility CI
+runs the published JavaScript surface on Node 20, 22, and 24 so this minimum is
+tested rather than merely declared. The root package is not install-time OS/CPU
+gated and has no required npm runtime dependencies. On
 supported local-execution targets, npm selects an exact-version native runtime
 through platform-constrained optional dependencies.
 
