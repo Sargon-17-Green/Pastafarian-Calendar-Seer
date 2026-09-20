@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <thread>
 #include <vector>
 
@@ -78,6 +79,8 @@ int main(int argc,char**argv){
     assert((s3==SEER_MOBILE_OK || s3==SEER_MOBILE_QUEUE_FULL));
     assert(s1==SEER_MOBILE_QUEUE_FULL || s2==SEER_MOBILE_QUEUE_FULL || s3==SEER_MOBILE_QUEUE_FULL);
 
+    assert(seer_mobile_query(ctx,std::numeric_limits<int64_t>::min(),-13334246LL,nullptr,&r1,&err)==SEER_MOBILE_CALCULATION_OUT_OF_DOMAIN);
+    assert(seer_mobile_query(ctx,-13334246LL,std::numeric_limits<int64_t>::min(),nullptr,&r1,&err)==SEER_MOBILE_TARGET_OUT_OF_DOMAIN);
     assert(seer_mobile_query(nullptr,0,0,nullptr,&r1,&err)==SEER_MOBILE_INVALID_ARGUMENT);
 
     seer_mobile_cancel_token_destroy(token);
