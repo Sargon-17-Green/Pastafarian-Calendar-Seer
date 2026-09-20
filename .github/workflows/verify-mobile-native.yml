@@ -112,6 +112,13 @@ jobs:
         uses: ./.github/actions/native-deps
         with:
           profile: boost-minimal
+      - name: Stage isolated Boost headers for NDK
+        run: |
+          set -euo pipefail
+          prefix="$RUNNER_TEMP/ws06-boost"
+          mkdir -p "$prefix/include"
+          cp -a /usr/include/boost "$prefix/include/"
+          echo "BOOST_ROOT=$prefix" >> "$GITHUB_ENV"
       - name: Install Android NDK
         run: |
           sdk="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
@@ -122,7 +129,6 @@ jobs:
         env:
           SEER_BUILD_COMMIT: ${{ github.sha }}
           SEER_PACKAGE_VERSION: 0.2.3
-          BOOST_ROOT: /usr
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/28.2.13676358"
           bash prototype/scripts/build_mobile_library.sh android-arm64
