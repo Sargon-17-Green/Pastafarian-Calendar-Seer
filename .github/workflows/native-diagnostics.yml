@@ -1,0 +1,169 @@
+name: Native diagnostics
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/seer_*.cpp'
+      - 'prototype/src/seer_*.hpp'
+      - 'prototype/src/sauce_fast127_v12.hpp'
+      - 'prototype/src/short_selection_o1.hpp'
+      - 'prototype/src/rns_primes*.hpp'
+      - 'prototype/data/canonical_saved_sum_vectors.tsv'
+      - 'prototype/data/gates*.bin'
+      - 'prototype/tools/canonical_saved_sum_reference.hpp'
+      - 'prototype/tools/canonical_vector_oracle.cpp'
+      - 'prototype/scripts/build_native_diagnostic.sh'
+      - 'prototype/scripts/classify_native_warnings.py'
+      - 'prototype/scripts/native_warning_policy.json'
+      - 'prototype/scripts/check_native_diagnostic_corpus.py'
+      - 'docs/NATIVE_DIAGNOSTICS.md'
+      - '.github/workflows/native-diagnostics.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'prototype/src/pastafarian_year_batch.cpp'
+      - 'prototype/src/seer_*.cpp'
+      - 'prototype/src/seer_*.hpp'
+      - 'prototype/src/sauce_fast127_v12.hpp'
+      - 'prototype/src/short_selection_o1.hpp'
+      - 'prototype/src/rns_primes*.hpp'
+      - 'prototype/data/canonical_saved_sum_vectors.tsv'
+      - 'prototype/data/gates*.bin'
+      - 'prototype/tools/canonical_saved_sum_reference.hpp'
+      - 'prototype/tools/canonical_vector_oracle.cpp'
+      - 'prototype/scripts/build_native_diagnostic.sh'
+      - 'prototype/scripts/classify_native_warnings.py'
+      - 'prototype/scripts/native_warning_policy.json'
+      - 'prototype/scripts/check_native_diagnostic_corpus.py'
+      - 'docs/NATIVE_DIAGNOSTICS.md'
+      - '.github/workflows/native-diagnostics.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-diagnostics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gcc-warnings:
+    name: GCC production warnings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
+      - name: Self-test warning classifier
+        run: python prototype/scripts/classify_native_warnings.py --self-test
+      - name: GCC warning builds and classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prototype/results/native-diagnostics/gcc
+          for backend in portable avx2; do
+            log="prototype/results/native-diagnostics/gcc/${backend}.log"
+            report="prototype/results/native-diagnostics/gcc/${backend}.json"
+            CXX=g++ \
+              SEER_DIAGNOSTIC_MODE=warnings \
+              SEER_DIAGNOSTIC_BACKEND="$backend" \
+              SEER_DIAGNOSTIC_OUT="$RUNNER_TEMP/gcc-$backend" \
+              bash prototype/scripts/build_native_diagnostic.sh 2>&1 | tee "$log"
+            python prototype/scripts/classify_native_warnings.py "$log" --json-out "$report"
+          done
+      - name: Upload GCC warning inventory
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-diagnostics-gcc-${{ github.sha }}
+          path: prototype/results/native-diagnostics/gcc
+          if-no-files-found: error
+          retention-days: 30
+
+  clang-warnings:
+    name: Clang production warnings
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libomp-dev libgmp-dev libboost-dev
+      - name: Self-test warning classifier
+        run: python prototype/scripts/classify_native_warnings.py --self-test
+      - name: Clang warning builds and classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prototype/results/native-diagnostics/clang
+          for backend in portable avx2; do
+            log="prototype/results/native-diagnostics/clang/${backend}.log"
+            report="prototype/results/native-diagnostics/clang/${backend}.json"
+            CXX=clang++ \
+              SEER_DIAGNOSTIC_MODE=warnings \
+              SEER_DIAGNOSTIC_BACKEND="$backend" \
+              SEER_DIAGNOSTIC_OUT="$RUNNER_TEMP/clang-$backend" \
+              bash prototype/scripts/build_native_diagnostic.sh 2>&1 | tee "$log"
+            python prototype/scripts/classify_native_warnings.py "$log" --json-out "$report"
+          done
+      - name: Upload Clang warning inventory
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: native-diagnostics-clang-${{ github.sha }}
+          path: prototype/results/native-diagnostics/clang
+          if-no-files-found: error
+          retention-days: 30
+
+  sanitizers:
+    name: ${{ matrix.sanitizer }} exact corpus (${{ matrix.backend }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [asan, ubsan]
+        backend: [portable, avx2]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install native dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev
+      - name: Check runtime backend support
+        id: backend
+        shell: bash
+        run: |
+          if [[ '${{ matrix.backend }}' == portable ]] || grep -qm1 -w avx2 /proc/cpuinfo; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::AVX2 is not exposed by this runner; AVX2 sanitizer execution is skipped.'
+          fi
+      - name: Build sanitized production runtime
+        if: steps.backend.outputs.run == 'true'
+        env:
+          CXX: g++
+          SEER_DIAGNOSTIC_MODE: ${{ matrix.sanitizer }}
+          SEER_DIAGNOSTIC_BACKEND: ${{ matrix.backend }}
+          SEER_DIAGNOSTIC_OUT: ${{ runner.temp }}/native-sanitized
+        run: bash prototype/scripts/build_native_diagnostic.sh
+      - name: Build independent oracle
+        if: steps.backend.outputs.run == 'true'
+        run: |
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp \
+            -o "$RUNNER_TEMP/native-sanitized/canonical_vector_oracle"
+      - name: Run exact/conformance corpus under sanitizer
+        if: steps.backend.outputs.run == 'true'
+        env:
+          ASAN_OPTIONS: halt_on_error=1:abort_on_error=1:detect_leaks=1:strict_string_checks=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+          SEER_DISABLE_EDGE_SHORTCUT: '1'
+          OMP_THREAD_LIMIT: '4'
+        run: python prototype/scripts/check_native_diagnostic_corpus.py --build "$RUNNER_TEMP/native-sanitized"
