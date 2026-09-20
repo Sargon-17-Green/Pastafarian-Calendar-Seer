@@ -30,10 +30,9 @@ jobs:
           { date -u -Iseconds; echo "commit=$GITHUB_SHA"; lscpu; grep -m1 '^flags' /proc/cpuinfo || true; } | tee prototype/results/sauce-v12-runner-info.txt
           grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
       - name: Install dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Build v3 and v12
         shell: bash
         run: bash ./prototype/scripts/build_sauce_v12.sh

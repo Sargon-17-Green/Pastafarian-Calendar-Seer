@@ -58,9 +58,9 @@ Publication workflows use per-version concurrency groups and never overwrite an 
 
 ## GitHub Actions integrity
 
-Every `uses:` reference in `.github/workflows` is pinned to a full 40-character commit SHA. A same-line version comment records the human-readable release. Runtime tools hidden behind actions are also constrained where material to reproducibility: Syft is pinned to `v1.52.0`, Buildx to `v0.37.1`, Trivy to `v0.70.0`, and the QEMU `tonistiigi/binfmt:latest` image is pinned to OCI index digest `sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0`. Dependabot is configured to propose updates for GitHub Actions, Docker, and npm metadata; updates are not auto-merged.
+Every third-party `uses:` reference in `.github/workflows` and `.github/actions` is pinned to a full 40-character commit SHA. A same-line version comment records the human-readable release. `ci/verify-workflow-policy.mjs` also rejects action-version drift, so one Marketplace Action cannot silently use multiple SHAs in different workflows or composite actions. Runtime tools hidden behind actions are constrained where material to reproducibility: Syft is pinned to `v1.52.0`, Buildx to `v0.37.1`, Trivy to `v0.70.0`, and the QEMU `tonistiigi/binfmt:latest` image is pinned to OCI index digest `sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0`. Dependabot is configured to propose updates for GitHub Actions, Docker, and npm metadata; updates are not auto-merged.
 
-`npm run` does not download workflow actions. `scripts/audit-supply-chain.mjs` checks that workflow references remain SHA-pinned, explicit permissions exist, `write-all` is absent, Docker bases are digest-pinned, and no tracked `HANDOFF_*` file exists.
+`npm run` does not download workflow actions. `scripts/audit-supply-chain.mjs` checks workflow references, explicit permissions, Docker/runtime-tool pins, and repository leakage guards. `ci/verify-workflow-policy.mjs` extends that boundary to composite actions, enforces the production/release/manual-benchmark separation, and requires the contract-tool lock to use exact versions. `verify-supply-chain.yml` runs both audits and parses both workflow and composite-action YAML.
 
 ## Docker base and image integrity
 

@@ -30,15 +30,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ libgmp-dev libboost-dev
-
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard
       - name: Build exact engines
-        run: |
-          bash prototype/scripts/build_year_batch.sh
-          bash prototype/scripts/build_year_locator.sh
-
+        uses: ./.github/actions/native-build
+        with:
+          targets: year-batch year-locator
       - name: Verify O(1) short-selection lemma and production paths
         run: bash prototype/scripts/check_short_selection_o1.sh
 
@@ -75,11 +73,7 @@ jobs:
       - name: Node tests
         run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
       - name: Set up isolated contract environment
-        run: |
-          python -m venv .contract-venv
-          .contract-venv/bin/python -m pip install --disable-pip-version-check \
-            'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
-
+        uses: ./.github/actions/contract-environment
       - name: Contract tests
         run: .contract-venv/bin/python api/tests/test_contract.py
 

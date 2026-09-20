@@ -10,9 +10,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install exact-reference build dependency
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libboost-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: boost-minimal
       - name: Generate and prove canonical gate corpora
         shell: bash
         run: |

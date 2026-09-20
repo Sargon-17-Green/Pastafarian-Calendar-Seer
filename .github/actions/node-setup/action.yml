@@ -1,0 +1,42 @@
+name: Canonical Node setup
+description: Install the selected Node runtime through one SHA-pinned setup-node action.
+inputs:
+  node-version:
+    description: Node major or exact version.
+    required: false
+    default: '20'
+  registry-url:
+    description: Optional npm-compatible registry URL.
+    required: false
+    default: ''
+  package-manager-cache:
+    description: true, false, or auto to preserve setup-node default behavior.
+    required: false
+    default: auto
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      if: inputs.registry-url == '' && inputs.package-manager-cache == 'auto'
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Set up Node with explicit cache policy
+      if: inputs.registry-url == '' && inputs.package-manager-cache != 'auto'
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        package-manager-cache: ${{ inputs.package-manager-cache }}
+    - name: Set up Node with registry
+      if: inputs.registry-url != '' && inputs.package-manager-cache == 'auto'
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+    - name: Set up Node with registry and explicit cache policy
+      if: inputs.registry-url != '' && inputs.package-manager-cache != 'auto'
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+        package-manager-cache: ${{ inputs.package-manager-cache }}

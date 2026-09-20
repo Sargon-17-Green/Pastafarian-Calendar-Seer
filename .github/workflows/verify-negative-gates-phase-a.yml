@@ -17,9 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ libboost-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: boost
       - name: Build exact gate generator
         run: |
           mkdir -p prototype/build prototype/results

@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ libgmp-dev libboost-all-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: full-minimal
       - name: Require AVX2 for candidate backend
         run: grep -qm1 -w avx2 /proc/cpuinfo
       - name: Build portable and AVX2 benchmark backends

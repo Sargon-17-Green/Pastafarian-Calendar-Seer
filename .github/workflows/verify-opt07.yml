@@ -15,9 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Native dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ libgmp-dev libboost-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard
       - name: Build OPT-07 research tool and OPT-06 service
         run: |
           bash prototype/scripts/build_opt07_transition_research.sh
@@ -42,8 +42,8 @@ jobs:
       - name: OPT-06 focused service tests remain green
         run: node --test query/test/engine-service.test.mjs
       - name: Full regressions
-        run: |
-          node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
-          python -m venv .contract-venv
-          .contract-venv/bin/pip install --disable-pip-version-check 'jsonschema>=4.18,<5' 'referencing>=0.30' 'jsonschema-specifications>=2023.3.6' PyYAML
-          .contract-venv/bin/python api/tests/test_contract.py
+        run: node --test precompute/test/*.test.mjs query/test/*.test.mjs http/test/*.test.mjs
+      - name: API contract environment
+        uses: ./.github/actions/contract-environment
+      - name: API contract tests
+        run: .contract-venv/bin/python api/tests/test_contract.py

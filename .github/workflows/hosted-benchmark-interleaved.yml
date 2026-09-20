@@ -50,11 +50,9 @@ jobs:
           grep -qm1 -w avx2 /proc/cpuinfo || { echo "AVX2 unavailable"; exit 3; }
 
       - name: Install dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgmp-dev libboost-dev time
-
+        uses: ./.github/actions/native-deps
+        with:
+          profile: benchmark
       - name: Build split-thread benchmark binaries
         shell: bash
         run: bash ./prototype/scripts/build_split_bench.sh
