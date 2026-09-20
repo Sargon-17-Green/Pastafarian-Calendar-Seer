@@ -122,6 +122,7 @@ jobs:
         env:
           SEER_BUILD_COMMIT: ${{ github.sha }}
           SEER_PACKAGE_VERSION: 0.2.3
+          BOOST_ROOT: /usr
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/28.2.13676358"
           bash prototype/scripts/build_mobile_library.sh android-arm64
