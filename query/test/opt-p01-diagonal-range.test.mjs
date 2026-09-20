@@ -113,9 +113,9 @@ test('cache hit inside a large diagonal range is preserved and exact misses spli
 
 function legacyServiceSpawnRunner({ rejectAll = false } = {}) {
   return (_binary, _args, options) => {
-    const source = String.raw\`
+    const source = String.raw`
 const readline = require('node:readline');
-const rejectAll = \${JSON.stringify(rejectAll)};
+const rejectAll = ${JSON.stringify(rejectAll)};
 const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
 rl.on('line', (line) => {
   if (line === 'X') process.exit(0);
@@ -136,7 +136,7 @@ rl.on('line', (line) => {
     schema: 1, ok: false, error: 'unknown service command',
   }) + String.fromCharCode(10));
 });
-\`;
+`;
     return spawn(process.execPath, ['--input-type=commonjs', '-e', source], {
       ...options,
       cwd: root,
