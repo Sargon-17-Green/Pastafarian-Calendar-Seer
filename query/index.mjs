@@ -85,6 +85,9 @@ function resolvePresentation(request) {
   if (presentation !== 'full' && presentation !== 'canonical') {
     throw queryError('UNSUPPORTED_PRESENTATION', `Unsupported presentation: ${String(presentation)}.`, { field: 'presentation' });
   }
+  if (own(request, 'locale') && (typeof request.locale !== 'string' || request.locale.length === 0)) {
+    throw queryError('INVALID_LOCALE', 'locale must be a non-empty string.', { field: 'locale' });
+  }
   if (presentation === 'canonical') return { presentation, locale: null, localePack: null };
   const localePack = getLocalePack(request.locale ?? DEFAULT_LOCALE);
   return { presentation, locale: localePack.code, localePack };

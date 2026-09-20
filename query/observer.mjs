@@ -13,19 +13,29 @@ export function normalizeLongitude(value, field = 'observer.longitude') {
 }
 
 export function resolveObserver(input, { relevant = true } = {}) {
-  if (!relevant) return null;
-  if (input === undefined || input === null) {
-    return { longitude: KISURRA_LONGITUDE, source: 'default-preset' };
+  if (input === undefined) {
+    return relevant ? { longitude: KISURRA_LONGITUDE, source: 'default-preset' } : null;
   }
-  if (typeof input !== 'object' || Array.isArray(input)) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw queryError('INVALID_OBSERVER', 'observer must be an object.', { field: 'observer' });
   }
   for (const key of Object.keys(input)) {
     if (!ALLOWED.has(key)) throw queryError('UNKNOWN_PARAMETER', `Unknown observer field: ${key}.`, { field: `observer.${key}` });
   }
-  // latitude/elevationMeters are documented no-ops and intentionally not validated.
-  const hasPreset = Object.prototype.hasOwnProperty.call(input, 'preset');
-  const hasLongitude = Object.prototype.hasOwnProperty.call(input, 'longitude');
+
+  const presetPresent = Object.prototype.hasOwnProperty.call(input, 'preset');
+  const longitudePresent = Object.prototype.hasOwnProperty.call(input, 'longitude');
+  if (presetPresent && input.preset !== null && typeof input.preset !== 'string') {
+    throw queryError('INVALID_OBSERVER', 'observer.preset must be a string or null.', { field: 'observer.preset' });
+  }
+  if (longitudePresent && input.longitude !== null && typeof input.longitude !== 'number') {
+    throw queryError('INVALID_OBSERVER', 'observer.longitude must be a number or null.', { field: 'observer.longitude' });
+  }
+  if (!relevant) return null;
+
+  // Null selectors are schema-valid no-ops. latitude/elevationMeters are documented no-ops.
+  const hasPreset = presetPresent && input.preset !== null;
+  const hasLongitude = longitudePresent && input.longitude !== null;
   if (hasPreset && hasLongitude) {
     throw queryError('AMBIGUOUS_OBSERVER', 'Use either observer.preset or observer.longitude, not both.', { field: 'observer' });
   }
@@ -36,7 +46,6 @@ export function resolveObserver(input, { relevant = true } = {}) {
     return { longitude: KISURRA_LONGITUDE, source: 'preset' };
   }
   if (hasLongitude) return { longitude: normalizeLongitude(input.longitude), source: 'longitude' };
-  // Only no-op fields were supplied: equivalent to omitted observer.
   return { longitude: KISURRA_LONGITUDE, source: 'default-preset' };
 }
 
