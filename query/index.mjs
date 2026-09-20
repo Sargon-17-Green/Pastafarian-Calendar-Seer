@@ -434,6 +434,13 @@ export async function queryRange(request, options = {}) {
 
   if (count > maxItems) throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: hasCount ? 'count' : 'endInclusive' });
 
+  // Preserve queryDate validation/error ordering before any speculative exact prefetch.
+  // In same-as-target mode the generated calculation selector is an explicit JDN, so the
+  // observer is semantically relevant only when boundaries are requested, exactly as in queryDate.
+  if (mode === 'same-as-target') {
+    resolveObserver(commonRequest.observer, { relevant: include.has('boundaries') });
+  }
+
   const pending = [];
   const provider = await providerFromOptions(options);
   let rangeProvider = provider;
