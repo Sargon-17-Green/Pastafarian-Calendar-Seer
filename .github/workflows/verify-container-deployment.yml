@@ -19,6 +19,8 @@ on:
       - 'prototype/scripts/build_*.sh'
       - 'scripts/build-runtime.sh'
       - 'scripts/build-runtime.mjs'
+      - 'scripts/generate-runtime-identity.mjs'
+      - 'scripts/package-selftest.mjs'
       - 'web/**'
       - 'docs/WEB_APPLICATION.md'
       - '.github/workflows/verify-container-deployment.yml'
@@ -37,6 +39,8 @@ on:
       - 'prototype/scripts/build_*.sh'
       - 'scripts/build-runtime.sh'
       - 'scripts/build-runtime.mjs'
+      - 'scripts/generate-runtime-identity.mjs'
+      - 'scripts/package-selftest.mjs'
       - 'web/**'
       - 'docs/WEB_APPLICATION.md'
       - '.github/workflows/verify-container-deployment.yml'
@@ -67,11 +71,18 @@ jobs:
           set -euo pipefail
           test "$(uname -m)" = "${{ matrix.uname }}"
 
-      - name: Build generic portable image
+      - name: Build strict release-like portable image
         shell: bash
         run: |
           set -euo pipefail
-          docker build --pull             --build-arg TARGETARCH="${{ matrix.arch }}"             --tag "pastafarian-seer:ci-${{ matrix.arch }}" .
+          VERSION="$(node -p "require('./package.json').version")"
+          docker build --pull \
+            --build-arg TARGETARCH="${{ matrix.arch }}" \
+            --build-arg SEER_RELEASE_VERSION="$VERSION" \
+            --build-arg SEER_RELEASE_TAG="v$VERSION" \
+            --build-arg SEER_RELEASE_COMMIT="$GITHUB_SHA" \
+            --build-arg SEER_REQUIRE_RELEASE_IDENTITY=1 \
+            --tag "pastafarian-seer:ci-${{ matrix.arch }}" .
 
       - name: Inspect image contract
         shell: bash
@@ -81,6 +92,8 @@ jobs:
           test "$(docker image inspect "$image" --format '{{.Config.User}}')" = "node"
           docker image inspect "$image" --format '{{json .Config.Healthcheck.Test}}' | grep -q '/_health/live'
           docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_REQUIRE_ENGINE_SERVICE=1'
+          docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_ARTIFACT_MODE=container'
+          docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_REQUIRE_RELEASE_IDENTITY=1'
           docker image inspect "$image" --format '{{json .Config.Env}}' | grep -q 'SEER_WEB_ROOT=/opt/seer-web'
           test "$(docker image inspect "$image" --format '{{.Architecture}}')" = "${{ matrix.arch }}"
       - name: HTTP, web and exact runtime smoke
@@ -105,6 +118,25 @@ jobs:
           done
           test "$ready" -eq 1
           test "$(docker exec seer-container id -u)" != "0"
+
+          curl -fsS http://127.0.0.1:18080/v1/meta -o /tmp/seer-meta.json
+          VERSION="$(node -p "require('./package.json').version")"
+          python - "$VERSION" "$GITHUB_SHA" <<'PY'
+          import json, re, sys
+          version, commit = sys.argv[1:3]
+          meta=json.load(open('/tmp/seer-meta.json', encoding='utf-8'))
+          assert meta['packageVersion'] == version, meta
+          assert meta['releaseTag'] == f'v{version}', meta
+          assert meta['commit'] == commit.lower(), meta
+          assert meta['artifactMode'] == 'container', meta
+          assert re.fullmatch(r'[0-9a-f]{64}', meta['engineFingerprint']), meta
+          assert 'date-query' in meta['supportedFeatures'], meta
+          assert meta['cacheRevision'] is None, meta
+          forbidden=('path','pid','hostname','secret')
+          assert not any(any(token in key.lower() for token in forbidden) for key in meta), meta
+          print('container public release identity PASS')
+          PY
+
           curl -fsS http://127.0.0.1:18080/web/ -o /tmp/seer-web.html
           grep -q 'Pastafarian Calendar Seer' /tmp/seer-web.html
           curl -fsS http://127.0.0.1:18080/client/index.mjs -o /tmp/seer-client.mjs
