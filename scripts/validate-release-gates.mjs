@@ -9,6 +9,7 @@ const problems = [];
 
 const requiredCategories = new Set([
   'package/cache',
+  'Node compatibility',
   'semantic/full domain',
   'reverse',
   'exact errors',

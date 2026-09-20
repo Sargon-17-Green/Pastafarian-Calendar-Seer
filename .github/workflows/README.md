@@ -24,3 +24,5 @@ This directory intentionally keeps three distinct classes of automation.
 
 All third-party GitHub Actions, including Actions used inside composite actions, must remain pinned to a full 40-character commit SHA. Version comments are informational only.
 Node 20 remains the package minimum declared by `package.json`; release/container automation currently uses Node 24. A new Node major is adopted only after an explicit runtime-policy decision and relevant matrices pass.
+
+`verify-node-compatibility.yml` enforces that package promise on Node 20, 22, and the chosen Node 24 LTS without rebuilding the native runtime. It syntax-checks every `.mjs` file that `npm pack` would publish, then runs the package self-test, focused query/Gregorian/client/HTTP/contract tests, and CLI help.
