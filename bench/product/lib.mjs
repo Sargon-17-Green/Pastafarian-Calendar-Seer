@@ -176,16 +176,18 @@ export async function measureScenario({ id, description, operation, validate, wa
   };
 }
 
-export async function runColdWorker({ workerPath, generatedDir, calculationJdn, targetJdn }) {
+export async function runColdWorker({ workerPath, generatedDir = null, calculationJdn, targetJdn }) {
   const args = [
     workerPath,
-    `--generated-dir=${generatedDir}`,
+    ...(generatedDir ? [`--generated-dir=${generatedDir}`] : []),
     `--calculation-jdn=${calculationJdn}`,
     `--target-jdn=${targetJdn}`,
   ];
+  const childEnv = { ...process.env, SEER_REQUIRE_ENGINE_SERVICE: '1' };
+  if (!generatedDir) delete childEnv.SEER_CACHE_DIR;
   const started = process.hrtime.bigint();
   const child = spawn(process.execPath, args, {
-    env: { ...process.env, SEER_REQUIRE_ENGINE_SERVICE: '1' },
+    env: childEnv,
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
   });
