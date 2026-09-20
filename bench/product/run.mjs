@@ -254,20 +254,21 @@ function markdown(result) {
 
 const options = parseArgs(process.argv.slice(2));
 process.env.SEER_REQUIRE_ENGINE_SERVICE = '1';
-process.env.SEER_CACHE_DIR = options.generatedDir;
 process.env.SEER_BENCH_ENVIRONMENT ??= options.environment;
 
 const discoveredCache = await loadCacheFixture(options.generatedDir);
 const discoveredFixture = discoveredCache ? { ...discoveredCache, generatedDir: options.generatedDir } : null;
 const cacheAcceptance = await acceptCacheFixture(discoveredFixture);
 const fixture = cacheAcceptance.fixture;
+const acceptedGeneratedDir = fixture ? options.generatedDir : null;
 console.error(`[bench] cache ${fixture ? 'accepted' : 'unavailable'}${cacheAcceptance.reason ? `: ${cacheAcceptance.reason}` : ''}`);
-const coldCalc = fixture?.calcJdn ?? FAR_FUTURE_CALC_JDN;
-const coldTarget = fixture?.missTargetJdn ?? (FAR_FUTURE_CALC_JDN + 1n);
+const exactFixture = discoveredFixture;
+const coldCalc = exactFixture?.calcJdn ?? FAR_FUTURE_CALC_JDN;
+const coldTarget = exactFixture?.missTargetJdn ?? (FAR_FUTURE_CALC_JDN + 1n);
 console.error('[bench] cold-process start');
 const coldProcess = await measureColdSeries({
   workerPath: coldWorkerPath,
-  generatedDir: options.generatedDir,
+  generatedDir: acceptedGeneratedDir,
   calculationJdn: coldCalc.toString(),
   targetJdn: coldTarget.toString(),
 }, options.coldSamples);
@@ -275,7 +276,10 @@ console.error('[bench] cold-process done');
 
 const publicIdentity = await createPublicIdentityProvider({ generatedDir: options.generatedDir }).snapshot();
 const machine = await collectMachineMetadata({ rootDir: root, publicIdentity });
-const { scenarios: definitions } = await buildScenarios(queryApi, fixture, { smoke: options.smoke });
+const { scenarios: definitions, workload } = await buildScenarios(queryApi, fixture, {
+  smoke: options.smoke,
+  exactFixture,
+});
 const scenarios = [];
 for (const definition of definitions) {
   console.error(`[bench] scenario ${definition.id} start`);
@@ -290,7 +294,7 @@ for (const definition of definitions) {
 const server = await listen({
   host: '127.0.0.1',
   port: 0,
-  queryOptions: { generatedDir: options.generatedDir },
+  queryOptions: acceptedGeneratedDir ? { generatedDir: acceptedGeneratedDir } : {},
 });
 let httpCached;
 let concurrency;
@@ -342,10 +346,13 @@ const result = {
     targetStartJdn: fixture.targetStartJdn.toString(),
     targetCount: fixture.targetCount,
     dataRevision: fixture.dataRevision,
+    snapshotCommit: process.env.SEER_BENCH_CACHE_COMMIT ?? null,
   } : {
     available: false,
     reason: cacheAcceptance.reason,
+    snapshotCommit: process.env.SEER_BENCH_CACHE_COMMIT ?? null,
   },
+  workload,
   coldProcess,
   scenarios,
   httpOverhead: overhead(httpCached, directCached),
