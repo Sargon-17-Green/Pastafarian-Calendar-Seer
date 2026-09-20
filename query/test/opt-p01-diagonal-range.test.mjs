@@ -1,7 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { queryRange } from '../index.mjs';
 import { createPrecomputedProvider } from '../provider-precomputed.mjs';
+import { createExactEngine, closeExactEngineServicesForTests } from '../exact-engine.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const generatedDir = path.join(root, 'generated');
+const dataDir = path.join(root, 'prototype', 'data');
 
 function shaped(day, provenance = { engineRevision: 'exact-engine' }) {
   return {
@@ -100,4 +108,134 @@ test('cache hit inside a large diagonal range is preserved and exact misses spli
   assert.equal(values[10].provenance.dataRevision, 'd'.repeat(64));
   assert.equal(values[9].provenance.engineRevision, 'exact-engine');
   assert.equal(values[11].provenance.engineRevision, 'exact-engine');
+});
+
+
+function legacyServiceSpawnRunner({ rejectAll = false } = {}) {
+  return (_binary, _args, options) => {
+    const source = String.raw\`
+const readline = require('node:readline');
+const rejectAll = \${JSON.stringify(rejectAll)};
+const rl = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
+rl.on('line', (line) => {
+  if (line === 'X') process.exit(0);
+  const f = line.split(String.fromCharCode(9));
+  if (!rejectAll && f[0] === 'R' && f.length === 4) {
+    const calc = Number(f[1]), start = Number(f[2]), count = Number(f[3]);
+    const records = Array.from({ length: count }, (_, i) => ({
+      targetJdn: start + i, year: 5000, cutletIndex: 0, dayInCutlet: 1,
+      monthIndex: 0, dayInMonth: 1, cutletCount: 5, monthCount: 40,
+    }));
+    process.stdout.write(JSON.stringify({
+      schema: 1, engine: 'legacy-r-service', calcJdn: calc,
+      targetStartJdn: start, targetCount: count, records,
+    }) + String.fromCharCode(10));
+    return;
+  }
+  process.stdout.write(JSON.stringify({
+    schema: 1, ok: false, error: 'unknown service command',
+  }) + String.fromCharCode(10));
+});
+\`;
+    return spawn(process.execPath, ['--input-type=commonjs', '-e', source], {
+      ...options,
+      cwd: root,
+      env: { ...process.env },
+    });
+  };
+}
+
+function exactEngineForFallback(t, {
+  serviceSpawnRunner,
+  execFileRunner,
+  maxConcurrency = 4,
+  requireService = false,
+} = {}) {
+  const oldRequire = process.env.SEER_REQUIRE_ENGINE_SERVICE;
+  if (requireService) process.env.SEER_REQUIRE_ENGINE_SERVICE = '1';
+  else delete process.env.SEER_REQUIRE_ENGINE_SERVICE;
+  closeExactEngineServicesForTests();
+  t.after(() => {
+    closeExactEngineServicesForTests();
+    if (oldRequire == null) delete process.env.SEER_REQUIRE_ENGINE_SERVICE;
+    else process.env.SEER_REQUIRE_ENGINE_SERVICE = oldRequire;
+  });
+  return createExactEngine({
+    generatedDir,
+    dataDir,
+    engineServiceBinary: path.join(root, 'query', 'exact-engine.mjs'),
+    yearBatchBinary: path.join(root, 'query', 'exact-engine.mjs'),
+    serviceSpawnRunner,
+    ...(execFileRunner ? { execFileRunner } : {}),
+    maxConcurrency,
+    timeoutMs: 2000,
+  });
+}
+
+test('new JS falls back to legacy R when required service does not implement D', async (t) => {
+  const engine = exactEngineForFallback(t, {
+    serviceSpawnRunner: legacyServiceSpawnRunner(),
+    requireService: true,
+  });
+  const result = await engine.queryDiagonal({
+    targetStartJdn: 2000,
+    count: 8,
+    stepDays: 2,
+  });
+  assert.deepEqual(
+    result.records.map((record) => record.targetJdn),
+    [2000, 2002, 2004, 2006, 2008, 2010, 2012, 2014],
+  );
+  assert.equal(result.provenance.engineRevision, 'legacy-r-service');
+});
+
+test('one-shot diagonal fallback preserves bounded exact concurrency', async (t) => {
+  let calls = 0;
+  let active = 0;
+  let peak = 0;
+  const execFileRunner = async (_binary, args) => {
+    calls += 1;
+    active += 1;
+    peak = Math.max(peak, active);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      const [calc, start, count] = args.map(Number);
+      return {
+        stdout: JSON.stringify({
+          schema: 1,
+          engine: 'fake-one-shot',
+          calcJdn: calc,
+          targetStartJdn: start,
+          targetCount: count,
+          records: Array.from({ length: count }, (_, i) => ({
+            targetJdn: start + i, year: 5000,
+            cutletIndex: 0, dayInCutlet: 1,
+            monthIndex: 0, dayInMonth: 1,
+            cutletCount: 5, monthCount: 40,
+          })),
+        }),
+        stderr: '',
+      };
+    } finally {
+      active -= 1;
+    }
+  };
+  const engine = exactEngineForFallback(t, {
+    serviceSpawnRunner: legacyServiceSpawnRunner({ rejectAll: true }),
+    execFileRunner,
+    maxConcurrency: 4,
+    requireService: false,
+  });
+  const result = await engine.queryDiagonal({
+    targetStartJdn: 3000,
+    count: 8,
+    stepDays: 3,
+  });
+  assert.deepEqual(
+    result.records.map((record) => record.targetJdn),
+    [3000, 3003, 3006, 3009, 3012, 3015, 3018, 3021],
+  );
+  assert.equal(calls, 8);
+  assert.equal(peak, 4);
+  assert.equal(result.provenance.engineRevision, 'fake-one-shot');
 });
