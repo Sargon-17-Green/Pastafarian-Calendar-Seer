@@ -34,6 +34,7 @@ using seer_native::detail::set_thread_cancel_flag;
 
 struct seer_mobile_cancel_token {
     std::atomic_bool cancelled{false};
+    std::atomic_uint32_t refs{1};
 };
 
 struct seer_mobile_context {
@@ -207,7 +208,24 @@ static seer_mobile_record compute_one(
     const seer_mobile_cancel_token* token) {
     validate_domain(context, calculation_jdn, target_jdn);
     if (cancelled(token)) throw Cancelled{};
-    FY year = target_year(calculation_jdn, target_jdn, context.gates, context.stones, token);
+    FY year{};
+    try {
+        year = target_year(calculation_jdn, target_jdn, context.gates, context.stones, token);
+    } catch (const Cancelled&) {
+        throw;
+    } catch (const std::exception& e) {
+        const std::string message = e.what();
+        if (message == "no anchor candidates in gate corpus") {
+            throw std::out_of_range(message);
+        }
+        if (message == "no previous year in gate corpus" ||
+            message == "no next year in gate corpus" ||
+            message == "day beyond bidirectional gate corpus" ||
+            message == "gate index") {
+            throw std::range_error(message);
+        }
+        throw;
+    }
     auto records = compute_segment(
         calculation_jdn, target_jdn, target_jdn,
         context.gates, context.stones, year, context.params);
@@ -294,8 +312,15 @@ seer_mobile_status seer_mobile_cancel_token_create(
     return SEER_MOBILE_OK;
 }
 
+void seer_mobile_cancel_token_retain(seer_mobile_cancel_token* token) {
+    if (token) token->refs.fetch_add(1, std::memory_order_relaxed);
+}
+
 void seer_mobile_cancel_token_destroy(seer_mobile_cancel_token* token) {
-    delete token;
+    if (!token) return;
+    if (token->refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        delete token;
+    }
 }
 
 void seer_mobile_cancel(seer_mobile_cancel_token* token) {
