@@ -30,6 +30,8 @@ int main(int argc,char**argv){
     auto c=config(argv[1],argv[2]);
     assert(seer_mobile_create(&c,&ctx,&err)==SEER_MOBILE_OK);
     assert(ctx);
+    seer_mobile_context_retain(ctx);
+    seer_mobile_destroy(ctx); // release caller ownership; retained call ref remains valid
 
     seer_mobile_provenance p{};
     p.struct_size=sizeof(p);
