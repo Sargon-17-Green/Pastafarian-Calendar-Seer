@@ -87,7 +87,10 @@
     "cli": "node ./query/cli.mjs",
     "test": "node ./scripts/package-selftest.mjs",
     "test:repo": "node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs",
-    "verify:release": "node ./scripts/verify-release.mjs"
+    "verify:release": "node ./scripts/verify-release.mjs",
+    "bench:product": "node ./bench/product/run.mjs",
+    "bench:compare": "node ./bench/product/compare.mjs",
+    "test:bench": "node --test bench/product/test/*.test.mjs"
   },
   "keywords": [
     "pastafarian",

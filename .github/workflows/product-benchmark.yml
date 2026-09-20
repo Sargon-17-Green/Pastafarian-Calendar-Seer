@@ -1,0 +1,235 @@
+name: Public product benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: Standard scenario repetitions
+        required: false
+        default: '20'
+      cheap_samples:
+        description: Cheap scenario repetitions (100 enables p99)
+        required: false
+        default: '100'
+      heavy_samples:
+        description: Heavy scenario repetitions
+        required: false
+        default: '5'
+      cold_samples:
+        description: Fresh-process repetitions
+        required: false
+        default: '20'
+      concurrency:
+        description: Comma-separated HTTP concurrency levels
+        required: false
+        default: '1,8,32,128,300'
+  pull_request:
+    paths:
+      - 'bench/**'
+      - 'query/**'
+      - 'http/**'
+      - 'precompute/**'
+      - 'prototype/src/**'
+      - 'prototype/data/**'
+      - 'prototype/scripts/**'
+      - 'scripts/build-runtime.*'
+      - 'package.json'
+      - '.github/actions/**'
+      - '.github/workflows/product-benchmark.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'bench/**'
+      - 'query/**'
+      - 'http/**'
+      - 'precompute/**'
+      - 'prototype/src/**'
+      - 'prototype/data/**'
+      - 'prototype/scripts/**'
+      - 'scripts/build-runtime.*'
+      - 'package.json'
+      - '.github/actions/**'
+      - '.github/workflows/product-benchmark.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: product-benchmark-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BENCH_SMOKE: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+  BENCH_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.samples || '20' }}
+  BENCH_CHEAP_SAMPLES: ${{ github.event_name == 'pull_request' && '3' || inputs.cheap_samples || '100' }}
+  BENCH_HEAVY_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.heavy_samples || '5' }}
+  BENCH_COLD_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.cold_samples || '20' }}
+  BENCH_CONCURRENCY: ${{ github.event_name == 'pull_request' && '1,4' || inputs.concurrency || '1,8,32,128,300' }}
+
+jobs:
+  linux:
+    name: ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-amd64-avx2
+            runner: ubuntu-24.04
+            backend: avx2
+            march: x86-64
+          - id: linux-amd64-portable
+            runner: ubuntu-24.04
+            backend: portable
+            march: x86-64
+          - id: linux-arm64-portable
+            runner: ubuntu-24.04-arm
+            backend: portable
+            march: armv8-a
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build production exact runtime
+        uses: ./.github/actions/native-build
+        env:
+          SEER_RNS_BACKEND: ${{ matrix.backend }}
+          SEER_MARCH: ${{ matrix.march }}
+        with:
+          targets: runtime
+      - name: Restore rolling cache snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          CACHE_DIR="$RUNNER_TEMP/seer-bench-cache"
+          mkdir -p "$CACHE_DIR/calc"
+          if git ls-remote --exit-code --heads origin refs/heads/cache-data >/dev/null 2>&1; then
+            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+            git archive refs/remotes/origin/cache-data | tar -x -C "$CACHE_DIR"
+          fi
+          echo "SEER_BENCH_CACHE=$CACHE_DIR" >> "$GITHUB_ENV"
+      - name: Validate benchmark harness
+        run: node --test bench/product/test/*.test.mjs
+      - name: Run public product benchmark
+        shell: bash
+        env:
+          SEER_RNS_BACKEND: ${{ matrix.backend }}
+          SEER_MARCH: ${{ matrix.march }}
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+          SEER_BENCH_ENVIRONMENT: ${{ matrix.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p bench/results
+          SMOKE_ARGS=()
+          if [[ "$BENCH_SMOKE" == true ]]; then SMOKE_ARGS+=(--smoke); fi
+          node bench/product/run.mjs \
+            "${SMOKE_ARGS[@]}" \
+            --generated-dir="$SEER_BENCH_CACHE" \
+            --environment="${{ matrix.id }}" \
+            --samples="$BENCH_SAMPLES" \
+            --cheap-samples="$BENCH_CHEAP_SAMPLES" \
+            --heavy-samples="$BENCH_HEAVY_SAMPLES" \
+            --cold-samples="$BENCH_COLD_SAMPLES" \
+            --concurrency="$BENCH_CONCURRENCY" \
+            --output="bench/results/${{ matrix.id }}.json"
+          cat "bench/results/${{ matrix.id }}.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: product-benchmark-${{ matrix.id }}
+          path: |
+            bench/results/${{ matrix.id }}.json
+            bench/results/${{ matrix.id }}.md
+          if-no-files-found: error
+
+  windows:
+    name: windows-x64-portable
+    runs-on: windows-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build production exact runtime
+        shell: pwsh
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+        run: npm run build:native
+      - name: Restore rolling cache snapshot
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cacheDir = Join-Path $env:RUNNER_TEMP 'seer-bench-cache'
+          New-Item -ItemType Directory -Force (Join-Path $cacheDir 'calc') | Out-Null
+          git ls-remote --exit-code --heads origin refs/heads/cache-data | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+            if ($LASTEXITCODE -ne 0) { throw 'cache-data fetch failed' }
+            $archive = Join-Path $env:RUNNER_TEMP 'seer-bench-cache.zip'
+            git archive --format=zip -o $archive refs/remotes/origin/cache-data
+            if ($LASTEXITCODE -ne 0) { throw 'cache-data archive failed' }
+            Expand-Archive -Path $archive -DestinationPath $cacheDir -Force
+          }
+          "SEER_BENCH_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Validate benchmark harness
+        run: node --test bench/product/test/*.test.mjs
+      - name: Run public product benchmark
+        shell: pwsh
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+          SEER_BENCH_ENVIRONMENT: windows-x64-portable
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force bench/results | Out-Null
+          $benchArgs = @(
+            "--generated-dir=$env:SEER_BENCH_CACHE"
+            "--environment=windows-x64-portable"
+            "--samples=$env:BENCH_SAMPLES"
+            "--cheap-samples=$env:BENCH_CHEAP_SAMPLES"
+            "--heavy-samples=$env:BENCH_HEAVY_SAMPLES"
+            "--cold-samples=$env:BENCH_COLD_SAMPLES"
+            "--concurrency=$env:BENCH_CONCURRENCY"
+            "--output=bench/results/windows-x64-portable.json"
+          )
+          if ($env:BENCH_SMOKE -eq 'true') { $benchArgs += '--smoke' }
+          node bench/product/run.mjs @benchArgs
+          if ($LASTEXITCODE -ne 0) { throw 'product benchmark failed' }
+          Get-Content bench/results/windows-x64-portable.md | Add-Content $env:GITHUB_STEP_SUMMARY
+      - name: Upload benchmark result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: product-benchmark-windows-x64-portable
+          path: |
+            bench/results/windows-x64-portable.json
+            bench/results/windows-x64-portable.md
+          if-no-files-found: error
