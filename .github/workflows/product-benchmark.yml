@@ -59,14 +59,12 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # TEMP OPT-P01 evidence gate: run this PR branch with the same full profile as the canonical baseline.
-  # Remove this branch-specific exception after benchmark artifacts are captured.
-  BENCH_SMOKE: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && 'true' || 'false' }}
-  BENCH_SAMPLES: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && '1' || inputs.samples || '20' }}
-  BENCH_CHEAP_SAMPLES: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && '3' || inputs.cheap_samples || '100' }}
-  BENCH_HEAVY_SAMPLES: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && '1' || inputs.heavy_samples || '5' }}
-  BENCH_COLD_SAMPLES: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && '1' || inputs.cold_samples || '20' }}
-  BENCH_CONCURRENCY: ${{ github.event_name == 'pull_request' && github.head_ref != 'perf/opt-p01-diagonal-range' && '1,4' || inputs.concurrency || '1,8,32,128,300' }}
+  BENCH_SMOKE: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+  BENCH_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.samples || '20' }}
+  BENCH_CHEAP_SAMPLES: ${{ github.event_name == 'pull_request' && '3' || inputs.cheap_samples || '100' }}
+  BENCH_HEAVY_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.heavy_samples || '5' }}
+  BENCH_COLD_SAMPLES: ${{ github.event_name == 'pull_request' && '1' || inputs.cold_samples || '20' }}
+  BENCH_CONCURRENCY: ${{ github.event_name == 'pull_request' && '1,4' || inputs.concurrency || '1,8,32,128,300' }}
 
 jobs:
   cache-snapshot:
