@@ -270,3 +270,117 @@ test('readiness and public status fail closed on a hung health probe while liven
     assert.equal(calls.length, 0);
   }, { healthProbe, healthTimeoutMs: 25 });
 });
+
+test('request correlation headers, structured logs and HTTP metrics are privacy-safe', async () => {
+  const logs = [];
+  const metricEvents = [];
+  let nextId = 0;
+  const ids = ['server-id-success', 'server-id-error', 'server-id-options'];
+  const logger = {
+    info(record) { logs.push(record); },
+    error(record) { logs.push(record); },
+  };
+  const metrics = {
+    counter(name, value, attributes) { metricEvents.push(['counter', name, value, attributes]); },
+    histogram(name, value, attributes) { metricEvents.push(['histogram', name, value, attributes]); },
+    gauge(name, value, attributes) { metricEvents.push(['gauge', name, value, attributes]); },
+  };
+
+  await withServer(async (base) => {
+    const success = await fetch(
+      `${base}/v1/date?target=2026-09-15&longitude=12.3456789`,
+      {
+        headers: {
+          'x-request-id': 'client-controlled-id',
+          authorization: 'Bearer do-not-log',
+          cookie: 'session=do-not-log',
+        },
+      },
+    );
+    assert.equal(success.status, 200);
+    assert.equal(success.headers.get('x-request-id'), 'server-id-success');
+    assert.match(success.headers.get('access-control-expose-headers'), /X-Request-ID/i);
+
+    const error = await fetch(`${base}/v1/year/5000`);
+    assert.equal(error.status, 503);
+    assert.equal(error.headers.get('x-request-id'), 'server-id-error');
+
+    const options = await fetch(`${base}/v1/date`, { method: 'OPTIONS' });
+    assert.equal(options.status, 204);
+    assert.equal(options.headers.get('x-request-id'), 'server-id-options');
+    assert.match(options.headers.get('access-control-expose-headers'), /X-Request-ID/i);
+
+    assert.equal(logs.length, 3);
+    assert.deepEqual(logs[0].release, {
+      packageVersion: '9.9.9-test',
+      releaseTag: 'v9.9.9-test',
+      commit: 'abc123',
+      engineFingerprint: 'engine-test',
+      cacheRevision: 'cache-test',
+    });
+    assert.equal(logs[0].method, 'GET');
+    assert.equal(logs[0].route, '/v1/date');
+    assert.equal(logs[0].status, 200);
+    assert.equal(logs[0].resourceClass, 'exact-single');
+    assert.equal(logs[0].outcome, 'success');
+    assert.ok(logs[0].latencyMs >= 0);
+    assert.equal(logs[1].route, '/v1/year/{year}');
+    assert.equal(logs[1].errorCode, 'SEER_UNAVAILABLE');
+
+    const serialized = JSON.stringify(logs);
+    for (const forbidden of [
+      '2026-09-15', '12.3456789', 'client-controlled-id',
+      'Bearer do-not-log', 'session=do-not-log', 'target=', 'longitude=',
+    ]) assert.equal(serialized.includes(forbidden), false, forbidden);
+
+    assert.ok(metricEvents.some(([kind, name]) => kind === 'counter' && name === 'http.request.count'));
+    assert.ok(metricEvents.some(([kind, name]) => kind === 'histogram' && name === 'http.request.latency_ms'));
+    assert.ok(metricEvents.some(([kind, name, , attrs]) =>
+      kind === 'counter' && name === 'http.error.count' && attrs.errorCode === 'SEER_UNAVAILABLE'));
+  }, {
+    logger,
+    metrics,
+    requestIdFactory: () => ids[nextId++],
+    observabilityReleaseIdentity: {
+      packageVersion: '9.9.9-test',
+      releaseTag: 'v9.9.9-test',
+      commit: 'abc123',
+      engineFingerprint: 'engine-test',
+      cacheRevision: 'cache-test',
+      ignoredSecret: 'must-not-appear',
+    },
+  });
+});
+
+test('unexpected internal errors are correlated but never logged as raw Error objects', async () => {
+  const logs = [];
+  const secret = 'AUTH-SECRET-2026-09-15-12.3456789';
+  await withServer(async (base) => {
+    const response = await fetch(`${base}/v1/date?target=2026-09-15&longitude=12.3456789`, {
+      headers: { authorization: secret, cookie: `session=${secret}` },
+    });
+    assert.equal(response.status, 500);
+    assert.equal(response.headers.get('x-request-id'), 'internal-error-id');
+    assert.deepEqual(await response.json(), {
+      error: { code: 'INTERNAL_ERROR', message: 'Internal server error.' },
+    });
+    assert.equal(logs.length, 1);
+    assert.equal(logs[0].requestId, 'internal-error-id');
+    assert.equal(logs[0].errorCode, 'INTERNAL_ERROR');
+    const serialized = JSON.stringify(logs);
+    assert.equal(serialized.includes(secret), false);
+    assert.equal(serialized.includes('2026-09-15'), false);
+    assert.equal(serialized.includes('12.3456789'), false);
+    assert.equal(serialized.includes('stack'), false);
+  }, {
+    requestIdFactory: () => 'internal-error-id',
+    logger: {
+      info(record) { logs.push(record); },
+      error(record) { logs.push(record); },
+    },
+    queryApi: {
+      ...fakeApi([]),
+      async queryDate() { throw new Error(secret); },
+    },
+  });
+});

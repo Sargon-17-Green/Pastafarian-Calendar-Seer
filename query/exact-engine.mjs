@@ -17,7 +17,7 @@ const DOMAIN_ERROR_CODES = new Set([
   'YEAR_OUT_OF_SUPPORTED_DOMAIN',
 ]);
 
-const PROCESS_EXACT_ADMISSION = createExactAdmission();
+const PROCESS_EXACT_ADMISSION = createExactAdmission({ scope: 'process-exact-admission' });
 const SERVICE_REGISTRY = new Map();
 const SERVICE_HASH_CACHE = new Map();
 const DEFAULT_SERVICE_REGISTRY_MAX = 4;
@@ -489,11 +489,11 @@ function yearFromStructurePayload(parsed, { calc, requestedYear, includeDays }) 
   };
 }
 
-export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync, serviceSpawnRunner = spawn, maxConcurrency, maxQueue } = {}) {
+export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBinary, yearStructureBinary, engineServiceBinary, dataDir, timeoutMs = DEFAULT_TIMEOUT_MS, maxBuffer = DEFAULT_MAX_BUFFER, execFileRunner = execFileAsync, serviceSpawnRunner = spawn, maxConcurrency, maxQueue, telemetry } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const rootDir = path.resolve(generatedDir, '..');
   const cwd = dataDir ?? path.join(rootDir, 'prototype', 'data');
-  const admission = createExactAdmission({ maxConcurrency, maxQueue });
+  const admission = createExactAdmission({ maxConcurrency, maxQueue, telemetry, scope: 'engine-exact-admission' });
   async function batchBinary() { return resolveBinary({ explicit: yearBatchBinary, envName: 'SEER_YEAR_BATCH_BIN', rootDir, basename: 'seer_year_batch' }); }
   async function locatorBinary() { return resolveBinary({ explicit: yearLocatorBinary, envName: 'SEER_YEAR_LOCATOR_BIN', rootDir, basename: 'seer_year_locator' }); }
   async function optionalStructureBinary() {
@@ -594,7 +594,7 @@ export function createExactEngine({ generatedDir, yearBatchBinary, yearLocatorBi
   }
 
   function runAdmitted(task) {
-    return admission.run(() => PROCESS_EXACT_ADMISSION.run(task));
+    return admission.run(() => PROCESS_EXACT_ADMISSION.run(task, telemetry), telemetry);
   }
 
   async function probe({ timeoutMs: probeTimeoutMs = Math.min(timeoutMs, 1000) } = {}) {

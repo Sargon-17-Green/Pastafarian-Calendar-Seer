@@ -74,21 +74,36 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/date-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': &id009
           description: Invalid or ambiguous request
           content: &id001
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '406': &id010
           description: Requested response representation or active locale is not acceptable
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '422': &id011
           description: Semantically invalid request
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '503': &id012
           description: Seer cannot currently guarantee a correct answer
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
   /v1/date:
     get:
       summary: Query a Pastafarian date
@@ -141,6 +156,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/date-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
         '422': *id011
@@ -160,6 +178,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/date-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
         '422': *id011
@@ -167,9 +188,15 @@ paths:
         '415': &id014
           description: 'POST requests require Content-Type: application/json'
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '413': &id013
           description: Request body or operation exceeds the configured limit
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
   /v1/batch:
     post:
       summary: Resolve multiple independent date queries using one captured request instant
@@ -186,6 +213,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/batch-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '413': *id013
         '503': *id012
@@ -213,11 +243,17 @@ paths:
             text/csv:
               schema:
                 type: string
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
         '413':
           description: Range exceeds deployment limit
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '422': *id011
         '503': *id012
         '415': *id014
@@ -246,6 +282,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/year-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
         '422': *id011
@@ -268,30 +307,45 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/date-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400':
           description: Invalid or incomplete request
           content:
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '406':
           description: Requested active locale is unsupported
           content:
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '422':
           description: Pastafarian coordinates are invalid, absent from the year, inconsistent, or outside the supported domain
           content:
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '503':
           description: Seer cannot currently guarantee a correct answer
           content:
             application/json:
               schema:
                 $ref: ./schemas/error-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '415': *id014
         '413': *id013
   /v1/calculation-day:
@@ -317,6 +371,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/calculation-day-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
         '422': *id011
@@ -331,6 +388,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/locales-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
   /v1/meta:
@@ -343,6 +403,9 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/meta-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
   /v1/status:
@@ -355,12 +418,18 @@ paths:
             application/json:
               schema:
                 $ref: ./schemas/status-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '503':
           description: Unavailable
           content:
             application/json:
               schema:
                 $ref: ./schemas/status-response.schema.json
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '406': *id010
   /openapi.json:
@@ -369,6 +438,9 @@ paths:
       responses:
         '200':
           description: OpenAPI 3.1 document
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
   /openapi.yaml:
     get:
@@ -376,6 +448,9 @@ paths:
       responses:
         '200':
           description: OpenAPI 3.1 document
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
   /schemas/{schema}:
     get:
@@ -394,10 +469,16 @@ paths:
             application/json:
               schema:
                 type: object
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
         '400': *id009
         '404':
           description: Referenced public schema was not found
           content: *id001
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestId'
 x-seer-semantics:
   defaultObserver: kisurra
   defaultLocale: en
@@ -427,3 +508,11 @@ x-seer-semantics:
   - present
 x-locale-pack-schema:
   $ref: ./schemas/locale-pack.schema.json
+components:
+  headers:
+    XRequestId:
+      description: Opaque server-generated request correlation identifier.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128

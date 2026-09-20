@@ -1,4 +1,5 @@
 import { queryError } from './errors.mjs';
+import { emitTelemetry } from './telemetry.mjs';
 
 export const DEFAULT_EXACT_CONCURRENCY = 8;
 export const DEFAULT_EXACT_QUEUE_MAX = 256;
@@ -47,23 +48,39 @@ export async function mapConcurrent(items, concurrency, worker) {
   return results;
 }
 
-export function createExactAdmission({ maxConcurrency, maxQueue } = {}) {
+export function createExactAdmission({ maxConcurrency, maxQueue, telemetry, scope = 'exact-admission' } = {}) {
   const concurrency = resolveExactConcurrency(maxConcurrency);
   const queueLimit = resolveExactQueueMax(maxQueue);
   let active = 0;
   const waiting = [];
-  function release() {
+
+  function observe(sink = telemetry, extra = {}) {
+    emitTelemetry(sink, 'queue', {
+      scope,
+      active,
+      queued: waiting.length,
+      maxConcurrency: concurrency,
+      maxQueue: queueLimit,
+      saturated: active >= concurrency,
+      ...extra,
+    });
+  }
+
+  function release(sink) {
     active -= 1;
     const next = waiting.shift();
     if (next) next();
+    observe(sink);
   }
 
-  async function acquire() {
+  async function acquire(sink) {
     if (active < concurrency) {
       active += 1;
+      observe(sink);
       return;
     }
     if (waiting.length >= queueLimit) {
+      observe(sink, { saturated: true, rejected: true });
       throw queryError(
         'SEER_UNAVAILABLE',
         'Exact Seer engine admission queue is full.',
@@ -76,18 +93,22 @@ export function createExactAdmission({ maxConcurrency, maxQueue } = {}) {
         },
       );
     }
-    await new Promise((resolve) => waiting.push(resolve));
+    await new Promise((resolve) => {
+      waiting.push(resolve);
+      observe(sink, { saturated: true });
+    });
     active += 1;
+    observe(sink);
   }
   return Object.freeze({
     concurrency,
     queueLimit,
-    async run(task) {
-      await acquire();
+    async run(task, runTelemetry = telemetry) {
+      await acquire(runTelemetry);
       try {
         return await task();
       } finally {
-        release();
+        release(runTelemetry);
       }
     },
   });

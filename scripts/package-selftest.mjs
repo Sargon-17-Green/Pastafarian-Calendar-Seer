@@ -60,6 +60,7 @@ async function verifyOpenApiSchemaClosure(baseUrl) {
   const seen = new Set();
   while (queue.length) {
     const { ref, baseUrl: parentUrl } = queue.shift();
+    if (ref.startsWith('#')) continue;
     const resolved = new URL(ref, parentUrl);
     if (resolved.hash) resolved.hash = '';
     assert.equal(resolved.origin, openapiUrl.origin, 'external schema ref is not self-contained: ' + ref);

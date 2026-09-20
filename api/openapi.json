@@ -92,6 +92,11 @@
                   "$ref": "./schemas/date-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -101,6 +106,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -112,6 +122,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "422": {
@@ -122,6 +137,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -131,6 +151,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -262,6 +287,11 @@
                   "$ref": "./schemas/date-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -271,6 +301,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -282,6 +317,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "422": {
@@ -292,6 +332,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -301,6 +346,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -327,6 +377,11 @@
                   "$ref": "./schemas/date-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -336,6 +391,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -347,25 +407,10 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
-            }
-          },
-          "413": {
-            "description": "Request body or operation exceeds the configured limit",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "POST requests require Content-Type: application/json",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -377,6 +422,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -386,6 +436,41 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -414,6 +499,11 @@
                   "$ref": "./schemas/batch-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -424,15 +514,10 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
-            }
-          },
-          "406": {
-            "description": "Requested response representation or active locale is not acceptable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -444,15 +529,10 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
-            }
-          },
-          "415": {
-            "description": "POST requests require Content-Type: application/json",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -463,6 +543,41 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -501,6 +616,11 @@
                   "type": "string"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -510,6 +630,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -521,6 +646,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "413": {
@@ -531,15 +661,10 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
-            }
-          },
-          "415": {
-            "description": "POST requests require Content-Type: application/json",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -551,6 +676,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -560,6 +690,26 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -671,6 +821,11 @@
                   "$ref": "./schemas/year-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -680,6 +835,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -691,6 +851,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "422": {
@@ -701,6 +866,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -710,6 +880,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -739,6 +914,11 @@
                   "$ref": "./schemas/date-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -748,6 +928,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -759,25 +944,10 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
-            }
-          },
-          "413": {
-            "description": "Request body or operation exceeds the configured limit",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "POST requests require Content-Type: application/json",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -789,6 +959,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -798,6 +973,41 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "415": {
+            "description": "POST requests require Content-Type: application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "413": {
+            "description": "Request body or operation exceeds the configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -869,6 +1079,11 @@
                   "$ref": "./schemas/calculation-day-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -878,6 +1093,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -889,6 +1109,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "422": {
@@ -899,6 +1124,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "503": {
@@ -908,6 +1138,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -926,6 +1161,11 @@
                   "$ref": "./schemas/locales-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -936,6 +1176,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "406": {
@@ -945,6 +1190,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -963,6 +1213,11 @@
                   "$ref": "./schemas/meta-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -973,6 +1228,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "406": {
@@ -982,6 +1242,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -1000,25 +1265,10 @@
                   "$ref": "./schemas/status-response.schema.json"
                 }
               }
-            }
-          },
-          "400": {
-            "description": "Invalid or ambiguous request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
-              }
-            }
-          },
-          "406": {
-            "description": "Requested response representation or active locale is not acceptable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "./schemas/error-response.schema.json"
-                }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           },
@@ -1030,6 +1280,41 @@
                   "$ref": "./schemas/status-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or ambiguous request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "406": {
+            "description": "Requested response representation or active locale is not acceptable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./schemas/error-response.schema.json"
+                }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           }
         }
@@ -1040,7 +1325,12 @@
         "summary": "OpenAPI contract in JSON",
         "responses": {
           "200": {
-            "description": "OpenAPI 3.1 document"
+            "description": "OpenAPI 3.1 document",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
           },
           "400": {
             "description": "Invalid or ambiguous request",
@@ -1049,6 +1339,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -1060,7 +1355,12 @@
         "summary": "OpenAPI contract in YAML",
         "responses": {
           "200": {
-            "description": "OpenAPI 3.1 document"
+            "description": "OpenAPI 3.1 document",
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
           },
           "400": {
             "description": "Invalid or ambiguous request",
@@ -1069,6 +1369,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -1098,6 +1403,11 @@
                   "type": "object"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "400": {
@@ -1108,6 +1418,11 @@
                   "$ref": "./schemas/error-response.schema.json"
                 }
               }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
+              }
             }
           },
           "404": {
@@ -1117,6 +1432,11 @@
                 "schema": {
                   "$ref": "./schemas/error-response.schema.json"
                 }
+              }
+            },
+            "headers": {
+              "X-Request-ID": {
+                "$ref": "#/components/headers/XRequestId"
               }
             }
           }
@@ -1157,5 +1477,17 @@
   },
   "x-locale-pack-schema": {
     "$ref": "./schemas/locale-pack.schema.json"
+  },
+  "components": {
+    "headers": {
+      "XRequestId": {
+        "description": "Opaque server-generated request correlation identifier.",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
+    }
   }
 }

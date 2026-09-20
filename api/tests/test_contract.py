@@ -359,6 +359,14 @@ def check_openapi():
         actual = set(j["paths"][route][method].get("responses",{}))
         if not statuses <= actual:
             raise AssertionError(f"OpenAPI transport response drift for {method.upper()} {route}: missing {sorted(statuses-actual)}")
+    for route, path_item in j.get("paths", {}).items():
+        for method, operation in path_item.items():
+            if method not in {"get", "post", "put", "patch", "delete", "head", "options", "trace"}:
+                continue
+            for status, response in operation.get("responses", {}).items():
+                request_id = response.get("headers", {}).get("X-Request-ID") if isinstance(response, dict) else None
+                if request_id != {"$ref": "#/components/headers/XRequestId"}:
+                    raise AssertionError(f"OpenAPI X-Request-ID header missing for {method.upper()} {route} {status}")
     # Every external schema ref in OpenAPI must exist locally.
     text=json.dumps(j)
     for rel in re.findall(r'\.\/schemas\/([A-Za-z0-9.-]+\.schema\.json)', text):

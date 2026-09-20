@@ -4,6 +4,7 @@ import { createCacheRequestContext } from '../precompute/cache-lookup.mjs';
 import { sha256EngineInputs } from '../precompute/lib/cache-format.mjs';
 import { createExactEngine } from './exact-engine.mjs';
 import { mapConcurrent, resolveExactConcurrency } from './concurrency.mjs';
+import { emitTelemetry } from './telemetry.mjs';
 
 const moduleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -49,6 +50,7 @@ export function createPrecomputedProvider({
   maxExactConcurrency,
   maxExactQueue,
   exactEngine,
+  telemetry,
 } = {}) {
   if (!generatedDir) throw new TypeError('generatedDir is required');
   const cache = cacheContext ?? createCacheRequestContext({ generatedDir });
@@ -65,6 +67,7 @@ export function createPrecomputedProvider({
     execFileRunner,
     maxConcurrency: exactConcurrency,
     maxQueue: maxExactQueue,
+    telemetry,
   });
   let engineFingerprintPromise;
   async function localEngineFingerprint() {
@@ -85,6 +88,7 @@ export function createPrecomputedProvider({
   async function resolveRun(calc, targets, waitersByTarget) {
     const start = targets[0];
     try {
+      emitTelemetry(telemetry, 'exactWork', { operation: 'range', items: targets.length, unit: 'day' });
       const supplied = await exact.queryRange({ calculationJdn: calc, targetStartJdn: start, count: targets.length });
       for (let i = 0; i < targets.length; i += 1) {
         const waiters = waitersByTarget.get(targets[i].toString());
@@ -107,6 +111,7 @@ export function createPrecomputedProvider({
         const targetJdn = targets[i];
         const waiters = waitersByTarget.get(targetJdn.toString());
         try {
+          emitTelemetry(telemetry, 'exactWork', { operation: 'date-retry', items: 1, unit: 'day' });
           const item = await exact.query({ calculationJdn: calc, targetJdn });
           for (const waiter of waiters) waiter.resolve(item);
         } catch (itemError) {
@@ -178,6 +183,7 @@ export function createPrecomputedProvider({
         try {
           const loaded = await cache.loadRecord(calcJdn, target);
           if (loaded.index.engineFingerprint !== await localEngineFingerprint()) throw new Error('cache engine fingerprint mismatch');
+          emitTelemetry(telemetry, 'cache', { outcome: 'hit' });
           return {
             record: loaded.record,
             structure: {
@@ -187,6 +193,7 @@ export function createPrecomputedProvider({
             provenance: cleanProvenance(loaded.index, loaded.descriptor),
           };
         } catch {
+          emitTelemetry(telemetry, 'cache', { outcome: 'miss' });
           // Rolling cache data is a performance hint only. Every cache failure is an exact-engine miss.
         }
       }
@@ -194,6 +201,7 @@ export function createPrecomputedProvider({
     },
 
     async year({ calculationJdn, year, includeDays = false }) {
+      emitTelemetry(telemetry, 'exactWork', { operation: 'year', items: 1, unit: 'year' });
       return exact.year({ calculationJdn, year, includeDays });
     },
   });
