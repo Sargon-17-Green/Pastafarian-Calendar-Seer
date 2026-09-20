@@ -82,6 +82,7 @@ SEER_MOBILE_API void seer_mobile_destroy(seer_mobile_context* context);
 SEER_MOBILE_API seer_mobile_status seer_mobile_cancel_token_create(
     seer_mobile_cancel_token** out_token,
     seer_mobile_error* error);
+SEER_MOBILE_API void seer_mobile_cancel_token_retain(seer_mobile_cancel_token* token);
 SEER_MOBILE_API void seer_mobile_cancel_token_destroy(seer_mobile_cancel_token* token);
 SEER_MOBILE_API void seer_mobile_cancel(seer_mobile_cancel_token* token);
 SEER_MOBILE_API void seer_mobile_cancel_token_reset(seer_mobile_cancel_token* token);
