@@ -1056,7 +1056,7 @@ If the Seer disagrees with the normative calendar, **the Seer is wrong**.
 
 The 12 final Sauce post-stirs use `R = SAVE(sum(oldBowls) + 149*r)` both to choose the bowl permutation and as the additive sum term inside `u`. All six new bowls in a stir read one common old-bowl snapshot.
 
-The former v3/v12 paths incorrectly used the raw old-bowl sum inside `u`; that common-mode error and all derived semantic witnesses are superseded. See `docs/CONFORMANCE.md`, `docs/DATA_PROVENANCE.md`, and `HISTORICAL_VALIDATION_NOTICE.md`.
+The former v3/v12 paths incorrectly used the raw old-bowl sum inside `u`; that common-mode error and all derived semantic witnesses are superseded. See `docs/CONFORMANCE.md`, `docs/DATA_PROVENANCE.md`, and `docs/history/HISTORICAL_VALIDATION_NOTICE.md`.
 
 Corrected positive 40,000-gap corpus SHA-256:
 
@@ -1095,7 +1095,6 @@ Known limitations:
 - presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - Windows ARM64 and macOS native exact-runtime support are not currently verified;
-- public npm-registry publication is not configured yet.
 
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
 
@@ -1132,22 +1131,24 @@ bash ./scripts/run_benchmark_portable.sh 3
 
 The portable and IFMA benchmark backends require a GCC-compatible C++20 environment with OpenMP, GMP/GMPXX, and Boost headers. The IFMA baseline additionally requires AVX-512F/DQ/BW/VL + AVX-512IFMA.
 
-See `prototype/STATUS.md`, `prototype/README.md`, `docs/PORTABLE_BACKEND.md`, and `ROADMAP.md`.
+See `prototype/README.md`, `research/benchmarks/README.md`, `docs/PORTABLE_BACKEND.md`, and `ROADMAP.md`.
 
 ## Repository map
 
 ```text
 api/                  OpenAPI, JSON Schemas, semantic rules and contract fixtures
 client/               browser-safe HTTP client
-docs/                 architecture, deployment, conformance and data provenance
+docs/                 current architecture, deployment, conformance and provenance docs
+docs/history/         completed stages, dated QA, benchmark history and frozen provenance evidence
 examples/browser/     no-build browser integration example
 precompute/           rolling-cache lookup/generation/validation tooling; data itself lives outside source/release identity
 http/                 HTTP v1 adapter/server
-prototype/            exact/native engine, data and benchmark lineage
+prototype/            production native closure plus verification/baseline harness
+research/             non-production experiment and benchmark variants
 query/                shared semantic query layer and CLI
 scripts/              package/native build and self-test entry points
 Dockerfile            verified amd64/ARM64 Linux service image
-ROADMAP.md             remaining product work
+ROADMAP.md             remaining work only
 LICENSE                MIT license
 NOTICE.md              liturgical non-authorization notice
 ```

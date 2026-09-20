@@ -45,7 +45,7 @@ The contract was drafted from the live repository, not a historical baseline. At
 
 This table is an audit record, not a moving alias for "current production". In particular, the partial v0.2.1 cross-channel state above is **not** a valid hosted-production release identity under this contract.
 
-Final adversarial QA was still changing `main` during this audit. Therefore this document may be used by downstream workstreams, but it does not declare the public service launch-ready.
+Historical audit note: at the 2026-09-18 snapshot, final adversarial QA was still changing `main`. That QA later completed for release v0.2.2; the dated evidence is preserved at `docs/history/releases/FINAL_QA_REPORT_2026-09-18.md`. The table above remains a frozen audit snapshot rather than current release identity. The hosted service itself remains pre-launch until the launch gates in this contract are satisfied.
 
 ## 3. Service identity and hostname model
 

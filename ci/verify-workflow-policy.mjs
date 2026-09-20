@@ -71,7 +71,7 @@ function checkUses(label, text) {
 
 const workflowFiles = (await yamlFiles(workflowDir)).filter((p) => !p.endsWith('README.yml'));
 const actionFiles = await yamlFiles(actionDir);
-const classes = { productionVerification: [], release: [], historicalManualBenchmark: [], reusable: [], other: [] };
+const classes = { productionVerification: [], release: [], researchManualBenchmark: [], reusable: [], other: [] };
 
 for (const file of workflowFiles) {
   const name = path.basename(file);
@@ -80,7 +80,7 @@ for (const file of workflowFiles) {
   checkStepShape(path.relative(root, file), text);
 
   if (/^release-/.test(name)) classes.release.push(name);
-  else if (/^(?:hosted-benchmark(?:-|\.ya?ml$)|hosted-check-)/.test(name)) classes.historicalManualBenchmark.push(name);
+  else if (/^research-(?:benchmark|check)-/.test(name)) classes.researchManualBenchmark.push(name);
   else if (/^_reusable-/.test(name)) classes.reusable.push(name);
   else if (/^(verify-|codeql|dependency-review|generate-|precompute-)/.test(name)) classes.productionVerification.push(name);
   else classes.other.push(name);
@@ -88,10 +88,10 @@ for (const file of workflowFiles) {
   if (text.includes('actions/setup-node@')) failures.push(`${name}: setup-node must be owned by .github/actions/node-setup`);
   if (text.includes('sudo apt-get update')) failures.push(`${name}: apt update must be owned by .github/actions/native-deps`);
 
-  if (/^(?:hosted-benchmark(?:-|\.ya?ml$)|hosted-check-)/.test(name)) {
-    if (!/^\s*workflow_dispatch:\s*$/m.test(text)) failures.push(`${name}: historical benchmark must remain manually dispatchable`);
+  if (/^research-(?:benchmark|check)-/.test(name)) {
+    if (!/^\s*workflow_dispatch:\s*$/m.test(text)) failures.push(`${name}: research benchmark must remain manually dispatchable`);
     if (/^\s*pull_request:\s*$/m.test(text) || /^\s*push:\s*$/m.test(text)) {
-      failures.push(`${name}: historical/manual benchmark must not become automatic production verification`);
+      failures.push(`${name}: research/manual benchmark must not become automatic production verification`);
     }
   }
 }
