@@ -444,8 +444,8 @@ export async function queryRange(request, options = {}) {
   const pending = [];
   const provider = await providerFromOptions(options);
   let rangeProvider = provider;
-  if (mode === 'same-as-target' && count >= 8n && count <= 10_000n &&
-      typeof provider.queryDiagonal === 'function') {
+  if (mode === 'same-as-target' && !include.has('boundaries') &&
+      count >= 8n && count <= 10_000n && typeof provider.queryDiagonal === 'function') {
     const prefetched = await provider.queryDiagonal({
       targetStartJdn: start.jdn,
       count: Number(count),
