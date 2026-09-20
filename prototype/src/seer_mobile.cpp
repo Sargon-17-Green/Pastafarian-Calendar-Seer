@@ -38,6 +38,7 @@ struct seer_mobile_cancel_token {
 };
 
 struct seer_mobile_context {
+    std::atomic_uint32_t refs{1};
     FGates gates;
     FStones stones;
     ExecutionParams params;
@@ -292,8 +293,15 @@ seer_mobile_status seer_mobile_create(
     }
 }
 
+void seer_mobile_context_retain(seer_mobile_context* context) {
+    if (context) context->refs.fetch_add(1, std::memory_order_relaxed);
+}
+
 void seer_mobile_destroy(seer_mobile_context* context) {
-    delete context;
+    if (!context) return;
+    if (context->refs.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        delete context;
+    }
 }
 
 seer_mobile_status seer_mobile_cancel_token_create(
