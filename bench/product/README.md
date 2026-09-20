@@ -8,6 +8,8 @@ It is intentionally **informational before the first baseline**: no latency, CPU
 
 The runner exercises cached date lookup, exact cache misses, `c=t`, Foundation vicinity, far-past and far-future dates, reverse lookup, year structure with and without `days`, batch, fixed range, same-as-target range, in-process HTTP overhead, fresh-process cold exact queries, steady warm persistent-service exact queries, and HTTP concurrency/queue behavior.
 
+CI never generates rolling cache data inside the benchmark workflow. It restores the current `cache-data` snapshot and lets the public provider accept or reject it using the production checksum/fingerprint path. If the snapshot is absent or engine-incompatible, cache-specific scenarios are explicitly skipped rather than mislabeled as cache hits.
+
 Steady-state cases perform explicit warmups. Fresh-process measurements are reported separately and never mixed into steady-state distributions. Cache-hit measurements require a verified rolling cache directory; CI generates and validates one before benchmarking.
 
 ## Metrics

@@ -74,7 +74,7 @@ async function measureHttpCached(baseUrl, fixture, options) {
   if (!fixture) return {
     id: 'http_cached_date',
     skipped: true,
-    reason: 'No verified rolling cache directory was supplied.',
+    reason: 'No compatible verified rolling cache snapshot was accepted by the public provider.',
   };
   const target = fixture.targetStartJdn.toString();
   const url = `${baseUrl}/v1/date?calculationJdn=${fixture.calcJdn}&targetJdn=${target}&presentation=canonical`;
@@ -93,6 +93,30 @@ async function measureHttpCached(baseUrl, fixture, options) {
       if (value?.targetDay?.jdn !== target) throw new Error('HTTP cached date target mismatch');
     },
   });
+}
+
+async function acceptCacheFixture(fixture) {
+  if (!fixture) return { fixture: null, reason: 'cache-data snapshot is unavailable' };
+  try {
+    const target = fixture.targetStartJdn.toString();
+    const value = await queryApi.queryDate({
+      calculation: { jdn: fixture.calcJdn.toString() },
+      target: { jdn: target },
+      presentation: 'canonical',
+      include: ['provenance'],
+    }, { generatedDir: fixture.generatedDir });
+    if (value?.targetDay?.jdn !== target ||
+        !fixture.dataRevision ||
+        value?.provenance?.dataRevision !== fixture.dataRevision) {
+      return { fixture: null, reason: 'cache-data snapshot was rejected by the public provider' };
+    }
+    return { fixture, reason: null };
+  } catch (error) {
+    return {
+      fixture: null,
+      reason: `cache-data snapshot was rejected: ${error?.code ?? error?.name ?? 'error'}`,
+    };
+  }
 }
 
 function overhead(httpScenario, directScenario) {
@@ -233,8 +257,11 @@ process.env.SEER_REQUIRE_ENGINE_SERVICE = '1';
 process.env.SEER_CACHE_DIR = options.generatedDir;
 process.env.SEER_BENCH_ENVIRONMENT ??= options.environment;
 
-const cacheFixture = await loadCacheFixture(options.generatedDir);
-const fixture = cacheFixture ? { ...cacheFixture, generatedDir: options.generatedDir } : null;
+const discoveredCache = await loadCacheFixture(options.generatedDir);
+const discoveredFixture = discoveredCache ? { ...discoveredCache, generatedDir: options.generatedDir } : null;
+const cacheAcceptance = await acceptCacheFixture(discoveredFixture);
+const fixture = cacheAcceptance.fixture;
+console.error(`[bench] cache ${fixture ? 'accepted' : 'unavailable'}${cacheAcceptance.reason ? `: ${cacheAcceptance.reason}` : ''}`);
 const coldCalc = fixture?.calcJdn ?? FAR_FUTURE_CALC_JDN;
 const coldTarget = fixture?.missTargetJdn ?? (FAR_FUTURE_CALC_JDN + 1n);
 console.error('[bench] cold-process start');
@@ -315,7 +342,10 @@ const result = {
     targetStartJdn: fixture.targetStartJdn.toString(),
     targetCount: fixture.targetCount,
     dataRevision: fixture.dataRevision,
-  } : { available: false },
+  } : {
+    available: false,
+    reason: cacheAcceptance.reason,
+  },
   coldProcess,
   scenarios,
   httpOverhead: overhead(httpCached, directCached),

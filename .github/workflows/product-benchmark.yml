@@ -106,16 +106,16 @@ jobs:
           SEER_MARCH: ${{ matrix.march }}
         with:
           targets: runtime
-      - name: Build and verify rolling cache fixture
+      - name: Restore rolling cache snapshot
         shell: bash
-        env:
-          SEER_RNS_BACKEND: ${{ matrix.backend }}
-          SEER_MARCH: ${{ matrix.march }}
         run: |
           set -euo pipefail
           CACHE_DIR="$RUNNER_TEMP/seer-bench-cache"
-          node precompute/generate-cache.mjs --output-dir="$CACHE_DIR" --source-commit="$(git rev-parse HEAD)"
-          node precompute/validate-generated.mjs --generated-dir="$CACHE_DIR" --expected-source-commit="$(git rev-parse HEAD)"
+          mkdir -p "$CACHE_DIR/calc"
+          if git ls-remote --exit-code --heads origin refs/heads/cache-data >/dev/null 2>&1; then
+            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+            git archive refs/remotes/origin/cache-data | tar -x -C "$CACHE_DIR"
+          fi
           echo "SEER_BENCH_CACHE=$CACHE_DIR" >> "$GITHUB_ENV"
       - name: Validate benchmark harness
         run: node --test bench/product/test/*.test.mjs
@@ -183,19 +183,21 @@ jobs:
           SEER_RNS_BACKEND: portable
           SEER_MARCH: x86-64
         run: npm run build:native
-      - name: Build and verify rolling cache fixture
+      - name: Restore rolling cache snapshot
         shell: pwsh
-        env:
-          SEER_RNS_BACKEND: portable
-          SEER_MARCH: x86-64
         run: |
           $ErrorActionPreference = 'Stop'
           $cacheDir = Join-Path $env:RUNNER_TEMP 'seer-bench-cache'
-          $sha = (git rev-parse HEAD).Trim()
-          node precompute/generate-cache.mjs "--output-dir=$cacheDir" "--source-commit=$sha"
-          if ($LASTEXITCODE -ne 0) { throw 'cache generation failed' }
-          node precompute/validate-generated.mjs "--generated-dir=$cacheDir" "--expected-source-commit=$sha"
-          if ($LASTEXITCODE -ne 0) { throw 'cache validation failed' }
+          New-Item -ItemType Directory -Force (Join-Path $cacheDir 'calc') | Out-Null
+          git ls-remote --exit-code --heads origin refs/heads/cache-data | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+            if ($LASTEXITCODE -ne 0) { throw 'cache-data fetch failed' }
+            $archive = Join-Path $env:RUNNER_TEMP 'seer-bench-cache.zip'
+            git archive --format=zip -o $archive refs/remotes/origin/cache-data
+            if ($LASTEXITCODE -ne 0) { throw 'cache-data archive failed' }
+            Expand-Archive -Path $archive -DestinationPath $cacheDir -Force
+          }
           "SEER_BENCH_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Validate benchmark harness
         run: node --test bench/product/test/*.test.mjs
