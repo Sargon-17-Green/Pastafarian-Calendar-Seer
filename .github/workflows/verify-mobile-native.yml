@@ -12,7 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install native dependencies
-        run: sudo apt-get update && sudo apt-get install -y libboost-dev libgmp-dev
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
       - name: Build canonical portable service
         env:
           SEER_RNS_BACKEND: portable
@@ -92,10 +94,12 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Install Boost headers and NDK
+      - name: Install Boost headers
+        uses: ./.github/actions/native-deps
+        with:
+          profile: boost-minimal
+      - name: Install Android NDK
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libboost-dev
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           sdkmanager "ndk;28.2.13676358"
       - name: Build Android arm64-v8a and x86_64 shared libraries
