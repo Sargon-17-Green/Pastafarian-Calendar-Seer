@@ -1,0 +1,121 @@
+name: WS06 mobile native library
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  host-parity-sanitizers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libboost-dev libgmp-dev
+      - name: Build canonical portable service
+        env:
+          SEER_RNS_BACKEND: portable
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Build mobile host ABI with sanitizers
+        run: |
+          set -euo pipefail
+          CXX=clang++
+          common=(-std=c++20 -O1 -g -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -Iprototype/include -Iprototype/src -pthread -fsanitize=address,undefined -fno-omit-frame-pointer)
+          src=(prototype/src/seer_year_core.cpp prototype/src/seer_calendar_core.cpp prototype/src/seer_weave_portable.cpp prototype/src/seer_mobile.cpp)
+          "$CXX" "${common[@]}" "${src[@]}" prototype/tests/seer_mobile_abi_test.cpp -o prototype/build/seer_mobile_abi_test
+          "$CXX" "${common[@]}" "${src[@]}" prototype/tests/seer_mobile_dump.cpp -o prototype/build/seer_mobile_dump
+      - name: ABI, queue and cancellation sanitizer test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: prototype/build/seer_mobile_abi_test prototype/data/gates_100k_u16.bin prototype/data/gates_negative_100k_u16.bin
+      - name: Differential parity against existing executable service
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: python prototype/scripts/check_mobile_parity.py prototype/build/seer_mobile_dump prototype/build/seer_engine_service prototype/data
+      - name: Native warning gate for ABI translation unit
+        run: |
+          clang++ -std=c++20 -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -Iprototype/include -Iprototype/src \
+            -Wall -Wextra -Werror -c prototype/src/seer_mobile.cpp -o /tmp/seer_mobile_warnings.o
+      - name: libFuzzer smoke
+        run: |
+          set -euo pipefail
+          src=(prototype/src/seer_year_core.cpp prototype/src/seer_calendar_core.cpp prototype/src/seer_weave_portable.cpp prototype/src/seer_mobile.cpp)
+          clang++ -std=c++20 -O1 -g -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -Iprototype/include -Iprototype/src -pthread \
+            -fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer "${src[@]}" prototype/tests/seer_mobile_fuzz.cpp -o prototype/build/seer_mobile_fuzz
+          SEER_MOBILE_POSITIVE_GATES="$PWD/prototype/data/gates_100k_u16.bin" \
+          SEER_MOBILE_NEGATIVE_GATES="$PWD/prototype/data/gates_negative_100k_u16.bin" \
+          prototype/build/seer_mobile_fuzz -runs=1000
+
+  ios-packaging:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Select Xcode 26.4.1
+        run: |
+          test -d /Applications/Xcode_26.4.1.app
+          sudo xcode-select -s /Applications/Xcode_26.4.1.app/Contents/Developer
+          xcodebuild -version
+      - name: Install Boost headers
+        run: brew install boost
+      - name: Build iOS device and simulator arm64 libraries
+        env:
+          BOOST_ROOT: ${{ env.HOMEBREW_PREFIX }}/opt/boost
+          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_PACKAGE_VERSION: 0.2.3
+        run: |
+          export HOMEBREW_PREFIX="$(brew --prefix)"
+          export BOOST_ROOT="$(brew --prefix boost)"
+          bash prototype/scripts/build_mobile_library.sh ios-arm64
+          bash prototype/scripts/build_mobile_library.sh ios-simulator-arm64
+          xcodebuild -create-xcframework \
+            -library prototype/build/mobile/ios-arm64/libseer_mobile.a -headers prototype/include \
+            -library prototype/build/mobile/ios-simulator-arm64/libseer_mobile.a -headers prototype/include \
+            -output prototype/build/mobile/SeerMobile.xcframework
+          test -f prototype/build/mobile/SeerMobile.xcframework/Info.plist
+          lipo -info prototype/build/mobile/ios-arm64/libseer_mobile.a
+          lipo -info prototype/build/mobile/ios-simulator-arm64/libseer_mobile.a
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-mobile-ios
+          path: |
+            prototype/build/mobile/SeerMobile.xcframework
+            prototype/build/mobile/ios-arm64/data
+            prototype/build/mobile/ios-simulator-arm64/data
+          if-no-files-found: error
+
+  android-packaging:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Boost headers and NDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-dev
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "ndk;28.2.13676358"
+      - name: Build Android arm64-v8a and x86_64 shared libraries
+        env:
+          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_PACKAGE_VERSION: 0.2.3
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/28.2.13676358"
+          bash prototype/scripts/build_mobile_library.sh android-arm64
+          bash prototype/scripts/build_mobile_library.sh android-x86_64
+          file prototype/build/mobile/android-arm64/libseer_mobile.so
+          file prototype/build/mobile/android-x86_64/libseer_mobile.so
+          readelf -h prototype/build/mobile/android-arm64/libseer_mobile.so | grep -E 'AArch64|ARM aarch64'
+          readelf -h prototype/build/mobile/android-x86_64/libseer_mobile.so | grep -E 'X86-64|Advanced Micro Devices X86-64'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-mobile-android
+          path: |
+            prototype/build/mobile/android-arm64/libseer_mobile.so
+            prototype/build/mobile/android-x86_64/libseer_mobile.so
+            prototype/build/mobile/android-arm64/include
+            prototype/build/mobile/android-arm64/data
+          if-no-files-found: error
