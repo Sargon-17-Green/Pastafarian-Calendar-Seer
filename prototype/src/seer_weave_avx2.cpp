@@ -111,10 +111,6 @@ struct Scaled{
 static inline Scaled snorm(long double m,int e=0){Scaled x;if(!std::isfinite(m)){x.ok=false;x.m=m;x.e=e;return x;}if(m==0){return x;}int k=0;long double mm=frexpl(m,&k);x.m=mm;x.e=e+k;return x;}
 static inline Scaled smul(const Scaled&a,const Scaled&b){if(!a.ok||!b.ok){Scaled z;z.ok=false;return z;}return snorm(a.m*b.m,a.e+b.e);}
 static inline Scaled smul_scalar(const Scaled&a,long double b){if(!a.ok||!std::isfinite(b)){Scaled z;z.ok=false;return z;}return snorm(a.m*b,a.e);}
-static inline Scaled sadd(const Scaled&a,const Scaled&b){
-    if(!a.ok||!b.ok){Scaled z;z.ok=false;return z;}if(a.m==0)return b;if(b.m==0)return a;
-    const Scaled *hi=&a,*lo=&b;if(a.e<b.e){hi=&b;lo=&a;}int de=lo->e-hi->e;if(de<-20000)return *hi;return snorm(hi->m+scalbnl(lo->m,de),hi->e);
-}
 static inline Scaled ssub(const Scaled&a,const Scaled&b){
     if(!a.ok||!b.ok||a.m==0){Scaled z;z.ok=false;return z;}if(b.m==0)return a;int de=b.e-a.e;if(de>100){Scaled z;z.ok=false;return z;}long double bm=de<-20000?0:scalbnl(b.m,de);long double m=a.m-bm;if(!(m>0)||!std::isfinite(m)){Scaled z;z.ok=false;return z;}return snorm(m,a.e);
 }
@@ -158,7 +154,8 @@ struct StructState{int pos=1,low=0,high=0,R=0,d=0;std::array<int,MAXM> rem{};};
 static StructState initial_struct(const std::vector<int>&len){StructState s;for(int i=0;i<(int)len.size();i++)s.rem[i]=len[i];s.rem[0]--;s.R=s.rem[0];return s;}
 
 static long double mpz_ratio_ld(const mpz_class& num,const mpz_class& den){
-    if(num==0)return 0; if(num<0||den<=0) return NAN;
+    if(num==0)return 0;
+    if(num<0||den<=0) return NAN;
     size_t bn=mpz_sizeinbase(num.get_mpz_t(),2), bd=mpz_sizeinbase(den.get_mpz_t(),2);
     unsigned tn=(unsigned)std::min<size_t>(64,bn), td=(unsigned)std::min<size_t>(64,bd);
     mpz_class an=num, ad=den; if(bn>tn) an >>= (bn-tn); if(bd>td) ad >>= (bd-td);
@@ -249,20 +246,7 @@ struct FastState{StructState st;std::vector<PackState> pack;int k=0;std::vector<
 static std::vector<uint64_t> init_coeff(const RnsEngine&e,int k){std::vector<uint64_t> c(k);for(int i=0;i<k;i++){uint64_t p=e.primes[i],prod=1;for(int j=0;j<k;j++)if(j!=i){uint64_t x=e.primes[j]%p;prod=mulmod52(prod,x,p);}c[i]=inv_mod_u64(prod,p);}return c;}
 static void shrink_coeff(const RnsEngine&e,std::vector<uint64_t>&c,int oldk,int newk){if(newk>=oldk){c.resize(newk);return;}for(int i=0;i<newk;i++){uint64_t p=e.primes[i],q=1;for(int j=newk;j<oldk;j++)q=mulmod52(q,e.primes[j]%p,p);c[i]=mulmod52(c[i],q,p);}c.resize(newk);}
 
-struct Frac3{long double value=0;std::array<uint64_t,3> digit{};bool ok=true;};
-static Frac3 frac3(const RnsEngine&e,const std::vector<uint64_t>&res,const std::vector<uint64_t>&coeff,int k){Frac3 out;if(k==0){out.ok=false;return out;}std::vector<uint64_t> n(k);bool allzero=true;for(int i=0;i<k;i++){n[i]=mulmod52(res[i],coeff[i],e.primes[i]);if(res[i])allzero=false;}if(allzero){out.value=0;return out;}
-    for(int layer=0;layer<3;layer++){uint64_t sumq=0;long double sum=0,corr=0;for(int i=0;i<k;i++){uint64_t p=e.primes[i],cc=B52-p;__uint128_t cn=(__uint128_t)cc*n[i];uint64_t q0=(uint64_t)(cn>>32),r0=(uint64_t)cn&MASK52;uint64_t y=r0+q0*cc;uint64_t ex=q0;if(y>=p){y-=p;ex++;}uint64_t q=n[i]+ex;sumq+=q;n[i]=y;long double term=(long double)y*e.invp[i];long double yy=term-corr,tt=sum+yy;corr=(tt-sum)-yy;sum=tt;}long double nearest=floorl(sum);long double frac=sum-nearest;if(frac<0)frac+=1; // diagnostic only
-        uint64_t carry=(uint64_t)floorl(sum+1e-18L);out.digit[layer]=(sumq+carry)&MASK52;}
-    out.value=ldexpl((long double)out.digit[0],-32)+ldexpl((long double)out.digit[1],-64)+ldexpl((long double)out.digit[2],-96);if(!(out.value>=0)||!std::isfinite(out.value))out.ok=false;return out;}
-
-
 struct FracAdaptive{long double value=0;int layers=0,firstnz=0;bool ok=true;};
-static FracAdaptive frac_adaptive(const RnsEngine&e,const std::vector<uint64_t>&res,const std::vector<uint64_t>&coeff,int k,int maxlayers=96){
-    FracAdaptive out;if(k==0){out.ok=false;return out;}std::vector<uint64_t> n(k);bool allzero=true;for(int i=0;i<k;i++){n[i]=mulmod52(res[i],coeff[i],e.primes[i]);if(res[i])allzero=false;}if(allzero)return out;
-    bool seen=false;int sig=0;long double val=0;
-    for(int layer=0;layer<maxlayers;layer++){uint64_t sumq=0;long double sum=0,corr=0;for(int i=0;i<k;i++){uint64_t p=e.primes[i],cc=B52-p;__uint128_t cn=(__uint128_t)cc*n[i];uint64_t q0=(uint64_t)(cn>>32),r0=(uint64_t)cn&MASK52;uint64_t y=r0+q0*cc;uint64_t ex=q0;if(y>=p){y-=p;ex++;}sumq+=n[i]+ex;n[i]=y;long double term=(long double)y*e.invp[i];long double yy=term-corr,tt=sum+yy;corr=(tt-sum)-yy;sum=tt;}uint64_t carry=(uint64_t)floorl(sum+1e-18L);uint64_t dig=(sumq+carry)&MASK52;out.layers=layer+1;if(dig){seen=true;sig++;}else if(seen)sig++;val += scalbnl((long double)dig,-32*(layer+1));if(seen&&sig>=3){out.value=val;return out;}}
-    out.value=val;if(!seen)out.ok=false;return out;
-}
 static void gather_vals(const RnsEngine&e,const FastState&s,std::vector<uint64_t>&O,std::vector<uint64_t>&S,std::vector<uint64_t>*U=nullptr,std::vector<uint64_t>*V=nullptr){int k=s.k;O.resize(k);S.resize(k);if(U)U->resize(k);if(V)V->resize(k);int packs=(k+7)/8;for(int pk=0;pk<packs;pk++){const auto&q=e.pc[pk];const auto&z=s.pack[pk];V8 sv=VMod::mul(z.A,z.H[s.st.high],q.vp,q.vc);V8 xv=VMod::sub(z.rankR,z.O,q.vp);alignas(64)uint64_t oo[8],ss[8],xx[8];vstore(oo,z.O);vstore(ss,sv);vstore(xx,xv);for(int l=0;l<8;l++){int i=pk*8+l;if(i>=k)break;O[i]=oo[l];S[i]=ss[l];if(U){(*U)[i]=xx[l]==0?e.primes[i]-1:xx[l]-1;}if(V){(*V)[i]=submod52(ss[l],xx[l],e.primes[i]);}}}}
 
 struct FracTriple{FracAdaptive u,v,s;};

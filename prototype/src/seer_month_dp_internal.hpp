@@ -20,7 +20,8 @@ struct YBMonthCountTable{
             int maxShift=119*p,half=maxShift/2;f[p].resize(half+1);YBU320 win{};
             auto prev=[&](int sh)->const YBU320&{
                 static const YBU320 Z{};int pm=119*(p-1);
-                if(sh<0||sh>pm)return Z;int q=std::min(sh,pm-sh);return f[p-1][q];
+                if(sh<0||sh>pm)return Z;
+                int q=std::min(sh,pm-sh);return f[p-1][q];
             };
             for(int sh=0;sh<=half;sh++){
                 yb_uadd(win,prev(sh));if(sh>=120)yb_usub(win,prev(sh-120));f[p][sh]=win;

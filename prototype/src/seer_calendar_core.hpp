@@ -38,7 +38,7 @@ std::vector<BatchRecord> compute_segment(
     const ExecutionParams& params);
 
 std::vector<BatchRecord> compute_full_year_days(
-    int64_t calc,const FGates& gates,const FY& year,const FSauce& structSauce,
+    const FY& year,const FSauce& structSauce,
     const YBStructResult& structure,const ExecutionParams& params);
 
 } // namespace detail

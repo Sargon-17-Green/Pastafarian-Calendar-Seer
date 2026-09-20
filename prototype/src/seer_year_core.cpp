@@ -27,8 +27,9 @@ std::vector<uint16_t> FGates::load_gaps(const char* filename) {
         unsigned char b[2]{};
         f.read(reinterpret_cast<char*>(b), 2);
         if (!f) throw std::runtime_error(std::string("short gate data: ") + filename);
-        out[i] = static_cast<uint16_t>(b[0]) |
-            (static_cast<uint16_t>(b[1]) << 8);
+        out[i] = static_cast<uint16_t>(
+            static_cast<unsigned int>(b[0]) |
+            (static_cast<unsigned int>(b[1]) << 8));
     }
     return out;
 }
