@@ -1,0 +1,223 @@
+name: Research - OPT-P02 persistent exact-service concurrency
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'research/opt-p02/**'
+      - '.github/workflows/research-opt-p02-validation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-opt-p02-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    name: Candidate regression contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Reconstruct and verify candidate
+        run: node research/opt-p02/apply-candidate.mjs
+      - name: OPT-P02 targeted tests
+        run: node --test query/test/opt-p02-concurrency.test.mjs
+      - name: Package self-test
+        run: npm test
+
+  cache-snapshot:
+    name: Pin rolling cache snapshot
+    runs-on: ubuntu-24.04
+    outputs:
+      cache_commit: ${{ steps.pin.outputs.cache_commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Pin cache-data commit
+        id: pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          CACHE_COMMIT="$(git ls-remote --exit-code --heads origin refs/heads/cache-data | awk '{print $1}')"
+          [[ "$CACHE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+          echo "cache_commit=$CACHE_COMMIT" >> "$GITHUB_OUTPUT"
+
+  linux:
+    needs: [contract, cache-snapshot]
+    name: ${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: linux-amd64-avx2
+            runner: ubuntu-24.04
+            backend: avx2
+            march: x86-64
+          - id: linux-amd64-portable
+            runner: ubuntu-24.04
+            backend: portable
+            march: x86-64
+          - id: linux-arm64-portable
+            runner: ubuntu-24.04-arm
+            backend: portable
+            march: armv8-a
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Reconstruct and verify candidate
+        run: node research/opt-p02/apply-candidate.mjs
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build production exact runtime
+        uses: ./.github/actions/native-build
+        env:
+          SEER_RNS_BACKEND: ${{ matrix.backend }}
+          SEER_MARCH: ${{ matrix.march }}
+        with:
+          targets: runtime
+      - name: Restore pinned rolling cache snapshot
+        shell: bash
+        env:
+          CACHE_COMMIT: ${{ needs.cache-snapshot.outputs.cache_commit }}
+        run: |
+          set -euo pipefail
+          CACHE_DIR="$RUNNER_TEMP/seer-opt-p02-cache"
+          git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+          git cat-file -e "$CACHE_COMMIT^{commit}"
+          node bench/product/restore-cache-snapshot.mjs --ref="$CACHE_COMMIT" --output-dir="$CACHE_DIR"
+          echo "SEER_BENCH_CACHE=$CACHE_DIR" >> "$GITHUB_ENV"
+      - name: Run canonical 1-vs-2 matrix twice
+        shell: bash
+        env:
+          SEER_RNS_BACKEND: ${{ matrix.backend }}
+          SEER_MARCH: ${{ matrix.march }}
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          set -euo pipefail
+          mkdir -p bench/results/opt-p02
+          for item in 1:1 1:2 2:2 2:1; do
+            rep="${item%%:*}"
+            workers="${item##*:}"
+            node bench/product/opt-p02-concurrency.mjs \
+              --service-workers="$workers" \
+              --concurrency=1,8,32,128,300 \
+              --requests=300 \
+              --generated-dir="$SEER_BENCH_CACHE" \
+              --output="bench/results/opt-p02/${{ matrix.id }}-w${workers}-r${rep}.json"
+          done
+      - name: Upload OPT-P02 evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: opt-p02-${{ matrix.id }}
+          path: bench/results/opt-p02/*.json
+          if-no-files-found: error
+
+  windows:
+    needs: [contract, cache-snapshot]
+    name: windows-x64-portable
+    runs-on: windows-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Reconstruct and verify candidate
+        run: node research/opt-p02/apply-candidate.mjs
+      - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+      - name: Export UCRT64 toolchain
+        shell: msys2 {0}
+        run: |
+          echo "CXX=$(cygpath -w "$(command -v g++)")" >> "$GITHUB_ENV"
+          cygpath -w /ucrt64/bin >> "$GITHUB_PATH"
+      - name: Build production exact runtime
+        shell: pwsh
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+        run: npm run build:native
+      - name: Restore pinned rolling cache snapshot
+        shell: pwsh
+        env:
+          CACHE_COMMIT: ${{ needs.cache-snapshot.outputs.cache_commit }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cacheDir = Join-Path $env:RUNNER_TEMP 'seer-opt-p02-cache'
+          git fetch --no-tags origin refs/heads/cache-data:refs/remotes/origin/cache-data
+          if ($LASTEXITCODE -ne 0) { throw 'cache-data fetch failed' }
+          git cat-file -e "$env:CACHE_COMMIT^{commit}"
+          if ($LASTEXITCODE -ne 0) { throw 'pinned cache-data commit is unavailable' }
+          node bench/product/restore-cache-snapshot.mjs "--ref=$env:CACHE_COMMIT" "--output-dir=$cacheDir"
+          if ($LASTEXITCODE -ne 0) { throw 'byte-exact cache restore failed' }
+          "SEER_BENCH_CACHE=$cacheDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Run canonical 1-vs-2 matrix twice
+        shell: pwsh
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+          SEER_REQUIRE_ENGINE_SERVICE: '1'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force bench/results/opt-p02 | Out-Null
+          $runs = @(
+            @{ rep = 1; workers = 1 },
+            @{ rep = 1; workers = 2 },
+            @{ rep = 2; workers = 2 },
+            @{ rep = 2; workers = 1 }
+          )
+          foreach ($run in $runs) {
+            $out = "bench/results/opt-p02/windows-x64-portable-w$($run.workers)-r$($run.rep).json"
+            node bench/product/opt-p02-concurrency.mjs `
+              "--service-workers=$($run.workers)" `
+              "--concurrency=1,8,32,128,300" `
+              "--requests=300" `
+              "--generated-dir=$env:SEER_BENCH_CACHE" `
+              "--output=$out"
+            if ($LASTEXITCODE -ne 0) { throw "OPT-P02 benchmark failed: $out" }
+          }
+      - name: Surface Windows fetch-error causes
+        shell: pwsh
+        run: |
+          Get-ChildItem bench/results/opt-p02/*.json | ForEach-Object {
+            $j = Get-Content $_.FullName -Raw | ConvertFrom-Json
+            "### $($_.Name)" | Add-Content $env:GITHUB_STEP_SUMMARY
+            foreach ($row in $j.results) {
+              if ($row.errors.FETCH_ERROR -or $row.fetchErrorCauses) {
+                "- c=$($row.concurrency): FETCH_ERROR=$($row.errors.FETCH_ERROR); causes=$($row.fetchErrorCauses | ConvertTo-Json -Compress)" | Add-Content $env:GITHUB_STEP_SUMMARY
+              }
+            }
+          }
+      - name: Upload OPT-P02 evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: opt-p02-windows-x64-portable
+          path: bench/results/opt-p02/*.json
+          if-no-files-found: error
