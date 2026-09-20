@@ -58,7 +58,6 @@ static inline uint64_t mulmod52(uint64_t a,uint64_t b,uint64_t p){
     if(r>=p)r-=p;
     return r;
 }
-static inline uint64_t addmod52(uint64_t a,uint64_t b,uint64_t p){uint64_t s=a+b;if(s>=p)s-=p;return s;}
 static inline uint64_t submod52(uint64_t a,uint64_t b,uint64_t p){return a>=b?a-b:p-(b-a);}
 
 struct V8{__m256i v;};
@@ -91,7 +90,7 @@ static inline __m256i add32x8(__m256i a,__m256i b,__m256i p,__m256i c){
     __m256i s=_mm256_add_epi32(a,b);__m256i carry=ugt32(a,s);s=_mm256_add_epi32(s,_mm256_and_si256(carry,c));
     __m256i ge=uge32(s,p);return _mm256_sub_epi32(s,_mm256_and_si256(ge,p));
 }
-static inline __m256i sub32x8(__m256i a,__m256i b,__m256i p,__m256i c){
+static inline __m256i sub32x8(__m256i a,__m256i b,__m256i c){
     __m256i borrow=ugt32(b,a);__m256i d=_mm256_sub_epi32(a,b);return _mm256_sub_epi32(d,_mm256_and_si256(borrow,c));
 }
 struct VMod{
@@ -100,7 +99,7 @@ struct VMod{
     static inline V8 add(const V8&a,const V8&b,const V8&p){ // recover c=2^32-p by two's complement
         __m256i c=_mm256_sub_epi32(_mm256_setzero_si256(),p.v);return {add32x8(a.v,b.v,p.v,c)};
     }
-    static inline V8 sub(const V8&a,const V8&b,const V8&p){__m256i c=_mm256_sub_epi32(_mm256_setzero_si256(),p.v);return {sub32x8(a.v,b.v,p.v,c)};}
+    static inline V8 sub(const V8&a,const V8&b,const V8&p){__m256i c=_mm256_sub_epi32(_mm256_setzero_si256(),p.v);return {sub32x8(a.v,b.v,c)};}
 };
 
 struct Scaled{
