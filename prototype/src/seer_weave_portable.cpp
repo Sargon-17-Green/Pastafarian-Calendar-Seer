@@ -3,8 +3,12 @@
 // Exact modular arithmetic and CRT certification are preserved; only the 8-lane
 // execution representation is replaced by ordinary uint64_t lanes.
 
+#ifndef SEER_MOBILE_CPPINT
 #include <gmpxx.h>
+#endif
+#ifndef SEER_NO_OPENMP
 #include <omp.h>
+#endif
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -26,26 +30,42 @@
 #include <utility>
 #include <vector>
 #include "rns_primes.hpp"
+#include "seer_selection_core.hpp"
+#include "seer_weave_core.hpp"
 
-// GMP C++ overloads do not accept uint64_t unambiguously on LLP64 (Windows).
-// Convert through two 32-bit limbs so the value is exact on LP64 and LLP64.
-static inline mpz_class mpz_from_u64_exact(uint64_t x){
-    mpz_class z=(unsigned long)(x>>32);
-    z<<=32;
-    z+=(unsigned long)(x&0xffffffffu);
-    return z;
+#ifdef SEER_MOBILE_CPPINT
+using SeerBigInt = seer_native::detail::BI;
+static inline SeerBigInt sbig_from_u64_exact(uint64_t x){ return SeerBigInt(x); }
+static inline uint64_t sbig_to_u64_exact(const SeerBigInt& z){ return z.convert_to<uint64_t>(); }
+static inline uint64_t sbig_fdiv_u64_exact(const SeerBigInt& z,uint64_t d){ return (z % d).convert_to<uint64_t>(); }
+static inline void sbig_divexact_ui(SeerBigInt& z,unsigned long q){ z /= q; }
+static inline size_t sbig_bit_size(const SeerBigInt& z){ return z==0 ? 1u : (size_t)boost::multiprecision::msb(z)+1u; }
+#else
+using SeerBigInt = mpz_class;
+static inline SeerBigInt sbig_from_u64_exact(uint64_t x){
+    SeerBigInt z=(unsigned long)(x>>32);z<<=32;z+=(unsigned long)(x&0xffffffffu);return z;
 }
-static inline uint64_t mpz_to_u64_exact(const mpz_class& z){
-    uint64_t lo=(uint32_t)mpz_get_ui(z.get_mpz_t());
-    mpz_class hi=z>>32;
-    uint64_t high=(uint32_t)mpz_get_ui(hi.get_mpz_t());
-    return lo|(high<<32);
+static inline uint64_t sbig_to_u64_exact(const SeerBigInt& z){
+    uint64_t lo=(uint32_t)mpz_get_ui(z.get_mpz_t());SeerBigInt hi=z>>32;
+    uint64_t high=(uint32_t)mpz_get_ui(hi.get_mpz_t());return lo|(high<<32);
 }
-static inline uint64_t mpz_fdiv_u64_exact(const mpz_class& z,uint64_t d){
-    mpz_class divisor=mpz_from_u64_exact(d), rem;
-    mpz_fdiv_r(rem.get_mpz_t(),z.get_mpz_t(),divisor.get_mpz_t());
-    return mpz_to_u64_exact(rem);
+static inline uint64_t sbig_fdiv_u64_exact(const SeerBigInt& z,uint64_t d){
+    SeerBigInt divisor=sbig_from_u64_exact(d),rem;
+    mpz_fdiv_r(rem.get_mpz_t(),z.get_mpz_t(),divisor.get_mpz_t());return sbig_to_u64_exact(rem);
 }
+static inline void sbig_divexact_ui(SeerBigInt& z,unsigned long q){ mpz_divexact_ui(z.get_mpz_t(),z.get_mpz_t(),q); }
+static inline size_t sbig_bit_size(const SeerBigInt& z){ return mpz_sizeinbase(z.get_mpz_t(),2); }
+#endif
+
+namespace seer_native::detail {
+thread_local const std::atomic_bool* g_seer_mobile_cancel_flag=nullptr;
+void set_thread_cancel_flag(const std::atomic_bool* flag){ g_seer_mobile_cancel_flag=flag; }
+static inline void mobile_cancel_point(){
+    if(g_seer_mobile_cancel_flag && g_seer_mobile_cancel_flag->load(std::memory_order_relaxed))
+        throw std::runtime_error("seer cancelled");
+}
+}
+using seer_native::detail::mobile_cancel_point;
 
 using Clock=std::chrono::steady_clock;
 static double ms(Clock::time_point a,Clock::time_point b){return std::chrono::duration<double,std::milli>(b-a).count();}
@@ -132,11 +152,11 @@ struct ApproxTable{
 };
 
 struct ExactTable{
-    std::vector<int> len,pref;int m=0;std::vector<std::vector<mpz_class>> f;mpz_class N;
+    std::vector<int> len,pref;int m=0;std::vector<std::vector<SeerBigInt>> f;SeerBigInt N;
     explicit ExactTable(const std::vector<int>&L):len(L),m((int)L.size()){
         pref.resize(m);int s=0;for(int i=0;i<m;i++){s+=len[i]-1;pref[i]=s;}
-        f.resize(m);f[m-1].assign(pref[m-1]+2,mpz_class(1));
-        for(int h=m-2;h>=0;--h){int qmax=pref[h]+1,n=len[h+1];f[h].assign(qmax+1,0);mpz_class cum=0,w=1;for(int q=1;q<=qmax;q++){int r=q-1;cum+=w*f[h+1][n+r];f[h][q]=cum;w*=n+r-1;mpz_divexact_ui(w.get_mpz_t(),w.get_mpz_t(),q);}}
+        f.resize(m);f[m-1].assign(pref[m-1]+2,SeerBigInt(1));
+        for(int h=m-2;h>=0;--h){int qmax=pref[h]+1,n=len[h+1];f[h].assign(qmax+1,0);SeerBigInt cum=0,w=1;for(int q=1;q<=qmax;q++){int r=q-1;cum+=w*f[h+1][n+r];f[h][q]=cum;w*=n+r-1;sbig_divexact_ui(w,q);}}
         N=f[0][len[0]];
     }
 };
@@ -144,19 +164,19 @@ struct ExactTable{
 struct StructState{int pos=1,low=0,high=0,R=0,d=0;std::array<int,MAXM> rem{};};
 static StructState initial_struct(const std::vector<int>&len){StructState s;for(int i=0;i<(int)len.size();i++)s.rem[i]=len[i];s.rem[0]--;s.R=s.rem[0];return s;}
 
-static long double mpz_ratio_ld(const mpz_class& num,const mpz_class& den){
+static long double mpz_ratio_ld(const SeerBigInt& num,const SeerBigInt& den){
     if(num==0)return 0; if(num<0||den<=0) return NAN;
-    size_t bn=mpz_sizeinbase(num.get_mpz_t(),2), bd=mpz_sizeinbase(den.get_mpz_t(),2);
+    size_t bn=sbig_bit_size(num), bd=sbig_bit_size(den);
     unsigned tn=(unsigned)std::min<size_t>(64,bn), td=(unsigned)std::min<size_t>(64,bd);
-    mpz_class an=num, ad=den; if(bn>tn) an >>= (bn-tn); if(bd>td) ad >>= (bd-td);
-    uint64_t un=mpz_to_u64_exact(an), ud=mpz_to_u64_exact(ad);
+    SeerBigInt an=num, ad=den; if(bn>tn) an >>= (bn-tn); if(bd>td) ad >>= (bd-td);
+    uint64_t un=sbig_to_u64_exact(an), ud=sbig_to_u64_exact(ad);
     int en=(int)bn-(int)tn, ed=(int)bd-(int)td;
     return scalbnl((long double)un/(long double)ud,en-ed);
 }
 
 struct Predictor{
     const ApproxTable* tab=nullptr;StructState st;std::array<Scaled,MAXM> H{},B{};long double u=0,v=0;bool ok=true;uint64_t forced=0;
-    void reset(const StructState&s,const mpz_class&rank,const mpz_class&total){st=s;ok=true;int d=s.d;for(int h=s.high;h<tab->m;h++){int q=tab->pref[h]-d+1;if(q<0||q>=(int)tab->f[h].size()){ok=false;return;}H[h]=snorm(tab->f[h][q],tab->rowExp[h]);if(h<tab->m-1){int Rh=tab->pref[h]-d,n=tab->len[h+1];B[h]=binom_scaled((unsigned)(Rh+n-2),(unsigned)(n-2));}}
+    void reset(const StructState&s,const SeerBigInt&rank,const SeerBigInt&total){st=s;ok=true;int d=s.d;for(int h=s.high;h<tab->m;h++){int q=tab->pref[h]-d+1;if(q<0||q>=(int)tab->f[h].size()){ok=false;return;}H[h]=snorm(tab->f[h][q],tab->rowExp[h]);if(h<tab->m-1){int Rh=tab->pref[h]-d,n=tab->len[h+1];B[h]=binom_scaled((unsigned)(Rh+n-2),(unsigned)(n-2));}}
         u=mpz_ratio_ld(rank-1,total);v=mpz_ratio_ld(total-rank,total);if(!std::isfinite(u)||!std::isfinite(v))ok=false;
     }
     void reset_uv(long double nu,long double nv){u=nu;v=nv;if(!std::isfinite(u)||!std::isfinite(v)||u<0||v<0)ok=false;}
@@ -179,16 +199,19 @@ static StepMeta make_meta_and_apply(StructState& s,const std::vector<int>&len,co
 struct PackConst{alignas(64) uint64_t p[8],c[8];V8 vp,vc;std::vector<V8> inv,bcommon;};
 struct PackState{std::array<V8,MAXM> H{},B{};V8 A=vsmall(1),O=vzero(),rankR=vzero();};
 struct RnsEngine{
-    std::vector<int> len,pref;int m,total,npr,npacks,threads,commonN=0,commonFreq=0;std::vector<uint64_t> primes;std::vector<long double> invp,logP,logFact;std::vector<mpz_class> Pprefix;std::vector<uint64_t> garnerInv;
+    std::vector<int> len,pref;int m,total,npr,npacks,threads,commonN=0,commonFreq=0;std::vector<uint64_t> primes;std::vector<long double> invp,logP,logFact;std::vector<SeerBigInt> Pprefix;std::vector<uint64_t> garnerInv;
     std::vector<PackConst> pc;std::vector<PackState> initPacks;double count_ms=0,fracmeta_ms=0;std::vector<uint64_t> Nres;
     RnsEngine(const std::vector<int>&L,int npr_,int threads_):len(L),m(L.size()),npr(npr_),threads(threads_){total=std::accumulate(len.begin(),len.end(),0);pref.resize(m);int s=0;for(int i=0;i<m;i++){s+=len[i]-1;pref[i]=s;}std::array<int,124> fql{};for(int h=0;h<m-1;h++)fql[len[h+1]]++;for(int n=1;n<=123;n++)if(fql[n]>commonFreq){commonFreq=fql[n];commonN=n;}primes=make_primes(npr);npacks=(npr+7)/8;invp.resize(npr);for(int i=0;i<npr;i++)invp[i]=1.0L/(long double)primes[i];
-        Pprefix.resize(npr+1);Pprefix[0]=1;garnerInv.resize(npr);garnerInv[0]=1;logP.assign(npr+1,0);for(int i=0;i<npr;i++){if(i>0){uint64_t pm=mpz_fdiv_u64_exact(Pprefix[i],primes[i]);garnerInv[i]=inv_mod_u64(pm,primes[i]);}Pprefix[i+1]=Pprefix[i]*mpz_from_u64_exact(primes[i]);logP[i+1]=logP[i]+log2l((long double)primes[i]);}
+        Pprefix.resize(npr+1);Pprefix[0]=1;garnerInv.resize(npr);garnerInv[0]=1;logP.assign(npr+1,0);for(int i=0;i<npr;i++){if(i>0){uint64_t pm=sbig_fdiv_u64_exact(Pprefix[i],primes[i]);garnerInv[i]=inv_mod_u64(pm,primes[i]);}Pprefix[i+1]=Pprefix[i]*sbig_from_u64_exact(primes[i]);logP[i+1]=logP[i]+log2l((long double)primes[i]);}
         logFact.assign(total+1,0);for(int i=1;i<=total;i++)logFact[i]=logFact[i-1]+log2l((long double)i);
         fracmeta_ms=0;
         pc.resize(npacks);initPacks.resize(npacks);Nres.resize(npr);
-        auto a=Clock::now();omp_set_num_threads(threads);
+        auto a=Clock::now();mobile_cancel_point();
+#ifndef SEER_NO_OPENMP
+        omp_set_num_threads(threads);
 #pragma omp parallel for schedule(static)
-        for(int pk=0;pk<npacks;pk++) build_pack(pk);
+#endif
+        for(int pk=0;pk<npacks;pk++){ mobile_cancel_point(); build_pack(pk); }
         auto b=Clock::now();count_ms=ms(a,b);
         for(int pk=0;pk<npacks;pk++){alignas(64)uint64_t rr[8];vstore(rr,initPacks[pk].H[0]);for(int l=0;l<8;l++){int i=pk*8+l;if(i<npr)Nres[i]=rr[l];}}
     }
@@ -204,13 +227,13 @@ struct RnsEngine{
         q.bcommon=std::move(wc[cn]);
         st.A=vsmall(1);st.O=vzero();st.rankR=vzero();
     }
-    mpz_class crt(const std::vector<uint64_t>&r,int k) const{mpz_class x=0;for(int i=0;i<k;i++){uint64_t pi=primes[i],xm=mpz_fdiv_u64_exact(x,pi);uint64_t delta=r[i]>=xm?r[i]-xm:pi-(xm-r[i]);uint64_t t=(uint64_t)((__uint128_t)delta*garnerInv[i]%pi);if(t)x+=Pprefix[i]*mpz_from_u64_exact(t);}return x;}
-    void crt2(const std::vector<uint64_t>&a,const std::vector<uint64_t>&b,int k,mpz_class&xa,mpz_class&xb) const{xa=0;xb=0;for(int i=0;i<k;i++){uint64_t p=primes[i];uint64_t am=mpz_fdiv_u64_exact(xa,p),bm=mpz_fdiv_u64_exact(xb,p);uint64_t da=a[i]>=am?a[i]-am:p-(am-a[i]);uint64_t db=b[i]>=bm?b[i]-bm:p-(bm-b[i]);uint64_t ta=(uint64_t)((__uint128_t)da*garnerInv[i]%p),tb=(uint64_t)((__uint128_t)db*garnerInv[i]%p);if(ta)xa+=Pprefix[i]*mpz_from_u64_exact(ta);if(tb)xb+=Pprefix[i]*mpz_from_u64_exact(tb);}}
-    int basis_for(const mpz_class&x,int maxk) const{int lo=1,hi=maxk;while(lo<hi){int md=(lo+hi)/2;if(Pprefix[md]>x)hi=md;else lo=md+1;}if(Pprefix[lo]<=x)throw std::runtime_error("basis too small");return lo;}
+    SeerBigInt crt(const std::vector<uint64_t>&r,int k) const{SeerBigInt x=0;for(int i=0;i<k;i++){uint64_t pi=primes[i],xm=sbig_fdiv_u64_exact(x,pi);uint64_t delta=r[i]>=xm?r[i]-xm:pi-(xm-r[i]);uint64_t t=(uint64_t)((__uint128_t)delta*garnerInv[i]%pi);if(t)x+=Pprefix[i]*sbig_from_u64_exact(t);}return x;}
+    void crt2(const std::vector<uint64_t>&a,const std::vector<uint64_t>&b,int k,SeerBigInt&xa,SeerBigInt&xb) const{xa=0;xb=0;for(int i=0;i<k;i++){uint64_t p=primes[i];uint64_t am=sbig_fdiv_u64_exact(xa,p),bm=sbig_fdiv_u64_exact(xb,p);uint64_t da=a[i]>=am?a[i]-am:p-(am-a[i]);uint64_t db=b[i]>=bm?b[i]-bm:p-(bm-b[i]);uint64_t ta=(uint64_t)((__uint128_t)da*garnerInv[i]%p),tb=(uint64_t)((__uint128_t)db*garnerInv[i]%p);if(ta)xa+=Pprefix[i]*sbig_from_u64_exact(ta);if(tb)xb+=Pprefix[i]*sbig_from_u64_exact(tb);}}
+    int basis_for(const SeerBigInt&x,int maxk) const{int lo=1,hi=maxk;while(lo<hi){int md=(lo+hi)/2;if(Pprefix[md]>x)hi=md;else lo=md+1;}if(Pprefix[lo]<=x)throw std::runtime_error("basis too small");return lo;}
     int predictor_basis(const StructState&s,int maxk) const{int remtot=0;long double lu=0;for(int i=0;i<m;i++){remtot+=s.rem[i];lu-=logFact[s.rem[i]];}lu+=logFact[remtot];long double need=lu+4.0L;int lo=1,hi=maxk;while(lo<hi){int md=(lo+hi)/2;if(logP[md]>need)hi=md;else lo=md+1;}return lo;}
 };
 
-struct FastState{StructState st;std::vector<PackState> pack;int k=0;std::vector<uint64_t> coeff;mpz_class rank,total;};
+struct FastState{StructState st;std::vector<PackState> pack;int k=0;std::vector<uint64_t> coeff;SeerBigInt rank,total;};
 
 static std::vector<uint64_t> init_coeff(const RnsEngine&e,int k){std::vector<uint64_t> c(k);for(int i=0;i<k;i++){uint64_t p=e.primes[i],prod=1;for(int j=0;j<k;j++)if(j!=i){uint64_t x=e.primes[j]%p;prod=mulmod52(prod,x,p);}c[i]=inv_mod_u64(prod,p);}return c;}
 static void shrink_coeff(const RnsEngine&e,std::vector<uint64_t>&c,int oldk,int newk){if(newk>=oldk){c.resize(newk);return;}for(int i=0;i<newk;i++){uint64_t p=e.primes[i],q=1;for(int j=newk;j<oldk;j++)q=mulmod52(q,e.primes[j]%p,p);c[i]=mulmod52(c[i],q,p);}c.resize(newk);}
@@ -269,7 +292,7 @@ static FracTriple frac_state_vector(const RnsEngine&e,const FastState&s,const st
     FracAdaptive* rr[3]={&out.u,&out.v,&out.s};for(int a=0;a<3;a++){rr[a]->value=val[a];if(!seen[a])rr[a]->ok=false;}return out;
 }
 
-static void set_rank_resid(const RnsEngine&e,FastState&s){int packs=(s.k+7)/8;for(int pk=0;pk<packs;pk++){alignas(64)uint64_t rr[8]{};for(int l=0;l<8;l++){int i=pk*8+l;if(i<e.npr)rr[l]=mpz_fdiv_u64_exact(s.rank,e.primes[i]);}s.pack[pk].rankR=vload(rr);s.pack[pk].O=vzero();}}
+static void set_rank_resid(const RnsEngine&e,FastState&s){int packs=(s.k+7)/8;for(int pk=0;pk<packs;pk++){alignas(64)uint64_t rr[8]{};for(int l=0;l<8;l++){int i=pk*8+l;if(i<e.npr)rr[l]=sbig_fdiv_u64_exact(s.rank,e.primes[i]);}s.pack[pk].rankR=vload(rr);s.pack[pk].O=vzero();}}
 
 static inline V8 replay_B(const RnsEngine&e,const PackConst&q,const PackState&z,int h,int d){if(h>=e.m-1)return vzero();int Rh=e.pref[h]-d;if(Rh<0)return vzero();if(e.commonFreq>1&&e.len[h+1]==e.commonN)return q.bcommon[Rh];return z.B[h];}
 static inline V8 ratio_prod4(const PackConst&q,const StepMeta&x,int from,int to){ // inclusive j range
@@ -296,21 +319,18 @@ struct Stats{uint64_t cert=0,splits=0,fallback=0,failed=0,spec=0,waste=0,discard
 struct Unknown{
     const RnsEngine&e;const ApproxTable&ap;const ExactTable&goldtab;const std::vector<int>&gold;ReplayPool&pool;int superblock;Stats st;std::vector<int> out;
     void basis_stat(int k){st.minbasis=std::min(st.minbasis,k);st.maxbasis=std::max(st.maxbasis,k);st.basis_sum+=k;st.basis_samples++;}
-    bool certify_commit(FastState&s){std::vector<uint64_t>O,S;gather_vals(e,s,O,S);mpz_class o,ss;auto a=Clock::now();e.crt2(O,S,s.k,o,ss);auto b=Clock::now();st.crt_ms+=ms(a,b);st.cert++;bool pass=(o<s.rank && s.rank<=o+ss);if(!pass)return false;s.rank-=o;s.total=ss;int oldk=s.k,newk=e.basis_for(ss,oldk);for(int pk=0;pk<(oldk+7)/8;pk++){auto&q=e.pc[pk];s.pack[pk].rankR=VMod::sub(s.pack[pk].rankR,s.pack[pk].O,q.vp);s.pack[pk].O=vzero();}if(newk<oldk){shrink_coeff(e,s.coeff,oldk,newk);s.k=newk;}basis_stat(s.k);return true;}
+    bool certify_commit(FastState&s){std::vector<uint64_t>O,S;gather_vals(e,s,O,S);SeerBigInt o,ss;auto a=Clock::now();e.crt2(O,S,s.k,o,ss);auto b=Clock::now();st.crt_ms+=ms(a,b);st.cert++;bool pass=(o<s.rank && s.rank<=o+ss);if(!pass)return false;s.rank-=o;s.total=ss;int oldk=s.k,newk=e.basis_for(ss,oldk);for(int pk=0;pk<(oldk+7)/8;pk++){auto&q=e.pc[pk];s.pack[pk].rankR=VMod::sub(s.pack[pk].rankR,s.pack[pk].O,q.vp);s.pack[pk].O=vzero();}if(newk<oldk){shrink_coeff(e,s.coeff,oldk,newk);s.k=newk;}basis_stat(s.k);return true;}
     bool uv_reset(FastState&s,Predictor&p,int& resetK,std::vector<uint64_t>&resetCoeff){int bound=e.predictor_basis(s.st,s.k);int targetK=std::min(resetK,bound);if(targetK<resetK){shrink_coeff(e,resetCoeff,resetK,targetK);resetK=targetK;}int oldk=s.k;s.k=resetK;st.reset_minbasis=std::min(st.reset_minbasis,resetK);st.reset_maxbasis=std::max(st.reset_maxbasis,resetK);st.reset_basis_sum+=resetK;st.reset_basis_samples++;auto a=Clock::now();auto ft=frac_state_vector(e,s,resetCoeff,12);auto b=Clock::now();s.k=oldk;auto &fu=ft.u;auto &fv=ft.v;auto &fs=ft.s;st.reset_ms+=ms(a,b);st.micro++;st.maxlayers=std::max({st.maxlayers,fu.layers,fv.layers,fs.layers});st.layers_sum+=fu.layers+fv.layers+fs.layers;if(!fu.ok||!fv.ok||!fs.ok||!(fs.value>0)){st.invalid++;return false;}long double u=fu.value/fs.value,v=fv.value/fs.value;if(!std::isfinite(u)||!std::isfinite(v)||u<0||v<0||u>1.0000000001L||v>1.0000000001L){st.invalid++;return false;}p.reset_uv(u,v);int drop=std::max(0,fs.firstnz-1);int nk=std::max(1,resetK-drop);if(nk<resetK){shrink_coeff(e,resetCoeff,resetK,nk);resetK=nk;}return p.ok;}
     std::vector<int> legal(const StructState&s){std::vector<int>v;for(int m=s.low;m<=s.high;m++)if(!(s.rem[m]==1&&m!=s.low))v.push_back(m);if(s.high+1<e.m)v.push_back(s.high+1);return v;}
     void exact_leaf(FastState&s){auto t0=Clock::now();auto labs=legal(s.st);for(int lab:labs){FastState c=s;StructState meta=c.st;std::vector<StepMeta> sm{make_meta_and_apply(meta,e.len,e.pref,lab)};auto r0=Clock::now();int packs=(c.k+7)/8;pool.submit(c.pack,sm,packs);auto r1=Clock::now();st.replay_ms+=ms(r0,r1);c.st=meta;if(certify_commit(c)){s=std::move(c);out.push_back(lab);st.fallback++;st.fallback_ms+=ms(t0,Clock::now());return;}}
         throw std::runtime_error("leaf no exact branch");}
-    void process(FastState&s,int len){if(len<=0)return;FastState snap=s;int startpos=s.st.pos;Predictor p;p.tab=&ap;p.reset(s.st,s.rank,s.total);std::vector<int>labels;labels.reserve(len);bool good=p.ok;StructState meta=s.st;int resetK=s.k;std::vector<uint64_t> resetCoeff=s.coeff;while(good&&(int)labels.size()<len){int chunk=std::min(8,len-(int)labels.size());std::vector<StepMeta> sm;sm.reserve(chunk);for(int i=0;i<chunk;i++){auto a=Clock::now();int lab=p.step();auto b=Clock::now();st.pred_ms+=ms(a,b);if(lab<0){good=false;st.invalid++;break;}labels.push_back(lab);st.spec++;sm.push_back(make_meta_and_apply(meta,e.len,e.pref,lab));}if(!good)break;auto r0=Clock::now();int packs=(s.k+7)/8;pool.submit(s.pack,sm,packs);auto r1=Clock::now();st.replay_ms+=ms(r0,r1);s.st=meta;if((int)labels.size()<len){if(!uv_reset(s,p,resetK,resetCoeff)){good=false;break;}}}
+    void process(FastState&s,int len){mobile_cancel_point();if(len<=0)return;FastState snap=s;int startpos=s.st.pos;Predictor p;p.tab=&ap;p.reset(s.st,s.rank,s.total);std::vector<int>labels;labels.reserve(len);bool good=p.ok;StructState meta=s.st;int resetK=s.k;std::vector<uint64_t> resetCoeff=s.coeff;while(good&&(int)labels.size()<len){int chunk=std::min(8,len-(int)labels.size());std::vector<StepMeta> sm;sm.reserve(chunk);for(int i=0;i<chunk;i++){auto a=Clock::now();int lab=p.step();auto b=Clock::now();st.pred_ms+=ms(a,b);if(lab<0){good=false;st.invalid++;break;}labels.push_back(lab);st.spec++;sm.push_back(make_meta_and_apply(meta,e.len,e.pref,lab));}if(!good)break;auto r0=Clock::now();int packs=(s.k+7)/8;pool.submit(s.pack,sm,packs);auto r1=Clock::now();st.replay_ms+=ms(r0,r1);s.st=meta;if((int)labels.size()<len){if(!uv_reset(s,p,resetK,resetCoeff)){good=false;break;}}}
         st.forced+=p.forced;if(!good||(int)labels.size()!=len){st.failed++;st.waste+=labels.size();s=std::move(snap);if(len==1){exact_leaf(s);return;}st.splits++;int a=len/2;process(s,a);process(s,len-a);return;}
         if(certify_commit(s)){out.insert(out.end(),labels.begin(),labels.end());return;}
         st.failed++;st.waste+=len;int lcp=0;while(lcp<len&&startpos+lcp<(int)gold.size()&&labels[lcp]==gold[startpos+lcp])lcp++;st.discard+=len-lcp;s=std::move(snap);if(len==1){exact_leaf(s);return;}st.splits++;int a=len/2;process(s,a);process(s,len-a);
     }
-    bool run(FastState&s,int stoppos=-1){out.clear();out.push_back(0);auto a=Clock::now();int totalpos=stoppos<0?(int)gold.size():std::min(stoppos,(int)gold.size());while(s.st.pos<totalpos){int n=std::min(superblock,totalpos-s.st.pos);process(s,n);}auto b=Clock::now();st.total_ms=ms(a,b);bool same=true;for(int i=0;i<totalpos;i++)if(out[i]!=gold[i]){same=false;break;}return same;}
+    bool run(FastState&s,int stoppos=-1){out.clear();out.push_back(0);auto a=Clock::now();int totalpos=stoppos<0?(int)gold.size():std::min(stoppos,(int)gold.size());while(s.st.pos<totalpos){mobile_cancel_point();int n=std::min(superblock,totalpos-s.st.pos);process(s,n);}auto b=Clock::now();st.total_ms=ms(a,b);bool same=true;for(int i=0;i<totalpos;i++)if(out[i]!=gold[i]){same=false;break;}return same;}
 };
-
-#include "seer_selection_core.hpp"
-#include "seer_weave_core.hpp"
 
 namespace seer_native::detail {
 std::vector<int> weave_month_prefix(
@@ -320,6 +340,7 @@ std::vector<int> weave_month_prefix(
     int threads,
     int superblock,
     int replayThreads) {
+    mobile_cancel_point();
     if (monthLengths.empty()) throw std::runtime_error("empty month lengths");
     const int total=std::accumulate(monthLengths.begin(),monthLengths.end(),0);
     if(stopPositions<1||stopPositions>total) throw std::runtime_error("invalid weave prefix length");
@@ -329,11 +350,15 @@ std::vector<int> weave_month_prefix(
     int npr=(int)ceill((bits+32.0L)/51.9L)+2;
     npr=std::clamp(npr,8,608);
     RnsEngine eng(monthLengths,npr,threads);
-    mpz_class N=eng.crt(eng.Nres,eng.npr);
+    SeerBigInt N=eng.crt(eng.Nres,eng.npr);
     int initk=eng.basis_for(N,eng.npr);
     auto coeff=init_coeff(eng,initk);
     int width=0;
-    mpz_class rank=yb_fast_choose_mpz(structSauce,4,32,N,&width);
+    #ifdef SEER_MOBILE_CPPINT
+    SeerBigInt rank=yb_fast_choose_bi(structSauce,4,32,N,&width);
+#else
+    SeerBigInt rank=yb_fast_choose_mpz(structSauce,4,32,N,&width);
+#endif
     ExactTable gtDummy(std::vector<int>{1});
     std::vector<int> dummyGold((size_t)total,-1); dummyGold[0]=0;
     ApproxTable ap(monthLengths);
