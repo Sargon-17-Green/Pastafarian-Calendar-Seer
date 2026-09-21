@@ -79,6 +79,26 @@ export function createPrecomputedProvider({
     return engineFingerprintPromise;
   }
 
+  async function cachedShape(calculationJdn, targetJdn) {
+    const calcJdn = safeNumberOrNull(calculationJdn);
+    const target = safeNumberOrNull(targetJdn);
+    if (calcJdn === null || target === null) return null;
+    try {
+      const loaded = await cache.loadRecord(calcJdn, target);
+      if (loaded.index.engineFingerprint !== await localEngineFingerprint()) throw new Error('cache engine fingerprint mismatch');
+      return {
+        record: loaded.record,
+        structure: {
+          ...(Number.isInteger(loaded.record.cutletCount) ? { cutletCount: loaded.record.cutletCount } : {}),
+          ...(Number.isInteger(loaded.record.monthCount) ? { monthCount: loaded.record.monthCount } : {}),
+        },
+        provenance: cleanProvenance(loaded.index, loaded.descriptor),
+      };
+    } catch {
+      return null;
+    }
+  }
+
   let queue = [];
   let flushScheduled = false;
 
@@ -172,25 +192,65 @@ export function createPrecomputedProvider({
     id: 'precomputed',
 
     async query({ calculationJdn, targetJdn }) {
-      const calcJdn = safeNumberOrNull(calculationJdn);
-      const target = safeNumberOrNull(targetJdn);
-      if (calcJdn !== null && target !== null) {
-        try {
-          const loaded = await cache.loadRecord(calcJdn, target);
-          if (loaded.index.engineFingerprint !== await localEngineFingerprint()) throw new Error('cache engine fingerprint mismatch');
-          return {
-            record: loaded.record,
-            structure: {
-              ...(Number.isInteger(loaded.record.cutletCount) ? { cutletCount: loaded.record.cutletCount } : {}),
-              ...(Number.isInteger(loaded.record.monthCount) ? { monthCount: loaded.record.monthCount } : {}),
-            },
-            provenance: cleanProvenance(loaded.index, loaded.descriptor),
-          };
-        } catch {
-          // Rolling cache data is a performance hint only. Every cache failure is an exact-engine miss.
+      const cached = await cachedShape(calculationJdn, targetJdn);
+      if (cached) return cached;
+      return queuedExactQuery(calculationJdn, targetJdn);
+    },
+
+    async queryDiagonal({ targetStartJdn, count, stepDays = 1n }) {
+      const start = BigInt(targetStartJdn);
+      const step = BigInt(stepDays);
+      const size = Number(count);
+      if (!Number.isSafeInteger(size) || size < 1 || size > MAX_EXACT_BATCH_COUNT || step === 0n) {
+        throw new RangeError('invalid exact diagonal range');
+      }
+
+      const results = new Array(size);
+      const misses = [];
+      for (let i = 0; i < size; i += 1) {
+        const day = start + BigInt(i) * step;
+        const cached = await cachedShape(day, day);
+        if (cached) results[i] = cached;
+        else misses.push({ index: i, day });
+      }
+
+      const runs = [];
+      let run = [];
+      for (const miss of misses) {
+        if (run.length === 0 ||
+            (miss.index === run[run.length - 1].index + 1 && run.length < MAX_EXACT_BATCH_COUNT)) {
+          run.push(miss);
+        } else {
+          runs.push(run);
+          run = [miss];
         }
       }
-      return queuedExactQuery(calculationJdn, targetJdn);
+      if (run.length) runs.push(run);
+
+      for (const missesInRun of runs) {
+        const useDiagonal = missesInRun.length >= 8 && typeof exact.queryDiagonal === 'function';
+        if (useDiagonal) {
+          try {
+            const supplied = await exact.queryDiagonal({
+              targetStartJdn: missesInRun[0].day,
+              count: missesInRun.length,
+              stepDays: step,
+            });
+            for (let i = 0; i < missesInRun.length; i += 1) {
+              results[missesInRun[i].index] = exactShape(supplied.records[i], supplied.provenance);
+            }
+            continue;
+          } catch (error) {
+            if (error?.code !== 'CALCULATION_OUT_OF_SUPPORTED_DOMAIN' &&
+                error?.code !== 'TARGET_OUT_OF_SUPPORTED_DOMAIN') throw error;
+          }
+        }
+
+        const supplied = await Promise.all(missesInRun.map(({ day }) => queuedExactQuery(day, day)));
+        for (let i = 0; i < missesInRun.length; i += 1) results[missesInRun[i].index] = supplied[i];
+      }
+
+      return results;
     },
 
     async year({ calculationJdn, year, includeDays = false }) {

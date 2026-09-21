@@ -434,9 +434,45 @@ export async function queryRange(request, options = {}) {
 
   if (count > maxItems) throw queryError('REQUEST_TOO_LARGE', `Range exceeds the configured limit of ${maxItems} items.`, { field: hasCount ? 'count' : 'endInclusive' });
 
+  // Preserve queryDate validation/error ordering before any speculative exact prefetch.
+  // In same-as-target mode the generated calculation selector is an explicit JDN, so the
+  // observer is semantically relevant only when boundaries are requested, exactly as in queryDate.
+  if (mode === 'same-as-target') {
+    resolveObserver(commonRequest.observer, { relevant: include.has('boundaries') });
+  }
+
   const pending = [];
   const provider = await providerFromOptions(options);
-  const sharedOptions = { ...options, now, provider };
+  let rangeProvider = provider;
+  if (mode === 'same-as-target' && !include.has('boundaries') &&
+      count >= 8n && count <= 10_000n && typeof provider.queryDiagonal === 'function') {
+    const prefetched = await provider.queryDiagonal({
+      targetStartJdn: start.jdn,
+      count: Number(count),
+      stepDays: step,
+    });
+    if (!Array.isArray(prefetched) || prefetched.length !== Number(count)) {
+      throw queryError('SEER_UNAVAILABLE', 'Exact diagonal provider returned an unexpected result count.');
+    }
+    const byTarget = new Map();
+    for (let i = 0; i < prefetched.length; i += 1) {
+      byTarget.set((start.jdn + BigInt(i) * step).toString(), prefetched[i]);
+    }
+    rangeProvider = Object.freeze({
+      id: `${provider.id ?? 'provider'}:diagonal-prefetch`,
+      async query({ calculationJdn, targetJdn }) {
+        const calc = BigInt(calculationJdn);
+        const target = BigInt(targetJdn);
+        if (calc === target) {
+          const supplied = byTarget.get(target.toString());
+          if (supplied) return supplied;
+        }
+        return provider.query({ calculationJdn, targetJdn });
+      },
+      ...(typeof provider.year === 'function' ? { year: (...args) => provider.year(...args) } : {}),
+    });
+  }
+  const sharedOptions = { ...options, now, provider: rangeProvider };
   for (let i = 0n; i < count; i += 1n) {
     const targetJdn = start.jdn + i * step;
     let dateRequest;

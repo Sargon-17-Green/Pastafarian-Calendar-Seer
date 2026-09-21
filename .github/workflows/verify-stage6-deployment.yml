@@ -30,7 +30,8 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  verify_linux:
+    name: Linux package and contract verification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -240,6 +241,11 @@ jobs:
       - name: Print runtime/schema failure fixture
         if: ${{ failure() && hashFiles('api/tests/runtime_contract_failure.json') != '' }}
         run: cat api/tests/runtime_contract_failure.json
+
+  verify_windows:
+    name: Windows native package verification
+    runs-on: windows-latest
+    steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
         with:
@@ -247,6 +253,7 @@ jobs:
           update: true
           install: >-
             mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-libgomp
             mingw-w64-ucrt-x86_64-gmp
             mingw-w64-ucrt-x86_64-boost
       - name: Export MSYS2 UCRT64 toolchain

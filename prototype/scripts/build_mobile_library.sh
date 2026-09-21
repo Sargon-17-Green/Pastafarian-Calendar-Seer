@@ -17,7 +17,7 @@ COMMON=(
   -O2 -DNDEBUG -std=c++20 -fvisibility=hidden
   -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1
   "-DSEER_BUILD_COMMIT=\"${SEER_BUILD_COMMIT:-unknown}\""
-  "-DSEER_PACKAGE_VERSION=\"${SEER_PACKAGE_VERSION:-0.2.3}\""
+  "-DSEER_PACKAGE_VERSION=\"${SEER_PACKAGE_VERSION:-0.2.5}\""
   -I"$ROOT/include" -I"$ROOT/src"
 )
 if [[ -n "${BOOST_ROOT:-}" ]]; then COMMON+=("-I$BOOST_ROOT/include"); fi

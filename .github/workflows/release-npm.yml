@@ -18,7 +18,7 @@ jobs:
   publish:
     if: github.repository == 'Sargon-17-Green/Pastafarian-Calendar-Seer' && github.ref_type == 'tag'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
       - name: Check out tagged release source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           ok=0
-          for _ in $(seq 1 120); do
+          for _ in $(seq 1 360); do
             RUNS="$(gh run list --workflow release-native-npm.yml --commit "$GITHUB_SHA" --limit 50 --json headSha,status,conclusion,event)"
             if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
           const [sha, raw] = process.argv.slice(2);
@@ -141,6 +141,7 @@ jobs:
         run: |
           set -euo pipefail
           TGZ="${{ steps.pack.outputs.tgz }}"
+          VERSION="${{ steps.meta.outputs.version }}"
           tar -tzf "$TGZ" > "$RUNNER_TEMP/npm-package-files.txt"
           for REQUIRED in \
             package/index.mjs \

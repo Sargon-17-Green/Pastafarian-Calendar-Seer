@@ -20,7 +20,7 @@
 #define SEER_BUILD_COMMIT "unknown"
 #endif
 #ifndef SEER_PACKAGE_VERSION
-#define SEER_PACKAGE_VERSION "0.2.3"
+#define SEER_PACKAGE_VERSION "0.2.5"
 #endif
 
 using seer_native::BatchRecord;

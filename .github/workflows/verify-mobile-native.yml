@@ -81,7 +81,7 @@ jobs:
         env:
           BOOST_ROOT: ${{ env.HOMEBREW_PREFIX }}/opt/boost
           SEER_BUILD_COMMIT: ${{ github.sha }}
-          SEER_PACKAGE_VERSION: 0.2.3
+          SEER_PACKAGE_VERSION: 0.2.5
         run: |
           export HOMEBREW_PREFIX="$(brew --prefix)"
           export BOOST_ROOT="$(brew --prefix boost)"
@@ -130,7 +130,7 @@ jobs:
       - name: Build Android arm64-v8a and x86_64 shared libraries
         env:
           SEER_BUILD_COMMIT: ${{ github.sha }}
-          SEER_PACKAGE_VERSION: 0.2.3
+          SEER_PACKAGE_VERSION: 0.2.5
         run: |
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/28.2.13676358"
           bash prototype/scripts/build_mobile_library.sh android-arm64
