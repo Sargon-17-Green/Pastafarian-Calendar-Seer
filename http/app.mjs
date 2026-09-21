@@ -11,6 +11,86 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_API_DIR = path.resolve(here, '..', 'api');
 const DEFAULT_MAX_BODY_BYTES = 1024 * 1024;
 
+const DEFAULT_HTTP_EXACT_QUEUE_MAX = 0;
+
+function parseHttpAdmissionInteger(value, name, min, max) {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < min || n > max) {
+    throw new TypeError(`${name} must be an integer between ${min} and ${max}.`);
+  }
+  return n;
+}
+
+function createHttpExactAdmission(options = {}) {
+  const explicitConcurrency = options.maxHttpExactConcurrency;
+  const envConcurrency = process.env.SEER_HTTP_EXACT_CONCURRENCY;
+  const rawConcurrency = explicitConcurrency ?? envConcurrency;
+  const explicitQueue = options.maxHttpExactQueue;
+  const envQueue = process.env.SEER_HTTP_EXACT_QUEUE_MAX;
+  const rawQueue = explicitQueue ?? envQueue;
+
+  const concurrencyConfigured = rawConcurrency !== undefined && rawConcurrency !== null && rawConcurrency !== '';
+  const queueConfigured = rawQueue !== undefined && rawQueue !== null && rawQueue !== '';
+  if (!concurrencyConfigured) {
+    if (queueConfigured) {
+      throw new TypeError('SEER_HTTP_EXACT_QUEUE_MAX/maxHttpExactQueue requires SEER_HTTP_EXACT_CONCURRENCY/maxHttpExactConcurrency.');
+    }
+    return null;
+  }
+
+  const concurrency = parseHttpAdmissionInteger(rawConcurrency, 'HTTP exact concurrency', 1, 64);
+  const queueLimit = queueConfigured
+    ? parseHttpAdmissionInteger(rawQueue, 'HTTP exact queue limit', 0, 10_000)
+    : DEFAULT_HTTP_EXACT_QUEUE_MAX;
+
+  let active = 0;
+  const waiting = [];
+
+  async function acquire() {
+    if (active < concurrency) {
+      active += 1;
+      return;
+    }
+    if (waiting.length >= queueLimit) {
+      throw queryError(
+        'SEER_UNAVAILABLE',
+        'Hosted exact request admission queue is full.',
+        {
+          details: {
+            admissionFailure: 'overloaded',
+            layer: 'http',
+            maxConcurrency: concurrency,
+            maxQueue: queueLimit,
+          },
+        },
+      );
+    }
+    await new Promise((resolve) => waiting.push(resolve));
+  }
+
+  function release() {
+    const next = waiting.shift();
+    if (next) {
+      next();
+      return;
+    }
+    active -= 1;
+  }
+
+  return Object.freeze({
+    concurrency,
+    queueLimit,
+    async run(task) {
+      await acquire();
+      try {
+        return await task();
+      } finally {
+        release();
+      }
+    },
+  });
+}
+
 const JSON_TYPE = 'application/json; charset=utf-8';
 const NDJSON_TYPE = 'application/x-ndjson; charset=utf-8';
 const CSV_TYPE = 'text/csv; charset=utf-8';
@@ -470,6 +550,8 @@ export function createSeerHttpHandler(options = {}) {
     requireReleaseIdentity: options.requireReleaseIdentity,
     artifactMode: options.artifactMode,
   });
+  const httpExactAdmission = createHttpExactAdmission(options);
+  const runExactRequest = (task) => httpExactAdmission ? httpExactAdmission.run(task) : task();
   const webRoot = options.webRoot ? path.resolve(options.webRoot) : null;
   const clientDir = path.resolve(options.clientDir ?? path.join(here, '..', 'client'));
 
@@ -557,13 +639,13 @@ export function createSeerHttpHandler(options = {}) {
       // /v1/status is handled above by the bounded health probe; it never performs a calendar query.
       if (pathname === '/v1/now' && method === 'GET') {
         negotiate(req, ['application/json'], 'application/json');
-        const result = await queryApi.queryDate(dateRequestFromGet(url.searchParams, { nowOnly: true }), queryOptions);
+        const result = await runExactRequest(() => queryApi.queryDate(dateRequestFromGet(url.searchParams, { nowOnly: true }), queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
       if (pathname === '/v1/date' && method === 'GET') {
         negotiate(req, ['application/json'], 'application/json');
-        const result = await queryApi.queryDate(dateRequestFromGet(url.searchParams), queryOptions);
+        const result = await runExactRequest(() => queryApi.queryDate(dateRequestFromGet(url.searchParams), queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
@@ -571,7 +653,7 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
         const body = await readJsonBody(req, maxBodyBytes);
-        const result = await queryApi.queryDate(body, queryOptions);
+        const result = await runExactRequest(() => queryApi.queryDate(body, queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
@@ -579,7 +661,7 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
         const body = await readJsonBody(req, maxBodyBytes);
-        const result = await queryApi.queryBatch(body, queryOptions);
+        const result = await runExactRequest(() => queryApi.queryBatch(body, queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
@@ -587,7 +669,7 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         const media = negotiate(req, ['application/json', 'application/x-ndjson', 'text/csv'], 'application/json');
         const body = await readJsonBody(req, maxBodyBytes);
-        const result = await queryApi.queryRange(body, queryOptions);
+        const result = await runExactRequest(() => queryApi.queryRange(body, queryOptions));
         if (media === 'application/x-ndjson') send(res, 200, rangeNdjson(result.results), NDJSON_TYPE, { 'cache-control': 'no-store' });
         else if (media === 'text/csv') send(res, 200, rangeCsv(result.results), CSV_TYPE, { 'cache-control': 'no-store' });
         else sendJson(res, 200, result, { 'cache-control': 'no-store' });
@@ -597,7 +679,7 @@ export function createSeerHttpHandler(options = {}) {
         ensureNoQuery(url.searchParams);
         negotiate(req, ['application/json'], 'application/json');
         const body = await readJsonBody(req, maxBodyBytes);
-        const result = await queryApi.queryReverse(body, queryOptions);
+        const result = await runExactRequest(() => queryApi.queryReverse(body, queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
@@ -611,7 +693,7 @@ export function createSeerHttpHandler(options = {}) {
       if (yearMatch && method === 'GET') {
         negotiate(req, ['application/json'], 'application/json');
         const yearInput = decodeURIComponent(yearMatch[1]);
-        const result = await queryApi.queryYear(yearInput, yearRequestFromGet(url.searchParams), queryOptions);
+        const result = await runExactRequest(() => queryApi.queryYear(yearInput, yearRequestFromGet(url.searchParams), queryOptions));
         sendJson(res, 200, result, { 'cache-control': 'no-store' });
         return;
       }
