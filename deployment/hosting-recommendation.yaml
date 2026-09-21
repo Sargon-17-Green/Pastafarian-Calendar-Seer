@@ -1,0 +1,387 @@
+schema_version: 2
+decision_date: "2026-09-21"
+constraint:
+  payment_method_allowed: false
+  paid_services_allowed: false
+
+launch_classification: "public-beta-no-sla"
+production_contract_status: "conditional-pending-render-live-gates"
+
+primary:
+  provider: "render"
+  plan: "free-web-service"
+  region: "frankfurt"
+  price_usd_per_month: 0
+  cpu: "0.15 CPU"
+  memory: "512 MB"
+  instances:
+    initial: 1
+    max_zero_cost: 1
+  public_url: "stable provider onrender.com HTTPS URL"
+  idle_spin_down_minutes: 15
+  cold_start_documented: "about one minute"
+  free_instance_hours_per_workspace_month: 750
+  persistent_storage: false
+  database: false
+  payment_method_required: false
+
+runtime:
+  os: "linux-container"
+  node_major: 24
+  http_processes_per_container: 1
+  engine_processes_per_container: 1
+  persistent_engine_service: true
+  rns_backend: "portable"
+  heavy_work_concurrency: 1
+  native_exact_default_timeout_ms: 120000
+  hosted_application_deadline_ms: 120000
+  provider_request_timeout_ms: 6000000
+  deadline_rule: "Render documents up to 100 minutes for HTTP responses; the existing 120-second exact-engine deadline is intentionally much shorter"
+  provider_request_timeout_verified: true
+
+capacity:
+  planning_exact_requests_per_minute_warm: "3-5"
+  horizontal_scaling_zero_cost: false
+  cold_start_material: true
+  render_envelope_simulation:
+    cpu_quota: "15%"
+    memory_limit: "512 MiB"
+    exact_representative_seconds:
+      - 10.965
+      - 9.101
+      - 8.887
+    cheap_query_seconds: 0.006
+    peak_memory_bytes: 85807104
+
+cost:
+  idle_usd_per_month: 0
+  typical_usd_per_month: 0
+  exact_1000_monetary_cost_usd: 0
+  paid_overage_assumption: "none"
+  exhaustion_behavior: "availability/builds may be suspended instead of billing when no payment method exists"
+
+back4app_live_gate:
+  date: "2026-09-21"
+  provider: "back4app-web-deployment"
+  plan: "free"
+  result: "compatibility-pass-durability-fail"
+  cpu: "0.25 vCPU"
+  memory: "256 MB"
+  docker_build: "pass"
+  native_build: "pass"
+  package_selftest: "pass"
+  provider_health_check: "pass"
+  observed_memory_mb: 47
+  public_url_status: "temporary"
+  public_url_lifetime_minutes: 60
+  permanent_url_requires_upgrade: true
+  launch_eligible: false
+  note: "useful only for short-lived compatibility testing under the zero-payment constraint"
+
+docker_compatibility:
+  finding: "Back4app/Kaniko did not inject automatic TARGETARCH"
+  resolution: "fallback to amd64 only when TARGETARCH is empty; preserve explicit Buildx amd64/arm64"
+  verification_required:
+    - "GitHub amd64 container CI"
+    - "GitHub arm64 container CI"
+    - "GitHub multi-architecture OCI index CI"
+
+workstream_3_gates:
+  - "Render Free Web Service can be created without a payment method"
+  - "Frankfurt Docker deployment succeeds"
+  - "Stable onrender.com HTTPS URL is confirmed"
+  - "Runtime architecture is recorded"
+  - "Representative warm exact latency and memory are measured"
+  - "Four-request exact concurrency burst is measured"
+  - "10k-range response is measured"
+  - "Cold wake after 15 minutes idle is measured"
+  - "Provider ingress/gateway timeout is measured and a shorter hosted application deadline is selected"
+  - "A cheap non-calendar liveness endpoint is used for frequent health checks"
+  - "Restart/redeploy and ephemeral-state loss are verified"
+  - "No payment method or billing account is requested"
+  - "Overload/rate-limit behavior is explicit before broad publicity"
+
+fallback_trigger:
+  - "Render requests a payment method"
+  - "Docker build cannot complete on Free plan"
+  - "Provider request timeout cannot satisfy the API contract"
+  - "Measured Free-tier runtime is unstable or exceeds safe memory limits"
+
+render_live_gate:
+  date: "2026-09-21"
+  source_commit: "465328804e3caad8d34ddb05013ac5622694f967"
+  branch: "hosting/back4app-targetarch-fix"
+  docker_build: "pass"
+  native_architecture: "amd64"
+  rns_backend: "portable"
+  package_selftest: "pass"
+  web_concurrency: 1
+  listen_address: "0.0.0.0"
+  injected_port_observed: 10000
+  deploy_status: "live"
+  deploy_duration: "1m42s"
+  public_url: "https://seer-hosting-eval-render.onrender.com"
+  public_url_stable_provider_subdomain: true
+  payment_method_requested: false
+  region_selected: "frankfurt"
+  region_reconfirmed_in_deploy_log_capture: false
+  remaining_gates: []
+
+public_liveness_probe:
+  date: "2026-09-21"
+  url_path: "/_health/live"
+  result: "pass"
+  response_json: '{"status":"ok"}'
+
+public_meta_probe:
+  date: "2026-09-21"
+  url_path: "/v1/meta"
+  result: "pass"
+  api_version: "v1"
+  package_version: "0.2.3"
+  artifact_mode: "container"
+  engine_fingerprint: "02fc6de6a659bcdc110e91e044f4b4ca7835d9a1964e04f31c7fbdef886bfd11"
+  release_tag: null
+  commit: null
+  reverse_status: "implemented"
+  exact_domain:
+    minimum_jdn_exclusive: "-63473948"
+    maximum_jdn_inclusive: "36828783"
+
+render_live_exact_benchmark:
+  date: "2026-09-21"
+  endpoint: "/v1/date"
+  calculation_jdn: "2342550"
+  target_jdn: "1093452"
+  http_status_all: 200
+  samples_seconds:
+    - 8.294
+    - 7.571
+    - 7.916
+    - 7.202
+    - 7.895
+  median_seconds: 7.895
+  mean_seconds: 7.776
+  minimum_seconds: 7.202
+  maximum_seconds: 8.294
+  result: "pass"
+  returned_pastafarian_date:
+    year: "4710"
+    cutlet_canonical_index: 16
+    cutlet_name: "Horn"
+    day_in_cutlet: 663
+    month_canonical_index: 20
+    month_name: "Well"
+    day_in_month: 57
+
+render_live_concurrency_burst:
+  date: "2026-09-21"
+  endpoint: "/v1/date"
+  concurrent_requests: 4
+  calculation_jdn: "2342550"
+  target_jdn: "1093452"
+  http_status_all: 200
+  completion_seconds:
+    request_3: 8.455
+    request_1: 16.317
+    request_2: 24.614
+    request_4: 32.615
+  total_seconds: 32.640
+  incremental_service_seconds:
+    - 8.455
+    - 7.862
+    - 8.297
+    - 8.001
+  behavior: "serialized-heavy-exact-queue-confirmed"
+  result: "pass"
+
+render_live_range_10k:
+  date: "2026-09-21"
+  endpoint: "/v1/range"
+  calculation_jdn: "2342550"
+  start_jdn: "1093452"
+  count: 10000
+  step_days: 1
+  calculation_mode: "fixed"
+  presentation: "canonical"
+  http_status: 200
+  elapsed_seconds: 36.726
+  response_bytes_utf8: 2395061
+  response_mib: 2.284
+  result_count: 10000
+  first_target_jdn: "1093452"
+  last_target_jdn: "1103451"
+  result: "pass"
+
+render_metrics_entitlement:
+  date: "2026-09-21"
+  plan: "free"
+  application_metrics_visible: false
+  upgrade_required_for_memory_cpu_metrics: true
+  live_limits_shown_by_ui:
+    memory: "512 MB"
+    cpu: "0.15 CPU"
+  zero_payment_implication: "provider dashboard memory/CPU graphs cannot be used for this evaluation"
+  gate_disposition: "measure memory by zero-cost in-container/cgroup instrumentation instead of upgrading"
+
+render_memory_gate:
+  date: "2026-09-21"
+  plan_limit_mb: 512
+  exact_peak_mb: null
+  exact_peak_unavailable_reason: "Render exposes application memory/CPU metrics only after upgrading to paid compute"
+  representative_loads_completed_without_oom_or_restart:
+    - "five sequential representative exact requests"
+    - "four concurrent representative exact requests"
+    - "10,000-result fixed-calculation range"
+  conclusion: "bounded-pass"
+  proven_bound: "peak container memory remained below the enforced 512 MB limit for all representative live-provider gates"
+  precision_note: "exact peak memory is not observable on the zero-payment plan"
+
+render_live_cold_wake:
+  date: "2026-09-21"
+  idle_condition: "first request after >=15 minutes without app traffic"
+  endpoint: "/_health/live"
+  http_status: 200
+  elapsed_seconds: 13.765
+  response_json: '{"status":"ok"}'
+  result: "pass"
+  note: "observed wake latency was materially below Render's documented rough estimate of about one minute"
+
+render_restart_action:
+  date: "2026-09-21"
+  result: "pass"
+  provider_confirmation: "Your server has successfully restarted"
+  deploy_record_behavior: "restart retained the existing deploy record and commit rather than creating a second deploy entry"
+  source_commit: "465328804e3caad8d34ddb05013ac5622694f967"
+  post_restart_validation: "pass"
+
+render_post_restart_validation:
+  date: "2026-09-21"
+  health:
+    http_status: 200
+    response_json: '{"status":"ok"}'
+  meta:
+    package_version: "0.2.3"
+    artifact_mode: "container"
+    engine_fingerprint: "02fc6de6a659bcdc110e91e044f4b4ca7835d9a1964e04f31c7fbdef886bfd11"
+    fingerprint_matches_pre_restart: true
+  exact:
+    calculation_jdn: "2342550"
+    target_jdn: "1093452"
+    elapsed_seconds: 7.862
+    year: "4710"
+    cutlet: "Horn"
+    day_in_cutlet: 663
+    month: "Well"
+    day_in_month: 57
+    result_matches_pre_restart: true
+  ephemeral_state_dependency: false
+  result: "pass"
+
+render_timeout_gate:
+  date: "2026-09-21"
+  provider_http_response_limit_minutes: 100
+  provider_http_response_limit_ms: 6000000
+  source: "Render official documentation"
+  live_lower_bound_seconds: 36.726
+  internal_exact_engine_deadline_ms: 120000
+  result: "pass"
+  note: "the native exact-operation deadline is far shorter than the provider HTTP response ceiling; admission waiting is separately bounded by the hosted queue policy"
+
+render_overload_gate_initial:
+  date: "2026-09-21"
+  configured_internal_exact_concurrency: 1
+  configured_internal_exact_queue_max: 2
+  simultaneous_http_requests: 6
+  result: "fail"
+  responses:
+    http_200: 6
+    http_503: 0
+  completion_seconds:
+    - 8.785
+    - 17.560
+    - 21.068
+    - 25.758
+    - 31.867
+    - 41.163
+  root_cause: "provider batching/coalescing admits HTTP-originated waiters before exact-engine admission, so the internal exact queue is not an HTTP request queue bound"
+  remediation:
+    branch: "hosting/render-http-overload-admission"
+    pr: 37
+    status: "ci-complete-with-known-unrelated-windows-libgomp-failures"
+    env:
+      SEER_HTTP_EXACT_CONCURRENCY: 1
+      SEER_HTTP_EXACT_QUEUE_MAX: 2
+
+render_overload_remediation_deploy:
+  date: "2026-09-21"
+  source_commit: "69cc3191d197885ef9b5b508387cb847edf4fdba"
+  render_status: "live"
+  deploy_duration_seconds: 47.8
+  trigger: "manual-dashboard"
+  listen_address: "0.0.0.0"
+  listen_port: 10000
+  live_revalidation: "pending"
+
+render_overload_gate_final:
+  date: "2026-09-21"
+  remediation_commit: "69cc3191d197885ef9b5b508387cb847edf4fdba"
+  http_exact_concurrency: 1
+  http_exact_queue_max: 2
+  simultaneous_http_requests: 6
+  result: "pass"
+  fast_rejections:
+    - request: 2
+      http_status: 503
+      elapsed_seconds: 0.347
+    - request: 3
+      http_status: 503
+      elapsed_seconds: 0.389
+    - request: 5
+      http_status: 503
+      elapsed_seconds: 0.391
+  accepted_requests:
+    - request: 6
+      http_status: 200
+      elapsed_seconds: 6.220
+    - request: 1
+      http_status: 200
+      elapsed_seconds: 14.027
+    - request: 4
+      http_status: 200
+      elapsed_seconds: 17.625
+  overload_error:
+    code: "SEER_UNAVAILABLE"
+    admission_failure: "overloaded"
+    layer: "http"
+    max_concurrency: 1
+    max_queue: 2
+  conclusion: "bounded overload behavior confirmed on live Render Free instance"
+
+pr37_ci_adjudication:
+  date: "2026-09-21"
+  head_commit: "69cc3191d197885ef9b5b508387cb847edf4fdba"
+  overall: "accepted-for-hosting-evaluation"
+  passed:
+    - "Verify release preflight"
+    - "Verify Node compatibility"
+    - "Verify ARM64 exact runtime"
+    - "Verify production web application"
+    - "Verify container deployment"
+  failed:
+    - workflow: "Verify prebuilt native packages"
+      job: "Windows win32-x64"
+      reason: "ld.exe cannot find -lgomp"
+      classification: "pre-existing unrelated Windows toolchain failure"
+    - workflow: "Public product benchmark"
+      job: "windows-x64-portable"
+      reason: "ld.exe cannot find -lgomp during native build"
+      classification: "same unrelated Windows toolchain failure"
+  linux_benchmark_jobs_passed:
+    - "linux-arm64-portable"
+    - "linux-amd64-avx2"
+    - "linux-amd64-portable"
+  baseline_evidence:
+    commit: "465328804e3caad8d34ddb05013ac5622694f967"
+    prebuilt_windows_failure_present: true
+  live_render_overload_validation: "pass"
