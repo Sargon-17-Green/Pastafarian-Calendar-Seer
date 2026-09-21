@@ -18,6 +18,8 @@ This document describes how release origin and artifact integrity are establishe
 
 `v0.2.2` supersedes the partial `v0.2.1` line with the QA regression fix and the post-QA release alignment.
 
+`v0.2.3` is intentionally recorded as a **partial release** at commit `598ea3bba5583ebe0844b7eee0fe9402b3928c22`. Its unified release-candidate verification passed. The three native npm runtime packages `0.2.3` and the GHCR multi-architecture image were published from that tag, but the native publication workflow initially failed because npm had accepted each publish while the registry still returned a temporary 404 during processing. A later retry exposed an upstream MSYS2 packaging change: MinGW GCC 16.2.0-4 split OpenMP into the optional `mingw-w64-ucrt-x86_64-libgomp` package, so the Windows rebuild could not link `-lgomp`. The root npm package and final GitHub Release were therefore not published. The tag and already-published artifacts are not moved, overwritten, or backfilled under changed workflow code; the recovery is issued as a new patch version.
+
 The repository is configured so that GitHub Releases are immutable once published. A published release's tag and assets must not be moved or replaced. If a published artifact is defective, publish a new patch version.
 
 ## Release identity
