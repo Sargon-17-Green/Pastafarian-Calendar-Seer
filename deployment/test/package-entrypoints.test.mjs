@@ -47,9 +47,22 @@ test('package metadata exposes stable entry points with platform-native optional
   const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
   assert.equal(pkg.type, 'module');
   assert.equal(pkg.main, './index.mjs');
-  assert.equal(pkg.exports['.'], './index.mjs');
-  assert.equal(pkg.exports['./http'], './http/index.mjs');
-  assert.equal(pkg.exports['./client'], './client/index.mjs');
+  assert.equal(pkg.types, './index.d.ts');
+  assert.deepEqual(pkg.exports['.'], {
+    types: './index.d.ts', import: './index.mjs', default: './index.mjs',
+  });
+  assert.deepEqual(pkg.exports['./query'], {
+    types: './query/index.d.ts', import: './query/index.mjs', default: './query/index.mjs',
+  });
+  assert.deepEqual(pkg.exports['./client'], {
+    types: './client/index.d.ts', import: './client/index.mjs', default: './client/index.mjs',
+  });
+  assert.deepEqual(pkg.exports['./http'], {
+    types: './http/index.d.ts', import: './http/index.mjs', default: './http/index.mjs',
+  });
+  assert.deepEqual(pkg.exports['./http/server'], {
+    types: './http/server.d.ts', import: './http/server.mjs', default: './http/server.mjs',
+  });
   assert.equal(pkg.exports['./schemas/*'], './api/schemas/*');
   assert.equal(pkg.bin['pastafarian-seer'], 'query/cli.mjs');
   assert.equal(pkg.bin['pastafarian-seer-http'], 'http/server.mjs');
@@ -59,6 +72,7 @@ test('package metadata exposes stable entry points with platform-native optional
   assert.equal(pkg.scripts.postinstall, undefined);
   assert.equal(pkg.scripts.test, 'node ./scripts/package-selftest.mjs');
   assert.equal(pkg.scripts['test:repo'], 'node --test precompute/test/*.test.mjs query/test/*.test.mjs client/test/*.test.mjs http/test/*.test.mjs deployment/test/*.test.mjs');
+  assert.equal(pkg.scripts['test:types'], 'tsc -p test/typescript-consumer/tsconfig.json --noEmit');
   assert.equal(pkg.engines.node, '>=20');
   assert.equal(pkg.os, undefined);
   assert.equal(pkg.cpu, undefined);
@@ -77,7 +91,11 @@ test('package file allowlist excludes repository-only material', async () => {
   const files = pkg.files.map(String);
   assert.equal(files.some((entry) => entry === 'generated' || entry.startsWith('generated/')), false);
   assert.ok(files.includes('client/*.mjs'));
+  for (const declarationEntry of [
+    'index.d.ts', 'types/*.d.ts', 'query/*.d.ts', 'client/*.d.ts', 'http/*.d.ts',
+  ]) assert.ok(files.includes(declarationEntry), declarationEntry);
   assert.equal(files.some((entry) => entry === 'web' || entry.startsWith('web/')), false);
+  assert.equal(files.some((entry) => entry === 'test' || entry.startsWith('test/')), false);
   assert.ok(files.includes('api/openapi.json'));
   assert.ok(files.includes('api/openapi.yaml'));
   assert.equal(files.includes('api'), false);
