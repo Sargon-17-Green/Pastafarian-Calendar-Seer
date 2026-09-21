@@ -21,7 +21,9 @@ RUN set -eux; \
 
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS build
 ARG TARGETARCH
-RUN case "$TARGETARCH" in amd64|arm64) ;; *) echo "unsupported TARGETARCH: $TARGETARCH" >&2; exit 2 ;; esac
+# Some Docker builders (including Back4app/Kaniko) do not inject BuildKit's automatic TARGETARCH.
+# Fall back to amd64 only when TARGETARCH is empty; Buildx-provided amd64/arm64 values remain authoritative.
+RUN arch="${TARGETARCH:-amd64}"; case "$arch" in amd64|arm64) ;; *) echo "unsupported TARGETARCH: $arch" >&2; exit 2 ;; esac
 RUN apt-get update \
     && apt-get install -y --no-install-recommends g++ libgmp-dev libboost-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -30,7 +32,7 @@ COPY --from=package /tmp/seer.tgz /tmp/seer.tgz
 RUN npm init -y >/dev/null \
     && npm install --omit=dev --ignore-scripts /tmp/seer.tgz \
     && cd node_modules/pastafarian-calendar-seer \
-    && SEER_ARCH="$TARGETARCH" SEER_RNS_BACKEND=portable npm run build:native \
+    && SEER_ARCH="${TARGETARCH:-amd64}" SEER_RNS_BACKEND=portable npm run build:native \
     && npm test
 
 FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
