@@ -22,7 +22,7 @@ env:
 jobs:
   package:
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 150
     steps:
       - name: Check out exact source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -77,8 +77,8 @@ jobs:
           git worktree add --detach "$A" "$GITHUB_SHA"
           git worktree add --detach "$B" "$GITHUB_SHA"
           mkdir -p "$OA" "$OB"
-          (cd "$A" && npm pack --silent --pack-destination "$OA" >/dev/null)
-          (cd "$B" && npm pack --silent --pack-destination "$OB" >/dev/null)
+          (cd "$A" && node scripts/generate-runtime-identity.mjs --mode=package --version="$VERSION" --tag="$GITHUB_REF_NAME" --commit="$GITHUB_SHA" && npm pack --silent --pack-destination "$OA" >/dev/null)
+          (cd "$B" && node scripts/generate-runtime-identity.mjs --mode=package --version="$VERSION" --tag="$GITHUB_REF_NAME" --commit="$GITHUB_SHA" && npm pack --silent --pack-destination "$OB" >/dev/null)
           TGZ="$OA/pastafarian-calendar-seer-$VERSION.tgz"
           TGZ_B="$OB/pastafarian-calendar-seer-$VERSION.tgz"
           test -f "$TGZ" && test -f "$TGZ_B"
@@ -153,7 +153,7 @@ jobs:
           set -euo pipefail
           for WORKFLOW in release-npm.yml release-container.yml; do
             ok=0
-            for _ in $(seq 1 120); do
+            for _ in $(seq 1 360); do
               RUNS="$(gh run list --workflow "$WORKFLOW" --commit "$GITHUB_SHA" --limit 20 --json headSha,status,conclusion,event)"
               if node --input-type=module - "$GITHUB_SHA" "$RUNS" <<'NODE'
           const [sha, raw] = process.argv.slice(2);
