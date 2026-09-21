@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS package
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS package
 WORKDIR /src
 COPY . .
 ARG SEER_RELEASE_VERSION=
@@ -19,7 +19,7 @@ RUN set -eux; \
     test -n "$tgz"; \
     mv "$tgz" /tmp/seer.tgz
 
-FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS build
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS build
 ARG TARGETARCH
 # Some Docker builders (including Back4app/Kaniko) do not inject BuildKit's automatic TARGETARCH.
 # Fall back to amd64 only when TARGETARCH is empty; Buildx-provided amd64/arm64 values remain authoritative.
@@ -35,7 +35,7 @@ RUN npm init -y >/dev/null \
     && SEER_ARCH="${TARGETARCH:-amd64}" SEER_RNS_BACKEND=portable npm run build:native \
     && npm test
 
-FROM node:24-bookworm-slim@sha256:2fe369e969550cde8e867afc3fe370b260140cab4a23d467074295b42163d553 AS runtime
+FROM node:25-bookworm-slim@sha256:81db02c4b671288a03915da9534dbd54f96d0e7c24d80ccc54f5b36b2e684370 AS runtime
 ARG SEER_REQUIRE_RELEASE_IDENTITY=0
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgmp10 libgmpxx4ldbl libgomp1 \
