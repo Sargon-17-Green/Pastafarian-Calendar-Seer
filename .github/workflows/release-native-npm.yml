@@ -115,6 +115,13 @@ jobs:
           else
             npm publish "$TGZ" --access public --provenance
           fi
+          FOUND=''
+          for _ in $(seq 1 120); do
+            FOUND="$(npm view "$NAME@$VERSION" version 2>/dev/null || true)"
+            test "$FOUND" = "$VERSION" && break
+            sleep 5
+          done
+          test "$FOUND" = "$VERSION" || { echo "npm registry did not expose $NAME@$VERSION after publish" >&2; exit 1; }
           DIST="$(npm view "$NAME@$VERSION" dist --json)"
           URL="$(node -e "const x=JSON.parse(process.argv[1]);process.stdout.write(x.tarball)" "$DIST")"
           curl -fsSL "$URL" -o "$RUNNER_TEMP/registry-native.tgz"
@@ -179,6 +186,16 @@ jobs:
             npm publish $tgz --access public --provenance
             if ($LASTEXITCODE -ne 0) { throw "npm publish failed: $LASTEXITCODE" }
           }
+          $found = $false
+          for ($i = 0; $i -lt 120; $i++) {
+            $visible = npm view "$name@$version" version 2>$null
+            if ($LASTEXITCODE -eq 0 -and (($visible | Out-String).Trim() -eq $version)) {
+              $found = $true
+              break
+            }
+            Start-Sleep -Seconds 5
+          }
+          if (-not $found) { throw "npm registry did not expose $name@$version after publish" }
           $dist = npm view "$name@$version" dist --json | ConvertFrom-Json
           Invoke-WebRequest -UseBasicParsing $dist.tarball -OutFile "$env:RUNNER_TEMP/registry-native.tgz"
           $sha = (Get-FileHash "$env:RUNNER_TEMP/registry-native.tgz" -Algorithm SHA256).Hash.ToLowerInvariant()
