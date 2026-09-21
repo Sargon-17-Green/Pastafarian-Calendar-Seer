@@ -106,6 +106,21 @@ for (const [action, refs] of actionRefs) {
   if (refs.size > 1) failures.push(`action-version drift: ${action} uses ${[...refs].join(', ')}`);
 }
 
+
+const releaseNpmText = await readFile(path.join(workflowDir, 'release-npm.yml'), 'utf8');
+const releaseNpmBoundary = releaseNpmText.match(/- name: Verify npm package boundary[\s\S]*?(?=\n      - name:|$)/)?.[0] ?? '';
+const releaseNpmNativeWait = releaseNpmText.match(/- name: Require exact-SHA native runtime publication[\s\S]*?(?=\n      - name:|$)/)?.[0] ?? '';
+if (!/timeout-minutes:\s*120\b/.test(releaseNpmText)) failures.push('release-npm.yml: release job timeout must preserve slow-native recovery budget');
+if (!releaseNpmNativeWait.includes('for _ in $(seq 1 360); do')) failures.push('release-npm.yml: native publication wait budget must remain 90 minutes');
+if (!releaseNpmBoundary.includes('VERSION="${{ steps.meta.outputs.version }}"')) failures.push('release-npm.yml: npm package boundary must bind VERSION from validated release metadata');
+
+const releaseGithubText = await readFile(path.join(workflowDir, 'release-github-package.yml'), 'utf8');
+const releaseGithubChannelWait = releaseGithubText.match(/- name: Require exact-SHA published channels[\s\S]*?(?=\n      - name:|$)/)?.[0] ?? '';
+const releaseGithubPack = releaseGithubText.match(/- name: Build two clean byte-identical packages[\s\S]*?(?=\n      - name:|$)/)?.[0] ?? '';
+if (!/timeout-minutes:\s*150\b/.test(releaseGithubText)) failures.push('release-github-package.yml: release job timeout must preserve dependent-channel recovery budget');
+if (!releaseGithubChannelWait.includes('for _ in $(seq 1 360); do')) failures.push('release-github-package.yml: published-channel wait budget must remain 90 minutes');
+if ((releaseGithubPack.match(/generate-runtime-identity\.mjs/g) ?? []).length !== 2) failures.push('release-github-package.yml: both reproducible pack worktrees must generate release identity before npm pack');
+
 const lock = await readFile(path.join(root, 'ci', 'requirements-contract.txt'), 'utf8');
 for (const [index, raw] of lock.split(/\r?\n/).entries()) {
   const line = raw.trim();
