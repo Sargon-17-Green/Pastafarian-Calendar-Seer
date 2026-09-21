@@ -1,0 +1,14 @@
+{
+  "intentional_extensions": [
+    {
+      "id": "gnu-int128-exact-arithmetic",
+      "path_regex": "prototype/src/(?:sauce_fast127_v12\\.hpp|seer_month_dp_internal\\.hpp|seer_weave_(?:portable|avx2)\\.cpp)",
+      "message_regex": "(?i)(?:(?:__int128|__uint128_t).*(?:ISO C\\+\\+|extension|pedantic)|(?:ISO C\\+\\+|extension|pedantic).*(?:__int128|__uint128_t))"
+    }
+  ],
+  "benchmark_only_paths": [
+    "prototype/src/(?:year_fast_bench.*|pastafarian_cold_bench.*|rns_micro8.*|month_count_table_bench\\.cpp|opt07_transition_research\\.cpp)$",
+    "prototype/tools/"
+  ],
+  "false_positives": []
+}

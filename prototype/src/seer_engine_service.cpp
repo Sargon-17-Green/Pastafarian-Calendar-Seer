@@ -391,7 +391,7 @@ class SeerEngineService {
         const FSauce structSauce = fast_sauce(calc, start, stones_);
         const YBStructResult st = build_nonweave(calc, gates_, y, structSauce);
         std::vector<BatchRecord> days;
-        if (includeDays) days = compute_full_year_days(calc, gates_, y, structSauce, st, ExecutionParams{});
+        if (includeDays) days = compute_full_year_days(y, structSauce, st, ExecutionParams{});
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
                   << ",\"year\":" << y.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end

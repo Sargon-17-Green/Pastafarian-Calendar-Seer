@@ -42,11 +42,11 @@ static constexpr int FPST[6]={0,1,2,3,4,0},FDST[3]={0,1,2},FDM[3]={3,5,7},FHGS[7
 static constexpr int FVG[11][5]={{3,5,7,11,0},{5,7,11,13,1},{7,11,13,17,2},{11,13,17,19,3},{13,17,19,23,4},{17,19,23,29,0},{19,23,29,31,1},{23,29,31,37,2},{29,31,37,41,3},{31,37,41,43,4},{37,41,43,47,0}};
 static constexpr int FHC[7][4]={{3,4,6,8},{5,7,10,12},{7,10,14,16},{9,13,18,20},{11,16,22,24},{13,19,26,28},{15,22,30,32}};
 using FStones=std::array<std::array<U128,5>,46>;
-static FStones fast_stones(){FStones R{};R[0]={17,29,43,71,101};for(int i=1;i<46;i++){auto&o=R[i-1];uint64_t d=i+1;R[i][0]=fsum({fsq(o[0]),fmul_small(o[1],3),U128(d)});R[i][1]=fsum({fsq(o[1]),fmul_small(o[2],5),o[0]});R[i][2]=fsum({fsq(o[2]),fmul_small(o[3],7),o[1]});R[i][3]=fsum({fsq(o[3]),fmul_small(o[4],11),o[2]});R[i][4]=fsum({fsq(o[4]),fmul_small(o[0],13),o[3]});}return R;}
+[[maybe_unused]] static FStones fast_stones(){FStones R{};R[0]={17,29,43,71,101};for(int i=1;i<46;i++){auto&o=R[i-1];uint64_t d=i+1;R[i][0]=fsum({fsq(o[0]),fmul_small(o[1],3),U128(d)});R[i][1]=fsum({fsq(o[1]),fmul_small(o[2],5),o[0]});R[i][2]=fsum({fsq(o[2]),fmul_small(o[3],7),o[1]});R[i][3]=fsum({fsq(o[3]),fmul_small(o[4],11),o[2]});R[i][4]=fsum({fsq(o[4]),fmul_small(o[0],13),o[3]});}return R;}
 struct FSauce{std::array<U128,6> bowls{};std::array<int,6> last{};};
 struct FSauceTrace{std::array<U128,6> afterDrop46{};std::array<std::array<U128,6>,12> postStirs{};};
 static inline U128 fdaynum(int64_t d){constexpr int64_t F=-13334246LL;if(d==F)return 1;if(d>F)return U128(2)*uint64_t(d-F)+1;return U128(2)*uint64_t(F-d);}
-static FSauce fast_sauce(int64_t cj,int64_t tj,const FStones&S,FSauceTrace* trace=nullptr){
+[[maybe_unused]] static FSauce fast_sauce(int64_t cj,int64_t tj,const FStones&S,FSauceTrace* trace=nullptr){
     U128 calc=fdaynum(cj),target=fdaynum(tj),dist=uint64_t(cj>=tj?cj-tj:tj-cj)+1,sum=fadd(calc,target),dir=tj<cj?1:(tj==cj?2:3);bool smallCounters=((calc>>64)==0)&&((target>>64)==0)&&((dist>>64)==0)&&((sum>>64)==0);auto cmul=[&](U128 a,U128 b)->U128{return smallCounters?fmul_small(a,(uint64_t)b):fmul(a,b);};std::array<U128,8>hb{};
     for(int h=1;h<=7;h++){auto&s=S[h-1];U128 v=fsum({calc,fmul_small(target,FHC[h-1][0]),fmul_small(dist,FHC[h-1][1]),fmul_small(sum,FHC[h-1][2]),fmul_small(dir,FHC[h-1][3]),s[0],s[1],s[2],s[3],s[4]});for(int g=1;g<=7;g++)v=fsum({fmul(v,fadd(v,U128(3))),s[FHGS[g-1]],U128(g)});hb[h]=v;}
     std::array<U128,6>b{};for(int j=0;j<6;j++){U128 bn=j+1,x=fsum({calc,fmul_small(target,j+1),dist,sum,dir,U128(FBP[j]*FBP[j])});b[j]=fadd(fsq(x),bn);}std::array<U128,47>seq{};std::array<int,6>last{};auto seqv=[&](int i)->U128{return i>=1?seq[i]:hb[1-i];};
@@ -57,4 +57,4 @@ static FSauce fast_sauce(int64_t cj,int64_t tj,const FStones&S,FSauceTrace* trac
 }
 struct FDesc{U128 first;bool forward;};
 static FDesc fast_desc(const FSauce&s,int bowl,uint64_t seal){int pl=0;while(s.last[pl]!=bowl)pl++;int ni=s.last[(pl+1)%6]-1;U128 first=fsum({fsq(fsum({s.bowls[bowl-1],U128(seal+181)})),fmul_small(s.bowls[ni],179),U128(seal)});U128 dn=fsum({fsq(fsum({first,U128(seal+194)})),fmul_small(first,193),fmul_small(s.bowls[5],197)});return{first,(frep(dn)&1)!=0};}
-static uint64_t fast_choose_small(const FSauce&s,int bowl,uint64_t seal,uint64_t n){auto d=fast_desc(s,bowl,seal);U128 c=frep(d.first),accepted=seer_short_selection_accepted_o1(F127_M,U128(n),c,d.forward);return (uint64_t)((accepted-1)%n)+1;}
+[[maybe_unused]] static uint64_t fast_choose_small(const FSauce&s,int bowl,uint64_t seal,uint64_t n){auto d=fast_desc(s,bowl,seal);U128 c=frep(d.first),accepted=seer_short_selection_accepted_o1(F127_M,U128(n),c,d.forward);return (uint64_t)((accepted-1)%n)+1;}

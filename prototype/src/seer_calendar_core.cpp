@@ -73,7 +73,7 @@ std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last
 
 
 std::vector<BatchRecord> compute_full_year_days(
-    int64_t calc,const FGates& G,const FY& y,const FSauce& structSauce,
+    const FY& y,const FSauce& structSauce,
     const YBStructResult& st,const ExecutionParams& params){
     const int yearLen=(int)(y.b-y.a);
     if(const char*counter=std::getenv("SEER_TEST_WEAVE_COUNTER_FILE")){

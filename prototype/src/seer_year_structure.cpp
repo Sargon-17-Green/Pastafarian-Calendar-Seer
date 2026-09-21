@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
         const YBStructResult structure = build_nonweave(calc, gates, year, structSauce);
         std::vector<BatchRecord> days;
         if (includeDays) {
-            days = compute_full_year_days(calc, gates, year, structSauce, structure, params);
+            days = compute_full_year_days(year, structSauce, structure, params);
         }
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
