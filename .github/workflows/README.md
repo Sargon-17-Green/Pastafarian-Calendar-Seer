@@ -10,9 +10,9 @@ This directory intentionally keeps three distinct classes of automation.
 
 `release-*.yml` is tag-driven publication logic. Release workflows stay deliberately explicit where ordering, identity, attestations, registries, or irreversible publication matter. Maintenance refactors must not hide release evidence behind a generic abstraction.
 
-## Historical/manual benchmarks
+## Research/manual benchmarks
 
-`hosted-benchmark-*.yml` and `hosted-check-*.yml` are preserved as historical/performance evidence and remain `workflow_dispatch`-only. They are not production gates and must not silently become pull-request or push checks.
+`research-benchmark-*.yml` and `research-check-*.yml` remain `workflow_dispatch`-only research/performance workflows. They are not production gates and must not silently become pull-request or push checks. Completed experiment narratives and checksum ledgers live under `docs/history/benchmarks/`.
 
 ## Shared setup
 

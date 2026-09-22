@@ -11,6 +11,7 @@ on:
       - '.github/workflows/verify-node-compatibility.yml'
       - 'ci/requirements-contract.txt'
       - 'ci/verify-workflow-policy.mjs'
+      - 'ci/verify-repository-ia.mjs'
   pull_request:
     paths:
       - '.github/actions/**'
@@ -19,6 +20,7 @@ on:
       - '.github/workflows/verify-node-compatibility.yml'
       - 'ci/requirements-contract.txt'
       - 'ci/verify-workflow-policy.mjs'
+      - 'ci/verify-repository-ia.mjs'
 
 permissions:
   contents: read
@@ -49,3 +51,4 @@ jobs:
       command: |
         node --check index.mjs
         npm test
+        npm run test:ia

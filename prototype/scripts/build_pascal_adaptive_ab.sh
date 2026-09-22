@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+RESEARCH_SRC="$ROOT/../research/benchmarks/src"
 SRC="$ROOT/src"; BUILD="$ROOT/build"
 mkdir -p "$BUILD" "$ROOT/results"
 CXX="${CXX:-g++}"
 read -r -a ARCH_FLAGS <<< "${SEER_AVX2_CXXFLAGS:--march=native}"
 if [[ -r /proc/cpuinfo ]] && ! grep -qm1 -w avx2 /proc/cpuinfo; then echo "AVX2 unavailable" >&2; exit 3; fi
-COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC")
+COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC" -I"$RESEARCH_SRC")
 DEFAULT="$SRC/pastafarian_cold_bench_avx2_split.cpp"
 REFGEN="$BUILD/pastafarian_cold_bench_avx2_split_pascal_reference.cpp"
 python3 - "$DEFAULT" "$REFGEN" <<'PY'
