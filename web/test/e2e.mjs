@@ -34,6 +34,27 @@ try {
   await expectText(page.locator('#api-status-title'), /API reachable — ready/);
   await expectText(page.locator('#now-result'), /Current Pastafarian date/);
   await expectText(page.locator('#now-result'), /Calculation JDN/);
+  assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+  assert.equal(await page.locator('html').getAttribute('dir'), 'ltr');
+
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.locator('#ui-locale').selectOption('he'),
+  ]);
+  await expectText(page.locator('#api-status-title'), /ה־API נגיש — מוכן/);
+  await expectText(page.locator('#now-result'), /התאריך הפסטפרי הנוכחי/);
+  assert.equal(await page.locator('html').getAttribute('lang'), 'he');
+  assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
+  await page.getByRole('button', { name: 'תאריך', exact: true }).waitFor({ state: 'visible' });
+  assert.equal(await page.locator('#ui-locale').inputValue(), 'he');
+
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    page.locator('#ui-locale').selectOption('en'),
+  ]);
+  await expectText(page.locator('#api-status-title'), /API reachable — ready/);
+  assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+  assert.equal(await page.locator('html').getAttribute('dir'), 'ltr');
   await page.locator('#presentation-locale').selectOption('he');
   await page.getByRole('button', { name: 'Refresh now' }).click();
   await expectText(page.locator('#now-result .formatted'), /^שנה /);
