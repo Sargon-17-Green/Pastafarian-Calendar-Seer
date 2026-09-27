@@ -200,6 +200,7 @@ The default presentation is `full` with locale `en`. Supported locales are disco
 ```js
 { presentation: 'full', locale: 'en' }
 { presentation: 'full', locale: 'he' }
+{ presentation: 'full', locale: 'ja' }
 { presentation: 'canonical' }
 ```
 
@@ -228,9 +229,11 @@ For `queryYear()`, supported includes are `days`, `provenance`, and `resolution`
 
 Localization is presentation-only. English itself is a normal locale pack rather than a special code path. The HTTP API uses explicit `locale` only; `Accept-Language` is intentionally not negotiated in v1.
 
-`GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
+`GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, proper-name policy, and `sourceSupport` so a UI can build a selector without bundling response translations.
 
-The first additional locale is `he`. Its formatter, RTL metadata, and all 17 cutlet plus 47 month display names are Hebrew. The names are sourced from the frozen Hebrew source-language catalog documented in `docs/LOCALIZATION.md`; canonical indices and calculation semantics are unchanged.
+The response catalog contains 72 statically bundled locales. English and Hebrew are marked `sourceSupport: "complete"`. Seventy additional response locales are generated from the validated public-site locale resources pinned at `Sargon17-Green/pastafari-calendar@da6037036b259165fc13b88d9153caf064705de0` and retain `sourceSupport: "partial"` to reflect the upstream resource-review status. Every Seer response pack still contains all 17 cutlet names, all 47 month names and complete date-line templates; no per-request English fallback is used.
+
+Hebrew names continue to come from the separately documented authoritative Hebrew source-language catalog. Canonical indices and calculation semantics are unchanged in every locale. The web application's own interface chrome remains a separate English/Hebrew setting; selecting another response locale changes returned presentation only.
 
 See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
@@ -702,7 +705,7 @@ For `GET /v1/date`:
 | `calculationJdn=...` | `calculation.jdn` |
 | `observer=kisurra` | `observer.preset` |
 | `longitude=...` | `observer.longitude` |
-| `locale=en` or `locale=he` | `locale` |
+| `locale=<supported BCP 47 code>` | `locale` (discover through `/v1/locales`) |
 | `presentation=full|canonical` | `presentation` |
 | `include=a,b,c` | `include: ['a','b','c']` |
 
@@ -1096,7 +1099,7 @@ The repository contains:
 Known limitations:
 
 - the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
-- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack includes the authoritative Hebrew 17+47 display-name catalog;
+- presentation uses 72 validated response locale packs; English/Hebrew have complete source status and 70 pinned public-site imports retain partial source-review status; the web UI chrome itself remains English/Hebrew;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - Windows ARM64 and macOS native exact-runtime support are not currently verified; npm publication itself is configured and the verified `v0.2.5` root package plus its supported prebuilt native runtime packages were published successfully.
 
