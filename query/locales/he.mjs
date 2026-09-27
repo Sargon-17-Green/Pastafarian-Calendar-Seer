@@ -30,6 +30,7 @@ export const LOCALE_PACK = Object.freeze({
   selfName: 'עברית',
   direction: 'rtl',
   properNamePolicy: 'localized',
+  sourceSupport: 'complete',
   cutlets: CUTLET_NAMES,
   months: MONTH_NAMES,
   formatDate: formatHebrew,
