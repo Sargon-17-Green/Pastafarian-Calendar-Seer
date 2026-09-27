@@ -14,12 +14,14 @@ The application exposes:
 - reverse conversion using the complete canonical tuple;
 - year structure, with `include=days` only after explicit opt-in;
 - range queries using count or `endInclusive`, step, and fixed or same-as-target calculation mode;
-- readiness plus `/v1/meta` and `/v1/locales` diagnostics;
-- raw request/response transport details and structured API errors.
+- readiness plus `/v1/meta` and `/v1/locales` diagnostics, available under an advanced disclosure;
+- raw request/response transport details and structured API errors, also kept under an advanced disclosure so ordinary date lookup remains primary.
 
 The year view does not synthesize fields that HTTP v1 does not expose. In particular, cutlet offsets are displayed from `YearResponse`; month offsets are shown as unavailable rather than recomputed in the browser.
 
-The locale selector is populated from `/v1/locales`; the web application does not bundle translations. It sends only the selected locale code to HTTP v1. Returned formatted text uses the locale metadata `direction` for rendering, while canonical presentation disables the locale control because locale is semantically irrelevant there.
+The locale selector is populated from `/v1/locales`; the web application does not bundle UI translations. It sends only the selected locale code to HTTP v1. Returned formatted text uses the locale metadata `direction` for rendering and carries the returned locale as its HTML `lang` value, while canonical presentation disables the locale control because locale is semantically irrelevant there.
+
+This means response localization and interface-chrome localization are currently separate concerns: choosing Hebrew localizes the response supplied by HTTP v1, but it does not translate the surrounding English web controls. A future end-to-end UI-localization pass must change this architecture explicitly rather than silently treating response locale as a complete UI locale.
 
 ## API base configuration
 
@@ -29,7 +31,7 @@ Configuration precedence at page load is:
 2. `globalThis.SEER_WEB_CONFIG.apiBase` from `web/config.js`;
 3. the empty string, meaning same origin.
 
-The UI also permits changing the API base at runtime. Accepted values are an empty string, an origin-relative path, or an HTTP(S) URL. URLs containing credentials are rejected.
+The UI also permits changing the API base at runtime under the advanced connection disclosure. Accepted values are an empty string, an origin-relative path, or an HTTP(S) URL. URLs containing credentials are rejected.
 For a same-origin service:
 
 ```js
