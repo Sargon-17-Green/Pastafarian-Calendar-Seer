@@ -37,6 +37,7 @@ export const LOCALE_PACK = Object.freeze({
   selfName: 'English',
   direction: 'ltr',
   properNamePolicy: 'localized',
+  sourceSupport: 'complete',
   cutlets: CUTLET_NAMES,
   months: MONTH_NAMES,
   formatDate: formatEnglish,
