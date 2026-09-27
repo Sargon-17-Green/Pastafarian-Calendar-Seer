@@ -4,6 +4,7 @@ const UI_LOCALES = Object.freeze({
 });
 
 const HE = Object.freeze({
+  'Pastafarian Calendar Seer': 'לוח השנה הפסטפרי — Seer',
   'Skip to queries': 'דלג לשאילתות',
   'Pastafarian Calendar': 'לוח השנה הפסטפרי',
   'Seer': 'Seer',
@@ -18,6 +19,9 @@ const HE = Object.freeze({
   'Same origin (empty) or https://seer.example': 'אותו מקור (ריק) או https://seer.example',
   'Empty means same origin. A runtime config.js or ?apiBase= can set a remote API.':
     'שדה ריק פירושו אותו מקור. config.js בזמן ריצה או ?apiBase= יכולים להגדיר API מרוחק.',
+  'Empty means same origin. A runtime': 'שדה ריק פירושו אותו מקור. קובץ',
+  'or': 'בזמן ריצה או',
+  'can set a remote API.': 'יכולים להגדיר API מרוחק.',
   'Apply API base': 'החל כתובת API',
   'API diagnostics': 'אבחון API',
   'API version': 'גרסת API',
@@ -33,9 +37,14 @@ const HE = Object.freeze({
   'Presentation locale': 'שפת תוצאת התאריך',
   'Locale choices are discovered from /v1/locales. Canonical presentation ignores locale.':
     'אפשרויות שפת התוצאה מתקבלות מ־/v1/locales. תצוגה קאנונית מתעלמת משפה.',
+  'Locale choices are discovered from': 'אפשרויות שפת התוצאה מתקבלות מ־',
+  '. Canonical presentation ignores locale.': '. תצוגה קאנונית מתעלמת מן השפה.',
   'Calculation day': 'יום המעשה',
   'Calculation day controls the mapping. Target day is the day being asked about. They are distinct inputs.':
     'יום המעשה קובע את המיפוי. היום הנשאל הוא היום שאת תאריכו מבקשים. אלה שני קלטים נפרדים.',
+  'controls the mapping.': 'קובע את המיפוי.',
+  'Target day': 'היום הנשאל',
+  'is the day being asked about. They are distinct inputs.': 'הוא היום שרוצים לדעת את תאריכו. אלה שני קלטים נפרדים.',
   'Calculation selector': 'בחירת יום המעשה',
   'Automatic / live': 'אוטומטי / חי',
   'Explicit JDN': 'JDN מפורש',
@@ -114,6 +123,8 @@ const HE = Object.freeze({
   'No response captured.': 'לא נלכדה תשובה.',
   'This interface delegates all calendar semantics to pastafarian-calendar-seer/client and HTTP v1.':
     'הממשק מעביר את כל סמנטיקת הלוח ל־pastafarian-calendar-seer/client ול־HTTP v1.',
+  'This interface delegates all calendar semantics to': 'הממשק מעביר את כל סמנטיקת הלוח אל',
+  'and HTTP v1.': 'ואל HTTP v1.',
 });
 
 const DYNAMIC = Object.freeze({
@@ -144,6 +155,7 @@ const DYNAMIC = Object.freeze({
     yearLabel: 'Pastafarian year',
     cutlet: 'Cutlet',
     month: 'Month',
+    day: 'day',
     gregorianTarget: 'Gregorian target',
     targetJdn: 'Target JDN',
     calculationJdn: 'Calculation JDN',
@@ -228,6 +240,7 @@ const DYNAMIC = Object.freeze({
     yearLabel: 'שנה פסטפרית',
     cutlet: 'קציצה',
     month: 'חודש',
+    day: 'יום',
     gregorianTarget: 'היום הנשאל — גרגוריאני',
     targetJdn: 'JDN של היום הנשאל',
     calculationJdn: 'JDN של יום המעשה',
