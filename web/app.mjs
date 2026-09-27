@@ -142,7 +142,7 @@ let querySerial = 0;
 let latestTrace = null;
 let requestedLocale = null;
 let reverseNameSignature = null;
-let localeMetadata = new Map([['en', Object.freeze({ code: 'en', direction: 'ltr', default: true })]]);
+let localeMetadata = new Map([['en', Object.freeze({ code: 'en', direction: 'ltr', default: true, sourceSupport: 'complete' })]]);
 
 function formatJson(value) {
   if (value === undefined) return '—';
@@ -531,8 +531,27 @@ function updateRangeEndMode() {
   if (useEnd) updateRangeEndInputs();
 }
 
+function updateLocaleSupportStatus() {
+  const host = q('#presentation-locale-support');
+  const canonical = selectedValue('presentation') === 'canonical';
+  const code = q('#presentation-locale').value;
+  const sourceSupport = localeMetadata.get(code)?.sourceSupport;
+  if (canonical || !code || !sourceSupport) {
+    host.hidden = true;
+    host.textContent = '';
+    return;
+  }
+  host.hidden = false;
+  host.textContent = sourceSupport === 'complete'
+    ? t('localeSupportComplete')
+    : sourceSupport === 'partial'
+      ? t('localeSupportPartial')
+      : t('localeSupportUnknown');
+}
+
 function updatePresentationInputs() {
   q('#presentation-locale').disabled = selectedValue('presentation') === 'canonical' || localeMetadata.size === 0;
+  updateLocaleSupportStatus();
 }
 
 for (const item of qa('input[name="presentation"]')) item.addEventListener('change', updatePresentationInputs);
@@ -642,6 +661,7 @@ async function refreshDiagnostics() {
         code: item.code ?? item.tag,
         direction: item.direction ?? 'ltr',
         default: item.default === true,
+        sourceSupport: item.sourceSupport,
       }),
     ]));
     const options = locales.map((item) => node('option', {
@@ -708,7 +728,10 @@ q('#reverse-load-names').addEventListener('click', loadReverseNames);
 syncReverseChoice('#reverse-cutlet-choice', '#reverse-cutlet-index');
 syncReverseChoice('#reverse-month-choice', '#reverse-month-index');
 q('#reverse-year').addEventListener('input', () => resetReverseNameChoices());
-q('#presentation-locale').addEventListener('change', () => resetReverseNameChoices());
+q('#presentation-locale').addEventListener('change', () => {
+  resetReverseNameChoices();
+  updateLocaleSupportStatus();
+});
 for (const selector of [
   'input[name="calculation-mode"]',
   '#calculation-jdn',
