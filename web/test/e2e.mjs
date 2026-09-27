@@ -43,6 +43,7 @@ try {
   ]);
   await expectText(page.locator('#api-status-title'), /ה־API נגיש — מוכן/);
   await expectText(page.locator('#now-result'), /התאריך הפסטפרי הנוכחי/);
+  await expectText(page.locator('#presentation-locale-support'), /מעמד מקור: מלא/);
   assert.equal(await page.locator('html').getAttribute('lang'), 'he');
   assert.equal(await page.locator('html').getAttribute('dir'), 'rtl');
   await page.getByRole('button', { name: 'תאריך', exact: true }).waitFor({ state: 'visible' });
@@ -55,7 +56,10 @@ try {
   await expectText(page.locator('#api-status-title'), /API reachable — ready/);
   assert.equal(await page.locator('html').getAttribute('lang'), 'en');
   assert.equal(await page.locator('html').getAttribute('dir'), 'ltr');
+  await page.locator('#presentation-locale').selectOption('af');
+  await expectText(page.locator('#presentation-locale-support'), /Source support: partial/);
   await page.locator('#presentation-locale').selectOption('he');
+  await expectText(page.locator('#presentation-locale-support'), /Source support: complete/);
   await page.getByRole('button', { name: 'Refresh now' }).click();
   await expectText(page.locator('#now-result .formatted'), /^שנה /);
   assert.equal(await page.locator('#now-result .formatted').getAttribute('dir'), 'rtl');
