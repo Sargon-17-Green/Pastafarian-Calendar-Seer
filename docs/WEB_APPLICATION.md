@@ -19,9 +19,11 @@ The application exposes:
 
 The year view does not synthesize fields that HTTP v1 does not expose. In particular, cutlet offsets are displayed from `YearResponse`; month offsets are shown as unavailable rather than recomputed in the browser.
 
-The locale selector is populated from `/v1/locales`; the web application does not bundle UI translations. It sends only the selected locale code to HTTP v1. Returned formatted text uses the locale metadata `direction` for rendering and carries the returned locale as its HTML `lang` value, while canonical presentation disables the locale control because locale is semantically irrelevant there.
+The response-locale selector is populated from `/v1/locales`. It sends the chosen response locale to HTTP v1. Returned formatted text uses the response locale direction and carries the returned locale as its HTML `lang` value. Canonical presentation disables the response-locale selector because the locale does not affect canonical output.
 
-This means response localization and interface-chrome localization are currently separate concerns: choosing Hebrew localizes the response supplied by HTTP v1, but it does not translate the surrounding English web controls. A future end-to-end UI-localization pass must change this architecture explicitly rather than silently treating response locale as a complete UI locale.
+The interface language is a separate setting. The production web application has an explicit UI catalog in `web/i18n.mjs` for English and Hebrew. The interface choice is persisted independently, sets the document `lang` and `dir`, and leaves technical JDN, URL, JSON and code values in LTR form inside an RTL Hebrew interface. Changing the interface language does not change calendar calculations or the API response locale.
+
+The Hebrew response pack uses the authoritative Hebrew 17+47 display-name catalog documented in `docs/LOCALIZATION.md`. Canonical indices and reverse-conversion coordinates remain unchanged.
 
 ## API base configuration
 
