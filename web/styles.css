@@ -150,7 +150,7 @@ pre {
 .skip-link {
   position: absolute;
   top: -4rem;
-  left: 1rem;
+  inset-inline-start: 1rem;
   z-index: 10;
   padding: 0.6rem;
   background: var(--surface);
@@ -435,7 +435,7 @@ table {
 th,
 td {
   padding: 0.5rem 0.6rem;
-  text-align: left;
+  text-align: start;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
@@ -468,6 +468,20 @@ th {
 
 .breakable {
   overflow-wrap: anywhere;
+}
+
+[dir="rtl"] input[type="text"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] .raw-block,
+[dir="rtl"] code,
+[dir="rtl"] pre {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="rtl"] .formatted {
+  direction: rtl;
+  text-align: start;
 }
 
 .advanced-panel > details > summary,
@@ -526,8 +540,7 @@ th {
 @media (max-width: 620px) {
   .site-header,
   .layout {
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
+    padding-inline: 0.7rem;
   }
 
   .controls,
