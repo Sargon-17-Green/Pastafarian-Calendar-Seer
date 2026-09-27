@@ -31,6 +31,15 @@ function paragraph(text, className) {
   return node('p', { text, className });
 }
 
+function coordinateLabel(item) {
+  const name = item?.name;
+  const index = item?.canonicalIndex;
+  if (name && index !== undefined && index !== null) return `${name} · #${index}`;
+  if (name) return String(name);
+  if (index !== undefined && index !== null) return `#${index}`;
+  return '—';
+}
+
 function selectedValue(name) {
   return q(`input[name="${name}"]:checked`)?.value;
 }
@@ -228,7 +237,7 @@ function renderDate(host, result, title) {
     card.append(node('p', {
       className: 'formatted',
       text: summary.formatted,
-      attrs: { dir: direction },
+      attrs: { dir: direction, lang: result?.locale ?? undefined },
     }));
   }
   host.replaceChildren(card);
@@ -322,9 +331,9 @@ function renderYear(host, result) {
         item.targetDay?.jdn,
         gregorianText(item.targetDay?.gregorian),
         item.pastafarianDate?.year,
-        item.pastafarianDate?.cutlet?.canonicalIndex,
+        coordinateLabel(item.pastafarianDate?.cutlet),
         item.pastafarianDate?.cutlet?.day,
-        item.pastafarianDate?.month?.canonicalIndex,
+        coordinateLabel(item.pastafarianDate?.month),
         item.pastafarianDate?.month?.day,
       ]),
       caption: 'Days returned by include=days',
@@ -346,9 +355,9 @@ function renderRange(host, result) {
       item.targetDay?.jdn,
       gregorianText(item.targetDay?.gregorian),
       item.pastafarianDate?.year,
-      item.pastafarianDate?.cutlet?.canonicalIndex,
+      coordinateLabel(item.pastafarianDate?.cutlet),
       item.pastafarianDate?.cutlet?.day,
-      item.pastafarianDate?.month?.canonicalIndex,
+      coordinateLabel(item.pastafarianDate?.month),
       item.pastafarianDate?.month?.day,
     ]),
     caption: 'Range query results',
