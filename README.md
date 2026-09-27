@@ -1098,8 +1098,7 @@ Known limitations:
 - the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
 - presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack includes the authoritative Hebrew 17+47 display-name catalog;
 - exact out-of-cache execution requires the native toolchain/runtime;
-- Windows ARM64 and macOS native exact-runtime support are not currently verified;
-- public npm-registry publication is not configured yet.
+- Windows ARM64 and macOS native exact-runtime support are not currently verified; npm publication itself is configured and the verified `v0.2.5` root package plus its supported prebuilt native runtime packages were published successfully.
 
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
 
@@ -1167,4 +1166,4 @@ R'amen.
 
 ## Supply-chain verification
 
-The `v0.1.2` GitHub tarball can be checked against its published SHA-256 file. The repository is prepared for subsequent hardened releases with SHA-pinned Actions, OIDC npm publishing, GHCR digest publication, SBOMs, GitHub attestations, immutable GitHub Releases, and a machine-readable release manifest. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) for the exact verification model and commands. Provenance establishes build origin and artifact integrity; it is not evidence of calendar-semantic correctness.
+The current hardened release line publishes immutable, cross-verified artifacts through GitHub Releases, npm and GHCR. `v0.2.5` was published as an immutable GitHub Release on 2026-09-21; the tag's root npm workflow and prebuilt-native npm workflow both completed successfully for commit `93000cbdca5b2d2666ea716717e342e9a5c4f0e3`. The release pipeline uses SHA-pinned Actions, OIDC npm trusted publishing with provenance, GHCR digest publication, SBOMs, GitHub attestations, deterministic package checks and a machine-readable release manifest. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) for the exact verification model, including the explicitly recorded partial-release history. Provenance establishes build origin and artifact integrity; it is not evidence of calendar-semantic correctness.
