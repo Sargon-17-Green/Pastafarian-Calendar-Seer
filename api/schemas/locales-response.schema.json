@@ -4,7 +4,9 @@
   "title": "LocalesResponse",
   "type": "object",
   "additionalProperties": false,
-  "required": ["locales"],
+  "required": [
+    "locales"
+  ],
   "properties": {
     "locales": {
       "type": "array",
@@ -12,21 +14,63 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "tag", "code", "name", "selfName", "direction", "default",
-          "schemaVersion", "version", "properNamePolicy"
+          "tag",
+          "code",
+          "name",
+          "selfName",
+          "direction",
+          "default",
+          "schemaVersion",
+          "version",
+          "properNamePolicy",
+          "sourceSupport"
         ],
         "properties": {
-          "tag": { "type": "string" },
-          "code": { "type": "string" },
-          "name": { "type": "string", "minLength": 1 },
-          "selfName": { "type": "string", "minLength": 1 },
-          "direction": { "type": "string", "enum": ["ltr", "rtl"] },
-          "default": { "type": "boolean" },
-          "schemaVersion": { "type": "integer", "const": 1 },
-          "version": { "type": "string" },
+          "tag": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selfName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "ltr",
+              "rtl"
+            ]
+          },
+          "default": {
+            "type": "boolean"
+          },
+          "schemaVersion": {
+            "type": "integer",
+            "const": 1
+          },
+          "version": {
+            "type": "string"
+          },
           "properNamePolicy": {
             "type": "string",
-            "enum": ["localized", "english-retained"]
+            "enum": [
+              "localized",
+              "english-retained"
+            ]
+          },
+          "sourceSupport": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial"
+            ],
+            "description": "Support status of the pinned source locale resources used by this response pack."
           }
         }
       }

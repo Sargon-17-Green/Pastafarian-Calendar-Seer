@@ -162,8 +162,13 @@ test('public status and static endpoints are served without semantic work', asyn
     const locales = await fetch(`${base}/v1/locales`);
     assert.equal(locales.status, 200);
     const localeBody = await locales.json();
-    assert.deepEqual(localeBody.locales.map((item) => item.code), ['en', 'he']);
+    assert.equal(localeBody.locales.length, 72);
+    assert.deepEqual(localeBody.locales.slice(0, 4).map((item) => item.code), ['en', 'he', 'af', 'ar']);
     assert.equal(localeBody.locales[1].direction, 'rtl');
+    assert.equal(localeBody.locales[1].sourceSupport, 'complete');
+    assert.equal(localeBody.locales.find((item) => item.code === 'ar').direction, 'rtl');
+    assert.equal(localeBody.locales.find((item) => item.code === 'ar').sourceSupport, 'partial');
+    assert.equal(localeBody.locales.at(-1).code, 'zu');
     const meta = await fetch(`${base}/v1/meta`);
     const metaBody = await meta.json();
     assert.equal(metaBody.packageVersion, '0.2.3');

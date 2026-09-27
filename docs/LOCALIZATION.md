@@ -13,6 +13,7 @@ Every pack has schema version `1` and contains:
 - `direction` (`ltr` or `rtl`);
 - pack `version`;
 - `properNamePolicy`;
+- `sourceSupport` (`complete` or `partial`) describing the review/support status inherited from the pinned source resources;
 - exactly 17 cutlet display names in canonical-index order;
 - exactly 47 month display names in canonical-index order;
 - a date-formatting function.
@@ -27,17 +28,19 @@ A syntactically valid but unsupported code such as `en-US` fails with `LOCALE_NO
 
 `presentation: "canonical"` is language-free and intentionally ignores `locale`, including malformed or unsupported locale values. This preserves the v1 machine-oriented contract.
 
-HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotiated. The browser client carries locale values to the HTTP API and contains no translation catalog.
+HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotiated. The reusable browser client carries locale values to the HTTP API and contains no response-translation catalog. The production web application has a separate, explicit UI-chrome catalog for English and Hebrew; its interface language is independent of the response locale sent to HTTP v1.
 
-## English and Hebrew
+## Response-locale sources
 
-English is a normal locale pack and therefore exercises the same catalog, validator, name lookup, and formatter path as every other locale.
+English and Hebrew are the two `sourceSupport: "complete"` response packs. English is a normal locale pack and therefore exercises the same catalog, validator, name lookup, and formatter path as every other locale.
 
-The first additional pack is `he`. It localizes formatting, self-name, and RTL direction. Its 17+47 Pastafarian proper names are deliberately the verified English names and the pack declares `properNamePolicy: "english-retained"`. This is explicit pack data, not a missing-string fallback.
+Hebrew localizes formatting, self-name, RTL direction, and the full 17+47 Pastafarian display-name catalog. The authoritative Hebrew names come from `Sargon17-Green/Pastafarian-Calendar`, branch `Dart+עברית`, file `lib/src/source_language_catalog.dart`, blob `b0d5286523a417cb8c307165960ee43f9019be89`. That catalog is frozen in canonical-index order and is used here only as presentation data; Seer does not derive canonical identity from the strings.
 
-Those proper names must not be translated until an authoritative naming source is supplied and documented.
+Seventy additional response packs are generated from the public site's validated locale resources at the pinned source revision `Sargon17-Green/pastafari-calendar@da6037036b259165fc13b88d9153caf064705de0`. Only the presentation subset Seer needs is snapshotted: locale metadata, the three date-line templates, 17 cutlet names and 47 month names. The upstream site's own test suite verifies that all 72 registered locales resolve non-empty 17+47 names. Those 70 source locales are marked `sourceSupport: "partial"` because their broader legacy-site UI still intentionally falls back for unrelated strings; Seer does not convert that upstream review status into a claim of complete linguistic QA.
 
-Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and retained LTR proper names. Machine-readable numeric fields remain ASCII decimal strings.
+The committed `site-imported-01..07.mjs` snapshots contain no runtime network dependency. `scripts/import-site-locales.mjs` regenerates the exact seven chunks from a local checkout plus an explicitly supplied 40-character source revision and fails closed on missing/duplicate display names or missing date templates.
+
+RTL response formatters isolate inserted year/day/name values with Unicode bidi isolation. This applies to Hebrew and the imported RTL response locales. Machine-readable numeric fields remain ASCII decimal strings.
 
 ## API discovery
 
@@ -49,13 +52,14 @@ Hebrew formatted text uses Unicode bidi isolation around inserted exact integers
 - `direction`;
 - `default`;
 - locale-pack schema and data versions;
-- `properNamePolicy`.
+- `properNamePolicy`;
+- `sourceSupport` — `complete` or `partial` status inherited from the pinned source resources.
 
 Node consumers may use `listLocales()` and `DEFAULT_LOCALE` from the package root. The HTTP browser client exposes `getLocales()`.
 
 ## Adding a locale
 
-A localization contribution must not touch the mathematical engine or canonical indices. Add a complete pack, register it statically in `catalog.mjs`, and document the translation authority or the decision to retain verified proper names.
+A localization contribution must not touch the mathematical engine or canonical indices. A runtime response pack must always be structurally complete for Seer's presentation needs. It may nevertheless carry `sourceSupport: "partial"` when its pinned upstream resource set has not completed broader linguistic/UI review. Register the pack statically and document the translation authority or pinned source.
 
 Before merging a locale contribution:
 
@@ -66,7 +70,7 @@ Before merging a locale contribution:
 5. verify `/v1/locales` metadata;
 6. verify the npm package contains all runtime locale modules and no authoring notes or `HANDOFF_*` material.
 
-Partial packs are rejected. Do not sort localized names alphabetically, infer canonical identity from a translated string, or accept localized names as reverse-conversion input.
+Incomplete Seer response packs are rejected. `sourceSupport: "partial"` is metadata about upstream review status, not permission to omit any of Seer's 17+47 names or date templates. Do not sort localized names alphabetically, infer canonical identity from a translated string, or accept localized names as reverse-conversion input.
 
 Reverse conversion continues to accept canonical indices only.
 
@@ -76,15 +80,17 @@ For identical calculation, target, and include inputs, locale changes may alter 
 
 Calculation-day data, target JDN/Gregorian data, canonical indices, days, structure, boundaries, provenance, resolution, and reverse coordinates must be unchanged.
 
-The localization tests strip presentation-only fields and compare full `en` and `he` results directly with canonical results. They also exercise canonical cutlet index 17 and month index 47 to catch off-by-one errors.
+The localization tests strip presentation-only fields and compare full results for all 72 response locales directly with canonical results. They also exercise canonical cutlet index 17 and month index 47, representative LTR/RTL year output, and bidi isolation in imported RTL formatters.
 
 Broad formatter/catalog tests use deterministic fixture records so localization does not multiply expensive exact-engine calculations. Repository and deployment suites remain responsible for the exact runtime itself, including rolling-cache, cache-miss, negative-gate, Foundation-adjacent, reverse, and year paths.
 
 ## RTL and web rendering
 
-`direction` is presentation metadata only. A web UI should set its text direction from locale metadata and insert returned `formatted` text as text content, never via `innerHTML`.
+`direction` in a response-locale pack is presentation metadata only. Returned `formatted` text is inserted as text content, never via `innerHTML`, and receives the response locale as its HTML `lang` value.
 
-Mixed-direction content should preserve bidi isolation. Exact JDNs, canonical indices, IDs, and other machine fields are not transformed for RTL locales.
+The production web application's interface language is a separate setting. It currently supports English and Hebrew, persists independently from the response locale, and sets the document `lang` and `dir` accordingly. Technical values such as JDNs, URLs, raw JSON, canonical indices and code remain LTR even when the surrounding interface is RTL.
+
+Mixed-direction content should preserve bidi isolation. Locale changes never transform machine fields or alter their mathematical values.
 
 ## Security
 

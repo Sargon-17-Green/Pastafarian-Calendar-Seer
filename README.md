@@ -200,6 +200,7 @@ The default presentation is `full` with locale `en`. Supported locales are disco
 ```js
 { presentation: 'full', locale: 'en' }
 { presentation: 'full', locale: 'he' }
+{ presentation: 'full', locale: 'ja' }
 { presentation: 'canonical' }
 ```
 
@@ -228,9 +229,11 @@ For `queryYear()`, supported includes are `days`, `provenance`, and `resolution`
 
 Localization is presentation-only. English itself is a normal locale pack rather than a special code path. The HTTP API uses explicit `locale` only; `Accept-Language` is intentionally not negotiated in v1.
 
-`GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
+`GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, proper-name policy, and `sourceSupport` so a UI can build a selector without bundling response translations.
 
-The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the 17 cutlet and 47 month proper names intentionally remain the verified English names until a documented Hebrew naming authority is available. This is explicit locale-pack data, not silent fallback.
+The response catalog contains 72 statically bundled locales. English and Hebrew are marked `sourceSupport: "complete"`. Seventy additional response locales are generated from the validated public-site locale resources pinned at `Sargon17-Green/pastafari-calendar@da6037036b259165fc13b88d9153caf064705de0` and retain `sourceSupport: "partial"` to reflect the upstream resource-review status. Every Seer response pack still contains all 17 cutlet names, all 47 month names and complete date-line templates; no per-request English fallback is used.
+
+Hebrew names continue to come from the separately documented authoritative Hebrew source-language catalog. Canonical indices and calculation semantics are unchanged in every locale. The web application's own interface chrome remains a separate English/Hebrew setting; selecting another response locale changes returned presentation only.
 
 See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
@@ -685,7 +688,7 @@ A normal date or reverse response contains:
 | `provenance` | Present when requested |
 | `resolution` | Present when requested |
 
-When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The initial Hebrew pack localizes formatting and RTL metadata but deliberately retains the verified English Pastafarian proper names until an authoritative Hebrew naming source is supplied.
+When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The Hebrew pack supplies the authoritative Hebrew display names while preserving the same canonical indices used by canonical presentation and reverse conversion.
 
 The `resolution` object is useful for debugging defaults. It records how the calculation day, target, and observer were selected.
 
@@ -702,7 +705,7 @@ For `GET /v1/date`:
 | `calculationJdn=...` | `calculation.jdn` |
 | `observer=kisurra` | `observer.preset` |
 | `longitude=...` | `observer.longitude` |
-| `locale=en` or `locale=he` | `locale` |
+| `locale=<supported BCP 47 code>` | `locale` (discover through `/v1/locales`) |
 | `presentation=full|canonical` | `presentation` |
 | `include=a,b,c` | `include: ['a','b','c']` |
 
@@ -1096,10 +1099,9 @@ The repository contains:
 Known limitations:
 
 - the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
-- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
+- presentation uses 72 validated response locale packs; English/Hebrew have complete source status and 70 pinned public-site imports retain partial source-review status; the web UI chrome itself remains English/Hebrew;
 - exact out-of-cache execution requires the native toolchain/runtime;
-- Windows ARM64 and macOS native exact-runtime support are not currently verified;
-- public npm-registry publication is not configured yet.
+- Windows ARM64 and macOS native exact-runtime support are not currently verified; npm publication itself is configured and the verified `v0.2.5` root package plus its supported prebuilt native runtime packages were published successfully.
 
 The public Node/HTTP contract is stable at v1; this does not make the Seer normative.
 
@@ -1167,4 +1169,4 @@ R'amen.
 
 ## Supply-chain verification
 
-The `v0.1.2` GitHub tarball can be checked against its published SHA-256 file. The repository is prepared for subsequent hardened releases with SHA-pinned Actions, OIDC npm publishing, GHCR digest publication, SBOMs, GitHub attestations, immutable GitHub Releases, and a machine-readable release manifest. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) for the exact verification model and commands. Provenance establishes build origin and artifact integrity; it is not evidence of calendar-semantic correctness.
+The current hardened release line publishes immutable, cross-verified artifacts through GitHub Releases, npm and GHCR. `v0.2.5` was published as an immutable GitHub Release on 2026-09-21; the tag's root npm workflow and prebuilt-native npm workflow both completed successfully for commit `93000cbdca5b2d2666ea716717e342e9a5c4f0e3`. The release pipeline uses SHA-pinned Actions, OIDC npm trusted publishing with provenance, GHCR digest publication, SBOMs, GitHub attestations, deterministic package checks and a machine-readable release manifest. See [docs/SUPPLY_CHAIN.md](docs/SUPPLY_CHAIN.md) for the exact verification model, including the explicitly recorded partial-release history. Provenance establishes build origin and artifact integrity; it is not evidence of calendar-semantic correctness.

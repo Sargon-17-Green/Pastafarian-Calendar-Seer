@@ -1,6 +1,13 @@
 import { queryError } from '../errors.mjs';
 import { LOCALE_PACK as ENGLISH } from './en.mjs';
 import { LOCALE_PACK as HEBREW } from './he.mjs';
+import { LOCALE_PACKS as IMPORTED_01 } from './site-imported-01.mjs';
+import { LOCALE_PACKS as IMPORTED_02 } from './site-imported-02.mjs';
+import { LOCALE_PACKS as IMPORTED_03 } from './site-imported-03.mjs';
+import { LOCALE_PACKS as IMPORTED_04 } from './site-imported-04.mjs';
+import { LOCALE_PACKS as IMPORTED_05 } from './site-imported-05.mjs';
+import { LOCALE_PACKS as IMPORTED_06 } from './site-imported-06.mjs';
+import { LOCALE_PACKS as IMPORTED_07 } from './site-imported-07.mjs';
 
 export const LOCALE_PACK_SCHEMA_VERSION = 1;
 export const DEFAULT_LOCALE = 'en';
@@ -39,6 +46,7 @@ export function validateLocalePack(pack) {
   if (typeof pack.selfName !== 'string' || !pack.selfName.trim()) throw new TypeError('locale pack selfName is required');
   if (pack.direction !== 'ltr' && pack.direction !== 'rtl') throw new TypeError('locale pack direction must be ltr or rtl');
   if (!['localized', 'english-retained'].includes(pack.properNamePolicy)) throw new TypeError('locale pack properNamePolicy is invalid');
+  if (!['complete', 'partial'].includes(pack.sourceSupport)) throw new TypeError('locale pack sourceSupport is invalid');
   if (typeof pack.formatDate !== 'function') throw new TypeError('locale pack formatDate function is required');
   for (const [kind, values, expected] of [['cutlet', pack.cutlets, 17], ['month', pack.months, 47]]) {
     if (!Array.isArray(values) || values.length !== expected) throw new TypeError(`locale pack must contain exactly ${expected} ${kind} names`);
@@ -53,7 +61,17 @@ export function validateLocalePack(pack) {
   return pack;
 }
 
-const PACKS = Object.freeze([ENGLISH, HEBREW].map(validateLocalePack));
+const PACKS = Object.freeze([
+  ENGLISH,
+  HEBREW,
+  ...IMPORTED_01,
+  ...IMPORTED_02,
+  ...IMPORTED_03,
+  ...IMPORTED_04,
+  ...IMPORTED_05,
+  ...IMPORTED_06,
+  ...IMPORTED_07,
+].map(validateLocalePack));
 const BY_CODE = new Map(PACKS.map((pack) => [pack.code, pack]));
 
 export function normalizeLocaleCode(value) {
@@ -86,5 +104,6 @@ export function listLocales() {
     schemaVersion: pack.schemaVersion,
     version: pack.version,
     properNamePolicy: pack.properNamePolicy,
+    sourceSupport: pack.sourceSupport,
   })));
 }

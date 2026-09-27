@@ -8,6 +8,17 @@ import {
   validateLocalePack,
 } from '../locales/catalog.mjs';
 
+const EXPECTED_LOCALES = Object.freeze([
+  'en', 'he',
+  'af', 'ar', 'az', 'be', 'bg', 'bn', 'bs', 'ca', 'cs', 'da',
+  'de', 'el', 'eo', 'es', 'et', 'fa', 'fi', 'fil', 'fo', 'fr',
+  'fy', 'gl', 'gu', 'ha', 'hi', 'hr', 'ht', 'hu', 'hy', 'id',
+  'is', 'it', 'ja', 'jv', 'ka', 'kk', 'ko', 'lb', 'lt', 'lv',
+  'mk', 'mr', 'ms', 'nb', 'ne', 'nl', 'nn', 'pa', 'pl', 'pt',
+  'ro', 'ru', 'sk', 'sl', 'so', 'sq', 'sr', 'sv', 'sw', 'ta',
+  'te', 'th', 'tr', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh', 'zu',
+]);
+
 const record = Object.freeze({
   targetJdn: 101,
   year: 5000,
@@ -59,16 +70,22 @@ function stripPresentation(value) {
   return out;
 }
 
-test('locale catalog is complete, immutable and discoverable', () => {
+test('locale catalog exposes all 72 pinned response locales with explicit source support', () => {
   const locales = listLocales();
-  assert.deepEqual(locales.map((x) => x.code), ['en', 'he']);
+  assert.deepEqual(locales.map((x) => x.code), EXPECTED_LOCALES);
   assert.equal(Object.isFrozen(locales), true);
+  assert.equal(locales.length, 72);
   assert.equal(locales[0].default, true);
+  assert.equal(locales[0].sourceSupport, 'complete');
   assert.equal(locales[1].selfName, 'עברית');
   assert.equal(locales[1].direction, 'rtl');
-  assert.equal(locales[1].properNamePolicy, 'english-retained');
+  assert.equal(locales[1].properNamePolicy, 'localized');
+  assert.equal(locales[1].sourceSupport, 'complete');
+  assert.equal(locales.find(({ code }) => code === 'ar').direction, 'rtl');
+  assert.equal(locales.find(({ code }) => code === 'ar').sourceSupport, 'partial');
+  assert.equal(locales.find(({ code }) => code === 'ur').direction, 'rtl');
 
-  for (const code of ['en', 'he']) {
+  for (const code of EXPECTED_LOCALES) {
     const pack = getLocalePack(code);
     assert.equal(validateLocalePack(pack), pack);
     assert.equal(Object.isFrozen(pack), true);
@@ -78,6 +95,7 @@ test('locale catalog is complete, immutable and discoverable', () => {
     assert.equal(pack.months.length, 47);
     assert.equal(new Set(pack.cutlets).size, 17);
     assert.equal(new Set(pack.months).size, 47);
+    assert.equal(pack.sourceSupport, code === 'en' || code === 'he' ? 'complete' : 'partial');
     for (let index = 1; index <= 17; index += 1) {
       assert.equal(typeof localizedName(pack, 'cutlet', index), 'string');
     }
@@ -98,15 +116,7 @@ test('English uses the locale pack and preserves the v1 output', async () => {
   assert.equal(result.formatted, 'Year 5000 — Akkad, day 346; Honey, day 22');
 });
 
-test('Hebrew localizes only presentation fields', async () => {
-  const canonical = await queryDate(
-    { calculation: { jdn: '100' }, presentation: 'canonical', include: ['provenance'] },
-    { provider },
-  );
-  const english = await queryDate(
-    { calculation: { jdn: '100' }, locale: 'en', include: ['provenance'] },
-    { provider },
-  );
+test('Hebrew keeps authoritative names and bidi-isolates inserted values', async () => {
   const hebrew = await queryDate(
     { calculation: { jdn: '100' }, locale: 'HE', include: ['provenance'] },
     { provider },
@@ -114,11 +124,37 @@ test('Hebrew localizes only presentation fields', async () => {
   assert.equal(hebrew.locale, 'he');
   assert.match(hebrew.formatted, /^שנה /);
   assert.match(hebrew.formatted, /\u20685000\u2069/);
-  assert.match(hebrew.formatted, /\u2068Akkad\u2069/);
-  assert.equal(hebrew.pastafarianDate.cutlet.name, 'Akkad');
-  assert.equal(hebrew.pastafarianDate.month.name, 'Honey');
-  assert.deepEqual(stripPresentation(english), canonical);
-  assert.deepEqual(stripPresentation(hebrew), canonical);
+  assert.match(hebrew.formatted, /\u2068אכד\u2069/);
+  assert.equal(hebrew.pastafarianDate.cutlet.name, 'אכד');
+  assert.equal(hebrew.pastafarianDate.month.name, 'דבש');
+});
+
+test('all 72 full-presentation locales are semantically invariant against canonical output', async () => {
+  const canonical = await queryDate(
+    { calculation: { jdn: '100' }, presentation: 'canonical', include: ['provenance'] },
+    { provider },
+  );
+  for (const code of EXPECTED_LOCALES) {
+    const localized = await queryDate(
+      { calculation: { jdn: '100' }, locale: code, include: ['provenance'] },
+      { provider },
+    );
+    assert.equal(localized.locale, code);
+    assert.equal(typeof localized.formatted, 'string');
+    assert(localized.formatted.length > 0);
+    assert.equal(typeof localized.pastafarianDate.cutlet.name, 'string');
+    assert.equal(typeof localized.pastafarianDate.month.name, 'string');
+    assert.deepEqual(stripPresentation(localized), canonical, `semantic drift in locale ${code}`);
+  }
+});
+
+test('imported RTL response locales isolate substituted exact values', async () => {
+  for (const code of ['ar', 'fa', 'ur']) {
+    const result = await queryDate({ calculation: { jdn: '100' }, locale: code }, { provider });
+    assert.match(result.formatted, /\u20685000\u2069/, `${code} must isolate the year`);
+    assert.match(result.formatted, /\u2068346\u2069/, `${code} must isolate day-in-cutlet`);
+    assert.match(result.formatted, /\u206822\u2069/, `${code} must isolate day-in-month`);
+  }
 });
 
 test('locale validation is strict only when presentation is full', async () => {
@@ -150,20 +186,20 @@ test('locale validation is strict only when presentation is full', async () => {
   assert.equal(canonical.locale, undefined);
 });
 
-test('year structures are invariant across locales including maximum indices', async () => {
+test('year structures are invariant across representative LTR and RTL locales including maximum indices', async () => {
   const canonical = await queryYear(
     '5000',
     { calculation: { jdn: '100' }, presentation: 'canonical' },
     { provider },
   );
-  const en = await queryYear('5000', { calculation: { jdn: '100' }, locale: 'en' }, { provider });
-  const he = await queryYear('5000', { calculation: { jdn: '100' }, locale: 'he' }, { provider });
-  assert.equal(en.year.cutlets.at(-1).canonicalIndex, 17);
-  assert.equal(he.year.months.at(-1).canonicalIndex, 47);
-  assert.equal(en.year.cutlets.at(-1).name, 'The Empty Jar');
-  assert.equal(he.year.months.at(-1).name, 'Sand');
-  assert.deepEqual(stripPresentation(en), canonical);
-  assert.deepEqual(stripPresentation(he), canonical);
+  for (const code of ['en', 'he', 'ar', 'ja', 'ur', 'zh']) {
+    const localized = await queryYear('5000', { calculation: { jdn: '100' }, locale: code }, { provider });
+    assert.equal(localized.year.cutlets.at(-1).canonicalIndex, 17);
+    assert.equal(localized.year.months.at(-1).canonicalIndex, 47);
+    assert.equal(typeof localized.year.cutlets.at(-1).name, 'string');
+    assert.equal(typeof localized.year.months.at(-1).name, 'string');
+    assert.deepEqual(stripPresentation(localized), canonical, `year semantic drift in locale ${code}`);
+  }
 });
 
 test('locale-pack validator rejects incomplete and structurally unsafe packs', () => {
@@ -183,5 +219,9 @@ test('locale-pack validator rejects incomplete and structurally unsafe packs', (
   assert.throws(
     () => validateLocalePack({ ...en, direction: 'sideways' }),
     /direction/,
+  );
+  assert.throws(
+    () => validateLocalePack({ ...en, sourceSupport: 'gold' }),
+    /sourceSupport/,
   );
 });

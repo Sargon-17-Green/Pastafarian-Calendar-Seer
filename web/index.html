@@ -13,9 +13,9 @@
   <a class="skip-link" href="#workspace">Skip to queries</a>
   <header class="site-header">
     <div>
-      <p class="eyebrow">Pastafarian Calendar Seer</p>
-      <h1>Web application</h1>
-      <p class="lede">A browser client for the exact Seer HTTP v1 service. Calendar semantics stay on the server.</p>
+      <p class="eyebrow">Pastafarian Calendar</p>
+      <h1>Seer</h1>
+      <p class="lede">Look up Pastafarian dates and calendar structures. Advanced API controls remain available when you need them.</p>
     </div>
     <div class="readiness" aria-live="polite">
       <span id="api-indicator" class="indicator" data-state="checking" aria-hidden="true"></span>
@@ -29,8 +29,10 @@
 
   <main id="workspace" class="layout">
     <aside class="controls" aria-label="Seer connection and shared query controls">
-      <section class="panel">
-        <h2>Connection</h2>
+      <section class="panel advanced-panel">
+        <details>
+          <summary>Connection &amp; API diagnostics (advanced)</summary>
+          <div class="advanced-panel-body">
         <form id="connection-form">
           <label for="api-base">API base URL</label>
           <input id="api-base" name="apiBase" type="text" inputmode="url" spellcheck="false" autocomplete="off"
@@ -47,10 +49,17 @@
           </dl>
           <pre id="meta-json" class="raw-block" aria-label="Raw API metadata">No metadata loaded.</pre>
         </details>
+          </div>
+        </details>
       </section>
 
       <section class="panel">
         <h2>Presentation</h2>
+        <label for="ui-locale">Interface language</label>
+        <select id="ui-locale">
+          <option value="en">English</option>
+          <option value="he">עברית</option>
+        </select>
         <fieldset class="inline-options">
           <legend>Response presentation</legend>
           <label><input type="radio" name="presentation" value="full" checked> Full</label>
@@ -61,6 +70,7 @@
           <option value="en">English</option>
         </select>
         <p class="hint">Locale choices are discovered from <code>/v1/locales</code>. Canonical presentation ignores locale.</p>
+        <p id="presentation-locale-support" class="hint" aria-live="polite" hidden></p>
       </section>
 
       <section class="panel">
@@ -140,21 +150,43 @@
           <label>Pastafarian year
             <input id="reverse-year" type="text" inputmode="numeric" required>
           </label>
-          <label>Cutlet canonical index
-            <input id="reverse-cutlet-index" type="number" min="1" max="17" required>
+          <div class="reverse-name-helper full-span">
+            <div class="reverse-helper-heading">
+              <div>
+                <strong>Choose units by name</strong>
+                <p class="hint">Load this year's structure to choose cutlet and month names. The API still receives canonical indices.</p>
+              </div>
+              <button id="reverse-load-names" type="button" class="secondary">Load names for this year</button>
+            </div>
+            <div class="reverse-name-grid">
+              <label>Cutlet by name
+                <select id="reverse-cutlet-choice" disabled>
+                  <option value="">Load names first</option>
+                </select>
+              </label>
+              <label>Month by name
+                <select id="reverse-month-choice" disabled>
+                  <option value="">Load names first</option>
+                </select>
+              </label>
+            </div>
+            <p id="reverse-name-status" class="hint" role="status" aria-live="polite"></p>
+          </div>
+          <label>Cutlet canonical index (manual or filled from name)
+            <input id="reverse-cutlet-index" type="number" min="1" max="17" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in cutlet
             <input id="reverse-cutlet-day" type="text" inputmode="numeric" required>
           </label>
-          <label>Month canonical index
-            <input id="reverse-month-index" type="number" min="1" max="47" required>
+          <label>Month canonical index (manual or filled from name)
+            <input id="reverse-month-index" type="number" min="1" max="47" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in month
             <input id="reverse-month-day" type="text" inputmode="numeric" required>
           </label>
           <div class="form-action"><button type="submit">Reverse convert</button></div>
         </form>
-        <p class="hint">All coordinates are sent. If they contradict one another, the complete Seer error code is displayed.</p>
+        <p id="reverse-index-help" class="hint">Name choices are helpers only. Reverse conversion still sends the complete canonical tuple, and contradictory coordinates return the complete Seer error code.</p>
         <div id="reverse-result" class="result" aria-live="polite" tabindex="-1">
           <p class="muted">No query yet.</p>
         </div>
@@ -226,13 +258,13 @@
       </section>
 
       <section class="query-panel exchange-panel" aria-labelledby="exchange-title">
-        <div class="panel-heading">
-          <div>
-            <h2 id="exchange-title">Latest API exchange</h2>
-            <p>Transport details from the actual browser client request.</p>
-          </div>
-          <button id="copy-response" type="button" class="secondary" disabled>Copy response JSON</button>
-        </div>
+        <details>
+          <summary id="exchange-title">Latest API exchange (advanced)</summary>
+          <div class="advanced-panel-body">
+            <div class="panel-heading">
+              <p>Transport details from the actual browser client request.</p>
+              <button id="copy-response" type="button" class="secondary" disabled>Copy response JSON</button>
+            </div>
         <dl class="compact-dl">
           <div><dt>Method</dt><dd id="exchange-method">—</dd></div>
           <div><dt>Route / URL</dt><dd id="exchange-url" class="breakable">—</dd></div>
@@ -246,6 +278,8 @@
         <details>
           <summary>Raw response</summary>
           <pre id="raw-response" class="raw-block">No response captured.</pre>
+        </details>
+          </div>
         </details>
       </section>
     </div>

@@ -11,15 +11,23 @@ The application exposes:
 - live, explicit-JDN, and explicit-instant calculation-day selection;
 - Kisurra and custom-longitude observer selection;
 - full and canonical presentation, with locale discovery from `/v1/locales`;
-- reverse conversion using the complete canonical tuple;
+- reverse conversion using the complete canonical tuple, with an optional YearResponse-backed name helper that lets users choose active cutlets/months by localized name while submitting the same canonical indices;
 - year structure, with `include=days` only after explicit opt-in;
 - range queries using count or `endInclusive`, step, and fixed or same-as-target calculation mode;
-- readiness plus `/v1/meta` and `/v1/locales` diagnostics;
-- raw request/response transport details and structured API errors.
+- readiness plus `/v1/meta` and `/v1/locales` diagnostics, available under an advanced disclosure;
+- raw request/response transport details and structured API errors, also kept under an advanced disclosure so ordinary date lookup remains primary.
 
 The year view does not synthesize fields that HTTP v1 does not expose. In particular, cutlet offsets are displayed from `YearResponse`; month offsets are shown as unavailable rather than recomputed in the browser.
 
-The locale selector is populated from `/v1/locales`; the web application does not bundle translations. It sends only the selected locale code to HTTP v1. Returned formatted text uses the locale metadata `direction` for rendering, while canonical presentation disables the locale control because locale is semantically irrelevant there.
+The response-locale selector is populated from `/v1/locales`. It sends the chosen response locale to HTTP v1. Returned formatted text uses the response locale direction and carries the returned locale as its HTML `lang` value. Canonical presentation disables the response-locale selector because the locale does not affect canonical output.
+
+The web UI also surfaces each response locale's `sourceSupport` metadata next to the selector. `complete` means the pinned presentation source is marked complete for that locale. `partial` is not a missing-data fallback: Seer still has a complete date formatter plus all 17 cutlet and 47 month display names, while the pinned upstream resource has not completed broader linguistic/UI review. This distinction is deliberately visible so the 72 response locales are not presented as having identical review depth.
+
+The interface language is a separate setting. The production web application has an explicit UI catalog in `web/i18n.mjs` for English and Hebrew. The interface choice is persisted independently, sets the document `lang` and `dir`, and leaves technical JDN, URL, JSON and code values in LTR form inside an RTL Hebrew interface. Changing the interface language does not change calendar calculations or the API response locale.
+
+The Hebrew response pack uses the authoritative Hebrew 17+47 display-name catalog documented in `docs/LOCALIZATION.md`. Canonical indices and reverse-conversion coordinates remain unchanged.
+
+The reverse name helper deliberately remains a presentation layer. It requests the specified year's normal structure with `presentation: "full"` and the selected response locale, lists only cutlets and months returned for that year, and copies the chosen `canonicalIndex` into the existing reverse fields. It does not add a name-based reverse API, infer missing coordinates, or weaken the server-side cross-check of the complete tuple. Manual canonical-index entry remains available if the helper cannot be loaded.
 
 ## API base configuration
 
@@ -29,7 +37,7 @@ Configuration precedence at page load is:
 2. `globalThis.SEER_WEB_CONFIG.apiBase` from `web/config.js`;
 3. the empty string, meaning same origin.
 
-The UI also permits changing the API base at runtime. Accepted values are an empty string, an origin-relative path, or an HTTP(S) URL. URLs containing credentials are rejected.
+The UI also permits changing the API base at runtime under the advanced connection disclosure. Accepted values are an empty string, an origin-relative path, or an HTTP(S) URL. URLs containing credentials are rejected.
 For a same-origin service:
 
 ```js
@@ -136,6 +144,6 @@ Fast tests cover:
 - same-origin static serving;
 - OpenAPI route drift.
 
-The `Verify production web application` workflow also builds the real exact-runtime container and runs Chromium through Playwright. Its browser test covers readiness, current date, explicit Gregorian date, reverse conversion through the exact native runtime, invalid input, the `SEER_UNAVAILABLE` UX, year structure, range queries, a narrow mobile viewport, and cross-origin static-site configuration.
+The `Verify production web application` workflow also builds the real exact-runtime container and runs Chromium through Playwright. Its browser test covers readiness, current date, explicit Gregorian date, the reverse name-to-index helper plus reverse conversion through the exact native runtime, invalid input, the `SEER_UNAVAILABLE` UX, year structure, range queries, a narrow mobile viewport, and cross-origin static-site configuration.
 
 The production web app is repository/deployment material and is intentionally excluded from the npm package allowlist. Therefore adding or changing this UI alone does not require an npm package version bump.
