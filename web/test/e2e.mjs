@@ -38,6 +38,8 @@ try {
   await page.getByRole('button', { name: 'Refresh now' }).click();
   await expectText(page.locator('#now-result .formatted'), /^שנה /);
   assert.equal(await page.locator('#now-result .formatted').getAttribute('dir'), 'rtl');
+  assert.equal(await page.locator('#now-result .formatted').getAttribute('lang'), 'he');
+  assert.equal(await page.locator('#connection-form').isVisible(), false);
 
   const dateNav = page.getByRole('button', { name: 'Date', exact: true });
   await dateNav.focus();
@@ -51,6 +53,7 @@ try {
   await page.getByRole('button', { name: 'Query date' }).click();
   await expectText(page.locator('#date-result'), /2461304/);
   await expectText(page.locator('#date-result'), /Pastafarian year/);
+  await page.locator('#exchange-title').click();
   await expectText(page.locator('#exchange-method'), /^POST$/);
   await expectText(page.locator('#exchange-url'), /\/v1\/date$/);
   await expectText(page.locator('#exchange-status'), /^200$/);
@@ -104,11 +107,14 @@ try {
   await expectText(page.locator('#year-result'), /Not exposed by HTTP v1/);
 
   await page.getByRole('button', { name: 'Range', exact: true }).click();
+  await choose(page, 'presentation', 'full');
+  await page.locator('#presentation-locale').selectOption('en');
   await page.locator('#range-start-gregorian').fill('2026-09-20');
   await page.locator('#range-count').fill('3');
   await page.locator('#range-step').fill('1');
   await page.getByRole('button', { name: 'Query range' }).click();
   await expectText(page.locator('#range-result'), /Range result — 3 rows/);
+  await expectText(page.locator('#range-result'), /· #\d+/);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(apiBase + '/web/?mode=date&targetKind=gregorian&target=2026-09-20&calculationMode=jdn&calculation=2461302', {
