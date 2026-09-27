@@ -21,6 +21,8 @@ The year view does not synthesize fields that HTTP v1 does not expose. In partic
 
 The response-locale selector is populated from `/v1/locales`. It sends the chosen response locale to HTTP v1. Returned formatted text uses the response locale direction and carries the returned locale as its HTML `lang` value. Canonical presentation disables the response-locale selector because the locale does not affect canonical output.
 
+The web UI also surfaces each response locale's `sourceSupport` metadata next to the selector. `complete` means the pinned presentation source is marked complete for that locale. `partial` is not a missing-data fallback: Seer still has a complete date formatter plus all 17 cutlet and 47 month display names, while the pinned upstream resource has not completed broader linguistic/UI review. This distinction is deliberately visible so the 72 response locales are not presented as having identical review depth.
+
 The interface language is a separate setting. The production web application has an explicit UI catalog in `web/i18n.mjs` for English and Hebrew. The interface choice is persisted independently, sets the document `lang` and `dir`, and leaves technical JDN, URL, JSON and code values in LTR form inside an RTL Hebrew interface. Changing the interface language does not change calendar calculations or the API response locale.
 
 The Hebrew response pack uses the authoritative Hebrew 17+47 display-name catalog documented in `docs/LOCALIZATION.md`. Canonical indices and reverse-conversion coordinates remain unchanged.
