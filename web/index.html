@@ -149,13 +149,35 @@
           <label>Pastafarian year
             <input id="reverse-year" type="text" inputmode="numeric" required>
           </label>
-          <label>Cutlet number (canonical index)
+          <div class="reverse-name-helper full-span">
+            <div class="reverse-helper-heading">
+              <div>
+                <strong>Choose units by name</strong>
+                <p class="hint">Load this year's structure to choose cutlet and month names. The API still receives canonical indices.</p>
+              </div>
+              <button id="reverse-load-names" type="button" class="secondary">Load names for this year</button>
+            </div>
+            <div class="reverse-name-grid">
+              <label>Cutlet by name
+                <select id="reverse-cutlet-choice" disabled>
+                  <option value="">Load names first</option>
+                </select>
+              </label>
+              <label>Month by name
+                <select id="reverse-month-choice" disabled>
+                  <option value="">Load names first</option>
+                </select>
+              </label>
+            </div>
+            <p id="reverse-name-status" class="hint" role="status" aria-live="polite"></p>
+          </div>
+          <label>Cutlet canonical index (manual or filled from name)
             <input id="reverse-cutlet-index" type="number" min="1" max="17" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in cutlet
             <input id="reverse-cutlet-day" type="text" inputmode="numeric" required>
           </label>
-          <label>Month number (canonical index)
+          <label>Month canonical index (manual or filled from name)
             <input id="reverse-month-index" type="number" min="1" max="47" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in month
@@ -163,7 +185,7 @@
           </label>
           <div class="form-action"><button type="submit">Reverse convert</button></div>
         </form>
-        <p id="reverse-index-help" class="hint">Use Year structure to see which names correspond to the canonical indices for the selected presentation. All coordinates are sent; contradictory coordinates return the complete Seer error code.</p>
+        <p id="reverse-index-help" class="hint">Name choices are helpers only. Reverse conversion still sends the complete canonical tuple, and contradictory coordinates return the complete Seer error code.</p>
         <div id="reverse-result" class="result" aria-live="polite" tabindex="-1">
           <p class="muted">No query yet.</p>
         </div>
