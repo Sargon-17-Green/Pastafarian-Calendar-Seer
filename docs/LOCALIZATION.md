@@ -27,17 +27,17 @@ A syntactically valid but unsupported code such as `en-US` fails with `LOCALE_NO
 
 `presentation: "canonical"` is language-free and intentionally ignores `locale`, including malformed or unsupported locale values. This preserves the v1 machine-oriented contract.
 
-HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotiated. The browser client carries locale values to the HTTP API and contains no translation catalog.
+HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotiated. The reusable browser client carries locale values to the HTTP API and contains no response-translation catalog. The production web application has a separate, explicit UI-chrome catalog for English and Hebrew; its interface language is independent of the response locale sent to HTTP v1.
 
 ## English and Hebrew
 
 English is a normal locale pack and therefore exercises the same catalog, validator, name lookup, and formatter path as every other locale.
 
-The first additional pack is `he`. It localizes formatting, self-name, and RTL direction. Its 17+47 Pastafarian proper names are deliberately the verified English names and the pack declares `properNamePolicy: "english-retained"`. This is explicit pack data, not a missing-string fallback.
+The first additional pack is `he`. It localizes formatting, self-name, RTL direction, and the full 17+47 Pastafarian display-name catalog. The authoritative Hebrew names come from `Sargon17-Green/Pastafarian-Calendar`, branch `Dart+עברית`, file `lib/src/source_language_catalog.dart`, blob `b0d5286523a417cb8c307165960ee43f9019be89`. That catalog is frozen in canonical-index order and is used here only as presentation data; Seer does not derive canonical identity from the strings.
 
-Those proper names must not be translated until an authoritative naming source is supplied and documented.
+The Hebrew pack therefore declares `properNamePolicy: "localized"`. Canonical indices, reverse coordinates, year/month/cutlet structure and all exact calculations remain unchanged.
 
-Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and retained LTR proper names. Machine-readable numeric fields remain ASCII decimal strings.
+Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and localized names so mixed-direction embedding remains stable. Machine-readable numeric fields remain ASCII decimal strings.
 
 ## API discovery
 
@@ -82,9 +82,11 @@ Broad formatter/catalog tests use deterministic fixture records so localization 
 
 ## RTL and web rendering
 
-`direction` is presentation metadata only. A web UI should set its text direction from locale metadata and insert returned `formatted` text as text content, never via `innerHTML`.
+`direction` in a response-locale pack is presentation metadata only. Returned `formatted` text is inserted as text content, never via `innerHTML`, and receives the response locale as its HTML `lang` value.
 
-Mixed-direction content should preserve bidi isolation. Exact JDNs, canonical indices, IDs, and other machine fields are not transformed for RTL locales.
+The production web application's interface language is a separate setting. It currently supports English and Hebrew, persists independently from the response locale, and sets the document `lang` and `dir` accordingly. Technical values such as JDNs, URLs, raw JSON, canonical indices and code remain LTR even when the surrounding interface is RTL.
+
+Mixed-direction content should preserve bidi isolation. Locale changes never transform machine fields or alter their mathematical values.
 
 ## Security
 
