@@ -173,13 +173,10 @@ try {
 } finally {
   closeExactServices();
   await new Promise((resolve) => server.close(resolve));
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    try {
-      await rm(work, { recursive: true, force: true });
-      break;
-    } catch (error) {
-      if (error?.code !== 'EBUSY' || attempt === 4) throw error;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-  }
+  await rm(work, {
+    recursive: true,
+    force: true,
+    maxRetries: 12,
+    retryDelay: 250,
+  });
 }
