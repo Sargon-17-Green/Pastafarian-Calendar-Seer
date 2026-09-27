@@ -43,7 +43,7 @@ function coordinateLabel(item) {
 
 function coordinateWithDay(item) {
   if (!item) return '—';
-  return `${coordinateLabel(item)}, ${t('dayInMonth').replace('בחודש', '').replace('in month', '').trim() || 'day'} ${item.day}`;
+  return `${coordinateLabel(item)}, ${t('day')} ${item.day}`;
 }
 
 function localizedErrorView(view) {
