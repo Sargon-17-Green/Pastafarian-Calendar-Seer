@@ -44,6 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check web/app.mjs
+          node --check web/i18n.mjs
           node --check web/model.mjs
           node --check web/transport.mjs
           node --check web/test/e2e.mjs
