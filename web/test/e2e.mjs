@@ -81,9 +81,36 @@ try {
 
   await page.getByRole('button', { name: 'Reverse', exact: true }).click();
   await page.locator('#reverse-year').fill('5000');
-  await page.locator('#reverse-cutlet-index').fill('5');
+  await page.route('**/v1/year/5000*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        calculationDay: { jdn: '2461302' },
+        year: {
+          number: '5000',
+          cutlets: [
+            { canonicalIndex: 5, name: 'מחשבה', lengthDays: 500, startOffset: 0, endOffset: 499 },
+            { canonicalIndex: 15, name: 'אכד', lengthDays: 500, startOffset: 500, endOffset: 999 },
+          ],
+          months: [
+            { canonicalIndex: 23, name: 'דבש', lengthDays: 100 },
+            { canonicalIndex: 33, name: 'שומשום', lengthDays: 100 },
+          ],
+        },
+      }),
+    });
+  });
+  await page.getByRole('button', { name: 'Load names for this year' }).click();
+  await expectText(page.locator('#reverse-name-status'), /Names loaded for Pastafarian year 5000/);
+  assert.equal(await page.locator('#reverse-cutlet-choice').isEnabled(), true);
+  assert.equal(await page.locator('#reverse-month-choice').isEnabled(), true);
+  await page.locator('#reverse-cutlet-choice').selectOption('5');
+  await page.locator('#reverse-month-choice').selectOption('33');
+  assert.equal(await page.locator('#reverse-cutlet-index').inputValue(), '5');
+  assert.equal(await page.locator('#reverse-month-index').inputValue(), '33');
+  await page.unroute('**/v1/year/5000*');
   await page.locator('#reverse-cutlet-day').fill('351');
-  await page.locator('#reverse-month-index').fill('33');
   await page.locator('#reverse-month-day').fill('69');
   await page.getByRole('button', { name: 'Reverse convert' }).click();
   await expectText(page.locator('#reverse-result'), /2461304/, 60000);
