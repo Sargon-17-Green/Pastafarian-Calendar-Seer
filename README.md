@@ -230,7 +230,7 @@ Localization is presentation-only. English itself is a normal locale pack rather
 
 `GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
 
-The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the 17 cutlet and 47 month proper names intentionally remain the verified English names until a documented Hebrew naming authority is available. This is explicit locale-pack data, not silent fallback.
+The first additional locale is `he`. Its formatter, RTL metadata, and all 17 cutlet plus 47 month display names are Hebrew. The names are sourced from the frozen Hebrew source-language catalog documented in `docs/LOCALIZATION.md`; canonical indices and calculation semantics are unchanged.
 
 See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
@@ -685,7 +685,7 @@ A normal date or reverse response contains:
 | `provenance` | Present when requested |
 | `resolution` | Present when requested |
 
-When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The initial Hebrew pack localizes formatting and RTL metadata but deliberately retains the verified English Pastafarian proper names until an authoritative Hebrew naming source is supplied.
+When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The Hebrew pack supplies the authoritative Hebrew display names while preserving the same canonical indices used by canonical presentation and reverse conversion.
 
 The `resolution` object is useful for debugging defaults. It records how the calculation day, target, and observer were selected.
 
@@ -1096,7 +1096,7 @@ The repository contains:
 Known limitations:
 
 - the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
-- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
+- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack includes the authoritative Hebrew 17+47 display-name catalog;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - Windows ARM64 and macOS native exact-runtime support are not currently verified;
 - public npm-registry publication is not configured yet.
