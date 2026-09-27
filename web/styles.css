@@ -338,6 +338,45 @@ pre {
   align-items: end;
 }
 
+.full-span {
+  grid-column: 1 / -1;
+}
+
+.reverse-name-helper {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  background: var(--surface-soft);
+}
+
+.reverse-helper-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.reverse-helper-heading .hint {
+  margin: 0.2rem 0 0;
+}
+
+.reverse-name-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem 1rem;
+}
+
+.reverse-name-grid label {
+  margin: 0;
+}
+
+#reverse-name-status {
+  min-height: 1.35em;
+  margin: 0;
+}
+
 .warning-option {
   margin: 0.9rem 0 !important;
   padding: 0.7rem;
@@ -548,6 +587,22 @@ th {
   .two-column,
   .selector-box {
     grid-template-columns: 1fr;
+  }
+
+  .reverse-name-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reverse-helper-heading {
+    display: block;
+  }
+
+  .reverse-helper-heading button {
+    margin-top: 0.65rem;
+  }
+
+  .full-span {
+    grid-column: auto;
   }
 
   .selector-box legend {
