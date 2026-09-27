@@ -13,7 +13,19 @@ const exportedSchema = JSON.parse(await readFile(exportedSchemaPath, 'utf8'));
 assert.equal(exportedSchema.$id, 'date-response.schema.json');
 const packagedSchemaCount = (await readdir(path.join(packageRoot, 'api', 'schemas'))).filter((name) => name.endsWith('.json')).length;
 const packagedLocales = (await readdir(path.join(packageRoot, 'query', 'locales'))).filter((name) => name.endsWith('.mjs')).sort();
-assert.deepEqual(packagedLocales, ['catalog.mjs', 'en.mjs', 'he.mjs']);
+assert.deepEqual(packagedLocales, [
+  'catalog.mjs',
+  'en.mjs',
+  'he.mjs',
+  'site-imported-01.mjs',
+  'site-imported-02.mjs',
+  'site-imported-03.mjs',
+  'site-imported-04.mjs',
+  'site-imported-05.mjs',
+  'site-imported-06.mjs',
+  'site-imported-07.mjs',
+  'site-imported-factory.mjs',
+]);
 
 const calculationJdn = 2461303;
 const targetJdn = 2461308;
@@ -83,6 +95,10 @@ assert.equal(direct.targetDay.jdn, String(targetJdn));
 const localizedDirect = await queryDate({ ...request, presentation: 'full', locale: 'he' }, queryOptions);
 assert.equal(localizedDirect.locale, 'he');
 assert.match(localizedDirect.formatted, /^שנה /);
+const japaneseDirect = await queryDate({ ...request, presentation: 'full', locale: 'ja' }, queryOptions);
+assert.equal(japaneseDirect.locale, 'ja');
+assert.equal(typeof japaneseDirect.pastafarianDate.cutlet.name, 'string');
+assert.equal(typeof japaneseDirect.pastafarianDate.month.name, 'string');
 
 const boundary = await queryCalculationDay({
   at: '2026-09-19T12:00:00Z',
@@ -127,7 +143,10 @@ try {
   const clientLocalized = await browserClient.queryDate({ ...request, presentation: 'full', locale: 'he' });
   assert.equal(clientLocalized.locale, 'he');
   const locales = await browserClient.getLocales();
-  assert.deepEqual(locales.locales.map((item) => item.code), ['en', 'he']);
+  assert.equal(locales.locales.length, 72);
+  assert.deepEqual(locales.locales.slice(0, 4).map((item) => item.code), ['en', 'he', 'af', 'ar']);
+  assert.equal(locales.locales.find((item) => item.code === 'ar').sourceSupport, 'partial');
+  assert.equal(locales.locales.at(-1).code, 'zu');
   const metaResponse = await fetch('http://127.0.0.1:' + port + '/v1/meta');
   const meta = await metaResponse.json();
   assert.equal(metaResponse.status, 200);
