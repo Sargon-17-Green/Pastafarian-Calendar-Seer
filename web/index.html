@@ -13,9 +13,9 @@
   <a class="skip-link" href="#workspace">Skip to queries</a>
   <header class="site-header">
     <div>
-      <p class="eyebrow">Pastafarian Calendar Seer</p>
-      <h1>Web application</h1>
-      <p class="lede">A browser client for the exact Seer HTTP v1 service. Calendar semantics stay on the server.</p>
+      <p class="eyebrow">Pastafarian Calendar</p>
+      <h1>Seer</h1>
+      <p class="lede">Look up Pastafarian dates and calendar structures. Advanced API controls remain available when you need them.</p>
     </div>
     <div class="readiness" aria-live="polite">
       <span id="api-indicator" class="indicator" data-state="checking" aria-hidden="true"></span>
@@ -29,8 +29,10 @@
 
   <main id="workspace" class="layout">
     <aside class="controls" aria-label="Seer connection and shared query controls">
-      <section class="panel">
-        <h2>Connection</h2>
+      <section class="panel advanced-panel">
+        <details>
+          <summary>Connection &amp; API diagnostics (advanced)</summary>
+          <div class="advanced-panel-body">
         <form id="connection-form">
           <label for="api-base">API base URL</label>
           <input id="api-base" name="apiBase" type="text" inputmode="url" spellcheck="false" autocomplete="off"
@@ -46,6 +48,8 @@
             <div><dt>Reverse</dt><dd id="meta-reverse">—</dd></div>
           </dl>
           <pre id="meta-json" class="raw-block" aria-label="Raw API metadata">No metadata loaded.</pre>
+        </details>
+          </div>
         </details>
       </section>
 
@@ -140,21 +144,21 @@
           <label>Pastafarian year
             <input id="reverse-year" type="text" inputmode="numeric" required>
           </label>
-          <label>Cutlet canonical index
-            <input id="reverse-cutlet-index" type="number" min="1" max="17" required>
+          <label>Cutlet number (canonical index)
+            <input id="reverse-cutlet-index" type="number" min="1" max="17" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in cutlet
             <input id="reverse-cutlet-day" type="text" inputmode="numeric" required>
           </label>
-          <label>Month canonical index
-            <input id="reverse-month-index" type="number" min="1" max="47" required>
+          <label>Month number (canonical index)
+            <input id="reverse-month-index" type="number" min="1" max="47" required aria-describedby="reverse-index-help">
           </label>
           <label>Day in month
             <input id="reverse-month-day" type="text" inputmode="numeric" required>
           </label>
           <div class="form-action"><button type="submit">Reverse convert</button></div>
         </form>
-        <p class="hint">All coordinates are sent. If they contradict one another, the complete Seer error code is displayed.</p>
+        <p id="reverse-index-help" class="hint">Use Year structure to see which names correspond to the canonical indices for the selected presentation. All coordinates are sent; contradictory coordinates return the complete Seer error code.</p>
         <div id="reverse-result" class="result" aria-live="polite" tabindex="-1">
           <p class="muted">No query yet.</p>
         </div>
@@ -226,13 +230,13 @@
       </section>
 
       <section class="query-panel exchange-panel" aria-labelledby="exchange-title">
-        <div class="panel-heading">
-          <div>
-            <h2 id="exchange-title">Latest API exchange</h2>
-            <p>Transport details from the actual browser client request.</p>
-          </div>
-          <button id="copy-response" type="button" class="secondary" disabled>Copy response JSON</button>
-        </div>
+        <details>
+          <summary id="exchange-title">Latest API exchange (advanced)</summary>
+          <div class="advanced-panel-body">
+            <div class="panel-heading">
+              <p>Transport details from the actual browser client request.</p>
+              <button id="copy-response" type="button" class="secondary" disabled>Copy response JSON</button>
+            </div>
         <dl class="compact-dl">
           <div><dt>Method</dt><dd id="exchange-method">—</dd></div>
           <div><dt>Route / URL</dt><dd id="exchange-url" class="breakable">—</dd></div>
@@ -246,6 +250,8 @@
         <details>
           <summary>Raw response</summary>
           <pre id="raw-response" class="raw-block">No response captured.</pre>
+        </details>
+          </div>
         </details>
       </section>
     </div>
