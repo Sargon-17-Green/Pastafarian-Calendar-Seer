@@ -108,6 +108,15 @@ function yearState() {
   };
 }
 
+function reverseNameYearState() {
+  return {
+    ...sharedState(),
+    presentation: 'full',
+    locale: q('#presentation-locale').value || 'en',
+    yearNumber: q('#reverse-year').value,
+  };
+}
+
 function rangeState() {
   return {
     ...sharedState(),
@@ -132,6 +141,7 @@ let queryController = null;
 let querySerial = 0;
 let latestTrace = null;
 let requestedLocale = null;
+let reverseNameSignature = null;
 let localeMetadata = new Map([['en', Object.freeze({ code: 'en', direction: 'ltr', default: true })]]);
 
 function formatJson(value) {
@@ -170,6 +180,97 @@ function tracedClient(signal, serial) {
 
 function plainClient() {
   return createTracedSeerClient(apiBase);
+}
+
+function reverseNameLookupSignature() {
+  const state = reverseNameYearState();
+  return JSON.stringify({
+    apiBase,
+    year: state.yearNumber,
+    locale: state.locale,
+    calculationMode: state.calculationMode,
+    calculationJdn: state.calculationJdn,
+    calculationAt: state.calculationAt,
+    observerMode: state.observerMode,
+    longitude: state.longitude,
+  });
+}
+
+function resetReverseNameChoices({ clearStatus = true } = {}) {
+  reverseNameSignature = null;
+  for (const selector of ['#reverse-cutlet-choice', '#reverse-month-choice']) {
+    const select = q(selector);
+    select.replaceChildren(node('option', { text: t('reverseNamesLoadFirst'), attrs: { value: '' } }));
+    select.disabled = true;
+  }
+  if (clearStatus) q('#reverse-name-status').textContent = '';
+}
+
+function populateReverseNameChoices(result, signature) {
+  const year = result?.year;
+  if (!year || !Array.isArray(year.cutlets) || !Array.isArray(year.months)) {
+    throw new Error(t('reverseNamesMalformed'));
+  }
+  const cutlet = q('#reverse-cutlet-choice');
+  const month = q('#reverse-month-choice');
+  const cutletValue = q('#reverse-cutlet-index').value;
+  const monthValue = q('#reverse-month-index').value;
+  cutlet.replaceChildren(
+    node('option', { text: t('chooseCutlet'), attrs: { value: '' } }),
+    ...year.cutlets.map((item) => node('option', {
+      text: coordinateLabel(item),
+      attrs: { value: item.canonicalIndex },
+    })),
+  );
+  month.replaceChildren(
+    node('option', { text: t('chooseMonth'), attrs: { value: '' } }),
+    ...year.months.map((item) => node('option', {
+      text: coordinateLabel(item),
+      attrs: { value: item.canonicalIndex },
+    })),
+  );
+  cutlet.disabled = false;
+  month.disabled = false;
+  if ([...cutlet.options].some((option) => option.value === cutletValue)) cutlet.value = cutletValue;
+  if ([...month.options].some((option) => option.value === monthValue)) month.value = monthValue;
+  reverseNameSignature = signature;
+  q('#reverse-name-status').textContent = t('reverseNamesLoaded', { year: year.number });
+}
+
+async function loadReverseNames() {
+  const button = q('#reverse-load-names');
+  const status = q('#reverse-name-status');
+  button.disabled = true;
+  status.textContent = t('reverseNamesLoading');
+  const signature = reverseNameLookupSignature();
+  try {
+    const { year, request } = buildYearRequest(reverseNameYearState());
+    const result = await plainClient().queryYear(year, request);
+    if (signature !== reverseNameLookupSignature()) {
+      resetReverseNameChoices({ clearStatus: false });
+      status.textContent = t('reverseNamesContextChanged');
+      return;
+    }
+    populateReverseNameChoices(result, signature);
+  } catch (error) {
+    resetReverseNameChoices({ clearStatus: false });
+    const view = localizedErrorView(errorPresentation(error));
+    status.textContent = t('reverseNamesLoadFailed', { message: view.message || view.category });
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function syncReverseChoice(selectSelector, inputSelector) {
+  const select = q(selectSelector);
+  const input = q(inputSelector);
+  select.addEventListener('change', () => {
+    if (select.value) input.value = select.value;
+  });
+  input.addEventListener('input', () => {
+    if (select.disabled) return;
+    select.value = [...select.options].some((option) => option.value === input.value) ? input.value : '';
+  });
 }
 
 function loading(host, label) {
@@ -557,6 +658,7 @@ async function refreshDiagnostics() {
     select.value = codes.has(previous) ? previous : fallback;
     requestedLocale = null;
     updatePresentationInputs();
+    resetReverseNameChoices();
   } else {
     q('#meta-locales').textContent = '—';
   }
@@ -565,6 +667,7 @@ async function refreshDiagnostics() {
 function applyApiBase(raw) {
   apiBase = normalizeApiBase(raw);
   q('#api-base').value = apiBase;
+  resetReverseNameChoices();
   syncUrl();
   return refreshDiagnostics();
 }
@@ -600,6 +703,23 @@ q('#date-form').addEventListener('submit', (event) => {
     (host, result) => renderDate(host, result, t('dateResult')),
   );
 });
+
+q('#reverse-load-names').addEventListener('click', loadReverseNames);
+syncReverseChoice('#reverse-cutlet-choice', '#reverse-cutlet-index');
+syncReverseChoice('#reverse-month-choice', '#reverse-month-index');
+q('#reverse-year').addEventListener('input', () => resetReverseNameChoices());
+q('#presentation-locale').addEventListener('change', () => resetReverseNameChoices());
+for (const selector of [
+  'input[name="calculation-mode"]',
+  '#calculation-jdn',
+  '#calculation-at',
+  'input[name="observer-mode"]',
+  '#observer-longitude',
+]) {
+  for (const control of qa(selector)) {
+    control.addEventListener(control.matches('input[type="radio"]') ? 'change' : 'input', () => resetReverseNameChoices());
+  }
+}
 
 q('#reverse-form').addEventListener('submit', (event) => {
   event.preventDefault();
