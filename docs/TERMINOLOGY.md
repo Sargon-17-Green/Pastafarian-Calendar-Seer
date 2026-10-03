@@ -2,7 +2,7 @@
 
 ## Scroll
 
-The normative specification of the Pastafarian Calendar. The Scroll defines the answer.
+An admitted Scroll edition is a canonical textual edition when the canonical corpus says so. A Scroll edition is not the exhaustive authority over the final corpus, and admitted editions do not form an automatic hierarchy.
 
 ## Monster
 
@@ -22,5 +22,5 @@ Use `oracle` in this project primarily in the software-testing sense: an indepen
 reference used to decide whether a result is correct.
 
 This distinction is intentional. Calling the accelerated engine “Oracle” would make it
-too easy to confuse the fast implementation with the source of truth. The Seer predicts;
-the normative oracle checks.
+too easy to confuse the fast implementation with canonical authority. The Seer predicts;
+the testing oracle checks against the canonical corpus and algorithm.
