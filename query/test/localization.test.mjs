@@ -161,7 +161,7 @@ test('year structures are invariant across locales including maximum indices', a
   assert.equal(en.year.cutlets.at(-1).canonicalIndex, 17);
   assert.equal(he.year.months.at(-1).canonicalIndex, 47);
   assert.equal(en.year.cutlets.at(-1).name, 'The Empty Jar');
-  assert.equal(he.year.months.at(-1).name, 'Sand');
+  assert.equal(he.year.months.at(-1).name, 'חול');
   assert.deepEqual(stripPresentation(en), canonical);
   assert.deepEqual(stripPresentation(he), canonical);
 });
