@@ -66,7 +66,7 @@ test('locale catalog is complete, immutable and discoverable', () => {
   assert.equal(locales[0].default, true);
   assert.equal(locales[1].selfName, 'עברית');
   assert.equal(locales[1].direction, 'rtl');
-  assert.equal(locales[1].properNamePolicy, 'english-retained');
+  assert.equal(locales[1].properNamePolicy, 'localized');
 
   for (const code of ['en', 'he']) {
     const pack = getLocalePack(code);
@@ -114,9 +114,9 @@ test('Hebrew localizes only presentation fields', async () => {
   assert.equal(hebrew.locale, 'he');
   assert.match(hebrew.formatted, /^שנה /);
   assert.match(hebrew.formatted, /\u20685000\u2069/);
-  assert.match(hebrew.formatted, /\u2068Akkad\u2069/);
-  assert.equal(hebrew.pastafarianDate.cutlet.name, 'Akkad');
-  assert.equal(hebrew.pastafarianDate.month.name, 'Honey');
+  assert.match(hebrew.formatted, /\u2068אכד\u2069/);
+  assert.equal(hebrew.pastafarianDate.cutlet.name, 'אכד');
+  assert.equal(hebrew.pastafarianDate.month.name, 'דבש');
   assert.deepEqual(stripPresentation(english), canonical);
   assert.deepEqual(stripPresentation(hebrew), canonical);
 });
