@@ -6,7 +6,7 @@ The **Seer** is a high-performance engine and public API for the Pastafarian Cal
 
 [Hosted Public API architecture and production contract](docs/PUBLIC_API_ARCHITECTURE.md) defines the authority boundary for a future hosted public HTTPS service. It is a pre-launch contract, not a claim that a production endpoint is already live.
 
-The Seer is **not normative**. The current Scroll defines the calendar; if the Seer disagrees with it, the Seer is wrong. The Seer is deliberately allowed to use precomputation, algebraic shortcuts, specialized integer representations, SIMD, and other optimizations instead of reenacting the Monster's liturgy.
+The Seer is **not a canonical authority**. Canonical calendar meaning is defined by the canonical corpus and the algorithm it adopts; if the Seer returns a result that conflicts with that corpus, the Seer is wrong. The Seer is deliberately allowed to use precomputation, algebraic shortcuts, specialized integer representations, SIMD, and other optimizations instead of reenacting the Monster's liturgy.
 
 ## Install
 
@@ -226,11 +226,11 @@ For `queryYear()`, supported includes are `days`, `provenance`, and `resolution`
 
 ## Localization
 
-Localization is presentation-only. English itself is a normal locale pack rather than a special code path. The HTTP API uses explicit `locale` only; `Accept-Language` is intentionally not negotiated in v1.
+Localization is presentation-only with respect to calendar computation and semantic indices. English itself is a normal locale pack rather than a special code path. Whether a displayed linguistic form is standard is determined by the canonical corpus and its admitted language rules. The HTTP API uses explicit `locale` only; `Accept-Language` is intentionally not negotiated in v1.
 
 `GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
 
-The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the 17 cutlet and 47 month proper names intentionally remain the verified English names until a documented Hebrew naming authority is available. This is explicit locale-pack data, not silent fallback.
+The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the current runtime pack still retains English proper names. The canonical corpus now contains admitted Hebrew period-name forms, so this pack is pending data alignment; the retained English names are implementation data, not canonical Hebrew forms.
 
 See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
