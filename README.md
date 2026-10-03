@@ -230,7 +230,7 @@ Localization is presentation-only with respect to calendar computation and seman
 
 `GET /v1/locales` returns canonical code, English and self names, direction, default status, locale-pack version, and proper-name policy so a UI can build a selector without bundling translations.
 
-The first additional locale is `he`. Its formatter and RTL metadata are Hebrew, while the current runtime pack still retains English proper names. The canonical corpus now contains admitted Hebrew period-name forms, so this pack is pending data alignment; the retained English names are implementation data, not canonical Hebrew forms.
+The first additional locale is `he`. Its formatter, RTL metadata, and 17+47 Pastafarian period names use the admitted Hebrew forms from the canonical corpus.
 
 See [`docs/LOCALIZATION.md`](docs/LOCALIZATION.md) for the locale-pack schema, contribution rules, fallback policy, BCP 47 normalization, semantic-invariance requirements, and RTL guidance.
 
@@ -685,7 +685,7 @@ A normal date or reverse response contains:
 | `provenance` | Present when requested |
 | `resolution` | Present when requested |
 
-When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The initial Hebrew pack localizes formatting and RTL metadata but deliberately retains the verified English Pastafarian proper names until an authoritative Hebrew naming source is supplied.
+When `presentation: 'full'` is used, cutlet and month objects also contain their locale-pack `name`. The Hebrew pack uses the admitted Hebrew period-name forms; the English pack uses the admitted English forms, including `flatsedge` at cutlet canonical index 8.
 
 The `resolution` object is useful for debugging defaults. It records how the calculation day, target, and observer were selected.
 
@@ -1096,7 +1096,7 @@ The repository contains:
 Known limitations:
 
 - the exact engine has a finite bundled ±100,000-gate horizon (`-63473948 < JDN <= 36828783`);
-- presentation uses validated locale packs (`en`, `he` initially); the Hebrew pack intentionally retains English Pastafarian proper names pending verified translation authority;
+- presentation uses validated locale packs (`en`, `he` initially); both packs use their admitted canonical-corpus period-name forms;
 - exact out-of-cache execution requires the native toolchain/runtime;
 - Windows ARM64 and macOS native exact-runtime support are not currently verified;
 - public npm-registry publication is not configured yet.
