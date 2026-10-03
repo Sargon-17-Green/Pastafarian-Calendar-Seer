@@ -2,8 +2,8 @@
 
 ## `prototype/data/gates_u16.bin`
 
-The current prototype bundles **40,000 positive canonical gate gaps** (`0..40000`) as fixed algorithm data.
-The corpus is derived from the canonical saved-sum Sauce semantics of the current Scroll.
+The current prototype bundles **40,000 positive reference gate gaps** (`0..40000`) as fixed algorithm data.
+The corpus is derived from the current saved-sum Sauce semantics used for conformance.
 
 Current SHA-256:
 

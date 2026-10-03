@@ -11,11 +11,11 @@ The hosted service is a deployment, policy, reliability, security, and operation
 
 ## 1. Authority boundaries
 
-Calendar semantics remain governed by the canonical calendar authority and the verified Seer implementation. This document must never be used to change calendar arithmetic, canonical indices, the calculation-day model, observer semantics, Gregorian/JDN semantics, or the Foundation.
+Calendar semantics remain governed by the canonical corpus and the canonical algorithm it adopts. The verified Seer implementation governs implementation behavior, not calendar meaning. This document must never be used to change calendar arithmetic, canonical indices, the calculation-day model, observer semantics, Gregorian/JDN semantics, or the Foundation.
 
 For the hosted service, the authority order is:
 
-1. canonical calendar authority for calendar meaning;
+1. canonical corpus and canonical algorithm for calendar meaning;
 2. OpenAPI plus referenced JSON Schemas for the wire contract;
 3. this document for public-hosting, compatibility, privacy, reliability, and deployment policy;
 4. provider configuration and operational runbooks for implementation details that do not contradict the above.
