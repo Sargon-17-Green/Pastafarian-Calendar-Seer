@@ -4,7 +4,7 @@
 
 export const CUTLET_NAMES = Object.freeze([
   'Bronze', 'Fox', 'Kidney', 'Lagash', 'Thought', 'Four Parts of Nine', 'Palgurash',
-  'Papyrus Sedge', 'Cluster', 'Scorpion', 'Ash', 'Wheat', 'River', 'Laughter',
+  'flatsedge', 'Cluster', 'Scorpion', 'Ash', 'Wheat', 'River', 'Laughter',
   'Akkad', 'Horn', 'The Empty Jar',
 ]);
 
@@ -31,7 +31,7 @@ export function formatEnglish({ year, cutlet, month }) {
 
 export const LOCALE_PACK = Object.freeze({
   schemaVersion: 1,
-  version: '1.0.0',
+  version: '1.1.0',
   code: 'en',
   name: 'English',
   selfName: 'English',
