@@ -33,11 +33,11 @@ HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotia
 
 English is a normal locale pack and therefore exercises the same catalog, validator, name lookup, and formatter path as every other locale.
 
-The first additional pack is `he`. It localizes formatting, self-name, and RTL direction. Its current 17+47 Pastafarian proper names are retained English forms and the pack declares `properNamePolicy: "english-retained"`. This is explicit pack data, not a missing-string fallback.
+The first additional pack is `he`. It localizes formatting, self-name, RTL direction, and all 17+47 Pastafarian period names. Its name tables are the admitted Hebrew forms from the canonical corpus and the pack declares `properNamePolicy: "localized"`.
 
-The canonical corpus now contains admitted Hebrew period-name forms. The current pack therefore needs a separate data-alignment change before it can claim those forms; repository presence or historical verification does not make the retained English forms canonical Hebrew names.
+The English pack likewise follows the admitted English name table; cutlet canonical index 8 is `flatsedge`.
 
-Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and retained LTR proper names. Machine-readable numeric fields remain ASCII decimal strings.
+Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and localized proper names. Machine-readable numeric fields remain ASCII decimal strings.
 
 ## API discovery
 
