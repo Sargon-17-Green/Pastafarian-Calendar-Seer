@@ -1,6 +1,6 @@
 # Localization and locale packs
 
-Localization in Pastafarian Calendar Seer is presentation-only. Locale data must never influence year numbers, cutlet or month indices, gate selection, Sauce, calculation-day boundaries, reverse conversion, exact-runtime behavior, JDNs, or canonical JSON coordinates.
+Localization in Pastafarian Calendar Seer is presentation-only with respect to computation and semantic indices. Locale data must never influence year numbers, cutlet or month indices, gate selection, Sauce, calculation-day boundaries, reverse conversion, exact-runtime behavior, JDNs, or canonical JSON coordinates. Whether a displayed linguistic form is standard is determined by the canonical corpus and its admitted language rules.
 
 ## Runtime architecture
 
@@ -33,9 +33,9 @@ HTTP v1 uses explicit `locale` parameters only. `Accept-Language` is not negotia
 
 English is a normal locale pack and therefore exercises the same catalog, validator, name lookup, and formatter path as every other locale.
 
-The first additional pack is `he`. It localizes formatting, self-name, and RTL direction. Its 17+47 Pastafarian proper names are deliberately the verified English names and the pack declares `properNamePolicy: "english-retained"`. This is explicit pack data, not a missing-string fallback.
+The first additional pack is `he`. It localizes formatting, self-name, and RTL direction. Its current 17+47 Pastafarian proper names are retained English forms and the pack declares `properNamePolicy: "english-retained"`. This is explicit pack data, not a missing-string fallback.
 
-Those proper names must not be translated until an authoritative naming source is supplied and documented.
+The canonical corpus now contains admitted Hebrew period-name forms. The current pack therefore needs a separate data-alignment change before it can claim those forms; repository presence or historical verification does not make the retained English forms canonical Hebrew names.
 
 Hebrew formatted text uses Unicode bidi isolation around inserted exact integers and retained LTR proper names. Machine-readable numeric fields remain ASCII decimal strings.
 
