@@ -2,8 +2,8 @@
 
 ## Source of truth
 
-The Seer does not define the Pastafarian Calendar. The current Scroll is the supreme semantic authority.
-Reference/oracle code is useful only after it has itself been audited against the Scroll. Agreement between
+The Seer does not define the Pastafarian Calendar. The canonical corpus is the semantic authority for canonical calendar meaning.
+Reference/oracle code and checked-in fixtures are verification tools; they do not become canonical merely by matching one another or by being stored in this repository. Agreement between
 multiple implementations is not evidence of truth when they can share the same bug.
 
 ## Saved-sum final post-stirs
@@ -27,11 +27,11 @@ while using `R` only for the permutation is noncanonical.
 `prototype/scripts/check_saved_sum_conformance.sh` compiles an independent Boost `cpp_int` reference and
 checks both v3 and v12 fast Sauce headers at intermediate level: bowls after visible drop 46, each of the
 12 final post-stirs, final bowls, and downstream descriptors. It also contains a targeted `rawSumMutant`
-discriminator, regenerates the complete positive gate corpus, and checks independently computed canonical
+discriminator, regenerates the complete positive gate corpus, and checks independently computed reference
 full-date vectors.
 
 `prototype/scripts/check_canonical_vectors.sh` applies the checked-in independent vector corpus to any
-compatible Seer cold-conversion binary. Candidate A/B checks must use those canonical vectors; equality
+compatible Seer cold-conversion binary. Candidate A/B checks must use those reference vectors; equality
 with another Seer binary alone is not a semantic oracle.
 
 The vector corpus covers Year 5000, year/cutlet/month boundaries, `c=t`, both query directions, a far-past
@@ -42,6 +42,6 @@ negative-axis inputs, and deterministic random inputs.
 
 Phase A independently regenerates and validates the complete negative 40,000-gap corpus through the exact
 Boost reference and both fast Sauce headers. Phase B compares full negative-domain calendar records against
-the independent oracle, retains the historical positive canonical vectors, and exercises the persistent service
+the independent oracle, retains the historical positive reference vectors, and exercises the persistent service
 and public query layer across Foundation. The remaining conformance program should continue to cover the
 5,778-day ceiling, cache/call-order independence, and all supported public interfaces.
