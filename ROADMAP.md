@@ -1,44 +1,47 @@
 # Roadmap
 
-The current repository begins with a performance prototype. The next steps should improve
-usability and reproducibility **without importing spaghetti doctrine into the Seer**.
+This roadmap lists **remaining work only**. Completed implementation stages, dated QA evidence, and superseded benchmark narratives are preserved under `docs/history/`.
 
-1. **Freeze and reproduce the current benchmark baseline**
-   - retain fixed benchmark vectors and hashes;
-   - add repeatable conformance fixtures;
-   - pin provenance for generated gate data.
+## Established baseline
 
-2. **Complete the calendar domain needed by production callers**
-   - package negative-gate support — complete;
-   - extend the exact finite gate horizon from ±40k to ±100k with immutable old-domain compatibility — implemented and independently verified;
-   - verify far-past/far-future walking across the full supported domain;
-   - harden difficult weave-edge ranks;
-   - reconsider checkpoints/lazy exact extension only if a future horizon makes static corpora materially costly.
+The repository already has:
 
-3. **Separate engine from benchmark CLI**
-   - extract a stable library-facing conversion function;
-   - keep benchmark instrumentation outside the semantic core;
-   - return canonical numeric indices, not localized strings, from the core.
+- a shared Node query API and CLI;
+- HTTP v1 and browser/remote client surfaces;
+- reverse conversion;
+- exact native fallback and a persistent exact engine service;
+- finite bidirectional gate-domain support with the production ±100k corpus;
+- a production no-build web application;
+- verified Linux amd64/ARM64 container deployment;
+- release-candidate orchestration and supply-chain verification;
+- a public product benchmark suite covering cold/warm, cache/exact, reverse, year, batch/range, HTTP, and concurrency cases.
 
-4. **Portable backend ג€” initial implementation present**
-   - preserve the AVX-512IFMA backend unchanged;
-   - maintain the scalar/portable RNS implementation for machines without IFMA;
-   - run exact self-tests and bundled vector checks on GitHub-hosted runners;
-   - use hosted measurements to decide whether a dedicated AVX2 layer is worthwhile.
+These are current capabilities, not future roadmap items.
 
-5. **Automate conformance**
-   - differential tests against an independent exact reference;
-   - fixed witnesses plus randomized/adversarial cases;
-   - no semantic dependency from the reference back into the Seer.
+## Remaining work
 
-6. **Presentation and service layers — v1 implemented**
-   - shared query API and CLI;
-   - dependency-free HTTP v1 service;
-   - installable Node package and persistent-service deployment path (API Stage 6);
-   - reverse conversion for a complete canonical Pastafarian tuple;
-   - browser/website integration foundation: dependency-free fetch client, CORS-capable HTTP API, and a no-build runnable browser example;
-   - production no-build web application with same-origin container and cross-origin static deployment paths;
-   - reproducible x86-64 Linux container deployment with generic portable exact runtime and persistent-service smoke;
-   - remaining product work: additional presentation locales and optional externally hosted production endpoints.
+1. **Hosted public-service launch gates**
+   - choose and configure the production/staging hosting path and canonical DNS;
+   - satisfy the identity, operations, privacy, reliability, and abuse-control gates in `docs/PUBLIC_API_ARCHITECTURE.md`;
+   - publish only an internally consistent release identity.
+
+2. **Performance and capacity**
+   - use `bench/product/` measurements to investigate demonstrated hotspots and regressions;
+   - preserve exact semantics and typed overload behavior while improving throughput;
+   - do not promote research optimizations without independent differential evidence.
+
+3. **Platform support**
+   - keep Node 20/22/24 compatibility green;
+   - extend native-platform support only with real build, package, and semantic verification;
+   - do not imply Windows ARM64 or macOS exact-runtime support until verified.
+
+4. **Presentation and localization**
+   - add locale packs only with documented naming/translation authority;
+   - keep localization presentation-only and semantically invariant.
+
+5. **Research promotion discipline**
+   - keep experimental/high-similarity variants under `research/`;
+   - retain historical evidence under `docs/history/`;
+   - require explicit adoption evidence before any research path enters the production runtime closure.
 
 A faster answer is useful only if it remains the same answer.

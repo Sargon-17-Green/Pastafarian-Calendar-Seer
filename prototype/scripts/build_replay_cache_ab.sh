@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+RESEARCH_SRC="$ROOT/../research/benchmarks/src"
 SRC="$ROOT/src"
 BUILD="$ROOT/build"
 mkdir -p "$BUILD" "$ROOT/results"
@@ -15,7 +16,7 @@ fi
 printf '#include <gmpxx.h>\n#include <boost/multiprecision/cpp_int.hpp>\nint main(){}\n' \
   | "$CXX" -std=c++20 -x c++ - -lgmpxx -lgmp -o "$BUILD/deps_probe_replay_cache"
 
-COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC")
+COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC" -I"$RESEARCH_SRC")
 BASE="$SRC/pastafarian_cold_bench_avx2_split.cpp"
 TOP2_GEN="$BUILD/pastafarian_cold_bench_avx2_split_replay_top2.cpp"
 ALL_GEN="$BUILD/pastafarian_cold_bench_avx2_split_replay_all.cpp"
@@ -33,7 +34,7 @@ PY
 "$CXX" "${COMMON[@]}" "$BASE" -lgmpxx -lgmp -o "$BUILD/replay_cache_base"
 "$CXX" "${COMMON[@]}" "$TOP2_GEN" -lgmpxx -lgmp -o "$BUILD/replay_cache_top2"
 "$CXX" "${COMMON[@]}" "$ALL_GEN" -lgmpxx -lgmp -o "$BUILD/replay_cache_all"
-"$CXX" "${COMMON[@]}" "$SRC/rns_micro8_avx2_32x8_replay_top2.cpp" -lgmpxx -lgmp -o "$BUILD/replay_cache_top2_selftest"
-"$CXX" "${COMMON[@]}" "$SRC/rns_micro8_avx2_32x8_replay_all.cpp" -lgmpxx -lgmp -o "$BUILD/replay_cache_all_selftest"
+"$CXX" "${COMMON[@]}" "$RESEARCH_SRC/rns_micro8_avx2_32x8_replay_top2.cpp" -lgmpxx -lgmp -o "$BUILD/replay_cache_top2_selftest"
+"$CXX" "${COMMON[@]}" "$RESEARCH_SRC/rns_micro8_avx2_32x8_replay_all.cpp" -lgmpxx -lgmp -o "$BUILD/replay_cache_all_selftest"
 
 echo "Built replay-cache baseline/top2/all candidates."

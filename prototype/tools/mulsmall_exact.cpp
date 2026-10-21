@@ -1,5 +1,5 @@
 #define main rns_mulsmall_disabled_main
-#include "../src/rns_micro8_avx2_32x8_mulsmall.cpp"
+#include "../../research/benchmarks/src/rns_micro8_avx2_32x8_mulsmall.cpp"
 #undef main
 #include <random>
 #include <iostream>

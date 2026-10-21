@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SRC="$ROOT/src"; BUILD="$ROOT/build"
+RESEARCH_SRC="$ROOT/../research/benchmarks/src"
 mkdir -p "$BUILD" "$ROOT/results"
 CXX="${CXX:-g++}"
 read -r -a ARCH_FLAGS <<< "${SEER_AVX2_CXXFLAGS:--march=native}"
-COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC")
+COMMON=(-O3 -DNDEBUG -std=c++20 -fopenmp -pthread "${ARCH_FLAGS[@]}" -I"$SRC" -I"$RESEARCH_SRC")
 BASE="$SRC/pastafarian_cold_bench_avx2_split.cpp"
 REF="$BUILD/pastafarian_cold_bench_avx2_split_reference.cpp"
 EXP="$BUILD/pastafarian_cold_bench_avx2_split_explicit_adaptive.cpp"
