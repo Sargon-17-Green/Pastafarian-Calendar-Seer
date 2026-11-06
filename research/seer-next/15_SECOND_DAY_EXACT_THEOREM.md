@@ -1,44 +1,35 @@
-# Exact second-day calendar month shortcut — a conditional closed-form theorem
+# Withdrawn hypothesis: an invalid closed-form second-day shortcut
 
-Date: 2026-11-06. **Research-only, opt-in in the isolated cold-probe executable. Not adopted to production.**
+**REJECTED — DO NOT USE OR ADOPT.** Corrected on 2026-11-06 after failed independent native differential CI.
 
-## Formal counting setup
-
-Let `m >= 2` month labels be `0,1,...,m-1`, with positive prescribed multiplicities `l_0,...,l_{m-1}` and total `T = Σ l_i >= 2`. A valid month-label sequence is a permutation of this multiset in which the **first occurrence of each label is in numerical order**: the first 0 precedes the first 1, which precedes the first 2, and so on. Its first label is always 0. The native baseline's `ExactTable` and `initial_struct` use this ordering, and `yb_fast_choose_bi(sauce, 4, 32, N)` supplies the canonical **1-based exact rank** in the set of legal sequences.
-
-Define suffix counts `S_i = Σ_{j=i}^{m-1} l_j`.
-
-## Lemma 1 — legal word count
-
-The number of valid words is
+The original version of this document assumed the exact month weave requires only that the **first occurrence** of month labels be in order. It proposed
 
 [
-N = rac{T!}{left(prod_{i=0}^{m-1}(l_i-1)!ight)left(prod_{i=0}^{m-1}S_iight)}.
+N_{mathrm{first-only}} =
+\frac{T!}{\prod_i(l_i-1)!\;\prod_i \sum_{j=i}^{m-1}l_j}
 ]
 
-**Proof.** There are `T! / Π l_i!` distinct multiset permutations. In a uniformly random permutation, the probability that label 0 appears before all other labels is `l_0/T`, because each label has `l_i` exchangeable initial slots. Conditional on label 0 being first among all labels, the relative first-occurrence order of the remaining labels is independently governed by the same weighted-first-selection rule: next label 1 is first among labels 1..m-1 with probability `l_1/S_1`; continue recursively. Thus probability of first occurrences in the fixed order is `Π (l_i/S_i)`. Multiply by the multinomial count and cancel `l_i` against `l_i!` to obtain the formula. QED.
+and a second-day repeat count `N*(l0-1)/(T-1)`.
 
-The numerator is divisible by the product denominator, as it counts whole words; an implementation checks exact division and fails closed if inconsistent.
+**This is NOT the Seer canonical legal-word count.** The native logic in `prototype/src/seer_weave_avx2.cpp` also prevents completing a later active month before earlier active months: `legal()` rejects a month `m` when `rem[m]==1 && m!=low`. Both first and **last** occurrences are ordered.
 
-## Lemma 2 — exactly two choices for the second day
+### Minimal counterexample
 
-Under the same ordering rule, the first two symbols are either `00` or `01` (the latter opens the next month). Their exact counts are
+For month lengths `(2,2)` there are exactly two legal words under both constraints:
 
-[
-C_{00} = N rac{l_0-1}{T-1},quad C_{01} = N-C_{00}.
-]
+- `0011`
+- `0101`
 
-**Proof.** In a uniformly random valid sequence, delete the first 0. The remaining original multiset consists of `l_0-1` zeros plus all other labels. The ordering constraint among the first occurrences of labels 1..m-1 is invariant under repositioning the remaining zeros, so for each valid arrangement of nonzero labels, the zeros are distributed uniformly among the available remaining positions. Consequently the probability that the second position is occupied by a zero is `(l_0-1)/(T-1)`. If it is not zero, the ordering constraint forces the first new label to be 1. Multiply by `N`. QED.
+The original formula predicts three, because it includes `0110`, whose month 1 ends before month 0 and is therefore illegal. The canonical `ExactTable` recurrence gives **N=2**.
 
-In the native baseline's lexicographic order, all second-symbol 0 words precede all second-symbol 1 words. Hence the canonical rank selects 0 iff `rank <= C_00`; otherwise it selects 1. We can compute the month index, its day number (2 for month 0, 1 for month 1), and the cutlet position at zero-based offset 1 **without constructing RNS tables or replaying a weave**.
+For lengths `(3,2)`, first-only counts six, while the canonical first-and-last legal words number three.
 
-## Implementation controls and acceptance
+### Actual failed experiment
 
-- The shortcut exists **only** in `seer_next_cold_core.cpp` and is activated by `SEER_NEXT_SECOND_DAY_SHORTCUT=1`. The normal hybrid, preexisting full-year candidate and production core are unchanged.
-- It uses arbitrary-precision integer arithmetic for `T!`, each `(l_i-1)!`, suffix products, `N`, `C_00` and `yb_fast_choose_bi`. No floating point comparisons or approximate acceptance.
-- It applies only to `R` with one target at the second day of its located year and with the original edge-shortcut-disabling flag unset. All other calls take the unchanged algorithm.
-- CI must compare **complete JSON replies** against the unchanged native service for multiple calculation days, separately check selected cases against the independent saved-sum oracle, assert the shortcut path was taken, and retain raw same-host latency samples. A passing CI provides test evidence; the proof applies under the explicitly stated valid-word/rank assumptions.
+GitHub Actions run [42306463421](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42306463421) at research SHA `8061a8c396fd95a23162e19ecbbceb697d0b0a6b` completed **FAILURE**, with full-JSON differential mismatch for `calculationJdn=-13334241, targetJdn=-13335188` (second day of its located Year 5000): candidate selected month index 24/day 2, while the unchanged Seer selected month index 22/day 1. This was a **real semantic mismatch in the experimental shortcut**, not a test harness fault. No production source or release was changed.
 
-## Limits
+The earlier small brute-force exercise enumerated words constrained **only by first occurrences**; it was not a valid proof of the canonical problem. The error was caught before adopting the optimization.
 
-This lemma optimizes one specific position, not general random access. It does not establish how to obtain a full year quickly, handle third/subsequent positions, or reduce asymptotic complexity for an arbitrary internal-day query. The next research step is an exact prefix-count dynamic algorithm for a small fixed number of initial days, bounded by measured cost rather than expanding an unproven shortcut.
+### Correct follow-up
+
+See [16_SECOND_DAY_DP_EXPERIMENT.md](16_SECOND_DAY_DP_EXPERIMENT.md). A new isolated candidate computes the exact canonical dynamic recurrence and the correct 1-based canonical rank. Its speedup is unknown until CI comparisons complete; it is not assumed faster than the existing RNS engine.

@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <fstream>
+#include <gmpxx.h>
 #include <numeric>
 #include <stdexcept>
 #include <vector>
@@ -85,54 +86,62 @@ std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last
             seerNextAfterStructure,seerNextDone);
         return std::vector<BatchRecord>{r};
     }
-    // Exact second-day shortcut in a research-only instrumented core.
-    // Lexicographic month paths have ordered first appearances (0,1,...).
-    // For multiplicities l_i, total T and suffix sums S_i, the count of
-    // legal paths is N = T! / (prod_i (l_i-1)! * prod_i S_i).
-    // Among those paths the first two labels are 00 exactly
-    // N*(l_0-1)/(T-1) times; otherwise they are 01.
-    // Rank selection is the SAME canonical bowl/seal used by full RNS.
-    // No approximation, floating point, or shared memory.
-    const char* secondOpt=std::getenv("SEER_NEXT_SECOND_DAY_SHORTCUT");
+    // Exact second-day research-only dynamic count (NOT the withdrawn
+    // ordered-first-occurrence closed form). Reproduce the reference ExactTable
+    // recurrence, which encodes ordered *first and last* month occurrences.
+    // f[0][len0] is full legal word count; f[0][len0-1] is the
+    // lexicographically first (repeat-month-zero) next-branch count.
+    const char*secondOpt=std::getenv("SEER_NEXT_SECOND_DAY_SHORTCUT");
     if(first==last && first==y.a+2 && !ybEdgeShortcutDisabled &&
        secondOpt && std::string(secondOpt)=="1" &&
        st.monthLen.size()>=2) {
-        const int T=std::accumulate(st.monthLen.begin(),st.monthLen.end(),0);
-        if(T!=y.b-y.a || T<2) throw std::logic_error("shortcut year length mismatch");
-        BI numerator=1;
-        for(int k=2;k<=T;k++) numerator*=k;
-        BI denominator=1;
-        int suffix=T;
-        for(int n:st.monthLen) {
-            if(n<=0)throw std::logic_error("shortcut invalid month length");
-            for(int k=2;k<n;k++)denominator*=k;
-            denominator*=suffix;
-            suffix-=n;
+        const int m=static_cast<int>(st.monthLen.size());
+        std::vector<int> pref(m);
+        int adjusted=0;
+        for(int i=0;i<m;i++){
+            if(st.monthLen[i]<1)throw std::logic_error("DP month length invalid");
+            adjusted+=st.monthLen[i]-1;
+            pref[i]=adjusted;
         }
-        if(suffix!=0 || denominator<=0 || numerator%denominator!=0)
-            throw std::logic_error("shortcut exact ordered-word count invalid");
-        BI N=numerator/denominator;
-        if(N<=0) throw std::logic_error("shortcut nonpositive path count");
-        BI repeatNumerator=N*(st.monthLen.front()-1);
-        if(repeatNumerator%(T-1)!=0)
-            throw std::logic_error("shortcut nonintegral exact branch count");
-        BI repeats=repeatNumerator/(T-1);
-        BI rank=yb_fast_choose_bi(structSauce,4,32,N);
-        if(rank<1 || rank>N)throw std::logic_error("shortcut canonical rank invalid");
+        std::vector<mpz_class> following(static_cast<size_t>(pref.back()+2),mpz_class(1));
+        for(int h=m-2;h>=0;--h){
+            const int n=st.monthLen[h+1];
+            const int qmax=pref[h]+1;
+            std::vector<mpz_class> current(static_cast<size_t>(qmax+1));
+            mpz_class cumulative=0,weight=1;
+            for(int q=1;q<=qmax;q++){
+                const int r=q-1;
+                cumulative+=weight*following[static_cast<size_t>(n+r)];
+                current[static_cast<size_t>(q)]=cumulative;
+                weight*=static_cast<unsigned long>(n+r-1);
+                mpz_divexact_ui(weight.get_mpz_t(),weight.get_mpz_t(),
+                    static_cast<unsigned long>(q));
+            }
+            following=std::move(current);
+        }
+        const int l0=st.monthLen.front();
+        if(l0>=static_cast<int>(following.size()))
+            throw std::logic_error("DP insufficient first-month row");
+        const mpz_class&N=following[static_cast<size_t>(l0)];
+        const mpz_class&repeats=following[static_cast<size_t>(l0-1)];
+        if(N<=0 || repeats<0 || repeats>N)
+            throw std::logic_error("DP invalid exact branch count");
+        const mpz_class rank=yb_fast_choose_mpz(structSauce,4,32,N);
+        if(rank<1 || rank>N) throw std::logic_error("DP rank out of range");
         const int mi=(rank<=repeats)?0:1;
         const int offset=1;
         int ci=-1;
         for(int k=0;k<st.cutletCount;k++){
             if(offset>=st.cutStart[k] && offset<=st.cutEnd[k]) {ci=k;break;}
         }
-        if(ci<0)throw std::logic_error("shortcut cutlet not found");
-        BatchRecord r{first,(long long)y.num,st.cutName[ci],
+        if(ci<0)throw std::logic_error("DP second-day cutlet absent");
+        BatchRecord rec{first,(long long)y.num,st.cutName[ci],
             offset-st.cutStart[ci]+1,st.monthName[mi],
             mi==0?2:1,st.cutletCount,st.monthCount};
         seer_next_record_cold_stage("second_day",calc,first,last,true,
             seerNextBegin,seerNextAfterSauce,seerNextAfterStructure,
             seerNextAfterStructure,SeerNextClock::now());
-        return {r};
+        return {rec};
     }
     if(const char*counter=std::getenv("SEER_TEST_WEAVE_COUNTER_FILE")){
         std::ofstream out(counter,std::ios::app);
