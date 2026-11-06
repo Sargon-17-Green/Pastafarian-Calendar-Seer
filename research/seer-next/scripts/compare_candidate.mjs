@@ -77,13 +77,20 @@ function openService(binary, env, label) {
       return {parsed,ms:Number(process.hrtime.bigint()-started)/1e6};
     } finally {clearTimeout(timer);}
   }
-  return {request,close(){child.stdin.end();child.kill();}};
+  return {request,pid:child.pid,close(){child.stdin.end();child.kill();}};
 }
 async function countWeaves(file) {
   try {
     const s = await readFile(file,'utf8');
     return s.split('\n').map(x=>x.trim()).filter(x=>x==='weave'||x==='year_batch_weave').length;
   } catch(e) {if(e?.code==='ENOENT')return 0;throw e;}
+}
+async function peakRssKiB(pid) {
+  if (platform() !== 'linux') return null;
+  const status = await readFile('/proc/' + pid + '/status', 'utf8');
+  const line = status.split('\n').find(x => x.startsWith('VmHWM:'));
+  const m = /^VmHWM:\s+(\d+) kB/.exec(line ?? '');
+  return m ? Number(m[1]) : null;
 }
 async function scenario(binary,label,opts={}) {
   const trace=path.join(temp,label+'.log');
@@ -114,7 +121,8 @@ async function scenario(binary,label,opts={}) {
       totals.push({target:t,ms,parsed});
     }
     const tailWeaves=await countWeaves(trace);
-    return {label,disabled:!!opts.disabled,repeated:repeatsResult,byTarget:totals,
+    const nativePeakRssKiB = await peakRssKiB(svc.pid);
+    return {label,disabled:!!opts.disabled,nativePeakRssKiB,repeated:repeatsResult,byTarget:totals,
       repeatedRecordHashes:hashes,fullResponses:outputs,allWeaveEvents:tailWeaves};
   } finally {svc.close();}
 }
@@ -137,16 +145,16 @@ try {
     baselineBinarySHA256:await sha256(src),candidateBinarySHA256:await sha256(candidate),
     platform:platform(),arch:arch(),cpu:cpus()[0]?.model,logicalCpus:cpus().length,node:process.version,
     n,cachePolicy:{promoteAfter:2,payloadLimitBytes:8388608,nativeCacheKey:'(c,year)'},
-    baseline:{repeated:baseline.repeated,allWeaveEvents:baseline.allWeaveEvents,
+    baseline:{nativePeakRssKiB:baseline.nativePeakRssKiB,repeated:baseline.repeated,allWeaveEvents:baseline.allWeaveEvents,
       byTarget:baseline.byTarget.map(({target,ms})=>({target,ms}))},
-    candidate:{repeated:optimized.repeated,allWeaveEvents:optimized.allWeaveEvents,
+    candidate:{nativePeakRssKiB:optimized.nativePeakRssKiB,repeated:optimized.repeated,allWeaveEvents:optimized.allWeaveEvents,
       byTarget:optimized.byTarget.map(({target,ms})=>({target,ms}))},
-    zeroBudgetControl:{repeated:disabled.repeated,allWeaveEvents:disabled.allWeaveEvents},
+    zeroBudgetControl:{nativePeakRssKiB:disabled.nativePeakRssKiB,repeated:disabled.repeated,allWeaveEvents:disabled.allWeaveEvents},
     numericalEquivalence:'full JSON response and independent saved-sum vectors PASS for tested coordinates',
     warmP50Ratio:baseline.repeated.warmPostTwo.p50/optimized.repeated.warmPostTwo.p50,
     totalRepeatedRatio:baseline.repeated.latency.sum/optimized.repeated.latency.sum,
     caveats:['Fixed-c/year sample, same process lifetimes per variant, ordered A/B only.',
-      'No causal proof of production-wide speedup, no RSS/CPU/energy measurement.','No full domain differential.']
+      'VmHWM is Linux process peak resident-memory high-water mark; no CPU/energy or hard RSS reservation enforcement.','No full domain differential.']
   };
   const json=JSON.stringify(result,null,2)+'\n';
   if(args.has('output'))await writeFile(path.resolve(args.get('output')),json,'utf8');

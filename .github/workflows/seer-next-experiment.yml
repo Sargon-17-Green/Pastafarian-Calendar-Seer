@@ -39,6 +39,12 @@ jobs:
           SEER_RNS_BACKEND: avx2
           SEER_MARCH: x86-64
         run: bash research/seer-next/scripts/build_candidate.sh
+      - name: Differential stress across calculation days and cache eviction
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_candidate.mjs --output=research/seer-next/results/working/differential.json
+          cat research/seer-next/results/working/differential.json
       - name: Compare full numeric records and warm/cumulative work
         run: |
           set -euo pipefail
@@ -48,5 +54,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-next-native-ab-linux-avx2
-          path: research/seer-next/results/working/ab.json
+          path: |
+            research/seer-next/results/working/ab.json
+            research/seer-next/results/working/differential.json
           if-no-files-found: error
