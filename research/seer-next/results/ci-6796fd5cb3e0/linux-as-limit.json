@@ -1,0 +1,44 @@
+{
+  "schema": "seer-next-linux-rlimit-as-v1",
+  "kernelEnforcement": "RLIMIT_AS",
+  "outcome": "2GiB workload succeeded; 64MiB workload is reported with explicit success/failure classification",
+  "results": [
+    {
+      "name": "2GiB-virtual",
+      "requestedBytes": 2147483648,
+      "before": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 7800,
+        "vmPeakKiB": 7800,
+        "rssHighWaterKiB": 4544
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 348744,
+        "vmPeakKiB": 350912,
+        "rssHighWaterKiB": 38972
+      }
+    },
+    {
+      "name": "64MiB-virtual",
+      "requestedBytes": 67108864,
+      "before": {
+        "effectiveLimitBytes": 67108864,
+        "vmSizeKiB": 7800,
+        "vmPeakKiB": 7800,
+        "rssHighWaterKiB": 4604
+      },
+      "outcome": "PROCESS_OR_QUERY_FAILED_UNDER_STRICT_LIMIT",
+      "failure": "Error: native close null/SIGABRT: terminate called recursively\nterminate called after throwing an instance of 'std::bad_alloc'\n"
+    }
+  ],
+  "qualifications": [
+    "This is an address-space limit, NOT an RSS limit, and only Linux is implemented.",
+    "The limit is installed early in main, after the system loader has mapped shared libraries.",
+    "A low virtual-memory cap may reject otherwise valid calculations; it is not a fallback algorithm.",
+    "RNS and thread stacks count toward virtual memory. This experiment does not establish a safe minimum.",
+    "No Windows Job Object or cgroup memory.max was implemented."
+  ]
+}
