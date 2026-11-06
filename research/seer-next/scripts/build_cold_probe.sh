@@ -27,5 +27,9 @@ case "$BACKEND" in
     exit 2
     ;;
 esac
-"$CXX" "${COMMON[@]}"   "$ROOT/prototype/src/seer_year_core.cpp"   $ROOT/research/seer-next/src/seer_next_cold_core.cpp" "$WEAVE"   "$ROOT/research/seer-next/src/seer_next_cold_probe_service.cpp"   "${LINK[@]}" -o "$ROOT/research/seer-next/build/seer_next_cold_probe_service"
+"$CXX" "${COMMON[@]}" \
+  "$ROOT/prototype/src/seer_year_core.cpp" \
+  "$ROOT/research/seer-next/src/seer_next_cold_core.cpp" "$WEAVE" \
+  "$ROOT/research/seer-next/src/seer_next_hybrid_engine_service.cpp" \
+  "${LINK[@]}" -o "$ROOT/research/seer-next/build/seer_next_cold_probe_service"
 echo "Built isolated Seer Next COLD STAGE instrumented candidate ($BACKEND / $MARCH)"
