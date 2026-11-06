@@ -1,0 +1,52 @@
+name: Seer Next isolated native year-cache experiment
+
+on:
+  push:
+    branches: [research/seer-next-first-principles-2026-11-06]
+    paths:
+      - 'research/seer-next/**'
+      - 'bench/next/**'
+      - '.github/workflows/seer-next-experiment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: seer-next-experiment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-native-avx2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build unchanged baseline
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Build isolated experimental candidate
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_candidate.sh
+      - name: Compare full numeric records and warm/cumulative work
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/compare_candidate.mjs --repetitions=32 --output=research/seer-next/results/working/ab.json
+          cat research/seer-next/results/working/ab.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-next-native-ab-linux-avx2
+          path: research/seer-next/results/working/ab.json
+          if-no-files-found: error
