@@ -11,3 +11,6 @@
 | 2026-11-06 | N-006 | Predictive tomorrow-calculation precomputation is opt-in and accounted against budgets. | `c` changes canonical computation; unbounded automatic work unacceptable. | DESIGN REQUIREMENT |
 
 Future entries must include candidate SHA, commands/results or a proof reference, adoption criteria, counterexamples, and rollback path.
+| 2026-11-06 | N-007 | First CI failed: probe used spaces rather than required tab-delimited native commands. | CI run 42283490299; fixed in ed36fa54. | CLOSED harness bug |
+| 2026-11-06 | N-008 | Linux recomputation verified on all three architectures; Windows counters zero with likely CRLF mismatch; fix and assert exact counts. | CI run 42284571453, raw results in results/2026-11-06-smoke. | NEEDS WINDOWS RECHECK |
+| 2026-11-06 | N-009 | Prove restricted 2-competitive online materialization for known variable per-request savings. | 05_VARIABLE_COST_CACHE_THEOREM.md. | PROVEN UNDER ASSUMPTIONS |

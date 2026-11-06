@@ -38,7 +38,7 @@ async function sha256(file) {
 async function eventCount() {
   try {
     const content = await readFile(weaveFile, 'utf8');
-    return content.split('\n').filter((line) => line === 'year_batch_weave' || line === 'weave').length;
+    return content.split('\n').map((line) => line.trim()).filter((line) => line === 'year_batch_weave' || line === 'weave').length;
   } catch (e) {
     if (e?.code === 'ENOENT') return 0;
     throw e;

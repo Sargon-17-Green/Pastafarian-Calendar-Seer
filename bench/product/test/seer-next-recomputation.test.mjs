@@ -19,7 +19,8 @@ test('Seer Next: observe exact-native repeated weave work (informational)', { ti
   assert.equal(result.repeated.latency.n, 3);
   assert.equal(result.alternating.latency.n, 3);
   assert.equal(result.yearWithoutDays.weaveEvents, 0);
-  assert.ok(Number.isInteger(result.repeated.weaveEvents));
-  assert.ok(Number.isInteger(result.alternating.weaveEvents));
+  assert.equal(result.cold.weaveEvents, 1);
+  assert.equal(result.repeated.weaveEvents, 3);
+  assert.equal(result.alternating.weaveEvents, 3);
   console.log('SEER_NEXT_REAL_PROBE=' + JSON.stringify(result));
 });
