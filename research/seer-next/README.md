@@ -39,6 +39,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 - A 0-byte cache setting disables the relevant layer; `SEER_NEXT_CACHE_BYTES=0` alone leaves the S4 day cache enabled. Cache budgets restrict record payload only, not metadata, RNS transient allocations or total RSS.
 - Three separately configurable research-only exact-computation profiles are now under experiment: `latency` (3 RNS/3 replay workers), `balanced` (3/1), and `memory` (1/1). Results and memory limits require a new completed CI run. The primary unresolved performance problem remains **cold/one-shot arithmetic**. Hard memory constraints also remain an unsolved engineering task. Do not merge to main.
 
+- [42307243480](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42307243480): an exact GMP DP shortcut for year day 2 passed 51 full native JSON differential cases and 8 independent oracle checks. **Performance mixed, not accepted as default**: baseline 3822.019 ms vs DP 3617.807 ms in aggregate (1.0564× ratio), with individual queries from 0.678× to 1.946×. The invalid first-only alternative was retracted after CI [42306463421](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42306463421) exposed an actual wrong month.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.

@@ -76,7 +76,7 @@ jobs:
           mkdir -p research/seer-next/results/working
           node research/seer-next/scripts/verify_independent_oracle.mjs --output=research/seer-next/results/working/oracle.json
           node -e "const x=require('./research/seer-next/results/working/oracle.json');console.log('INDEPENDENT_ORACLE_SUMMARY',JSON.stringify({caseCount:x.count,verdict:x.verdict,dayHits:x.hybridMemo.dayHits}));"
-      - name: Validate exact second-day closed-form shortcut against baseline and independent oracle
+      - name: Validate exact second-day dynamic recurrence against baseline and independent oracle
         run: |
           set -euo pipefail
           node research/seer-next/scripts/verify_second_day_shortcut.mjs --output=research/seer-next/results/working/second-day-exact.json
