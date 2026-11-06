@@ -20,7 +20,7 @@ case "$BACKEND" in
   avx2)
     [[ "$(uname -m)" == x86_64 ]] || { echo "AVX2 requires x86-64" >&2; exit 2; }
     COMMON+=(-mavx2)
-    WEAVE="$ROOT/prototype/src/seer_weave_avx2.cpp"
+    WEAVE="$ROOT/research/seer-next/src/seer_next_cold_weave_avx2.cpp"
     ;;
   *)
     echo "SEER_RNS_BACKEND must be avx2 or portable" >&2

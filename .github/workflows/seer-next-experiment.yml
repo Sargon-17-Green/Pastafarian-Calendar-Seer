@@ -81,6 +81,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/measure_cold_stages.mjs --trials=2 --output=research/seer-next/results/working/cold-stages.json
           node -e "const x=require('./research/seer-next/results/working/cold-stages.json');console.log('COLD_STAGE_SUMMARY',JSON.stringify({cases:x.resultCount,tests:x.trials}));"
+      - name: Evaluate RNS and replay-thread cold-cost/memory tradeoffs
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_workers.mjs --trials=2 --output=research/seer-next/results/working/cold-rns-workers.json
+          node -e "const x=require('./research/seer-next/results/working/cold-rns-workers.json');console.log('RNS_WORKERS',JSON.stringify({samples:x.results.length,policies:x.policies.length}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -109,6 +114,7 @@ jobs:
             research/seer-next/results/working/oracle.json
             research/seer-next/results/working/hybrid-eviction.json
             research/seer-next/results/working/cold-stages.json
+            research/seer-next/results/working/cold-rns-workers.json
             research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
       - name: Archive raw experiment results in research branch without retriggering CI
@@ -117,7 +123,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

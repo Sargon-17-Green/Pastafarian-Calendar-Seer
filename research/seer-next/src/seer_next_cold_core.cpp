@@ -90,9 +90,22 @@ std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last
         if(out)out<<"year_batch_weave\n";
     }
     int maxOffset=(int)(last-(y.a+1));
+
+    // Research-only tuning. Values must be explicit; default engine parameters unchanged.
+    auto seerNextTuned=[&](const char*name,int fallback)->int{
+        const char*raw=std::getenv(name);
+        if(!raw||!*raw)return fallback;
+        const std::string value(raw);
+        size_t parsed=0;int n=std::stoi(value,&parsed);
+        if(parsed!=value.size()||n<1||n>8)
+            throw std::runtime_error(std::string(name)+" must be an integer 1..8");
+        return n;
+    };
+    const int seerNextWorkers=seerNextTuned("SEER_NEXT_COLD_RNS_THREADS",params.threads);
+    const int seerNextReplay=seerNextTuned("SEER_NEXT_COLD_REPLAY_THREADS",params.replayThreads);
     auto weave=weave_month_prefix(
         st.monthLen,structSauce,maxOffset+1,
-        params.threads,params.superblock,params.replayThreads);
+        seerNextWorkers,params.superblock,seerNextReplay);
     const auto seerNextAfterWeave=SeerNextClock::now();
     std::vector<int>seen(st.monthCount,0);std::vector<BatchRecord>out;out.reserve((size_t)(last-first+1));
     for(int offset=0;offset<=maxOffset;offset++){
