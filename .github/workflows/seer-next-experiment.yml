@@ -61,6 +61,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/verify_hybrid_eviction.mjs --output=research/seer-next/results/working/hybrid-eviction.json
           node -e "const x=require('./research/seer-next/results/working/hybrid-eviction.json');console.log('HYBRID_EVICTION',JSON.stringify({verdict:x.verdict,phases:x.phaseCount}));"
+      - name: Build cold-stage instrumented hybrid (baseline core retained independently)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_cold_probe.sh
       - name: Build independent canonical saved-sum oracle
         run: |
           set -euo pipefail
@@ -71,6 +76,16 @@ jobs:
           mkdir -p research/seer-next/results/working
           node research/seer-next/scripts/verify_independent_oracle.mjs --output=research/seer-next/results/working/oracle.json
           node -e "const x=require('./research/seer-next/results/working/oracle.json');console.log('INDEPENDENT_ORACLE_SUMMARY',JSON.stringify({caseCount:x.count,verdict:x.verdict,dayHits:x.hybridMemo.dayHits}));"
+      - name: Capture exact cold-stage decomposition with one process per request
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/measure_cold_stages.mjs --trials=2 --output=research/seer-next/results/working/cold-stages.json
+          node -e "const x=require('./research/seer-next/results/working/cold-stages.json');console.log('COLD_STAGE_SUMMARY',JSON.stringify({cases:x.resultCount,tests:x.trials}));"
+      - name: Enforce and measure Linux virtual-address-space limit
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_linux_as_limit.mjs --output=research/seer-next/results/working/linux-as-limit.json
+          cat research/seer-next/results/working/linux-as-limit.json
       - name: Profile cold, repeat, memory and CPU policies with A/B parity
         run: |
           set -euo pipefail
@@ -93,6 +108,8 @@ jobs:
             research/seer-next/results/working/profile-hybrid.json
             research/seer-next/results/working/oracle.json
             research/seer-next/results/working/hybrid-eviction.json
+            research/seer-next/results/working/cold-stages.json
+            research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
       - name: Archive raw experiment results in research branch without retriggering CI
         shell: bash
@@ -100,7 +117,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

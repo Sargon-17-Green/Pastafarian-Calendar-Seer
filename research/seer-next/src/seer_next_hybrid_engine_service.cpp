@@ -25,6 +25,11 @@ using seer_native::detail::fanchor;
 #include <limits>
 #include <list>
 #include <memory>
+#ifdef __linux__
+#include <sys/resource.h>
+#include <cerrno>
+#include <cstring>
+#endif
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -656,8 +661,34 @@ public:
     }
 };
 
+// Seer Next research-only address-space limit. This is NOT an RSS/cgroup
+// guarantee and it applies only to Linux. Explicit unsupported mode is rejected.
+static void seer_next_apply_as_limit() {
+    const char* raw=std::getenv("SEER_NEXT_MAX_VIRTUAL_BYTES");
+    if(!raw || !*raw || std::string(raw)=="0") return;
+#ifdef __linux__
+    size_t end=0;
+    unsigned long long value=std::stoull(std::string(raw),&end,10);
+    if(end!=std::strlen(raw) || value<64ULL*1024*1024 ||
+       value>1ULL*1024*1024*1024*1024)
+        throw std::runtime_error("SEER_NEXT_MAX_VIRTUAL_BYTES must be 0 or 64MiB..1TiB");
+    struct rlimit old{};
+    if(getrlimit(RLIMIT_AS,&old)!=0)
+        throw std::runtime_error(std::string("getrlimit(RLIMIT_AS): ")+std::strerror(errno));
+    const auto requested=static_cast<rlim_t>(value);
+    struct rlimit bounded=old;
+    if(bounded.rlim_cur==RLIM_INFINITY || bounded.rlim_cur>requested)
+        bounded.rlim_cur=requested;
+    if(setrlimit(RLIMIT_AS,&bounded)!=0)
+        throw std::runtime_error(std::string("setrlimit(RLIMIT_AS): ")+std::strerror(errno));
+#else
+    throw std::runtime_error("SEER_NEXT_MAX_VIRTUAL_BYTES supported only on Linux");
+#endif
+}
+
 int main() {
     try {
+        seer_next_apply_as_limit();
         SeerEngineService service;
         std::string line;
         while (std::getline(std::cin, line)) {
