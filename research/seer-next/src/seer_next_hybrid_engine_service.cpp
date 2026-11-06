@@ -168,6 +168,20 @@ public:
     size_t size() const { return years_.size(); }
 };
 
+// Research configuration: exact arithmetic is unchanged; only parallelism differs.
+// The primary service and its wire schema are not modified.
+static std::string seer_next_execution_profile() {
+    const char*raw=std::getenv("SEER_NEXT_EXECUTION_PROFILE");
+    return raw&&*raw?std::string(raw):std::string("latency");
+}
+static ExecutionParams seer_next_execution_params() {
+    const std::string p=seer_next_execution_profile();
+    if(p=="latency")return ExecutionParams{3,512,3};
+    if(p=="balanced")return ExecutionParams{3,512,1};
+    if(p=="memory")return ExecutionParams{1,512,1};
+    throw std::runtime_error("SEER_NEXT_EXECUTION_PROFILE must be latency, balanced or memory");
+}
+
 class SeerEngineService {
     FGates gates_;
     FStones stones_;
@@ -314,7 +328,7 @@ class SeerEngineService {
         }
         const FSauce sauce = fast_sauce(calc, y.a + 1, stones_);
         const YBStructResult st = build_nonweave(calc, gates_, y, sauce);
-        auto whole = compute_full_year_days(calc, gates_, y, sauce, st, ExecutionParams{});
+        auto whole = compute_full_year_days(calc, gates_, y, sauce, st, seer_next_execution_params());
         if (whole.size() != static_cast<size_t>(length) ||
             whole.front().targetJdn != y.a + 1 || whole.back().targetJdn != y.b) {
             throw std::runtime_error("year cache full build failed validation");
@@ -431,7 +445,7 @@ class SeerEngineService {
                         throw std::logic_error("hybrid year memo segment invalid");
                     part.assign(full->begin()+first,full->begin()+beyond);
                 } else {
-                    part=compute_segment(calc,cursor,segmentEnd,gates_,stones_,y,ExecutionParams{});
+                    part=compute_segment(calc,cursor,segmentEnd,gates_,stones_,y,seer_next_execution_params());
                 }
                 if(single&&part.size()==1)storeDay(calc,cursor,part.front());
             }
@@ -484,7 +498,8 @@ class SeerEngineService {
         std::atomic<bool> failed{false};
         std::mutex errorMutex;
         std::exception_ptr firstError;
-        const size_t requestedWorkers = svc_env_limit("SEER_DIAGONAL_THREADS", 3, 1, 16);
+        const size_t requestedWorkers = seer_next_execution_profile()=="memory"
+            ? 1 : svc_env_limit("SEER_DIAGONAL_THREADS", 3, 1, 16);
         const size_t hardware = std::max<unsigned>(1, std::thread::hardware_concurrency());
         const size_t workers = std::min({requestedWorkers, hardware, static_cast<size_t>(count)});
 
@@ -566,7 +581,7 @@ class SeerEngineService {
         const FSauce structSauce = fast_sauce(calc, start, stones_);
         const YBStructResult st = build_nonweave(calc, gates_, y, structSauce);
         std::vector<BatchRecord> days;
-        if (includeDays) days = compute_full_year_days(calc, gates_, y, structSauce, st, ExecutionParams{});
+        if (includeDays) days = compute_full_year_days(calc, gates_, y, structSauce, st, seer_next_execution_params());
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
                   << ",\"year\":" << y.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end
@@ -672,6 +687,10 @@ static void seer_next_apply_as_limit() {
     if(end!=std::strlen(raw) || value<64ULL*1024*1024 ||
        value>1ULL*1024*1024*1024*1024)
         throw std::runtime_error("SEER_NEXT_MAX_VIRTUAL_BYTES must be 0 or 64MiB..1TiB");
+    // Conservative fail-fast for low caps with multi-worker modes. The threshold
+    // is experimental policy, NOT a proof that all larger budgets are sufficient.
+    if(value<512ULL*1024*1024 && seer_next_execution_profile()!="memory")
+        throw std::runtime_error("virtual cap below 512MiB requires SEER_NEXT_EXECUTION_PROFILE=memory");
     struct rlimit old{};
     if(getrlimit(RLIMIT_AS,&old)!=0)
         throw std::runtime_error(std::string("getrlimit(RLIMIT_AS): ")+std::strerror(errno));
@@ -689,6 +708,7 @@ static void seer_next_apply_as_limit() {
 int main() {
     try {
         seer_next_apply_as_limit();
+        (void)seer_next_execution_params(); // validate profile at startup
         SeerEngineService service;
         std::string line;
         while (std::getline(std::cin, line)) {

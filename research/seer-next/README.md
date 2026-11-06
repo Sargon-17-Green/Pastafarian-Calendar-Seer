@@ -37,7 +37,7 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 - Durable evidence: [results/ci-21f9558b74bc](results/ci-21f9558b74bc/README.md), including `hybrid-eviction.json`, `oracle.json`, `profile-hybrid.json`, and `profile-matrix.json`.
 - [42292756337](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42292756337): experimental S4+S2 profile showed a 28.14× total-time ratio on 32 repeated identical dates and 1.97× on nine calculation-day contexts visited twice; **not a general 28× engine speed claim**.
 - A 0-byte cache setting disables the relevant layer; `SEER_NEXT_CACHE_BYTES=0` alone leaves the S4 day cache enabled. Cache budgets restrict record payload only, not metadata, RNS transient allocations or total RSS.
-- The primary unresolved performance problem is independent **cold/one-shot arithmetic**, where overhead or regressions have been measured in some workloads. Hard memory constraints also remain an unsolved engineering task. Do not merge to main.
+- Three separately configurable research-only exact-computation profiles are now under experiment: `latency` (3 RNS/3 replay workers), `balanced` (3/1), and `memory` (1/1). Results and memory limits require a new completed CI run. The primary unresolved performance problem remains **cold/one-shot arithmetic**. Hard memory constraints also remain an unsolved engineering task. Do not merge to main.
 
 ## Artifacts and decision rules
 

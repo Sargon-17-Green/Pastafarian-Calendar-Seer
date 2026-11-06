@@ -13,9 +13,10 @@ const bin=path.join(root,'research','seer-next','build','seer_next_hybrid_engine
 const options=new Map(process.argv.slice(2).map(x=>{
  const m=/^--([a-z-]+)=(.*)$/.exec(x);if(!m)throw Error('invalid arg '+x);return [m[1],m[2]];
 }));
-function client(limit){
+function client(limit,profile){
  const child=spawn(bin,[],{cwd,env:{...process.env,
    SEER_NEXT_MAX_VIRTUAL_BYTES:String(limit),
+   ...(profile?{SEER_NEXT_EXECUTION_PROFILE:profile}:{}),
    SEER_NEXT_CACHE_BYTES:'8388608',
    SEER_NEXT_DAY_CACHE_BYTES:'0'},stdio:['pipe','pipe','pipe']});
  let buf='',err='',task=null,failed=null;
@@ -63,21 +64,36 @@ async function snapshot(pid){
    vmPeakKiB:Number(peak[1]),rssHighWaterKiB:hwm?Number(hwm[1]):null};
 }
 const trials=[
- {name:'2GiB-virtual',limit:2147483648,requiresSuccess:true},
- {name:'64MiB-virtual',limit:67108864,requiresSuccess:false}
+ {name:'2GiB-latency',limit:2147483648,profile:'latency',requiresSuccess:true},
+ {name:'64MiB-memory',limit:67108864,profile:'memory',requiresSuccess:true},
+ {name:'64MiB-latency-refused',limit:67108864,profile:'latency',requiresSuccess:false,expectRefusal:true}
 ];
 const results=[];
 for(const t of trials){
- const s=client(t.limit);
- const record={name:t.name,requestedBytes:t.limit};
+ const s=client(t.limit,t.profile);
+ const record={name:t.name,requestedBytes:t.limit,profile:t.profile};
  try{
+   // Synchronize startup with a real request: the process applies its limit
+   // inside main, so reading /proc immediately after spawn is a race.
+   if(t.expectRefusal){
+     let rejected;
+     try{await s.call(['M']);}catch(e){rejected=String(e);}
+     if(!rejected||!rejected.includes('requires SEER_NEXT_EXECUTION_PROFILE=memory'))
+       throw Error('Low-cap latency mode was not explicitly refused: '+rejected);
+     record.outcome='EXPLICIT_STARTUP_REFUSAL';
+     record.failure=rejected;
+     results.push(record);
+     continue;
+   }
+   const ready=await s.call(['M']);
+   assert.ok(ready?.memo,'native service did not become ready');
    const before=await snapshot(s.pid);
    assert.ok(before.effectiveLimitBytes<=t.limit,'setrlimit did not enforce requested cap');
    record.before=before;
    for(let i=0;i<3;i++){
      const ans=await s.call(['R','2461290',String(i%2?2461290:2460984),'1']);
      if(ans?.ok===false){
-       if(t.requiresSuccess)throw Error('2GiB limit produced failed computation '+JSON.stringify(ans));
+       if(t.requiresSuccess)throw Error('required profile produced failed computation '+JSON.stringify(ans));
        record.outcome='EXPLICIT_QUERY_ERROR_UNDER_CAP';
        record.error=ans;
        break;
@@ -92,8 +108,14 @@ for(const t of trials){
      'process exceeded requested VM limit after limit installation');
    assert.ok(record.after.vmSizeKiB*1024<=t.limit);
    if(t.requiresSuccess)assert.equal(record.successfulQueries,3);
+   if(t.profile==='memory'){
+     const memo=(await s.call(['M'])).memo;
+     assert.ok(memo.builds>=1,'64MiB memory-profile full-year build not exercised');
+     record.memo={fullYearBuilds:memo.builds,dayStores:memo.dayStores,
+       yearPayloadBytes:memo.payloadBytes};
+   }
  }catch(e){
-   if(t.requiresSuccess)throw e;
+   if(t.requiresSuccess||t.expectRefusal)throw e;
    record.outcome='PROCESS_OR_QUERY_FAILED_UNDER_STRICT_LIMIT';
    record.failure=String(e);
    // Low-memory pressure is not silently treated as successful calculation.
@@ -104,11 +126,12 @@ for(const t of trials){
  results.push(record);
 }
 const result={schema:'seer-next-linux-rlimit-as-v1',kernelEnforcement:'RLIMIT_AS',
-  outcome:'2GiB workload succeeded; 64MiB workload is reported with explicit success/failure classification',
+  outcome:'2GiB latency and 64MiB memory profiles must succeed; 64MiB latency mode must refuse at startup',
   results,
   qualifications:['This is an address-space limit, NOT an RSS limit, and only Linux is implemented.',
     'The limit is installed early in main, after the system loader has mapped shared libraries.',
-    'A low virtual-memory cap may reject otherwise valid calculations; it is not a fallback algorithm.',
+    'Under 64MiB the explicit memory profile uses 1 OpenMP + 1 replay worker; its acceptance is only tested for selected inputs.',
+    'The startup refusal for latency profile under 512MiB is conservative policy, not a proven lower bound.',
     'RNS and thread stacks count toward virtual memory. This experiment does not establish a safe minimum.',
     'No Windows Job Object or cgroup memory.max was implemented.']};
 const output=JSON.stringify(result,null,2)+'\n';
