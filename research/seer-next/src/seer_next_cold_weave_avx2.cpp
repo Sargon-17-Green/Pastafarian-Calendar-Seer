@@ -196,11 +196,51 @@ struct PackState{std::array<V8,MAXM> H{},B{};V8 A=vsmall(1),O=vzero(),rankR=vzer
 struct RnsEngine{
     std::vector<int> len,pref;int m,total,npr,npacks,threads,commonN=0,commonFreq=0;std::vector<uint64_t> primes;std::vector<long double> invp,logP,logFact;std::vector<mpz_class> Pprefix;std::vector<uint64_t> garnerInv;
     std::vector<PackConst> pc;std::vector<PackState> initPacks;double count_ms=0,fracmeta_ms=0;std::vector<uint64_t> Nres;
+    // Experimental optimization: compute the prime-independent Pascal-ladder
+    // grouping plan once per engine, rather than once per eight-prime pack.
+    // Original per-pack planning remains selectable as the exact control.
+    struct LadderGroup {size_t begin,end;int maxr;bool ladder;};
+    bool sharedPlan=false;
+    std::array<int,124> sharedFreq{},sharedMaxr{};
+    std::vector<int> sharedNeed;
+    std::vector<LadderGroup> sharedGroups;
+    // Per-pack phase timings are independent slots, written by parallel pack workers.
+    std::vector<std::array<double,3>> packDetails;
     RnsEngine(const std::vector<int>&L,int npr_,int threads_):len(L),m(L.size()),npr(npr_),threads(threads_){total=std::accumulate(len.begin(),len.end(),0);pref.resize(m);int s=0;for(int i=0;i<m;i++){s+=len[i]-1;pref[i]=s;}std::array<int,124> fql{};for(int h=0;h<m-1;h++)fql[len[h+1]]++;for(int n=1;n<=123;n++)if(fql[n]>commonFreq){commonFreq=fql[n];commonN=n;}primes=make_primes(npr);npacks=(npr+7)/8;invp.resize(npr);for(int i=0;i<npr;i++)invp[i]=1.0L/(long double)primes[i];
         Pprefix.resize(npr+1);Pprefix[0]=1;garnerInv.resize(npr);garnerInv[0]=1;logP.assign(npr+1,0);for(int i=0;i<npr;i++){if(i>0){uint64_t pm=mpz_fdiv_ui(Pprefix[i].get_mpz_t(),primes[i]);garnerInv[i]=inv_mod_u64(pm,primes[i]);}Pprefix[i+1]=Pprefix[i]*mpz_from_u64_exact(primes[i]);logP[i+1]=logP[i]+log2l((long double)primes[i]);}
         logFact.assign(total+1,0);for(int i=1;i<=total;i++)logFact[i]=logFact[i-1]+log2l((long double)i);
         fracmeta_ms=0;
+        if(const char*env=std::getenv("SEER_NEXT_RNS_SHARED_PLAN");env&&*env){
+            if(std::strcmp(env,"1")==0)sharedPlan=true;
+            else if(std::strcmp(env,"0")!=0)throw std::runtime_error("SEER_NEXT_RNS_SHARED_PLAN must be 0 or 1");
+        }
+        if(sharedPlan){
+            for(int h=0;h<m-1;h++){
+                int n=len[h+1];
+                sharedFreq[n]++;
+                sharedMaxr[n]=std::max(sharedMaxr[n],pref[h]);
+            }
+            for(int n=1;n<=123;n++)if(sharedFreq[n]>1)sharedNeed.push_back(n);
+#if WC_LADDER_GAP != 0
+            for(size_t gi=0;gi<sharedNeed.size();){
+                size_t gj=gi+1;
+                while(gj<sharedNeed.size()&&sharedNeed[gj]-sharedNeed[gj-1]<=WC_LADDER_GAP)gj++;
+                const int n0=sharedNeed[gi],nlast=sharedNeed[gj-1];
+                int mr=0;long long sumMr=0;
+                for(size_t z=gi;z<gj;z++){
+                    mr=std::max(mr,sharedMaxr[sharedNeed[z]]);
+                    sumMr+=sharedMaxr[sharedNeed[z]];
+                }
+                const long long prefixAdds=static_cast<long long>(nlast-n0)*(mr+1);
+                const long long savedMulOps=2LL*(sumMr-mr);
+                const bool useLadder=(gj-gi)>=2 && 2LL*savedMulOps>=prefixAdds;
+                sharedGroups.push_back({gi,gj,mr,useLadder});
+                gi=gj;
+            }
+#endif
+        }
         pc.resize(npacks);initPacks.resize(npacks);Nres.resize(npr);
+        packDetails.resize(npacks);
         auto a=Clock::now();omp_set_num_threads(threads);
 #pragma omp parallel for schedule(static)
         for(int pk=0;pk<npacks;pk++) build_pack(pk);
@@ -208,25 +248,44 @@ struct RnsEngine{
         for(int pk=0;pk<npacks;pk++){alignas(64)uint64_t rr[8];vstore(rr,initPacks[pk].H[0]);for(int l=0;l<8;l++){int i=pk*8+l;if(i<npr)Nres[i]=rr[l];}}
     }
     void build_pack(int pk){
+        const auto packBegin=Clock::now();
         auto &q=pc[pk];for(int l=0;l<8;l++){int i=pk*8+l;uint64_t p=i<npr?primes[i]:primes.back();q.p[l]=p;q.c[l]=B52-p;}q.vp=vload(q.p);q.vc=vload(q.c);
         int maxv=total+2;q.inv.resize(maxv);std::vector<V8> fact(maxv);fact[0]=vsmall(1);for(int i=1;i<maxv;i++)fact[i]=VMod::mul_small(fact[i-1],i,q.vp,q.vc);alignas(64)uint64_t ff[8],ii[8];vstore(ff,fact[maxv-1]);for(int l=0;l<8;l++)ii[l]=inv_mod_u64(ff[l],q.p[l]);V8 acc=vload(ii);for(int i=maxv-1;i>=1;i--){q.inv[i]=VMod::mul(acc,fact[i-1],q.vp,q.vc);acc=VMod::mul_small(acc,i,q.vp,q.vc);}q.inv[0]=vzero();fact.clear();fact.shrink_to_fit();
+        const auto afterInverse=Clock::now();
         auto &st=initPacks[pk];st.H[m-1]=vsmall(1);st.B[m-1]=vzero();
-        int cn=commonN;std::array<int,124> freq{},maxrByN{};for(int h=0;h<m-1;h++){int n=len[h+1];freq[n]++;maxrByN[n]=std::max(maxrByN[n],pref[h]);}
+        int cn=commonN;std::array<int,124> localFreq{},localMaxr{};
+        if(!sharedPlan)for(int h=0;h<m-1;h++){
+            int n=len[h+1];localFreq[n]++;localMaxr[n]=std::max(localMaxr[n],pref[h]);
+        }
+        const auto &freq=sharedPlan?sharedFreq:localFreq;
+        const auto &maxrByN=sharedPlan?sharedMaxr:localMaxr;
         std::array<std::vector<V8>,124> wc;
 #if WC_LADDER_GAP==0
         for(int n=1;n<=123;n++)if(freq[n]>1){int mr=maxrByN[n];wc[n].resize(mr+1);wc[n][0]=vsmall(1);for(int r=0;r<mr;r++){auto w=VMod::mul_small(wc[n][r],n+r-1,q.vp,q.vc);wc[n][r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}}
 #else
-        std::vector<int> need; for(int n=1;n<=123;n++)if(freq[n]>1)need.push_back(n);
+        std::vector<int> localNeed;
+        if(!sharedPlan)for(int n=1;n<=123;n++)if(freq[n]>1)localNeed.push_back(n);
+        const std::vector<int>&need=sharedPlan?sharedNeed:localNeed;
         auto build_direct=[&](int n){int mr=maxrByN[n];wc[n].resize(mr+1);wc[n][0]=vsmall(1);for(int r=0;r<mr;r++){auto w=VMod::mul_small(wc[n][r],n+r-1,q.vp,q.vc);wc[n][r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}};
+        size_t planIndex=0;
         for(size_t gi=0;gi<need.size();){
-            size_t gj=gi+1; while(gj<need.size() && need[gj]-need[gj-1]<=WC_LADDER_GAP)gj++;
-            int n0=need[gi], nlast=need[gj-1], mr=0; long long sumMr=0;
-            for(size_t z=gi;z<gj;z++){mr=std::max(mr,maxrByN[need[z]]);sumMr+=maxrByN[need[z]];}
-            long long prefixAdds=(long long)(nlast-n0)*(mr+1);
-            long long savedMulOps=2LL*(sumMr-mr);
-            // A VMod::add is much cheaper than a modular multiply, but not free.
-            // Require at least one saved multiply per two prefix additions.
-            bool useLadder=(gj-gi)>=2 && 2LL*savedMulOps>=prefixAdds;
+            size_t gj=gi+1;
+            int mr=0;
+            bool useLadder=false;
+            if(sharedPlan){
+                const LadderGroup &g=sharedGroups.at(planIndex++);
+                if(g.begin!=gi)throw std::logic_error("RNS shared Pascal group index mismatch");
+                gj=g.end;mr=g.maxr;useLadder=g.ladder;
+            }else{
+                while(gj<need.size() && need[gj]-need[gj-1]<=WC_LADDER_GAP)gj++;
+                long long sumMr=0;
+                for(size_t z=gi;z<gj;z++){mr=std::max(mr,maxrByN[need[z]]);sumMr+=maxrByN[need[z]];}
+                long long prefixAdds=(long long)(need[gj-1]-need[gi])*(mr+1);
+                long long savedMulOps=2LL*(sumMr-mr);
+                // Preserve the original ladder heuristic verbatim.
+                useLadder=(gj-gi)>=2 && 2LL*savedMulOps>=prefixAdds;
+            }
+            const int n0=need[gi],nlast=need[gj-1];
             if(!useLadder){for(size_t z=gi;z<gj;z++)build_direct(need[z]);gi=gj;continue;}
             std::vector<V8> row(mr+1); row[0]=vsmall(1); for(int r=0;r<mr;r++){auto w=VMod::mul_small(row[r],n0+r-1,q.vp,q.vc);row[r+1]=VMod::mul(w,q.inv[r+1],q.vp,q.vc);}
             wc[n0].assign(row.begin(),row.begin()+maxrByN[n0]+1);
@@ -235,10 +294,14 @@ struct RnsEngine{
             gi=gj;
         }
 #endif
+        const auto afterLadder=Clock::now();
         std::vector<V8> following(pref.back()+2,vsmall(1)),current;
         for(int h=m-2;h>=0;--h){int qmax=pref[h]+1,n=len[h+1];current.assign(qmax+1,vzero());V8 cum=vzero(),w=vsmall(1),Blast=vsmall(1);bool cached=freq[n]>1;for(int qq=1;qq<=qmax;qq++){int r=qq-1;V8 ww=cached?wc[n][r]:w;auto term=VMod::mul(ww,following[n+r],q.vp,q.vc);cum=VMod::add(cum,term,q.vp);current[qq]=cum;if(qq==qmax)Blast=ww;if(!cached){w=VMod::mul_small(w,n+r-1,q.vp,q.vc);w=VMod::mul(w,q.inv[qq],q.vp,q.vc);}}st.H[h]=current[qmax];st.B[h]=Blast;following.swap(current);}
         q.bcommon=std::move(wc[cn]);
         st.A=vsmall(1);st.O=vzero();st.rankR=vzero();
+        const auto afterDP=Clock::now();
+        packDetails[pk]={ms(packBegin,afterInverse),ms(afterInverse,afterLadder),
+                         ms(afterLadder,afterDP)};
     }
     mpz_class crt(const std::vector<uint64_t>&r,int k) const{mpz_class x=0;for(int i=0;i<k;i++){uint64_t pi=primes[i],xm=mpz_fdiv_ui(x.get_mpz_t(),pi);uint64_t delta=r[i]>=xm?r[i]-xm:pi-(xm-r[i]);uint64_t t=(uint64_t)((__uint128_t)delta*garnerInv[i]%pi);if(t)x+=Pprefix[i]*mpz_from_u64_exact(t);}return x;}
     void crt2(const std::vector<uint64_t>&a,const std::vector<uint64_t>&b,int k,mpz_class&xa,mpz_class&xb) const{xa=0;xb=0;for(int i=0;i<k;i++){uint64_t p=primes[i];uint64_t am=mpz_fdiv_ui(xa.get_mpz_t(),p),bm=mpz_fdiv_ui(xb.get_mpz_t(),p);uint64_t da=a[i]>=am?a[i]-am:p-(am-a[i]);uint64_t db=b[i]>=bm?b[i]-bm:p-(bm-b[i]);uint64_t ta=(uint64_t)((__uint128_t)da*garnerInv[i]%p),tb=(uint64_t)((__uint128_t)db*garnerInv[i]%p);if(ta)xa+=Pprefix[i]*mpz_from_u64_exact(ta);if(tb)xb+=Pprefix[i]*mpz_from_u64_exact(tb);}}
@@ -368,6 +431,20 @@ std::vector<int> weave_month_prefix(
     const auto seerNextAfterSizing=Clock::now();
     RnsEngine eng(monthLengths,npr,threads);
     const auto seerNextAfterEngine=Clock::now();
+    if(const char*file=std::getenv("SEER_NEXT_RNS_PACK_DETAIL_FILE");file&&*file){
+        std::ofstream out(file,std::ios::app);
+        if(out){
+            std::array<double,3> sums{},maxs{};
+            for(const auto&v:eng.packDetails)for(int phase=0;phase<3;phase++){
+                sums[phase]+=v[phase];maxs[phase]=std::max(maxs[phase],v[phase]);
+            }
+            out<<total<<'\t'<<npr<<'\t'<<eng.npacks<<'\t'
+               <<(eng.sharedPlan?1:0)<<'\t'<<eng.sharedNeed.size()<<'\t'
+               <<eng.sharedGroups.size()<<'\t'
+               <<sums[0]<<'\t'<<sums[1]<<'\t'<<sums[2]<<'\t'
+               <<maxs[0]<<'\t'<<maxs[1]<<'\t'<<maxs[2]<<'\n';
+        }
+    }
     mpz_class N=eng.crt(eng.Nres,eng.npr);
     int initk=eng.basis_for(N,eng.npr);
     auto coeff=init_coeff(eng,initk);
