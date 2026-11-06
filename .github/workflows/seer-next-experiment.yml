@@ -51,10 +51,16 @@ jobs:
           mkdir -p research/seer-next/results/working
           node research/seer-next/scripts/compare_candidate.mjs --repetitions=32 --output=research/seer-next/results/working/ab.json
           cat research/seer-next/results/working/ab.json
+      - name: Profile cold, repeat, memory and CPU policies with A/B parity
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_policies.mjs --trials=2 --output=research/seer-next/results/working/profile-matrix.json
+          node -e "const x=require('./research/seer-next/results/working/profile-matrix.json'); console.log('PROFILE_SUMMARY',JSON.stringify({results:x.results.length,scenarios:x.workloads.length,policies:x.policies.length,trials:x.trials}));"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-next-native-ab-linux-avx2
           path: |
             research/seer-next/results/working/ab.json
             research/seer-next/results/working/differential.json
+            research/seer-next/results/working/profile-matrix.json
           if-no-files-found: error

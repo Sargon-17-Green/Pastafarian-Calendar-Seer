@@ -522,6 +522,19 @@ class SeerEngineService {
         std::cout << "}\n";
     }
 
+    // Research-only diagnostics. The baseline S command and all public responses are unchanged.
+    void handleMemoStats() {
+        std::cout << "{\"schema\":1,\"engine\":\"seer-next-experimental\",\"memo\":{"
+                  << "\"hits\":" << memoHits_
+                  << ",\"builds\":" << memoBuilds_
+                  << ",\"evictions\":" << memoEvictions_
+                  << ",\"keys\":" << memo_.size()
+                  << ",\"payloadBytes\":" << memoUsedBytes_
+                  << ",\"payloadBudgetBytes\":" << memoLimitBytes_
+                  << ",\"promoteAfter\":" << memoPromoteAfter_
+                  << "}}\n";
+    }
+
     void handleStats() {
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-engine-service\",\"stats\":{"
                   << "\"requests\":" << counters_.requests
@@ -561,6 +574,7 @@ public:
         else if (f[0] == "D") handleDiagonal(f);
         else if (f[0] == "Y") handleYear(f);
         else if (f[0] == "S" && f.size() == 1) handleStats();
+        else if (f[0] == "M" && f.size() == 1) handleMemoStats();
         else throw std::runtime_error("unknown service command");
         std::cout << std::flush;
     }
