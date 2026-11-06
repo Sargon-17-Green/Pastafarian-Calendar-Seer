@@ -107,7 +107,7 @@ function openSession() {
         fail(new Error(`Native request timed out: ${command}`));
         child.kill();
       }, 120000);
-      child.stdin.write(`${command}\n`, 'utf8');
+      child.stdin.write(`${command.split(' ').join('\t')}\n`, 'utf8');
       const line = await response;
       const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
       const parsed = JSON.parse(line);
