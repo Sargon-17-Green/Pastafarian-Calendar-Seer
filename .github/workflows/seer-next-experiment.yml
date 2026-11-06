@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write  # research branch only: archive verified raw output; no deploy or release
 
 concurrency:
   group: seer-next-experiment-${{ github.ref }}
@@ -56,6 +56,16 @@ jobs:
           mkdir -p research/seer-next/results/working
           node research/seer-next/scripts/compare_candidate.mjs --repetitions=32 --output=research/seer-next/results/working/ab.json
           cat research/seer-next/results/working/ab.json
+      - name: Build independent canonical saved-sum oracle
+        run: |
+          set -euo pipefail
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp -o research/seer-next/build/independent_canonical_oracle
+      - name: Verify hybrid and original against independent canonical oracle
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_independent_oracle.mjs --output=research/seer-next/results/working/oracle.json
+          node -e "const x=require('./research/seer-next/results/working/oracle.json');console.log('INDEPENDENT_ORACLE_SUMMARY',JSON.stringify({caseCount:x.count,verdict:x.verdict,dayHits:x.hybridMemo.dayHits}));"
       - name: Profile cold, repeat, memory and CPU policies with A/B parity
         run: |
           set -euo pipefail
@@ -76,4 +86,27 @@ jobs:
             research/seer-next/results/working/differential.json
             research/seer-next/results/working/profile-matrix.json
             research/seer-next/results/working/profile-hybrid.json
+            research/seer-next/results/working/oracle.json
           if-no-files-found: error
+      - name: Archive raw experiment results in research branch without retriggering CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
+          mkdir -p "$DEST"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json} "$DEST/"
+          cat > "$DEST/README.md" <<EOF
+          # Seer Next independent oracle, full-year and hybrid raw CI evidence
+
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          Source commit: ${GITHUB_SHA}
+          Runner: ${RUNNER_OS} / ${RUNNER_ARCH}
+
+          All results are raw exact-candidate comparison artifacts from this run; they are not global speed claims. See each JSON for metrics, CPU/RSS snapshots, independent canonical vector results and statistical sample counts.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DEST"
+          git diff --cached --quiet && { echo "No new evidence to archive."; exit 0; }
+          git commit -m "research(seer-next): archive CI evidence for ${GITHUB_SHA:0:12} [skip ci]"
+          git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06
