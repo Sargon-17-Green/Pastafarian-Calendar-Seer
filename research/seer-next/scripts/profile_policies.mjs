@@ -12,7 +12,9 @@ if (platform() !== 'linux') throw Error('This profiler requires Linux /proc');
 const root = path.resolve(fileURLToPath(new URL('../../../', import.meta.url)));
 const workingDir = path.join(root, 'prototype', 'data');
 const baseline = path.join(root, 'prototype', 'build', 'seer_engine_service');
-const candidate = path.join(root, 'research', 'seer-next', 'build', 'seer_next_engine_service');
+const candidate = process.env.SEER_NEXT_CANDIDATE_BIN
+  ? path.resolve(process.env.SEER_NEXT_CANDIDATE_BIN)
+  : path.join(root, 'research', 'seer-next', 'build', 'seer_next_engine_service');
 const tickHz = Number(execFileSync('getconf', ['CLK_TCK'], {encoding:'utf8'}).trim());
 if (!Number.isSafeInteger(tickHz) || tickHz <= 0) throw Error('Invalid CPU tick rate');
 const args = new Map(process.argv.slice(2).map(arg => {
