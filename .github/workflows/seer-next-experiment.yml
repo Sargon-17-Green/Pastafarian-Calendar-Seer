@@ -56,6 +56,11 @@ jobs:
           mkdir -p research/seer-next/results/working
           node research/seer-next/scripts/compare_candidate.mjs --repetitions=32 --output=research/seer-next/results/working/ab.json
           cat research/seer-next/results/working/ab.json
+      - name: Verify hybrid cache eviction, small budgets and range correctness
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_hybrid_eviction.mjs --output=research/seer-next/results/working/hybrid-eviction.json
+          node -e "const x=require('./research/seer-next/results/working/hybrid-eviction.json');console.log('HYBRID_EVICTION',JSON.stringify({verdict:x.verdict,phases:x.phaseCount}));"
       - name: Build independent canonical saved-sum oracle
         run: |
           set -euo pipefail
@@ -87,6 +92,7 @@ jobs:
             research/seer-next/results/working/profile-matrix.json
             research/seer-next/results/working/profile-hybrid.json
             research/seer-next/results/working/oracle.json
+            research/seer-next/results/working/hybrid-eviction.json
           if-no-files-found: error
       - name: Archive raw experiment results in research branch without retriggering CI
         shell: bash
@@ -94,7 +100,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
