@@ -1,6 +1,6 @@
 # Seer Next — first-principles exact-engine research
 
-**Status (2026-11-06): PHASE 0 / research initiated; no speedup asserted or implementation adopted.**
+**Status (2026-11-06): PHASE 3 — isolated native S2 and S4+S2 candidates implemented and measured; no production adoption. Correctness is verified only for tested samples. Cold one-shot improvements and a hard process-RAM ceiling remain open.**
 
 This is a separate research program **inside the Seer repository**. It is intentionally not a rewrite of the normative calendar. Preserve existing production behavior, public APIs, canonical semantics, released packages, and the main branch. Never substitute agreement between Seer variants for independent canonical evidence.
 
@@ -22,7 +22,7 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 ## Research sequence
 
-0. Freeze baseline identity; inventory implementation, independent oracle, platform support and existing measurements. **In progress.**
+0. Freeze baseline identity; inventory implementation, independent oracle, platform support and existing measurements. **Completed for pinned baseline.**
 1. Measure the unchanged starting Seer with pinned, reproducible cold/warm/repeat/range/batch/concurrency workloads, full output parity and process-tree resource accounting.
 2. Derive exact dependencies and cost model; prove safe invariants and conditional lower bounds only where supported. Seek algorithmic elimination of work before instruction-level acceleration.
 3. Build a standalone candidate engine and differential oracle harness; first experiment: reuse of year structure, weaving checkpoints, and materialized records under hard cache budgets. No production adoption.
@@ -31,11 +31,21 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 6. Introduce policy-based selection and bounded fallback only after exhaustive correctness and resource tests. Keep every measurement, decision, proof, counterexample and negative result in this directory.
 7. Release separately after all existing Seer compatibility and release gates pass; never replace `main` by assumption.
 
+## Verified research checkpoints (as of 2026-11-06)
+
+- [42296969585](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42296969585) **completed success**: original Seer vs hybrid full-response parity, 11 selected independent saved-sum oracle cases, 156 prior differential queries, 5 new resource-constrained eviction phases (28 paired requests), and repeat/memory/CPU profiles.
+- Durable evidence: [results/ci-21f9558b74bc](results/ci-21f9558b74bc/README.md), including `hybrid-eviction.json`, `oracle.json`, `profile-hybrid.json`, and `profile-matrix.json`.
+- [42292756337](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42292756337): experimental S4+S2 profile showed a 28.14× total-time ratio on 32 repeated identical dates and 1.97× on nine calculation-day contexts visited twice; **not a general 28× engine speed claim**.
+- A 0-byte cache setting disables the relevant layer; `SEER_NEXT_CACHE_BYTES=0` alone leaves the S4 day cache enabled. Cache budgets restrict record payload only, not metadata, RNS transient allocations or total RSS.
+- The primary unresolved performance problem is independent **cold/one-shot arithmetic**, where overhead or regressions have been measured in some workloads. Hard memory constraints also remain an unsolved engineering task. Do not merge to main.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.
 - [01_MODEL_AND_BOUNDS.md](01_MODEL_AND_BOUNDS.md): mathematical cost model, proven statements, open questions.
 - [02_EXPERIMENT_PROTOCOL.md](02_EXPERIMENT_PROTOCOL.md): measurement design, correctness gate, reporting.
 - [DECISIONS.md](DECISIONS.md): research decisions and reversals.
+- [10_HYBRID_EVICTION_PROTOCOL.md](10_HYBRID_EVICTION_PROTOCOL.md): deterministic tiny-budget, full-response eviction checks.
+- [11_ONLINE_UNKNOWN_COST_LIMIT.md](11_ONLINE_UNKNOWN_COST_LIMIT.md): impossibility theorem under genuinely unknown request costs.
 
 For every experiment, retain its source, exact environment, command, raw measurements, summary, correctness artifacts, and reason to adopt/reject. Do not commit large generated data, secrets, or transient toolchains. A green run alone is not a benchmark result.
