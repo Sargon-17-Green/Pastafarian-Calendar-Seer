@@ -85,6 +85,55 @@ std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last
             seerNextAfterStructure,seerNextDone);
         return std::vector<BatchRecord>{r};
     }
+    // Exact second-day shortcut in a research-only instrumented core.
+    // Lexicographic month paths have ordered first appearances (0,1,...).
+    // For multiplicities l_i, total T and suffix sums S_i, the count of
+    // legal paths is N = T! / (prod_i (l_i-1)! * prod_i S_i).
+    // Among those paths the first two labels are 00 exactly
+    // N*(l_0-1)/(T-1) times; otherwise they are 01.
+    // Rank selection is the SAME canonical bowl/seal used by full RNS.
+    // No approximation, floating point, or shared memory.
+    const char* secondOpt=std::getenv("SEER_NEXT_SECOND_DAY_SHORTCUT");
+    if(first==last && first==y.a+2 && !ybEdgeShortcutDisabled &&
+       secondOpt && std::string(secondOpt)=="1" &&
+       st.monthLen.size()>=2) {
+        const int T=std::accumulate(st.monthLen.begin(),st.monthLen.end(),0);
+        if(T!=y.b-y.a || T<2) throw std::logic_error("shortcut year length mismatch");
+        BI numerator=1;
+        for(int k=2;k<=T;k++) numerator*=k;
+        BI denominator=1;
+        int suffix=T;
+        for(int n:st.monthLen) {
+            if(n<=0)throw std::logic_error("shortcut invalid month length");
+            for(int k=2;k<n;k++)denominator*=k;
+            denominator*=suffix;
+            suffix-=n;
+        }
+        if(suffix!=0 || denominator<=0 || numerator%denominator!=0)
+            throw std::logic_error("shortcut exact ordered-word count invalid");
+        BI N=numerator/denominator;
+        if(N<=0) throw std::logic_error("shortcut nonpositive path count");
+        BI repeatNumerator=N*(st.monthLen.front()-1);
+        if(repeatNumerator%(T-1)!=0)
+            throw std::logic_error("shortcut nonintegral exact branch count");
+        BI repeats=repeatNumerator/(T-1);
+        BI rank=yb_fast_choose_bi(structSauce,4,32,N);
+        if(rank<1 || rank>N)throw std::logic_error("shortcut canonical rank invalid");
+        const int mi=(rank<=repeats)?0:1;
+        const int offset=1;
+        int ci=-1;
+        for(int k=0;k<st.cutletCount;k++){
+            if(offset>=st.cutStart[k] && offset<=st.cutEnd[k]) {ci=k;break;}
+        }
+        if(ci<0)throw std::logic_error("shortcut cutlet not found");
+        BatchRecord r{first,(long long)y.num,st.cutName[ci],
+            offset-st.cutStart[ci]+1,st.monthName[mi],
+            mi==0?2:1,st.cutletCount,st.monthCount};
+        seer_next_record_cold_stage("second_day",calc,first,last,true,
+            seerNextBegin,seerNextAfterSauce,seerNextAfterStructure,
+            seerNextAfterStructure,SeerNextClock::now());
+        return {r};
+    }
     if(const char*counter=std::getenv("SEER_TEST_WEAVE_COUNTER_FILE")){
         std::ofstream out(counter,std::ios::app);
         if(out)out<<"year_batch_weave\n";
