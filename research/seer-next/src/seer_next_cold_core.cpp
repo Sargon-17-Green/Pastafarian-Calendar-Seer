@@ -161,9 +161,19 @@ std::vector<BatchRecord> compute_segment(int64_t calc,int64_t first,int64_t last
     };
     const int seerNextWorkers=seerNextTuned("SEER_NEXT_COLD_RNS_THREADS",params.threads);
     const int seerNextReplay=seerNextTuned("SEER_NEXT_COLD_REPLAY_THREADS",params.replayThreads);
+    const auto seerNextBlock=[&]()->int {
+        const char* raw=std::getenv("SEER_NEXT_COLD_SUPERBLOCK");
+        if(!raw||!*raw)return params.superblock;
+        const std::string value(raw);
+        size_t parsed=0;
+        const long long size=std::stoll(value,&parsed,10);
+        if(parsed!=value.size()||size<32||size>4096||(size&(size-1))!=0)
+            throw std::runtime_error("SEER_NEXT_COLD_SUPERBLOCK must be power of two in 32..4096");
+        return static_cast<int>(size);
+    }();
     auto weave=weave_month_prefix(
         st.monthLen,structSauce,maxOffset+1,
-        seerNextWorkers,params.superblock,seerNextReplay);
+        seerNextWorkers,seerNextBlock,seerNextReplay);
     const auto seerNextAfterWeave=SeerNextClock::now();
     std::vector<int>seen(st.monthCount,0);std::vector<BatchRecord>out;out.reserve((size_t)(last-first+1));
     for(int offset=0;offset<=maxOffset;offset++){
