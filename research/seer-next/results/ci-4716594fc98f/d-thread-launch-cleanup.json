@@ -1,0 +1,38 @@
+{
+  "schema": "seer-next-d-thread-launch-recovery-v1",
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "platform": "linux",
+  "arch": "x64",
+  "engines": [
+    "hybrid",
+    "probe"
+  ],
+  "sourceOracleReplies": 2,
+  "cases": 2,
+  "fullyVerified": true,
+  "results": [
+    {
+      "engine": "hybrid",
+      "partialWorkerLaunchInjected": true,
+      "rejectedDRequests": 2,
+      "successfulOriginalEqualRReplies": 3,
+      "successfulOriginalEqualYReplies": 1,
+      "nativeProcessSurvived": true
+    },
+    {
+      "engine": "probe",
+      "partialWorkerLaunchInjected": true,
+      "rejectedDRequests": 2,
+      "successfulOriginalEqualRReplies": 3,
+      "successfulOriginalEqualYReplies": 1,
+      "nativeProcessSurvived": true
+    }
+  ],
+  "caveats": [
+    "The error is intentionally injected after a first native worker starts, before launching the second; this is NOT an actual low-memory failure.",
+    "The research-only fault injection is disabled when SEER_NEXT_TEST_D_LAUNCH_FAIL_AFTER is absent.",
+    "Both failed D requests must return protocol errors, not process SIGABRT; valid R/Y requests before/after equal original Seer completely.",
+    "This verifies the specific partial thread-launch unwinding path, not every possible OpenMP abort cause.",
+    "No released Seer, original baseline, production default or branch main modification."
+  ]
+}

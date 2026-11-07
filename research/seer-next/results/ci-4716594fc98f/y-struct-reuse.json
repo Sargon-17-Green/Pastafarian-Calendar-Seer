@@ -1,0 +1,1377 @@
+{
+  "schema": "seer-next-y-structure-reuse-v1",
+  "sourceBaseline": "714ae09180d9cabe39116901f78e13bbdbd5f7fe",
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "node": "v24.22.2",
+  "platform": "linux",
+  "arch": "x64",
+  "trials": 2,
+  "contexts": 12,
+  "fullYearReplies": 108,
+  "cacheBudgetBytes": 8388608,
+  "fullParity": true,
+  "summary": [
+    {
+      "kind": "reference",
+      "contexts": 12,
+      "coldTotalMs": 1761.234809,
+      "firstWarmTotalMs": 1622.117689,
+      "secondWarmTotalMs": 1645.6543669999999,
+      "allThreeTotalMs": 5029.006865,
+      "largestVmPeakKiB": 493192,
+      "largestRssHwmKiB": 72812
+    },
+    {
+      "kind": "control",
+      "contexts": 12,
+      "coldTotalMs": 1574.495708,
+      "firstWarmTotalMs": 68.64828899999999,
+      "secondWarmTotalMs": 73.968064,
+      "allThreeTotalMs": 1717.1120609999998,
+      "largestVmPeakKiB": 457004,
+      "largestRssHwmKiB": 73372
+    },
+    {
+      "kind": "reuse",
+      "contexts": 12,
+      "coldTotalMs": 1538.521758,
+      "firstWarmTotalMs": 84.6626,
+      "secondWarmTotalMs": 74.47692599999999,
+      "allThreeTotalMs": 1697.661284,
+      "largestVmPeakKiB": 457004,
+      "largestRssHwmKiB": 73360
+    }
+  ],
+  "results": [
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 4999,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            246.92542,
+            227.137597,
+            232.102206
+          ],
+          "spawnToFirstMs": 250.304007,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 493192,
+            "rssHighWaterKiB": 72812
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            223.503744,
+            10.229348,
+            8.177299
+          ],
+          "spawnToFirstMs": 229.573039,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 230640,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 457004,
+            "rssHighWaterKiB": 73272
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            206.740015,
+            9.489237,
+            11.071455
+          ],
+          "spawnToFirstMs": 212.140165,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 230640,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 423004,
+            "rssHighWaterKiB": 73320
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 5000,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            129.35905,
+            126.893256,
+            122.190674
+          ],
+          "spawnToFirstMs": 131.665321,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 480972,
+            "rssHighWaterKiB": 38364
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            117.355239,
+            4.790625,
+            6.408857
+          ],
+          "spawnToFirstMs": 121.661915,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 161880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455636,
+            "rssHighWaterKiB": 39252
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            117.94374,
+            6.488846,
+            7.811408
+          ],
+          "spawnToFirstMs": 122.280782,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 161880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455636,
+            "rssHighWaterKiB": 39104
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 5001,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            68.272038,
+            60.711829,
+            62.443731
+          ],
+          "spawnToFirstMs": 70.3311,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 476832,
+            "rssHighWaterKiB": 26692
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            65.808033,
+            3.895239,
+            3.929524
+          ],
+          "spawnToFirstMs": 68.994723,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 131560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455028,
+            "rssHighWaterKiB": 27092
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            61.07295,
+            6.107547,
+            5.009233
+          ],
+          "spawnToFirstMs": 65.090608,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 131560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455028,
+            "rssHighWaterKiB": 26896
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 4999,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            163.869524,
+            147.879493,
+            155.302397
+          ],
+          "spawnToFirstMs": 166.034474,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 483372,
+            "rssHighWaterKiB": 40980
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            144.959348,
+            7.042827,
+            8.218315
+          ],
+          "spawnToFirstMs": 148.825854,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 182560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 435496,
+            "rssHighWaterKiB": 42152
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            143.474565,
+            5.154282,
+            6.727572
+          ],
+          "spawnToFirstMs": 147.226257,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 182560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455980,
+            "rssHighWaterKiB": 42176
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 5000,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            163.078998,
+            137.683867,
+            144.249146
+          ],
+          "spawnToFirstMs": 165.097494,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 483884,
+            "rssHighWaterKiB": 46748
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            130.993105,
+            6.972206,
+            10.523897
+          ],
+          "spawnToFirstMs": 135.179577,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 176880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455888,
+            "rssHighWaterKiB": 47428
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            125.752052,
+            4.667667,
+            4.683125
+          ],
+          "spawnToFirstMs": 131.184492,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 176880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455888,
+            "rssHighWaterKiB": 47536
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 5001,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            117.87934,
+            110.475691,
+            107.902774
+          ],
+          "spawnToFirstMs": 120.246585,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 348444,
+            "rssHighWaterKiB": 30656
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            107.996347,
+            4.413183,
+            7.303622
+          ],
+          "spawnToFirstMs": 112.799295,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 154560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455512,
+            "rssHighWaterKiB": 30200
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            110.438662,
+            5.966054,
+            6.16273
+          ],
+          "spawnToFirstMs": 114.142615,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 154560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455516,
+            "rssHighWaterKiB": 30064
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 5001,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            70.240941,
+            61.90447,
+            59.839284
+          ],
+          "spawnToFirstMs": 73.004103,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 476832,
+            "rssHighWaterKiB": 26620
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            65.046464,
+            7.234584,
+            3.743406
+          ],
+          "spawnToFirstMs": 69.33743,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 131560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455028,
+            "rssHighWaterKiB": 26968
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 5001
+          },
+          "perRequestMs": [
+            65.386498,
+            5.146428,
+            5.165153
+          ],
+          "spawnToFirstMs": 68.818235,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 131560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455028,
+            "rssHighWaterKiB": 27212
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 4999,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            161.805429,
+            151.271295,
+            161.744987
+          ],
+          "spawnToFirstMs": 164.126348,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 483372,
+            "rssHighWaterKiB": 40980
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            143.366232,
+            5.069264,
+            5.028619
+          ],
+          "spawnToFirstMs": 147.429374,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 182560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455980,
+            "rssHighWaterKiB": 42156
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 4999
+          },
+          "perRequestMs": [
+            144.682913,
+            10.035267,
+            7.039521
+          ],
+          "spawnToFirstMs": 148.660245,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 182560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455976,
+            "rssHighWaterKiB": 42176
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 5000,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            155.676241,
+            136.465551,
+            143.363348
+          ],
+          "spawnToFirstMs": 157.954471,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 483884,
+            "rssHighWaterKiB": 46896
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            134.081192,
+            7.841704,
+            4.538026
+          ],
+          "spawnToFirstMs": 138.402074,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 176880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 415400,
+            "rssHighWaterKiB": 47488
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 5000
+          },
+          "perRequestMs": [
+            134.507926,
+            4.651838,
+            5.006417
+          ],
+          "spawnToFirstMs": 138.55546,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 176880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455888,
+            "rssHighWaterKiB": 47600
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 5001,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            119.182446,
+            105.809419,
+            111.659244
+          ],
+          "spawnToFirstMs": 121.730989,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 479272,
+            "rssHighWaterKiB": 30932
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            106.996567,
+            4.15392,
+            4.208021
+          ],
+          "spawnToFirstMs": 110.841732,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 154560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 394076,
+            "rssHighWaterKiB": 29708
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461400,
+            "year": 5001
+          },
+          "perRequestMs": [
+            108.103246,
+            6.709507,
+            4.20749
+          ],
+          "spawnToFirstMs": 111.792883,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 154560,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455512,
+            "rssHighWaterKiB": 30224
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 4999,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            237.31815,
+            236.284861,
+            227.219056
+          ],
+          "spawnToFirstMs": 239.570712,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 493192,
+            "rssHighWaterKiB": 72680
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            207.64554,
+            10.082064,
+            6.148343
+          ],
+          "spawnToFirstMs": 212.338885,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 230640,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 457004,
+            "rssHighWaterKiB": 73360
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 4999
+          },
+          "perRequestMs": [
+            215.884385,
+            6.665184,
+            6.799755
+          ],
+          "spawnToFirstMs": 220.499263,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 230640,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 457004,
+            "rssHighWaterKiB": 73372
+          }
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 5000,
+      "rows": {
+        "reference": {
+          "kind": "reference",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            127.627232,
+            119.60036,
+            117.63752
+          ],
+          "spawnToFirstMs": 129.887898,
+          "fullParity": true,
+          "memo": null,
+          "memory": {
+            "vmPeakKiB": 480972,
+            "rssHighWaterKiB": 38188
+          }
+        },
+        "control": {
+          "kind": "control",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            116.192251,
+            4.25568,
+            4.427669
+          ],
+          "spawnToFirstMs": 120.217571,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 161880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 4,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 455636,
+            "rssHighWaterKiB": 39132
+          }
+        },
+        "reuse": {
+          "kind": "reuse",
+          "tc": {
+            "calc": 2461290,
+            "year": 5000
+          },
+          "perRequestMs": [
+            115.086452,
+            6.248388,
+            6.105533
+          ],
+          "spawnToFirstMs": 118.850247,
+          "fullParity": true,
+          "memo": {
+            "hits": 2,
+            "builds": 1,
+            "evictions": 0,
+            "keys": 1,
+            "payloadBytes": 161880,
+            "payloadBudgetBytes": 8388608,
+            "promoteAfter": 2,
+            "serviceYearStructBuilds": 1,
+            "dayHits": 0,
+            "dayStores": 0,
+            "dayEvictions": 0,
+            "dayEntries": 0,
+            "dayPayloadBytes": 0,
+            "dayBudgetBytes": 0
+          },
+          "memory": {
+            "vmPeakKiB": 439252,
+            "rssHighWaterKiB": 39340
+          }
+        }
+      },
+      "fullParity": true
+    }
+  ],
+  "interop": [
+    {
+      "label": "zero-budget",
+      "commands": 2,
+      "budgetBytes": 0,
+      "memo": {
+        "hits": 0,
+        "builds": 0,
+        "evictions": 0,
+        "keys": 0,
+        "payloadBytes": 0,
+        "payloadBudgetBytes": 0,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 2,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 39660
+      },
+      "fullParity": true
+    },
+    {
+      "label": "tiny-budget",
+      "commands": 2,
+      "budgetBytes": 1024,
+      "memo": {
+        "hits": 0,
+        "builds": 0,
+        "evictions": 0,
+        "keys": 1,
+        "payloadBytes": 0,
+        "payloadBudgetBytes": 1024,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 2,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 39256
+      },
+      "fullParity": true
+    },
+    {
+      "label": "Y-R-Y",
+      "commands": 3,
+      "budgetBytes": 8388608,
+      "memo": {
+        "hits": 2,
+        "builds": 1,
+        "evictions": 0,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 8388608,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 1,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 39140
+      },
+      "fullParity": true
+    },
+    {
+      "label": "R-R-Y",
+      "commands": 3,
+      "budgetBytes": 8388608,
+      "memo": {
+        "hits": 1,
+        "builds": 1,
+        "evictions": 0,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 8388608,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 1,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 39468
+      },
+      "fullParity": true
+    },
+    {
+      "label": "distinct-calcs",
+      "commands": 3,
+      "budgetBytes": 8388608,
+      "memo": {
+        "hits": 1,
+        "builds": 2,
+        "evictions": 0,
+        "keys": 2,
+        "payloadBytes": 338760,
+        "payloadBudgetBytes": 8388608,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 2,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 41212
+      },
+      "fullParity": true
+    },
+    {
+      "label": "LRU-rebuild",
+      "commands": 3,
+      "budgetBytes": 180000,
+      "memo": {
+        "hits": 0,
+        "builds": 3,
+        "evictions": 2,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 180000,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 3,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      },
+      "memory": {
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 39080
+      },
+      "fullParity": true
+    }
+  ],
+  "cappedEvidence": {
+    "fullParity": true,
+    "effectiveLimitBytes": 536870912,
+    "memo": {
+      "hits": 1,
+      "builds": 1,
+      "evictions": 0,
+      "keys": 1,
+      "payloadBytes": 230640,
+      "payloadBudgetBytes": 8388608,
+      "promoteAfter": 2,
+      "serviceYearStructBuilds": 1,
+      "dayHits": 0,
+      "dayStores": 0,
+      "dayEvictions": 0,
+      "dayEntries": 0,
+      "dayPayloadBytes": 0,
+      "dayBudgetBytes": 0
+    },
+    "memory": {
+      "vmPeakKiB": 457004,
+      "rssHighWaterKiB": 73360
+    }
+  },
+  "qualifications": [
+    "Each context uses three fresh native processes, three full-Y requests within each.",
+    "All full responses use deepStrictEqual against unchanged Seer; no hash-only oracle.",
+    "The control and reuse order is interleaved deterministically across contexts.",
+    "The 8MiB memo budget accounts only BatchRecord payload, not cached structure or RSS.",
+    "RLIMIT_AS restricts virtual address space; no physical RAM ceiling or universal speedup is claimed.",
+    "Single hosted x64 Linux runner and sampled years; research opt-in only."
+  ]
+}
