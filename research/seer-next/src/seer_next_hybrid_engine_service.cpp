@@ -179,7 +179,9 @@ static ExecutionParams seer_next_execution_params() {
     if(p=="latency")return ExecutionParams{3,512,3};
     if(p=="balanced")return ExecutionParams{3,512,1};
     if(p=="memory")return ExecutionParams{1,512,1};
-    throw std::runtime_error("SEER_NEXT_EXECUTION_PROFILE must be latency, balanced or memory");
+    // Research opt-in from 48 exact cold A/B comparisons. NOT the default.
+    if(p=="experimental4")return ExecutionParams{4,512,1};
+    throw std::runtime_error("SEER_NEXT_EXECUTION_PROFILE must be latency, balanced, memory or experimental4");
 }
 
 class SeerEngineService {

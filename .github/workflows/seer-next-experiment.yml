@@ -106,6 +106,16 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_cold_rns_scaling.mjs --trials=2 --output=research/seer-next/results/working/rns-worker-scaling.json
           node -e "const x=require('./research/seer-next/results/working/rns-worker-scaling.json');console.log('RNS_WORKER_SCALING',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,caseCount:x.samples.length}));"
+      - name: Confirm cold 4-RNS worker scaling in six paired trials
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_confirm.mjs --trials=6 --output=research/seer-next/results/working/rns-four-confirm.json
+          node -e "const x=require('./research/seer-next/results/working/rns-four-confirm.json');console.log('RNS4_CONFIRM',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,trials:x.trials}));"
+      - name: Verify experimental4 opt-in R/Y/D full JSON parity across profiles
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_experimental4_profile.mjs --output=research/seer-next/results/working/experimental4-parity.json
+          node -e "const x=require('./research/seer-next/results/working/experimental4-parity.json');console.log('RNS4_PROFILE_PARITY',JSON.stringify({profiles:x.profiles.length,queries:x.requests.length,passed:x.allPassed}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -138,6 +148,8 @@ jobs:
             research/seer-next/results/working/rns-shared-plan.json
             research/seer-next/results/working/rns-fact-pool.json
             research/seer-next/results/working/rns-worker-scaling.json
+            research/seer-next/results/working/rns-four-confirm.json
+            research/seer-next/results/working/experimental4-parity.json
             research/seer-next/results/working/second-day-exact.json
             research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
@@ -147,7 +159,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
