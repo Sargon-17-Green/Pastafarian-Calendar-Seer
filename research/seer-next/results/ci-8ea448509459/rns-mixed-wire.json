@@ -1,0 +1,5099 @@
+{
+  "schema": "seer-next-rns-cache-mixed-wire-v1",
+  "sourceCommitParent": "2dd85de901af3d78dad8391b86d6e60b4dfcc591",
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "platform": "linux",
+  "arch": "x64",
+  "trials": 2,
+  "contexts": 4,
+  "commandsPerContext": 18,
+  "primaryNativeReplies": 360,
+  "cappedNativeReplies": 36,
+  "fullParity": true,
+  "workerProfile": {
+    "rns": 4,
+    "replay": 2
+  },
+  "disabledResultCaches": true,
+  "hostThreadLimits": {
+    "ompNumThreads": 4,
+    "ompThreadLimit": 8,
+    "ompStack": "2M",
+    "diagonalThreadsUncapped": 2,
+    "diagonalThreadsCapped": 1
+  },
+  "groups": [
+    {
+      "mode": "original",
+      "contexts": 4,
+      "requests": 72,
+      "totalMs": 12186.736680999998,
+      "maxVmPeakKiB": 464904,
+      "maxVmHwmKiB": 92796,
+      "totalInitHits": null,
+      "traceRows": null
+    },
+    {
+      "mode": "hybrid",
+      "contexts": 4,
+      "requests": 72,
+      "totalMs": 11247.864454999999,
+      "maxVmPeakKiB": 413992,
+      "maxVmHwmKiB": 94124,
+      "totalInitHits": null,
+      "traceRows": null
+    },
+    {
+      "mode": "probe0",
+      "contexts": 4,
+      "requests": 72,
+      "totalMs": 10355.392617999998,
+      "maxVmPeakKiB": 677156,
+      "maxVmHwmKiB": 107392,
+      "totalInitHits": 0,
+      "traceRows": 100
+    },
+    {
+      "mode": "probe1",
+      "contexts": 4,
+      "requests": 72,
+      "totalMs": 9235.084144999999,
+      "maxVmPeakKiB": 683616,
+      "maxVmHwmKiB": 158156,
+      "totalInitHits": 16,
+      "traceRows": 100
+    },
+    {
+      "mode": "probe2",
+      "contexts": 4,
+      "requests": 72,
+      "totalMs": 8275.303431,
+      "maxVmPeakKiB": 627860,
+      "maxVmHwmKiB": 180748,
+      "totalInitHits": 39,
+      "traceRows": 100
+    }
+  ],
+  "results": [
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "requests": 18,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            203.174172,
+            109.23824,
+            197.537642,
+            98.550635,
+            0.254773,
+            120.836984,
+            119.157046,
+            48.480137,
+            509.688212,
+            490.505472,
+            239.80498,
+            217.913693,
+            0.205461,
+            47.203761,
+            188.106699,
+            62.88945,
+            104.407344,
+            314.498577
+          ],
+          "totalMs": 3072.4532780000004,
+          "spawnToFirstMs": 204.762139,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 76088
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "hybrid": {
+          "mode": "hybrid",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            184.011607,
+            88.636947,
+            163.541794,
+            83.68175,
+            0.240686,
+            97.285562,
+            111.030887,
+            44.395624,
+            523.838574,
+            497.132118,
+            206.788494,
+            201.591752,
+            0.215951,
+            48.375411,
+            159.999552,
+            57.44598,
+            92.611742,
+            308.398588
+          ],
+          "totalMs": 2869.2230189999996,
+          "spawnToFirstMs": 186.152096,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 413992,
+            "vmHwmKiB": 76780
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe0": {
+          "mode": "probe0",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            183.531404,
+            89.560961,
+            164.167388,
+            83.477581,
+            0.243532,
+            106.923973,
+            102.49291,
+            44.308189,
+            395.482159,
+            433.172728,
+            217.402002,
+            194.398933,
+            0.219748,
+            48.20341,
+            185.186816,
+            57.713915,
+            83.443888,
+            230.625343
+          ],
+          "totalMs": 2620.5548799999997,
+          "spawnToFirstMs": 186.126861,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 677156,
+            "vmHwmKiB": 92208
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe1": {
+          "mode": "probe1",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            170.005064,
+            85.090064,
+            165.137837,
+            79.254453,
+            0.269059,
+            50.688009,
+            54.516013,
+            38.255966,
+            392.07448,
+            438.058274,
+            199.107725,
+            128.193419,
+            0.221551,
+            42.051047,
+            155.438086,
+            54.567895,
+            86.74608,
+            184.654375
+          ],
+          "totalMs": 2324.329397,
+          "spawnToFirstMs": 172.028789,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 2,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 4,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 5,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 6,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 7,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 8,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 9,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 11,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 12,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 13,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 15,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 683616,
+            "vmHwmKiB": 145752
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe2": {
+          "mode": "probe2",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            168.298172,
+            84.327031,
+            92.167291,
+            36.401864,
+            0.242991,
+            49.724597,
+            60.770546,
+            44.407731,
+            359.876787,
+            440.48666,
+            200.788777,
+            119.700706,
+            0.197837,
+            44.538493,
+            90.404319,
+            35.504606,
+            79.404539,
+            209.989902
+          ],
+          "totalMs": 2117.232849,
+          "spawnToFirstMs": 170.331215,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 3,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 8,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 8,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 9,
+              "slots": 2
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 625268,
+            "vmHwmKiB": 159312
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "requests": 18,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            137.536986,
+            118.173313,
+            131.802165,
+            123.616503,
+            0.254251,
+            145.626929,
+            142.230947,
+            90.432522,
+            477.268017,
+            454.537615,
+            164.870652,
+            165.412827,
+            0.238323,
+            95.040283,
+            132.556805,
+            108.772586,
+            116.825531,
+            413.273359
+          ],
+          "totalMs": 3018.4696139999996,
+          "spawnToFirstMs": 140.013472,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 92796
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "hybrid": {
+          "mode": "hybrid",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            123.126134,
+            105.0946,
+            111.548448,
+            96.134163,
+            0.238904,
+            123.548878,
+            118.857933,
+            73.13956,
+            484.089627,
+            446.794447,
+            136.938596,
+            131.265638,
+            0.214989,
+            84.89168,
+            121.121543,
+            101.65603,
+            107.569033,
+            407.973444
+          ],
+          "totalMs": 2774.2036470000003,
+          "spawnToFirstMs": 125.394203,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 412964,
+            "vmHwmKiB": 93952
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe0": {
+          "mode": "probe0",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            119.477673,
+            108.121558,
+            111.383642,
+            107.905077,
+            0.245586,
+            123.585566,
+            126.65933,
+            75.105498,
+            424.203914,
+            410.896409,
+            137.982323,
+            131.128855,
+            0.26419,
+            74.702843,
+            112.463574,
+            103.055677,
+            110.477981,
+            310.454812
+          ],
+          "totalMs": 2588.1145079999997,
+          "spawnToFirstMs": 121.7448,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 614452,
+            "vmHwmKiB": 107392
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe1": {
+          "mode": "probe1",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            122.752262,
+            108.280674,
+            105.996726,
+            95.892624,
+            0.258159,
+            60.148531,
+            69.012552,
+            67.611391,
+            426.305044,
+            407.290837,
+            133.966651,
+            77.143982,
+            0.26956,
+            65.805841,
+            107.196342,
+            87.465106,
+            107.392917,
+            268.997768
+          ],
+          "totalMs": 2311.786967,
+          "spawnToFirstMs": 125.203271,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 2,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 4,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 5,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 6,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 7,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 8,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 9,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 11,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 12,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 13,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 15,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 680864,
+            "vmHwmKiB": 158060
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe2": {
+          "mode": "probe2",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            125.071995,
+            97.792049,
+            59.412787,
+            45.620702,
+            0.246748,
+            60.635597,
+            65.519609,
+            80.501743,
+            377.28875,
+            394.583614,
+            127.135094,
+            77.474895,
+            0.222564,
+            72.119601,
+            58.330131,
+            48.127078,
+            101.184406,
+            259.19085
+          ],
+          "totalMs": 2050.458213,
+          "spawnToFirstMs": 127.701785,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 3,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 625292,
+            "vmHwmKiB": 180628
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "requests": 18,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            206.677791,
+            99.359474,
+            192.282501,
+            108.552754,
+            0.263729,
+            120.374709,
+            122.607931,
+            43.12484,
+            515.043338,
+            483.135221,
+            241.131827,
+            219.964229,
+            0.197366,
+            43.913583,
+            204.392019,
+            61.25229,
+            99.721496,
+            312.589043
+          ],
+          "totalMs": 3074.584141,
+          "spawnToFirstMs": 208.990859,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 75952
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe2": {
+          "mode": "probe2",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            167.676314,
+            80.174242,
+            91.661167,
+            37.469221,
+            0.234725,
+            50.366861,
+            54.411112,
+            43.18959,
+            356.604497,
+            393.07853,
+            198.070975,
+            119.14548,
+            0.204379,
+            45.053307,
+            90.99442,
+            32.459159,
+            90.925992,
+            190.373447
+          ],
+          "totalMs": 2042.0934179999997,
+          "spawnToFirstMs": 170.308425,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 3,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 625160,
+            "vmHwmKiB": 174188
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe1": {
+          "mode": "probe1",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            172.778881,
+            85.041594,
+            152.589333,
+            83.97822,
+            0.223946,
+            49.564648,
+            54.982813,
+            41.929647,
+            389.33126,
+            419.82007,
+            199.629516,
+            122.157791,
+            0.18306,
+            42.15087,
+            160.091095,
+            52.931235,
+            78.837992,
+            184.795178
+          ],
+          "totalMs": 2291.017149,
+          "spawnToFirstMs": 175.345755,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 2,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 4,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 5,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 6,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 2,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 7,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 8,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 9,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 9,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 11,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 12,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 13,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 13,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 683616,
+            "vmHwmKiB": 140580
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe0": {
+          "mode": "probe0",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            178.797943,
+            84.587228,
+            170.156888,
+            82.947643,
+            0.240647,
+            108.094124,
+            112.259478,
+            47.23828,
+            391.734915,
+            441.340121,
+            211.593437,
+            193.572918,
+            0.209138,
+            44.440976,
+            162.721123,
+            55.712134,
+            82.107784,
+            235.912251
+          ],
+          "totalMs": 2603.6670279999994,
+          "spawnToFirstMs": 181.311668,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 677156,
+            "vmHwmKiB": 92024
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "hybrid": {
+          "mode": "hybrid",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            170.629888,
+            90.885853,
+            160.39836,
+            92.078307,
+            0.236499,
+            96.384893,
+            106.792335,
+            44.70673,
+            523.399243,
+            489.833791,
+            199.91755,
+            200.447111,
+            0.221662,
+            44.789503,
+            160.96428,
+            58.370301,
+            93.144336,
+            308.777815
+          ],
+          "totalMs": 2841.9784569999997,
+          "spawnToFirstMs": 173.575086,
+          "hashes": [
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+            "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+            "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+            "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+            "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+            "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+            "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+            "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+            "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+            "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+            "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+            "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+            "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+            "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+            "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+            "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 413992,
+            "vmHwmKiB": 76704
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "requests": 18,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            139.080789,
+            117.030225,
+            131.815679,
+            124.437235,
+            0.294056,
+            143.321342,
+            150.400728,
+            87.270584,
+            470.550038,
+            457.180099,
+            164.202353,
+            165.659002,
+            0.261536,
+            95.810063,
+            132.1292,
+            116.149244,
+            117.264247,
+            408.373228
+          ],
+          "totalMs": 3021.2296479999995,
+          "spawnToFirstMs": 141.643387,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 92552
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe2": {
+          "mode": "probe2",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            123.082303,
+            104.21067,
+            59.681818,
+            45.637413,
+            0.244825,
+            61.05838,
+            72.835455,
+            74.42713,
+            381.243702,
+            393.380564,
+            136.291865,
+            76.75546,
+            0.22607,
+            65.874029,
+            61.875055,
+            50.708583,
+            103.08401,
+            254.901619
+          ],
+          "totalMs": 2065.518951,
+          "spawnToFirstMs": 125.659675,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 1,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 2,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 3,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 4,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 5,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 1,
+              "entries": 2,
+              "evictions": 6,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 2
+            },
+            {
+              "hit": 0,
+              "entries": 2,
+              "evictions": 7,
+              "slots": 2
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 627860,
+            "vmHwmKiB": 180748
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe1": {
+          "mode": "probe1",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            124.599669,
+            105.903423,
+            105.778912,
+            98.99476,
+            0.264712,
+            60.558533,
+            67.216519,
+            68.437354,
+            432.392682,
+            407.96469,
+            124.280265,
+            78.741206,
+            0.198027,
+            73.586009,
+            101.048283,
+            91.252012,
+            101.946951,
+            264.786625
+          ],
+          "totalMs": 2307.950632,
+          "spawnToFirstMs": 127.646092,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 2,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 3,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 4,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 5,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 6,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 7,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 8,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 9,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 1,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 10,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 11,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 12,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 13,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 1,
+              "entries": 1,
+              "evictions": 14,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 1,
+              "evictions": 15,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 680864,
+            "vmHwmKiB": 158156
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "probe0": {
+          "mode": "probe0",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            116.596204,
+            98.601923,
+            107.282612,
+            96.822362,
+            0.244063,
+            112.73498,
+            139.59159,
+            83.616533,
+            435.221052,
+            400.101517,
+            136.381984,
+            134.082397,
+            0.220298,
+            79.773031,
+            107.041173,
+            99.03153,
+            95.120823,
+            300.59213
+          ],
+          "totalMs": 2543.056202,
+          "spawnToFirstMs": 119.495555,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": [
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            },
+            {
+              "hit": 0,
+              "entries": 0,
+              "evictions": 0,
+              "slots": 1
+            }
+          ],
+          "traceSegments": [
+            {
+              "commandIndex": 0,
+              "type": "R",
+              "begin": 0,
+              "end": 1
+            },
+            {
+              "commandIndex": 1,
+              "type": "R",
+              "begin": 1,
+              "end": 2
+            },
+            {
+              "commandIndex": 2,
+              "type": "R",
+              "begin": 2,
+              "end": 3
+            },
+            {
+              "commandIndex": 3,
+              "type": "R",
+              "begin": 3,
+              "end": 4
+            },
+            {
+              "commandIndex": 4,
+              "type": "Y",
+              "begin": 4,
+              "end": 4
+            },
+            {
+              "commandIndex": 5,
+              "type": "R",
+              "begin": 4,
+              "end": 5
+            },
+            {
+              "commandIndex": 6,
+              "type": "Y",
+              "begin": 5,
+              "end": 6
+            },
+            {
+              "commandIndex": 7,
+              "type": "R",
+              "begin": 6,
+              "end": 7
+            },
+            {
+              "commandIndex": 8,
+              "type": "D",
+              "begin": 7,
+              "end": 12
+            },
+            {
+              "commandIndex": 9,
+              "type": "D",
+              "begin": 12,
+              "end": 16
+            },
+            {
+              "commandIndex": 10,
+              "type": "Y",
+              "begin": 16,
+              "end": 17
+            },
+            {
+              "commandIndex": 11,
+              "type": "R",
+              "begin": 17,
+              "end": 18
+            },
+            {
+              "commandIndex": 12,
+              "type": "Y",
+              "begin": 18,
+              "end": 18
+            },
+            {
+              "commandIndex": 13,
+              "type": "R",
+              "begin": 18,
+              "end": 19
+            },
+            {
+              "commandIndex": 14,
+              "type": "R",
+              "begin": 19,
+              "end": 20
+            },
+            {
+              "commandIndex": 15,
+              "type": "Y",
+              "begin": 20,
+              "end": 21
+            },
+            {
+              "commandIndex": 16,
+              "type": "R",
+              "begin": 21,
+              "end": 22
+            },
+            {
+              "commandIndex": 17,
+              "type": "D",
+              "begin": 22,
+              "end": 25
+            }
+          ],
+          "mainThreadTraceRows": 13,
+          "diagonalWorkerTraceRows": 12,
+          "memory": {
+            "vmPeakKiB": 612860,
+            "vmHwmKiB": 106468
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        },
+        "hybrid": {
+          "mode": "hybrid",
+          "commands": 18,
+          "commandTypes": [
+            "R",
+            "R",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "D",
+            "D",
+            "Y",
+            "R",
+            "Y",
+            "R",
+            "R",
+            "Y",
+            "R",
+            "D"
+          ],
+          "requestMs": [
+            122.542862,
+            115.178576,
+            107.067223,
+            97.40466,
+            0.256516,
+            113.030128,
+            119.886994,
+            83.603429,
+            483.502532,
+            453.364723,
+            132.425873,
+            122.706897,
+            0.220439,
+            83.209538,
+            114.161688,
+            103.798717,
+            102.482023,
+            407.616514
+          ],
+          "totalMs": 2762.459332,
+          "spawnToFirstMs": 125.029796,
+          "hashes": [
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "08337b9843056c566b3dc36e0d016e5b3f6b5994e347a5b2cebad36028336338",
+            "b715c8a22c2d35d68cbe1b2816cd1f006edd4099cd322046f610aa0d92512e89",
+            "4244228c0d919abf678506654c08bae4233a053ae1cde151278b1291c079a9e6",
+            "21fa078d7bcce13941ce81ed727c320f78646806ebc28cf9b17a95b54c37d9f0",
+            "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+            "144d6f48cda1cf5f4ee483d0669cef704dbac8e030c5f8bcce046bd36a3ddc50",
+            "64fe6a4d1616d32247db6fcb4222e4f85b3e2326f8f36bfa8bfb923713d9564b",
+            "780349e36a9f46c95f36c82ce2838193170f53867188858f80e9e145f5d1977d",
+            "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+            "ccbbdd2ce2313cf0c76753593fe8bea6c02763529bee1f85aa097f6f3599f3f1",
+            "5e43fe5a2cff03cfe8b2902fd3abb5aa98fb344d3eb6b41b15854599f8894210",
+            "04de1b4fa29e17fb6e9348b7fd6c54eadacac42e4592a7756120e42ef6defe8a",
+            "6f5b5f0303692c747bb198193378e96ef7c85f5260a42103f9ec77a4a654105a",
+            "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+            "21a86d9e44fa67a2f1e619af879b37ea9388ca6fe38a4ca3f813ecb2fe51e02f",
+            "0ff62618402635ecb8ec880a4c33af87a5521fb681cc26a281a9af41429f8d55"
+          ],
+          "trace": null,
+          "traceSegments": [],
+          "mainThreadTraceRows": 0,
+          "diagonalWorkerTraceRows": 0,
+          "memory": {
+            "vmPeakKiB": 394532,
+            "vmHwmKiB": 94124
+          },
+          "effectiveLimitBytes": null,
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    }
+  ],
+  "cappedEvidence": {
+    "mode": "probe2",
+    "commands": 18,
+    "commandTypes": [
+      "R",
+      "R",
+      "R",
+      "R",
+      "Y",
+      "R",
+      "Y",
+      "R",
+      "D",
+      "D",
+      "Y",
+      "R",
+      "Y",
+      "R",
+      "R",
+      "Y",
+      "R",
+      "D"
+    ],
+    "requestMs": [
+      173.221269,
+      80.144678,
+      93.493092,
+      36.331273,
+      0.272015,
+      50.656837,
+      55.167389,
+      45.33925,
+      411.866912,
+      471.492203,
+      190.379892,
+      120.21418,
+      0.19375,
+      41.307728,
+      91.347591,
+      30.712245,
+      84.83296,
+      213.032639
+    ],
+    "totalMs": 2190.0059029999998,
+    "spawnToFirstMs": 176.067221,
+    "hashes": [
+      "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+      "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+      "eb88a844f32ed772c1a1e2da110282eae8e7f5224dd7b73e24ed27aadc9164f9",
+      "3db801d8111e9467ef3046432051cc2ed9d9f1f2dbcb68fc4e8d55f63338b50e",
+      "3d9aa1def00bfee123af302d8b349e831ea13c2852283843828e75956572ffd4",
+      "3e35de1f9aedecac0680b222e570505824a7427a1630e97d2392833182c860be",
+      "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+      "1a0bef037700935c4f27eae94cd2a384daf7c4695683a8ae448e12315dca6734",
+      "0c59b7c8147e7ca6dca44e55704e1e1796cf291e16f63d5d2b746e8e73863423",
+      "fc03c3340a4fb2c04e3fa8b2e728fceaa440c534c9adce0deb81a7094ba38be9",
+      "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+      "a88da12de059a49d0565dbbda08db5acc04ab11d61e59aa1b19716569ae8a311",
+      "6a89d3b0a14c29a46994cdf7eb858b617c41cc6adf94a5f33a4e3a79732f5ed0",
+      "fad9ecd8d98da2846d91d30993e966f56dcc36f81c1ca6203f6f45b21a83501c",
+      "56ebc5f4834633bbe89c11776d19f209962af594c219a950653322b515e65771",
+      "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+      "c59d69d510fdb261d496f22b286ce9ef82895ef43cc2ab21935a3708a7713043",
+      "df14ddc1ec70d877aed0a3e510559ddc0ec354df39b8776200fbe1bc44d29270"
+    ],
+    "trace": [
+      {
+        "hit": 0,
+        "entries": 1,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 0,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 1,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 1,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 2,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 3,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 4,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 5,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 6,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 7,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 8,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 9,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 10,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 10,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 11,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 11,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 11,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 12,
+        "slots": 2
+      },
+      {
+        "hit": 1,
+        "entries": 2,
+        "evictions": 12,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 13,
+        "slots": 2
+      },
+      {
+        "hit": 0,
+        "entries": 2,
+        "evictions": 14,
+        "slots": 2
+      }
+    ],
+    "traceSegments": [
+      {
+        "commandIndex": 0,
+        "type": "R",
+        "begin": 0,
+        "end": 1
+      },
+      {
+        "commandIndex": 1,
+        "type": "R",
+        "begin": 1,
+        "end": 2
+      },
+      {
+        "commandIndex": 2,
+        "type": "R",
+        "begin": 2,
+        "end": 3
+      },
+      {
+        "commandIndex": 3,
+        "type": "R",
+        "begin": 3,
+        "end": 4
+      },
+      {
+        "commandIndex": 4,
+        "type": "Y",
+        "begin": 4,
+        "end": 4
+      },
+      {
+        "commandIndex": 5,
+        "type": "R",
+        "begin": 4,
+        "end": 5
+      },
+      {
+        "commandIndex": 6,
+        "type": "Y",
+        "begin": 5,
+        "end": 6
+      },
+      {
+        "commandIndex": 7,
+        "type": "R",
+        "begin": 6,
+        "end": 7
+      },
+      {
+        "commandIndex": 8,
+        "type": "D",
+        "begin": 7,
+        "end": 12
+      },
+      {
+        "commandIndex": 9,
+        "type": "D",
+        "begin": 12,
+        "end": 16
+      },
+      {
+        "commandIndex": 10,
+        "type": "Y",
+        "begin": 16,
+        "end": 17
+      },
+      {
+        "commandIndex": 11,
+        "type": "R",
+        "begin": 17,
+        "end": 18
+      },
+      {
+        "commandIndex": 12,
+        "type": "Y",
+        "begin": 18,
+        "end": 18
+      },
+      {
+        "commandIndex": 13,
+        "type": "R",
+        "begin": 18,
+        "end": 19
+      },
+      {
+        "commandIndex": 14,
+        "type": "R",
+        "begin": 19,
+        "end": 20
+      },
+      {
+        "commandIndex": 15,
+        "type": "Y",
+        "begin": 20,
+        "end": 21
+      },
+      {
+        "commandIndex": 16,
+        "type": "R",
+        "begin": 21,
+        "end": 22
+      },
+      {
+        "commandIndex": 17,
+        "type": "D",
+        "begin": 22,
+        "end": 25
+      }
+    ],
+    "mainThreadTraceRows": 13,
+    "diagonalWorkerTraceRows": 12,
+    "memory": {
+      "vmPeakKiB": 414020,
+      "vmHwmKiB": 130860
+    },
+    "effectiveLimitBytes": 536870912,
+    "fullParity": true
+  },
+  "caveats": [
+    "Actual research hybrid control uses unchanged prototype arithmetic, while experimental cold probe uses independent research core/weave.",
+    "Full native R/Y/D JSON equality is required against unchanged Seer for each request, including three full-year Y exports per context.",
+    "Only cold probe implements optional immutable RNS initializer reuse; not merged into normal hybrid or production.",
+    "The first R four-command hit pattern is checked separately from later Y/D workload paths.",
+    "All record/day memo caches are disabled, so this isolates RNS initializer reuse.",
+    "Two cache slots bound entries but not allocated bytes; process VmHWM is measured and not a portable hard limit.",
+    "Linux RLIMIT_AS is an address-space cap, not a physical RAM guarantee.",
+    "Under 512MiB the D dispatcher uses one worker; two-worker capped D previously failed at command index 8 with Resource temporarily unavailable in completed CI 42395106652. The capped test does NOT certify two-worker D.",
+    "Uncapped mixed matrix retains two D dispatcher workers; capped versus uncapped wall timings are NOT directly comparable.",
+    "Single-host observations cannot prove universal performance or correctness."
+  ]
+}
