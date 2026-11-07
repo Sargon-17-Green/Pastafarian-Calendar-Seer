@@ -101,6 +101,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_rns_fact_pool.mjs --trials=2 --output=research/seer-next/results/working/rns-fact-pool.json
           node -e "const x=require('./research/seer-next/results/working/rns-fact-pool.json');console.log('RNS_FACT_POOL',JSON.stringify({cases:x.results.length,ratio:x.ratio,fullParity:x.fullJsonParity,memorySamples:x.memorySnapshots.length}));"
+      - name: Compare 3-8 RNS workers and replay-worker tradeoffs on independent cold processes
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_scaling.mjs --trials=2 --output=research/seer-next/results/working/rns-worker-scaling.json
+          node -e "const x=require('./research/seer-next/results/working/rns-worker-scaling.json');console.log('RNS_WORKER_SCALING',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,caseCount:x.samples.length}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -132,6 +137,7 @@ jobs:
             research/seer-next/results/working/cold-rns-workers.json
             research/seer-next/results/working/rns-shared-plan.json
             research/seer-next/results/working/rns-fact-pool.json
+            research/seer-next/results/working/rns-worker-scaling.json
             research/seer-next/results/working/second-day-exact.json
             research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
@@ -141,7 +147,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

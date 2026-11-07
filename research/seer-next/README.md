@@ -43,6 +43,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42310523750](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42310523750) completed success; RNS Pascal-plan sharing was correct in 52 A/B requests but 0.747% slower overall, so **DO NOT ADOPT**. Complete evidence is in `results/ci-d6def355fd9b/rns-shared-plan.json`; new allocator/scratch research is separate.
 
+- [42343786507](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42343786507) completed success: per-thread factorial scratch reuse passed 52 native comparisons but was ~0.080% slower and had no consistent observed RSS reduction. **DO NOT ADOPT**; see `results/ci-31e8e2b92722/rns-fact-pool.json`. A separate high-worker cold RNS scaling experiment is next.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.
