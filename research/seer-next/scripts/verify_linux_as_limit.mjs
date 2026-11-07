@@ -68,6 +68,14 @@ const trials=[
  // Observational follow-up: 4/1 fits beneath 512MiB VmPeak in prior Linux samples.
  // It is intentionally not an enforced acceptance threshold across unknown hardware.
  {name:'512MiB-experimental4-observed',limit:536870912,profile:'experimental4',requiresSuccess:false},
+ // The measured 4/2 VM peak was ~446MiB on a different CI CPU; this is
+ // observational stress, NOT an all-platform 512MiB guarantee.
+ {name:'512MiB-experimental42-long-year-observed',limit:536870912,profile:'experimental42',
+  requiresSuccess:false,requests:[
+    ['R','2461290','2456078','1'],
+    ['R','2461290','2458959','1'],
+    ['R','2461400','2454861','1']
+  ]},
  {name:'64MiB-memory',limit:67108864,profile:'memory',requiresSuccess:true},
  {name:'64MiB-latency-refused',limit:67108864,profile:'latency',requiresSuccess:false,expectRefusal:true}
 ];
@@ -94,7 +102,8 @@ for(const t of trials){
    assert.ok(before.effectiveLimitBytes<=t.limit,'setrlimit did not enforce requested cap');
    record.before=before;
    for(let i=0;i<3;i++){
-     const ans=await s.call(['R','2461290',String(i%2?2461290:2460984),'1']);
+     const request=t.requests?.[i]??['R','2461290',String(i%2?2461290:2460984),'1'];
+     const ans=await s.call(request);
      if(ans?.ok===false){
        if(t.requiresSuccess)throw Error('required profile produced failed computation '+JSON.stringify(ans));
        record.outcome='EXPLICIT_QUERY_ERROR_UNDER_CAP';
@@ -134,6 +143,7 @@ const result={schema:'seer-next-linux-rlimit-as-v1',kernelEnforcement:'RLIMIT_AS
   qualifications:['This is an address-space limit, NOT an RSS limit, and only Linux is implemented.',
     'The limit is installed early in main, after the system loader has mapped shared libraries.',
     'Under 64MiB the explicit memory profile uses 1 OpenMP + 1 replay worker; its acceptance is only tested for selected inputs.',
+    'Experimental42 512MiB long-year stress is an observation only: its failure is retained and not represented as a correctness failure of the native calendar.',
     'The startup refusal for latency profile under 512MiB is conservative policy, not a proven lower bound.',
     'RNS and thread stacks count toward virtual memory. This experiment does not establish a safe minimum.',
     'No Windows Job Object or cgroup memory.max was implemented.']};

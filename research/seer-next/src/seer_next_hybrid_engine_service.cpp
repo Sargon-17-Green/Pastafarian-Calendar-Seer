@@ -181,7 +181,10 @@ static ExecutionParams seer_next_execution_params() {
     if(p=="memory")return ExecutionParams{1,512,1};
     // Research opt-in from 48 exact cold A/B comparisons. NOT the default.
     if(p=="experimental4")return ExecutionParams{4,512,1};
-    throw std::runtime_error("SEER_NEXT_EXECUTION_PROFILE must be latency, balanced, memory or experimental4");
+    // Research-only cross-year result: four RNS builders, two replay workers.
+    // Opt-in only, after success of the 180 native cold-differential checks.
+    if(p=="experimental42")return ExecutionParams{4,512,2};
+    throw std::runtime_error("SEER_NEXT_EXECUTION_PROFILE must be latency, balanced, memory, experimental4 or experimental42");
 }
 
 class SeerEngineService {

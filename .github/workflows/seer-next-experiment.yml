@@ -115,11 +115,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_cold_rns_confirm.mjs --trials=6 --output=research/seer-next/results/working/rns-four-confirm.json
           node -e "const x=require('./research/seer-next/results/working/rns-four-confirm.json');console.log('RNS4_CONFIRM',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,trials:x.trials}));"
-      - name: Verify experimental4 opt-in R/Y/D full JSON parity across profiles
+      - name: Verify experimental42 and older profiles with cross-year R/Y/D full JSON parity
         run: |
           set -euo pipefail
           node research/seer-next/scripts/verify_experimental4_profile.mjs --output=research/seer-next/results/working/experimental4-parity.json
-          node -e "const x=require('./research/seer-next/results/working/experimental4-parity.json');console.log('RNS4_PROFILE_PARITY',JSON.stringify({profiles:x.profiles.length,queries:x.requests.length,passed:x.allPassed}));"
+          node -e "const x=require('./research/seer-next/results/working/experimental4-parity.json');if(!x.allPassed||x.profiles.length!==4||x.requests.length!==27)throw Error('Missing experimental42 parity evidence');console.log('RNS42_PROFILE_PARITY',JSON.stringify({profiles:x.profiles.length,queries:x.requests.length,passed:x.allPassed}));"
       - name: Cross-year exact cold profile comparison across 4999-5001
         run: |
           set -euo pipefail

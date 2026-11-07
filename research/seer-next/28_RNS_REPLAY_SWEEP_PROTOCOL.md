@@ -17,3 +17,9 @@ Record at least per-policy response wall time, RNS engine construction, replay e
 Classify Pareto-nondominated options across latency, observed VmPeak and VmHWM and whether replay workers 2 materially improve year 4999 while keeping VmPeak below an observed 512MiB threshold. A measured peak below that value is *not* a guarantee that an RLIMIT_AS cap succeeds on every Linux host. Keep `3/3` default, `3/1` balanced and `1/1` memory stable. Any future hybrid opt-in 4/2 or 4/3 must pass separate full-wire parity for R/Y/D and constrained-resource testing.
 
 Retain raw negative results and all CI evidence. No merges, releases or changes to the existing original Seer engine.
+
+## Completed outcome, CI 42356282646
+
+All 180 complete native responses matched the original service. The best aggregate candidate on the sampled AMD EPYC 9V74 runner was `4/2`, with 3793.881ms for 36 requests, versus `3/3` 4478.959ms, `4/1` 4329.858ms, `4/3` 4189.597ms and `4/4` 4019.017ms. Observed maximum virtual space was 446.29MiB for `4/2`, vs 482.03MiB for `3/3`, 557.46MiB for `4/3`, 701.47MiB for `4/4`. RSS highs were ~71–72MiB for all these profiles. The result is only a same-host sampled A/B, not a claim for all CPUs.
+
+Full raw evidence: [rns-replay-sweep.json](results/ci-20a47a34b248/rns-replay-sweep.json). See [29_RNS_REPLAY_SWEEP_RESULTS.md](29_RNS_REPLAY_SWEEP_RESULTS.md) for the decision record.

@@ -49,6 +49,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42348089979](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42348089979) completed SUCCESS with 144 cross-year full JSON comparisons. The earlier 4/1 speed result did **not** generalize: 4/1 was 2.76% slower than default 3/3 across six year/calculation-day structures; 4/3 was 5.16% faster but increased VmPeak to as much as 557MiB. See `results/ci-fd387c915de7/rns-cross-year.json`. Neither is adopted as default; opt-in 4/1 remains experimental.
 
+- [42356282646](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42356282646) completed SUCCESS: 180 native exact cold tests over years 4999–5001. RNS/replay `4/2` used 3793.881ms total versus 4478.959ms for default `3/3` (15.30% reduction), while peak virtual space was ~446MiB vs ~482MiB. `4/2` was faster in 35/36 matched pairs against both `3/3` and `4/3`. **Only a sampled single hosted AMD EPYC 9V74 observation**, not a new default. Raw `results/ci-20a47a34b248/rns-replay-sweep.json`; opt-in hybrid-profile verification is separate.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.

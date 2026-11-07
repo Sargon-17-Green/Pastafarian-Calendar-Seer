@@ -1,4 +1,4 @@
-// Full native-wire parity of research experimental4 profile across R/Y/D.
+// Full wire parity of experimental4 and experimental42 profiles, across R/Y/D and canonical years.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {writeFile} from 'node:fs/promises';
@@ -74,8 +74,28 @@ const requests=[
  ['D','2461290','5','1'],
  ['D','2461400','4','-1']
 ];
+// Derive additional full-wire R targets from independently computed reference Y
+// metadata; do not hardcode year boundaries or assume a fixed year structure.
+const discovery=client(binaries.baseline,'latency');
+try {
+ for(const calc of [2461290,2461400]){
+  for(const year of [4999,5000,5001]){
+   const meta=await discovery.call(['Y',String(calc),String(year),'0']);
+   assert.equal(meta.year,year,'native reference year metadata identity');
+   assert.ok(Number.isSafeInteger(meta.startJdn)&&Number.isSafeInteger(meta.endJdn));
+   assert.equal(meta.endJdn-meta.startJdn+1,meta.lengthDays,
+     'native service year boundaries must be inclusive');
+   assert.ok(meta.lengthDays>=4);
+   for(const day of [meta.startJdn+Math.floor(meta.lengthDays/2),meta.endJdn-1]){
+    assert.ok(day>meta.startJdn&&day<meta.endJdn);
+    requests.push(['R',String(calc),String(day),'1']);
+   }
+  }
+ }
+}finally{discovery.close();}
+assert.equal(requests.length,27,'complete cross-year full-wire request suite');
 const evidence=[];
-for(const profile of ['experimental4','latency','memory']){
+for(const profile of ['experimental42','experimental4','latency','memory']){
  const a=client(binaries.baseline,profile),b=client(binaries.research,profile);
  const digest=createHash('sha256');
  try {
@@ -96,12 +116,13 @@ for(const profile of ['experimental4','latency','memory']){
     responseSha256:digest.digest('hex')});
  } finally {a.close();b.close();}
 }
-const result={schema:'seer-next-experimental4-profile-parity-v1',
+const result={schema:'seer-next-experimental42-profile-parity-v2',
   baselineCommit:'7f1b3098332d891a9ea6cf8e31383d4fd39141cf',
   profiles:evidence,requests,allPassed:true,
   caveats:['One Linux host and limited cases; not proof of all-domain equivalence.',
-           'Experimental4 is 4 RNS and 1 replay worker for R and Y paths.',
+           'Experimental4 is 4 RNS and 1 replay worker; experimental42 is 4 RNS and 2 replay workers for R and Y paths.',
            'Diagonal D uses its existing one-worker-per-record exact compute profile.',
+           'Cross-year R requests are derived from original Seer inclusive Year metadata for each calculation day.',
            'No cache and no production Seer source changes.']};
 const output=JSON.stringify(result,null,2)+'\n';
 if(arg.length)await writeFile(path.resolve(arg[0].slice('--output='.length)),output);
