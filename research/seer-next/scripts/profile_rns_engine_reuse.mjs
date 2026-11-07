@@ -109,9 +109,9 @@ async function metadata(calc,year){
  }finally{p.stop();}
 }
 async function exercise(kind,commands,reference,traceFile,expectedHits){
+ const start=clock(); // Include process spawn in first-response measurement.
  const p=service(kind,traceFile);
  const answers=[],timings=[];
- const start=clock();
  let spawnedToFirstMs=null;
  try{
   for(let i=0;i<commands.length;i++){
