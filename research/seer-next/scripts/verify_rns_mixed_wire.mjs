@@ -149,6 +149,12 @@ async function run(mode,commands,oracle,tag,cap=0){
  const tracePath=probe?path.join(tmp,'cache-'+tag+'.tsv'):'';
  const s=start(mode,tracePath,cap);
  const answer=[],timings=[],digests=[];
+ // The native service processes R and Y on its main thread, while D also
+ // dispatches short-lived workers with *separate thread_local* LRU counters.
+ // Capture trace boundaries after each fully completed wire request so that
+ // monotonicity is asserted only for the durable main-thread R/Y subset.
+ const traceSegments=[];
+ let observedRows=0;
  let spawnToFirstMs=null;
  try{
   for(let i=0;i<commands.length;i++){
@@ -157,8 +163,17 @@ async function run(mode,commands,oracle,tag,cap=0){
    if(oracle)assert.deepStrictEqual(x.value,oracle[i],
     'Complete native R/Y/D mismatch: '+mode+' at #'+i+' '+commands[i].join(','));
    answer.push(x.value);timings.push(x.requestMs);digests.push(hash(x.value));
+   if(probe){
+    // Each request has completed and joined D workers before it replies.
+    const raw=(await readFile(tracePath,'utf8')).trim();
+    const allLines=raw?raw.split(/\r?\n/).filter(Boolean):[];
+    assert.ok(allLines.length>=observedRows,'Native trace rows disappeared');
+    traceSegments.push({commandIndex:i,type:commands[i][0],
+       begin:observedRows,end:allLines.length});
+    observedRows=allLines.length;
+   }
   }
-  let trace=null;
+  let trace=null,mainThreadTraceRows=0,diagonalWorkerTraceRows=0;
   if(probe){
    const lines=(await readFile(tracePath,'utf8')).trim().split(/\r?\n/).filter(Boolean);
    assert.ok(lines.length>=4,'Missing RNS cache trace for mixed commands');
@@ -174,11 +189,31 @@ async function run(mode,commands,oracle,tag,cap=0){
     if(mode==='probe2')assert.equal(slots,2);
     return {hit,entries,evictions,slots};
    });
+   assert.equal(trace.length,observedRows,'Trace must match exact command boundaries');
+   assert.equal(traceSegments.length,commands.length,'Each wire command needs a boundary');
    const firstFour=trace.slice(0,4).map(x=>x.hit);
    assert.deepStrictEqual(firstFour,mode==='probe2'?[0,0,1,1]:[0,0,0,0],
       'A/B/A/B early engine-init hit pattern');
-   for(let i=1;i<trace.length;i++)assert.ok(trace[i].evictions>=trace[i-1].evictions,
-      'LRU evictions must be monotone');
+   let mainCounter=-1;
+   for(const segment of traceSegments){
+    assert.ok(segment.end>=segment.begin&&segment.end<=trace.length);
+    const rows=trace.slice(segment.begin,segment.end);
+    if(segment.type==='D'){
+     // D concurrently uses the main thread and new short-lived threads.
+     // A thread_local counter can reset to zero on each new worker: there
+     // is no valid global ordering or global monotonicity assertion.
+     diagonalWorkerTraceRows+=rows.length;
+     continue;
+    }
+    assert.ok(segment.type==='R'||segment.type==='Y');
+    for(const row of rows){
+     assert.ok(row.evictions>=mainCounter,
+       'Persistent main-thread R/Y cache evictions must not decrease');
+     mainCounter=row.evictions;
+     ++mainThreadTraceRows;
+    }
+   }
+   assert.ok(mainThreadTraceRows>=4,'Missing persistent main-thread R traces');
   }
   const memory=await metrics(s.pid);
   const kernelLimit=cap?await effectiveCap(s.pid):null;
@@ -186,7 +221,8 @@ async function run(mode,commands,oracle,tag,cap=0){
   return {answers:answer,evidence:{mode,commands:commands.length,
     commandTypes:commands.map(x=>x[0]),requestMs:timings,
     totalMs:timings.reduce((a,b)=>a+b,0),spawnToFirstMs,
-    hashes:digests,trace,memory,effectiveLimitBytes:kernelLimit,fullParity:true}};
+    hashes:digests,trace,traceSegments,mainThreadTraceRows,
+    diagonalWorkerTraceRows,memory,effectiveLimitBytes:kernelLimit,fullParity:true}};
  }finally{s.close();}
 }
 const results=[];
