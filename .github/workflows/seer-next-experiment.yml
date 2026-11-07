@@ -150,6 +150,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_rns_two_slot_lru.mjs --trials=2 --output=research/seer-next/results/working/rns-two-slot-lru.json
           node -e "const x=require('./research/seer-next/results/working/rns-two-slot-lru.json');if(!x.fullParity||x.contexts!==8||x.groups.length!==3||x.trialsData.length!==8||x.trialsData.some(v=>!v.fullParity)||x.trialsData.some(v=>v.rows.slots2.trace.map(q=>q.hit).join(',')!=='0,0,1,1')||x.trialsData.some(v=>v.rows.slots1.trace.map(q=>q.hit).join(',')!=='0,0,0,0')||x.eviction.trace.map(q=>q.hit).join(',')!=='0,0,0,0'||x.cappedEvidence.effectiveLimitBytes!==536870912||x.cappedEvidence.trace.map(q=>q.hit).join(',')!=='0,0,1')throw Error('Missing exact bounded LRU parity/counters/cap');console.log('RNS_TWO_SLOT',JSON.stringify({cpu:x.cpu,contexts:x.contexts,groups:x.groups,cap:x.cappedEvidence.memory}));"
+      - name: Verify mixed R Y D exact wire parity and RNS initializer reuse in hybrid probe
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_rns_mixed_wire.mjs --trials=2 --output=research/seer-next/results/working/rns-mixed-wire.json
+          node -e "const x=require('./research/seer-next/results/working/rns-mixed-wire.json');if(!x.fullParity||x.contexts!==4||x.commandsPerContext!==18||x.primaryNativeReplies!==360||x.cappedNativeReplies!==36||x.groups.length!==5||x.results.some(r=>!r.fullParity)||x.results.some(r=>r.rows.probe2.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1')||x.cappedEvidence.effectiveLimitBytes!==536870912)throw Error('Incomplete mixed R/Y/D parity/memory evidence');console.log('RNS_MIXED_WIRE',JSON.stringify({cpu:x.cpu,requests:x.primaryNativeReplies,groups:x.groups.map(g=>({mode:g.mode,ms:g.totalMs,rss:g.maxVmHwmKiB,vm:g.maxVmPeakKiB,hits:g.totalInitHits}))}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -210,6 +215,7 @@ jobs:
             research/seer-next/results/working/cold-adaptive-block.json
             research/seer-next/results/working/rns-engine-reuse.json
             research/seer-next/results/working/rns-two-slot-lru.json
+            research/seer-next/results/working/rns-mixed-wire.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -223,7 +229,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
