@@ -45,6 +45,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42343786507](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42343786507) completed success: per-thread factorial scratch reuse passed 52 native comparisons but was ~0.080% slower and had no consistent observed RSS reduction. **DO NOT ADOPT**; see `results/ci-31e8e2b92722/rns-fact-pool.json`. A separate high-worker cold RNS scaling experiment is next.
 
+- [42346477835](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42346477835) confirmed the research-only `experimental4` 4-RNS/1-replay profile in 96 cold native comparisons and 45 R/Y/D full-wire parity checks. A 9.24% aggregate cold-time reduction versus the unchanged 3/3 default was observed on hosted AMD EPYC 9V45, **not** asserted as universal. Raw results: `results/ci-3bac030f32dc/rns-four-confirm.json` and `experimental4-parity.json`.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.

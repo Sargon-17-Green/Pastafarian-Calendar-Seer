@@ -65,6 +65,9 @@ async function snapshot(pid){
 }
 const trials=[
  {name:'2GiB-latency',limit:2147483648,profile:'latency',requiresSuccess:true},
+ // Observational follow-up: 4/1 fits beneath 512MiB VmPeak in prior Linux samples.
+ // It is intentionally not an enforced acceptance threshold across unknown hardware.
+ {name:'512MiB-experimental4-observed',limit:536870912,profile:'experimental4',requiresSuccess:false},
  {name:'64MiB-memory',limit:67108864,profile:'memory',requiresSuccess:true},
  {name:'64MiB-latency-refused',limit:67108864,profile:'latency',requiresSuccess:false,expectRefusal:true}
 ];

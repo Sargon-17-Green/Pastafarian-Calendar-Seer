@@ -15,3 +15,11 @@ The separate research hybrid service now recognizes `SEER_NEXT_EXECUTION_PROFILE
 3. Preserve all raw result JSON in the research branch on completed CI. Analyze per-context medians/dispersion and resource tradeoffs; no unqualified universal performance or Windows claim.
 
 **Decision gate:** Only consider experimental4 as a candidate for latency-oriented users when it survives correctness checks and has a stable benefit without unacceptable VmPeak/RSS. It is intentionally not the default and no merge is authorized.
+
+## Completed first confirmation — CI 42346477835
+
+The 96 full native cold comparisons passed across six trials of four contexts and four worker settings, on an AMD EPYC 9V45 GitHub runner. All 45 complete R/Y/D service replies passed across three execution profiles. Raw data: `results/ci-3bac030f32dc/rns-four-confirm.json` and `experimental4-parity.json`.
+
+Aggregate wall for 24 requests in each configuration: 3/3 = 2105.050 ms; 3/1 = 2183.490 ms; 4/1 = 1910.450 ms; 4/3 = 1870.566 ms. Thus 4/1 reduced total wall by 9.24% versus 3/3, while 4/3 reduced it by 11.14% but with greater maximum virtual address-space use (~549MiB vs ~445MiB for 4/1). Measured max process VmPeak for 3/3 was ~470MiB; physical RSS highs were ~37–38MiB for all. The 4/1 profile was faster than 3/3 in all four contexts **in this run**, but earlier two-run AMD EPYC 7763 Foundation results did not show that relationship. No universal performance ordering is claimed.
+
+**Decision:** retain experimental4 as opt-in, no change to latency (3/3) default. The next cross-year CI evaluates whether this pattern generalizes beyond the four fixed target contexts.
