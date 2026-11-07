@@ -13,3 +13,5 @@ Date: 2026-11-07. Source input: Seer Next research commit 3bac030f32dc04ab5557c4
 - Report per-year and per-configuration ratios, compare with earlier Foundation and Year 5000 results, and retain all raw samples even if 4/1 performs worse in a different year.
 
 These CI samples assess the proposed performance optimization, not full-domain correctness, hardware portability, process isolation or a hard physical RAM cap. No production/normal Seer changes or merges are authorized.
+
+Implementation note (after failed harness CI 42347723479): the canonical `Y` reply uses **inclusive** `startJdn` and `endJdn`, with `lengthDays=endJdn-startJdn+1`. The earlier validation incorrectly omitted the `+1` and prevented benchmark execution. This is corrected before any profile measurements are interpreted.

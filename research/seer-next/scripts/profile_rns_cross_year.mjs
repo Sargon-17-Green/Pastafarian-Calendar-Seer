@@ -80,7 +80,9 @@ try{
      const meta=(await once(baseline,{},['Y',String(c),String(year),'0'])).answer;
      assert.equal(meta.year,year,'baseline Year metadata must identify requested year');
      assert.ok(Number.isSafeInteger(meta.startJdn)&&Number.isSafeInteger(meta.endJdn));
-     assert.equal(meta.endJdn-meta.startJdn,meta.lengthDays);
+     // API Y returns inclusive first/last days. Length is end-start+1.
+     assert.equal(meta.endJdn-meta.startJdn+1,meta.lengthDays,
+       'year metadata must give inclusive endpoints');
      assert.ok(meta.lengthDays>=4,'located year must contain mid and penultimate');
      const destinations=[
        {kind:'mid',t:meta.startJdn+Math.floor(meta.lengthDays/2)},
