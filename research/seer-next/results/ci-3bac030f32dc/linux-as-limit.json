@@ -1,0 +1,65 @@
+{
+  "schema": "seer-next-linux-rlimit-as-v1",
+  "kernelEnforcement": "RLIMIT_AS",
+  "outcome": "2GiB latency and 64MiB memory profiles must succeed; 64MiB latency mode must refuse at startup",
+  "results": [
+    {
+      "name": "2GiB-latency",
+      "requestedBytes": 2147483648,
+      "profile": "latency",
+      "before": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 9172,
+        "vmPeakKiB": 9564,
+        "rssHighWaterKiB": 6348
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 349348,
+        "vmPeakKiB": 481244,
+        "rssHighWaterKiB": 38312
+      }
+    },
+    {
+      "name": "64MiB-memory",
+      "requestedBytes": 67108864,
+      "profile": "memory",
+      "before": {
+        "effectiveLimitBytes": 67108864,
+        "vmSizeKiB": 9172,
+        "vmPeakKiB": 9564,
+        "rssHighWaterKiB": 6280
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 67108864,
+        "vmSizeKiB": 33236,
+        "vmPeakKiB": 39636,
+        "rssHighWaterKiB": 36876
+      },
+      "memo": {
+        "fullYearBuilds": 1,
+        "dayStores": 0,
+        "yearPayloadBytes": 161880
+      }
+    },
+    {
+      "name": "64MiB-latency-refused",
+      "requestedBytes": 67108864,
+      "profile": "latency",
+      "outcome": "EXPLICIT_STARTUP_REFUSAL",
+      "failure": "Error: native close 1/null: seer_engine_service: virtual cap below 512MiB requires SEER_NEXT_EXECUTION_PROFILE=memory\n"
+    }
+  ],
+  "qualifications": [
+    "This is an address-space limit, NOT an RSS limit, and only Linux is implemented.",
+    "The limit is installed early in main, after the system loader has mapped shared libraries.",
+    "Under 64MiB the explicit memory profile uses 1 OpenMP + 1 replay worker; its acceptance is only tested for selected inputs.",
+    "The startup refusal for latency profile under 512MiB is conservative policy, not a proven lower bound.",
+    "RNS and thread stacks count toward virtual memory. This experiment does not establish a safe minimum.",
+    "No Windows Job Object or cgroup memory.max was implemented."
+  ]
+}

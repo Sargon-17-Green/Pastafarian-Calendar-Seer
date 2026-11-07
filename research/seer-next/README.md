@@ -1,0 +1,81 @@
+# Seer Next — first-principles exact-engine research
+
+**Status (2026-11-06): PHASE 3 — isolated native S2 and S4+S2 candidates implemented and measured; no production adoption. Correctness is verified only for tested samples. Cold one-shot improvements and a hard process-RAM ceiling remain open.**
+
+This is a separate research program **inside the Seer repository**. It is intentionally not a rewrite of the normative calendar. Preserve existing production behavior, public APIs, canonical semantics, released packages, and the main branch. Never substitute agreement between Seer variants for independent canonical evidence.
+
+## Immutable starting point
+
+- Repository: `Sargon-17-Green/Pastafarian-Calendar-Seer`.
+- Starting branch: `main`; starting commit: `7f1b3098332d891a9ea6cf8e31383d4fd39141cf`.
+- Starting Git tree: `228cc7685c0ced75410c9ce57718c136de68bb30`.
+- Version in that tree: `pastafarian-calendar-seer@0.2.5`.
+- Research branch: `research/seer-next-first-principles-2026-11-06`.
+- The original code is preserved in the initial commit's parent and by Git history. No existing source or release artifact was modified to start this work.
+- Treat benchmark observations from older commits as historical, **not measurements of this starting commit**.
+
+## End goal
+
+An exact engine that substantially outperforms the starting Seer **on well-defined workload profiles**, while preserving results, errors, supported domain, interfaces, provenance, and deterministic fallback. There cannot be one unconditional notion of 'fastest' without declaring the workload and resource constraints.
+
+The engine may eventually use several interchangeable strategies and/or builds: one-shot, long-lived latency-optimized, throughput-oriented, memory-bounded, storage-minimal, and opt-in predictive. Assembly is an implementation option to benchmark, not a design premise.
+
+## Research sequence
+
+0. Freeze baseline identity; inventory implementation, independent oracle, platform support and existing measurements. **Completed for pinned baseline.**
+1. Measure the unchanged starting Seer with pinned, reproducible cold/warm/repeat/range/batch/concurrency workloads, full output parity and process-tree resource accounting.
+2. Derive exact dependencies and cost model; prove safe invariants and conditional lower bounds only where supported. Seek algorithmic elimination of work before instruction-level acceleration.
+3. Build a standalone candidate engine and differential oracle harness; first experiment: reuse of year structure, weaving checkpoints, and materialized records under hard cache budgets. No production adoption.
+4. Explore direct random access to the canonical weave, alternative exact arithmetic and transitions, layout/NUMA/vectorization, persistent state, structured on-disk checkpoints, and background preparation of a future calculation day.
+5. Benchmark candidates on the same pinned environments, accepting **Pareto** improvements and rejecting regressions or unproven equivalence. Compare Rust/C++/C/Assembly or mixed backends on evidence.
+6. Introduce policy-based selection and bounded fallback only after exhaustive correctness and resource tests. Keep every measurement, decision, proof, counterexample and negative result in this directory.
+7. Release separately after all existing Seer compatibility and release gates pass; never replace `main` by assumption.
+
+## Verified research checkpoints (as of 2026-11-06)
+
+- [42296969585](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42296969585) **completed success**: original Seer vs hybrid full-response parity, 11 selected independent saved-sum oracle cases, 156 prior differential queries, 5 new resource-constrained eviction phases (28 paired requests), and repeat/memory/CPU profiles.
+- Durable evidence: [results/ci-21f9558b74bc](results/ci-21f9558b74bc/README.md), including `hybrid-eviction.json`, `oracle.json`, `profile-hybrid.json`, and `profile-matrix.json`.
+- [42292756337](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42292756337): experimental S4+S2 profile showed a 28.14× total-time ratio on 32 repeated identical dates and 1.97× on nine calculation-day contexts visited twice; **not a general 28× engine speed claim**.
+- A 0-byte cache setting disables the relevant layer; `SEER_NEXT_CACHE_BYTES=0` alone leaves the S4 day cache enabled. Cache budgets restrict record payload only, not metadata, RNS transient allocations or total RSS.
+- Three separately configurable research-only exact-computation profiles are now under experiment: `latency` (3 RNS/3 replay workers), `balanced` (3/1), and `memory` (1/1). Results and memory limits require a new completed CI run. The primary unresolved performance problem remains **cold/one-shot arithmetic**. Hard memory constraints also remain an unsolved engineering task. Do not merge to main.
+
+- [42307243480](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42307243480): an exact GMP DP shortcut for year day 2 passed 51 full native JSON differential cases and 8 independent oracle checks. **Performance mixed, not accepted as default**: baseline 3822.019 ms vs DP 3617.807 ms in aggregate (1.0564× ratio), with individual queries from 0.678× to 1.946×. The invalid first-only alternative was retracted after CI [42306463421](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42306463421) exposed an actual wrong month.
+
+- [42310523750](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42310523750) completed success; RNS Pascal-plan sharing was correct in 52 A/B requests but 0.747% slower overall, so **DO NOT ADOPT**. Complete evidence is in `results/ci-d6def355fd9b/rns-shared-plan.json`; new allocator/scratch research is separate.
+
+- [42343786507](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42343786507) completed success: per-thread factorial scratch reuse passed 52 native comparisons but was ~0.080% slower and had no consistent observed RSS reduction. **DO NOT ADOPT**; see `results/ci-31e8e2b92722/rns-fact-pool.json`. A separate high-worker cold RNS scaling experiment is next.
+
+- [42346477835](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42346477835) confirmed the research-only `experimental4` 4-RNS/1-replay profile in 96 cold native comparisons and 45 R/Y/D full-wire parity checks. A 9.24% aggregate cold-time reduction versus the unchanged 3/3 default was observed on hosted AMD EPYC 9V45, **not** asserted as universal. Raw results: `results/ci-3bac030f32dc/rns-four-confirm.json` and `experimental4-parity.json`.
+
+- [42348089979](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42348089979) completed SUCCESS with 144 cross-year full JSON comparisons. The earlier 4/1 speed result did **not** generalize: 4/1 was 2.76% slower than default 3/3 across six year/calculation-day structures; 4/3 was 5.16% faster but increased VmPeak to as much as 557MiB. See `results/ci-fd387c915de7/rns-cross-year.json`. Neither is adopted as default; opt-in 4/1 remains experimental.
+
+- [42356282646](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42356282646) completed SUCCESS: 180 native exact cold tests over years 4999–5001. RNS/replay `4/2` used 3793.881ms total versus 4478.959ms for default `3/3` (15.30% reduction), while peak virtual space was ~446MiB vs ~482MiB. `4/2` was faster in 35/36 matched pairs against both `3/3` and `4/3`. **Only a sampled single hosted AMD EPYC 9V74 observation**, not a new default. Raw `results/ci-20a47a34b248/rns-replay-sweep.json`; opt-in hybrid-profile verification is separate.
+
+- [42358871316](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42358871316): experimental42 passed **108/108 full R/Y/D replies** and three long-year R requests under real Linux 512MiB RLIMIT_AS (peak VM 456996KiB, peak RSS 73312KiB). Same-run Intel Xeon 8370C cold 4/2 recorded 5012.103ms vs 3/3 5649.083ms, but 4/4 was quicker (4812.806ms) at ~701MiB VmPeak. **Only an opt-in research profile**, not a new default. Raw `results/ci-f734953dba54/` contains all records; [31_RNS_PROFILE42_CONFIRM_RESULTS.md](31_RNS_PROFILE42_CONFIRM_RESULTS.md) summarizes.
+
+- [42360658075](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42360658075) completed SUCCESS: **6/6 full-year Y exports** (25,952 day records) matched native Seer in complete JSON; all six also succeeded under a real Linux `RLIMIT_AS=512MiB` with complete parity. Maximum VmPeak 446.29MiB and VmHWM 71.63MiB (AMD EPYC 7763). This is not a hard RSS budget or all-years guarantee. Raw evidence: `results/ci-2825ba6b9d8d/full-year-512.json`; see [33_FULL_YEAR_512_RESULTS.md](33_FULL_YEAR_512_RESULTS.md). No default change.
+
+- [42363472716](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42363472716) completed SUCCESS. `SEER_NEXT_Y_MEMO_DIRECT=1` retained full native response equivalence for 144 complete Y replies. Warm second Y was **19.71× faster** than uncached 4/2 on sampled AMD EPYC 9V45; all-three-request cumulative time fell 61.65%. Exact one build/two hits per tested memo context, tiny and zero budgets, Y→R and LRU paths passed; one repeated long year succeeded under a configured 512MiB Linux virtual cap. See `results/ci-44c11b2fb985/y-export-direct-memo.json` and [37_DIRECT_Y_MEMO_RESULTS.md](37_DIRECT_Y_MEMO_RESULTS.md). Research opt-in only; no change to default.
+
+## Artifacts and decision rules
+
+- [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.
+- [01_MODEL_AND_BOUNDS.md](01_MODEL_AND_BOUNDS.md): mathematical cost model, proven statements, open questions.
+- [02_EXPERIMENT_PROTOCOL.md](02_EXPERIMENT_PROTOCOL.md): measurement design, correctness gate, reporting.
+- [DECISIONS.md](DECISIONS.md): research decisions and reversals.
+- [10_HYBRID_EVICTION_PROTOCOL.md](10_HYBRID_EVICTION_PROTOCOL.md): deterministic tiny-budget, full-response eviction checks.
+- [11_ONLINE_UNKNOWN_COST_LIMIT.md](11_ONLINE_UNKNOWN_COST_LIMIT.md): impossibility theorem under genuinely unknown request costs.
+
+For every experiment, retain its source, exact environment, command, raw measurements, summary, correctness artifacts, and reason to adopt/reject. Do not commit large generated data, secrets, or transient toolchains. A green run alone is not a benchmark result.
+
+- **Next isolated experiment (not adopted):** `SEER_NEXT_Y_STRUCT_REUSE=1` (default 0) shares canonical year structure with the direct-Y memo table. An independent A/B harness is designed to check **108 additional complete Y replies**, six cache/interoperability scenarios and a 512MiB capped case, while the existing 144-reply memo verification is retained. No new acceleration is claimed until completed CI. See [39_Y_STRUCTURE_REUSE_PROTOCOL.md](39_Y_STRUCTURE_REUSE_PROTOCOL.md).
+
+- [42366626496](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42366626496) completed SUCCESS: `SEER_NEXT_Y_STRUCT_REUSE=1` passed **108 complete Y JSON parity comparisons**, exact zero/tiny/R–Y/LRU checks and a real 512MiB address-space cap. It reduced direct `build_nonweave` calls from four to one across three Y requests but **did not improve cold Y** in the sampled A/B; combined three-request time fell only **1.55%**. Keep opt-in only; see [40_Y_STRUCTURE_REUSE_RESULTS.md](40_Y_STRUCTURE_REUSE_RESULTS.md). Next experiment targets the more expensive cold weave via [41_COLD_SUPERBLOCK_SWEEP_PROTOCOL.md](41_COLD_SUPERBLOCK_SWEEP_PROTOCOL.md).
+
+- [CI 42368439867](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42368439867) completed SUCCESS: **120 complete native R replies** matched unchanged Seer for static RNS block sizes 64/128/256/512/1024. Fixed 512 was fastest in the matched aggregate (2834.938ms over 24 calls), but won only 5 of 12 input classes. No default change; see [42_COLD_SUPERBLOCK_RESULTS.md](42_COLD_SUPERBLOCK_RESULTS.md). Follow-up pre-registers a strictly local failure-responsive block policy on four unseen years: [43_ADAPTIVE_SUPERBLOCK_PROTOCOL.md](43_ADAPTIVE_SUPERBLOCK_PROTOCOL.md).
+
+- [CI 42369949390](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42369949390) completed SUCCESS: all 192 exact cold R replies matched the original on held-out years, but online adaptive superblocks were **0.09% slower** in aggregate versus fixed 512, winning just 2/16 input classes. This particular adaptive policy is **rejected**; see [44_ADAPTIVE_SUPERBLOCK_RESULTS.md](44_ADAPTIVE_SUPERBLOCK_RESULTS.md). The next isolated experiment measures opt-in capacity-one immutable RNS engine initialization reuse for repeated same-year R queries, with no result memo, strict hit/miss assertions and RSS/virtual-memory costs: [45_RNS_ENGINE_REUSE_PROTOCOL.md](45_RNS_ENGINE_REUSE_PROTOCOL.md).
+
+- [CI 42372010453](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42372010453) completed SUCCESS: **125 complete candidate R replies** plus **65 original Seer replies** compared exactly; single-entry immutable `RnsEngine` reuse cuts three-request total from 6477.956ms to 4331.718ms (**33.1%**) for 20 repeated-same-year contexts on AMD EPYC 9V74. Observed max VmHWM increased 428KiB, not a memory cap. Still research opt-in, not production. See [46_RNS_ENGINE_REUSE_RESULTS.md](46_RNS_ENGINE_REUSE_RESULTS.md). Next A/B explores 1 vs 2 bounded LRU entries on alternating years under 512MiB virtual space: [47_TWO_SLOT_LRU_PROTOCOL.md](47_TWO_SLOT_LRU_PROTOCOL.md).
+
+- [CI 42388493020](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42388493020) completed SUCCESS: two-entry opt-in immutable RNS initializer LRU passed exact A/B/A/B, A/B/C/A evictions and effective 512MiB address-space checks. Sampled two-year four-request wall fell from 3167.633ms with one initializer to 2429.366ms with two (23.31%); note a separate three-year sequence reached VmHWM 130868KiB and the cache remains **entry-bounded, not byte-bounded**. See [48_TWO_SLOT_LRU_RESULTS.md](48_TWO_SLOT_LRU_RESULTS.md). Next research-only [49_RNS_MIXED_WIRE_PROTOCOL.md](49_RNS_MIXED_WIRE_PROTOCOL.md) validates actual R/Y/D hybrid routes and capped memory, no default changes.
