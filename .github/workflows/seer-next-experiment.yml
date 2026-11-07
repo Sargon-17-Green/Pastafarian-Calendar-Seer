@@ -135,6 +135,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_cold_superblock_sweep.mjs --trials=2 --output=research/seer-next/results/working/cold-superblock-sweep.json
           node -e "const x=require('./research/seer-next/results/working/cold-superblock-sweep.json');if(x.results.length!==120||x.policies.length!==5||x.samples.length!==12||x.results.some(v=>!v.fullJsonParity)||x.results.some(v=>v.policy.rns!==4||v.policy.replay!==2))throw Error('Incomplete exact superblock sweep');console.log('COLD_SUPERBLOCK_SWEEP',JSON.stringify({cpu:x.cpu,results:x.results.length,policies:x.policies.map(p=>p.superblock)}));"
+      - name: Compare failure-responsive adaptive superblock against fixed policies on held-out years
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_adaptive_block.mjs --trials=3 --output=research/seer-next/results/working/cold-adaptive-block.json
+          node -e "const x=require('./research/seer-next/results/working/cold-adaptive-block.json');if(x.results.length!==192||x.policies.length!==4||x.samples.length!==16||x.trials!==3||x.results.some(v=>!v.fullJsonParity)||x.results.some(v=>v.policy.rns!==4||v.policy.replay!==2)||x.results.filter(v=>v.policy.adaptive).length!==48||x.results.some(v=>v.adaptiveTrace.enabled!==Number(v.policy.adaptive)))throw Error('Incomplete adaptive RNS exact-holdout evidence');console.log('COLD_ADAPTIVE_BLOCK',JSON.stringify({cpu:x.cpu,rows:x.results.length,holdoutYears:x.years,policies:x.policies}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -192,6 +197,7 @@ jobs:
             research/seer-next/results/working/rns-cross-year.json
             research/seer-next/results/working/rns-replay-sweep.json
             research/seer-next/results/working/cold-superblock-sweep.json
+            research/seer-next/results/working/cold-adaptive-block.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -205,7 +211,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

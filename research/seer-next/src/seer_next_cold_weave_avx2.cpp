@@ -430,7 +430,55 @@ struct Unknown{
         if(certify_commit(s)){out.insert(out.end(),labels.begin(),labels.end());return;}
         st.failed++;st.waste+=len;int lcp=0;while(lcp<len&&startpos+lcp<(int)gold.size()&&labels[lcp]==gold[startpos+lcp])lcp++;st.discard+=len-lcp;s=std::move(snap);if(len==1){exact_leaf(s);return;}st.splits++;int a=len/2;process(s,a);process(s,len-a);
     }
-    bool run(FastState&s,int stoppos=-1){out.clear();out.push_back(0);auto a=Clock::now();int totalpos=stoppos<0?(int)gold.size():std::min(stoppos,(int)gold.size());while(s.st.pos<totalpos){int n=std::min(superblock,totalpos-s.st.pos);process(s,n);}auto b=Clock::now();st.total_ms=ms(a,b);bool same=true;for(int i=0;i<totalpos;i++)if(out[i]!=gold[i]){same=false;break;}return same;}
+    bool run(FastState&s,int stoppos=-1){
+        out.clear();out.push_back(0);
+        const auto start=Clock::now();
+        const int totalpos=stoppos<0?(int)gold.size():std::min(stoppos,(int)gold.size());
+        const char* mode=std::getenv("SEER_NEXT_COLD_ADAPT_SUPERBLOCK");
+        if(mode && *mode && std::strcmp(mode,"0")!=0 && std::strcmp(mode,"1")!=0)
+            throw std::runtime_error("SEER_NEXT_COLD_ADAPT_SUPERBLOCK must be 0 or 1");
+        const bool adaptive=mode && std::strcmp(mode,"1")==0;
+        int block=adaptive?std::clamp(superblock,128,1024):superblock;
+        int cleanStreak=0;
+        uint64_t blocks=0,failedBlocks=0,cleanBlocks=0,upshifts=0,downshifts=0;
+        while(s.st.pos<totalpos){
+            const int n=std::min(block,totalpos-s.st.pos);
+            const uint64_t failuresBefore=st.failed;
+            const int previous=s.st.pos;
+            process(s,n);
+            if(s.st.pos<=previous || s.st.pos>totalpos)
+                throw std::runtime_error("adaptive superblock failed to make bounded progress");
+            ++blocks;
+            if(st.failed>failuresBefore){
+                ++failedBlocks;
+                cleanStreak=0;
+                if(adaptive){
+                    const int next=std::max(128,block/2);
+                    if(next!=block){block=next;++downshifts;}
+                }
+            }else{
+                ++cleanBlocks;
+                if(adaptive && ++cleanStreak>=2){
+                    const int next=std::min(1024,block*2);
+                    if(next!=block){block=next;++upshifts;}
+                    cleanStreak=0;
+                }
+            }
+        }
+        const auto finish=Clock::now();
+        st.total_ms=ms(start,finish);
+        if(const char* file=std::getenv("SEER_NEXT_COLD_ADAPT_STAGE_FILE");file && *file){
+            std::ofstream trace(file,std::ios::app);
+            if(!trace)throw std::runtime_error("cannot open adaptive research trace");
+            trace<<(adaptive?1:0)<<'\t'<<blocks<<'\t'<<failedBlocks<<'\t'
+                 <<cleanBlocks<<'\t'<<upshifts<<'\t'<<downshifts<<'\t'
+                 <<block<<'\n';
+            if(!trace)throw std::runtime_error("adaptive research trace write failed");
+        }
+        bool same=true;
+        for(int i=0;i<totalpos;i++)if(out[i]!=gold[i]){same=false;break;}
+        return same;
+    }
 };
 
 #include "seer_selection_core.hpp"
