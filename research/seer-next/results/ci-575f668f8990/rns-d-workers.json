@@ -1,0 +1,1569 @@
+{
+  "schema": "seer-next-rns-process-scope-d-workers-v1",
+  "originalSha": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "sourceParent": "634b87c99cf79a2016ae934f203572a608c88812",
+  "generated": "2026-11-07T20:32:39.834Z",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "platform": "linux",
+  "arch": "x64",
+  "trials": 2,
+  "contexts": 12,
+  "requestsPerContext": 8,
+  "primaryNativeReplies": 288,
+  "cappedNativeReplies": 24,
+  "fullParity": true,
+  "workerCases": [
+    1,
+    2,
+    3
+  ],
+  "groups": [
+    {
+      "mode": "original",
+      "workers": 1,
+      "contexts": 4,
+      "totalMs": 23102.231588,
+      "dTotalMs": 21125.536428,
+      "maxVmPeakKiB": 464904,
+      "maxVmHwmKiB": 76616,
+      "cacheHits": null,
+      "traceRows": null
+    },
+    {
+      "mode": "original",
+      "workers": 2,
+      "contexts": 4,
+      "totalMs": 13337.027383999999,
+      "dTotalMs": 11350.613683,
+      "maxVmPeakKiB": 464904,
+      "maxVmHwmKiB": 108440,
+      "cacheHits": null,
+      "traceRows": null
+    },
+    {
+      "mode": "original",
+      "workers": 3,
+      "contexts": 4,
+      "totalMs": 12749.541149,
+      "dTotalMs": 10750.272192,
+      "maxVmPeakKiB": 464904,
+      "maxVmHwmKiB": 151356,
+      "cacheHits": null,
+      "traceRows": null
+    },
+    {
+      "mode": "thread",
+      "workers": 1,
+      "contexts": 4,
+      "totalMs": 12657.707867999998,
+      "dTotalMs": 11081.694970999999,
+      "maxVmPeakKiB": 414020,
+      "maxVmHwmKiB": 147664,
+      "cacheHits": 4,
+      "traceRows": 124
+    },
+    {
+      "mode": "thread",
+      "workers": 2,
+      "contexts": 4,
+      "totalMs": 11959.420843000002,
+      "dTotalMs": 10400.260767,
+      "maxVmPeakKiB": 640120,
+      "maxVmHwmKiB": 262648,
+      "cacheHits": 4,
+      "traceRows": 124
+    },
+    {
+      "mode": "thread",
+      "workers": 3,
+      "contexts": 4,
+      "totalMs": 14579.14283,
+      "dTotalMs": 12985.418611000001,
+      "maxVmPeakKiB": 992804,
+      "maxVmHwmKiB": 388680,
+      "cacheHits": 0,
+      "traceRows": 124
+    },
+    {
+      "mode": "process",
+      "workers": 1,
+      "contexts": 4,
+      "totalMs": 12588.483017,
+      "dTotalMs": 11026.504945999997,
+      "maxVmPeakKiB": 414020,
+      "maxVmHwmKiB": 147740,
+      "cacheHits": 4,
+      "traceRows": 124
+    },
+    {
+      "mode": "process",
+      "workers": 2,
+      "contexts": 4,
+      "totalMs": 12119.168054,
+      "dTotalMs": 10561.076383,
+      "maxVmPeakKiB": 652432,
+      "maxVmHwmKiB": 190820,
+      "cacheHits": 4,
+      "traceRows": 124
+    },
+    {
+      "mode": "process",
+      "workers": 3,
+      "contexts": 4,
+      "totalMs": 14262.541641,
+      "dTotalMs": 12687.327474000002,
+      "maxVmPeakKiB": 995084,
+      "maxVmHwmKiB": 270728,
+      "cacheHits": 4,
+      "traceRows": 124
+    }
+  ],
+  "results": [
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "workers": 1,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            175.098375,
+            92.252773,
+            911.902902,
+            1793.967783,
+            170.511813,
+            0.335899,
+            2512.178255,
+            87.985163
+          ],
+          "dTimesMs": [
+            911.902902,
+            1793.967783,
+            2512.178255
+          ],
+          "totalMs": 5744.232963,
+          "dTotalMs": 5218.04894,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 72852
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            149.495045,
+            69.843633,
+            421.32215,
+            1044.436708,
+            130.44893,
+            0.229418,
+            1333.88852,
+            77.375038
+          ],
+          "dTimesMs": [
+            421.32215,
+            1044.436708,
+            1333.88852
+          ],
+          "totalMs": 3227.0394420000002,
+          "dTotalMs": 2799.6473779999997,
+          "memory": {
+            "vmPeakKiB": 348484,
+            "vmHwmKiB": 142044
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            142.819792,
+            78.006264,
+            409.708723,
+            1036.231831,
+            131.305398,
+            0.209508,
+            1330.720609,
+            74.626622
+          ],
+          "dTimesMs": [
+            409.708723,
+            1036.231831,
+            1330.720609
+          ],
+          "totalMs": 3203.6287469999997,
+          "dTotalMs": 2776.6611629999998,
+          "memory": {
+            "vmPeakKiB": 414020,
+            "vmHwmKiB": 141420
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "workers": 2,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            185.271881,
+            89.020351,
+            454.307487,
+            1004.279346,
+            170.698711,
+            0.228497,
+            1341.588725,
+            92.272801
+          ],
+          "dTimesMs": [
+            454.307487,
+            1004.279346,
+            1341.588725
+          ],
+          "totalMs": 3337.6677990000003,
+          "dTotalMs": 2800.175558,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 104224
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            143.576409,
+            69.122378,
+            392.61431,
+            885.076006,
+            133.348345,
+            0.255477,
+            1234.634009,
+            76.637981
+          ],
+          "dTimesMs": [
+            392.61431,
+            885.076006,
+            1234.634009
+          ],
+          "totalMs": 2935.2649149999997,
+          "dTotalMs": 2512.324325,
+          "memory": {
+            "vmPeakKiB": 640120,
+            "vmHwmKiB": 254312
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 17,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            143.186628,
+            76.041858,
+            374.088078,
+            899.128275,
+            132.482051,
+            0.209527,
+            1249.148901,
+            68.981726
+          ],
+          "dTimesMs": [
+            374.088078,
+            899.128275,
+            1249.148901
+          ],
+          "totalMs": 2943.267044,
+          "dTotalMs": 2522.3652540000003,
+          "memory": {
+            "vmPeakKiB": 632720,
+            "vmHwmKiB": 181840
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "workers": 3,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            180.524095,
+            94.121883,
+            436.182961,
+            907.252928,
+            169.502491,
+            0.23109,
+            1298.99152,
+            93.82884
+          ],
+          "dTimesMs": [
+            436.182961,
+            907.252928,
+            1298.99152
+          ],
+          "totalMs": 3180.635808,
+          "dTotalMs": 2642.427409,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 146720
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            143.574542,
+            69.279389,
+            451.266242,
+            1089.115524,
+            132.063955,
+            0.208316,
+            1591.571365,
+            67.624332
+          ],
+          "dTimesMs": [
+            451.266242,
+            1089.115524,
+            1591.571365
+          ],
+          "totalMs": 3544.703665,
+          "dTotalMs": 3131.953131,
+          "memory": {
+            "vmPeakKiB": 995084,
+            "vmHwmKiB": 267860
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            145.588625,
+            68.982519,
+            481.826703,
+            1123.233748,
+            131.856891,
+            0.233084,
+            1575.217398,
+            67.836749
+          ],
+          "dTimesMs": [
+            481.826703,
+            1123.233748,
+            1575.217398
+          ],
+          "totalMs": 3594.775717,
+          "dTotalMs": 3180.277849,
+          "memory": {
+            "vmPeakKiB": 992804,
+            "vmHwmKiB": 388680
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 0,
+            "evictionsMax": 11,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "workers": 1,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            127.176541,
+            106.539458,
+            832.192016,
+            1897.485358,
+            113.289199,
+            0.228296,
+            2598.635425,
+            109.363779
+          ],
+          "dTimesMs": [
+            832.192016,
+            1897.485358,
+            2598.635425
+          ],
+          "totalMs": 5784.910072,
+          "dTotalMs": 5328.312798999999,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 76616
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            98.409424,
+            80.93222,
+            417.282947,
+            1010.09042,
+            87.301197,
+            0.263559,
+            1273.454973,
+            76.911487
+          ],
+          "dTimesMs": [
+            417.282947,
+            1010.09042,
+            1273.454973
+          ],
+          "totalMs": 3044.6462269999997,
+          "dTotalMs": 2700.82834,
+          "memory": {
+            "vmPeakKiB": 412992,
+            "vmHwmKiB": 147736
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            99.579016,
+            83.428605,
+            426.144094,
+            1010.942711,
+            87.081433,
+            0.21731,
+            1331.575256,
+            90.534918
+          ],
+          "dTimesMs": [
+            426.144094,
+            1010.942711,
+            1331.575256
+          ],
+          "totalMs": 3129.503343,
+          "dTotalMs": 2768.662061,
+          "memory": {
+            "vmPeakKiB": 408720,
+            "vmHwmKiB": 147664
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "workers": 2,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            128.332824,
+            108.531968,
+            471.556871,
+            1094.074908,
+            112.29312,
+            0.240024,
+            1319.162722,
+            104.881554
+          ],
+          "dTimesMs": [
+            471.556871,
+            1094.074908,
+            1319.162722
+          ],
+          "totalMs": 3339.073991,
+          "dTotalMs": 2884.7945010000003,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 108392
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            98.477437,
+            84.078219,
+            376.040279,
+            1009.072609,
+            86.9617,
+            0.209217,
+            1289.593975,
+            85.796525
+          ],
+          "dTimesMs": [
+            376.040279,
+            1009.072609,
+            1289.593975
+          ],
+          "totalMs": 3030.2299610000005,
+          "dTotalMs": 2674.7068630000003,
+          "memory": {
+            "vmPeakKiB": 636508,
+            "vmHwmKiB": 256876
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 16,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            100.462918,
+            81.292467,
+            367.155881,
+            1001.771021,
+            89.94288,
+            0.282729,
+            1326.548663,
+            92.359994
+          ],
+          "dTimesMs": [
+            367.155881,
+            1001.771021,
+            1326.548663
+          ],
+          "totalMs": 3059.816553,
+          "dTotalMs": 2695.475565,
+          "memory": {
+            "vmPeakKiB": 626388,
+            "vmHwmKiB": 190820
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "workers": 3,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            127.942971,
+            109.615711,
+            396.091524,
+            1066.758476,
+            121.301675,
+            0.234675,
+            1259.970552,
+            111.942827
+          ],
+          "dTimesMs": [
+            396.091524,
+            1066.758476,
+            1259.970552
+          ],
+          "totalMs": 3193.8584109999997,
+          "dTotalMs": 2722.820552,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 151320
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            105.352387,
+            82.096996,
+            475.32125,
+            1224.822895,
+            94.62731,
+            0.228567,
+            1608.045728,
+            81.015126
+          ],
+          "dTimesMs": [
+            475.32125,
+            1224.822895,
+            1608.045728
+          ],
+          "totalMs": 3671.510259,
+          "dTotalMs": 3308.1898730000003,
+          "memory": {
+            "vmPeakKiB": 982464,
+            "vmHwmKiB": 211132
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            111.04054,
+            97.982315,
+            493.516912,
+            1251.910454,
+            94.897639,
+            0.218201,
+            1705.871732,
+            78.318564
+          ],
+          "dTimesMs": [
+            493.516912,
+            1251.910454,
+            1705.871732
+          ],
+          "totalMs": 3833.756357,
+          "dTotalMs": 3451.2990980000004,
+          "memory": {
+            "vmPeakKiB": 987432,
+            "vmHwmKiB": 353136
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 0,
+            "evictionsMax": 12,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "workers": 1,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            181.955385,
+            86.943408,
+            916.174825,
+            1805.194599,
+            173.082406,
+            0.213404,
+            2523.503051,
+            93.204659
+          ],
+          "dTimesMs": [
+            916.174825,
+            1805.194599,
+            2523.503051
+          ],
+          "totalMs": 5780.271737,
+          "dTotalMs": 5244.872475,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 72932
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            143.715733,
+            69.316429,
+            409.940965,
+            1055.552871,
+            142.206086,
+            0.24401,
+            1349.572176,
+            68.111674
+          ],
+          "dTimesMs": [
+            409.940965,
+            1055.552871,
+            1349.572176
+          ],
+          "totalMs": 3238.659944,
+          "dTotalMs": 2815.0660120000002,
+          "memory": {
+            "vmPeakKiB": 414020,
+            "vmHwmKiB": 141264
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            143.210429,
+            69.134945,
+            414.824732,
+            1043.245725,
+            134.465745,
+            0.20509,
+            1338.086956,
+            68.381994
+          ],
+          "dTimesMs": [
+            414.824732,
+            1043.245725,
+            1338.086956
+          ],
+          "totalMs": 3211.555616,
+          "dTotalMs": 2796.157413,
+          "memory": {
+            "vmPeakKiB": 414020,
+            "vmHwmKiB": 141816
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "workers": 2,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            177.831648,
+            86.593679,
+            455.129066,
+            1016.148872,
+            181.077288,
+            0.211991,
+            1326.44327,
+            92.566785
+          ],
+          "dTimesMs": [
+            455.129066,
+            1016.148872,
+            1326.44327
+          ],
+          "totalMs": 3336.002599,
+          "dTotalMs": 2797.721208,
+          "memory": {
+            "vmPeakKiB": 354224,
+            "vmHwmKiB": 104312
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            144.360459,
+            68.543412,
+            384.650832,
+            938.349253,
+            133.464445,
+            0.226654,
+            1297.385972,
+            69.975363
+          ],
+          "dTimesMs": [
+            384.650832,
+            938.349253,
+            1297.385972
+          ],
+          "totalMs": 3036.9563900000003,
+          "dTotalMs": 2620.3860569999997,
+          "memory": {
+            "vmPeakKiB": 652432,
+            "vmHwmKiB": 187504
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            150.256266,
+            73.575911,
+            377.994924,
+            918.291532,
+            131.52195,
+            0.212442,
+            1295.704863,
+            68.283479
+          ],
+          "dTimesMs": [
+            377.994924,
+            918.291532,
+            1295.704863
+          ],
+          "totalMs": 3015.8413670000004,
+          "dTotalMs": 2591.9913189999997,
+          "memory": {
+            "vmPeakKiB": 635124,
+            "vmHwmKiB": 262648
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 18,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "workers": 3,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            179.949803,
+            96.343569,
+            436.792285,
+            923.1634,
+            173.018595,
+            0.209998,
+            1317.73531,
+            85.981032
+          ],
+          "dTimesMs": [
+            436.792285,
+            923.1634,
+            1317.73531
+          ],
+          "totalMs": 3213.193992,
+          "dTotalMs": 2677.690995,
+          "memory": {
+            "vmPeakKiB": 464904,
+            "vmHwmKiB": 146840
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            143.448923,
+            75.308434,
+            477.304949,
+            1096.789155,
+            139.518675,
+            0.199202,
+            1586.913665,
+            68.552053
+          ],
+          "dTimesMs": [
+            477.304949,
+            1096.789155,
+            1586.913665
+          ],
+          "totalMs": 3588.035056,
+          "dTotalMs": 3161.007769,
+          "memory": {
+            "vmPeakKiB": 992804,
+            "vmHwmKiB": 336772
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 0,
+            "evictionsMax": 13,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            150.943252,
+            69.545889,
+            446.780629,
+            1111.677393,
+            131.49941,
+            0.202116,
+            1551.382056,
+            68.82164
+          ],
+          "dTimesMs": [
+            446.780629,
+            1111.677393,
+            1551.382056
+          ],
+          "totalMs": 3530.8523849999997,
+          "dTotalMs": 3109.8400779999997,
+          "memory": {
+            "vmPeakKiB": 978696,
+            "vmHwmKiB": 270728
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "workers": 1,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            132.568058,
+            108.557546,
+            841.151239,
+            1902.311486,
+            110.599652,
+            0.221055,
+            2590.839489,
+            106.568291
+          ],
+          "dTimesMs": [
+            841.151239,
+            1902.311486,
+            2590.839489
+          ],
+          "totalMs": 5792.816816,
+          "dTotalMs": 5334.302214,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 76228
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            103.898003,
+            83.973506,
+            416.225777,
+            1006.06236,
+            92.159841,
+            0.225401,
+            1299.017598,
+            84.353348
+          ],
+          "dTimesMs": [
+            416.225777,
+            1006.06236,
+            1299.017598
+          ],
+          "totalMs": 3085.915834,
+          "dTotalMs": 2721.305735,
+          "memory": {
+            "vmPeakKiB": 371980,
+            "vmHwmKiB": 147532
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 1,
+          "requests": 8,
+          "requestTimesMs": [
+            106.122926,
+            89.230581,
+            423.430935,
+            999.038564,
+            92.696425,
+            0.208256,
+            1307.402316,
+            87.111729
+          ],
+          "dTimesMs": [
+            423.430935,
+            999.038564,
+            1307.402316
+          ],
+          "totalMs": 3105.2417320000004,
+          "dTotalMs": 2729.8718149999995,
+          "memory": {
+            "vmPeakKiB": 412816,
+            "vmHwmKiB": 147740
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "workers": 2,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            127.357483,
+            107.739507,
+            467.840921,
+            1073.739541,
+            117.311394,
+            0.22483,
+            1326.341954,
+            103.727365
+          ],
+          "dTimesMs": [
+            467.840921,
+            1073.739541,
+            1326.341954
+          ],
+          "totalMs": 3324.282995,
+          "dTotalMs": 2867.922416,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 108440
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            98.492297,
+            81.689508,
+            390.100299,
+            1005.053478,
+            89.353456,
+            0.209888,
+            1327.69573,
+            86.533411
+          ],
+          "dTimesMs": [
+            390.100299,
+            1005.053478,
+            1327.69573
+          ],
+          "totalMs": 3079.128067,
+          "dTotalMs": 2722.849507,
+          "memory": {
+            "vmPeakKiB": 625372,
+            "vmHwmKiB": 182872
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 2,
+          "requests": 8,
+          "requestTimesMs": [
+            100.466349,
+            90.897075,
+            377.675454,
+            973.850299,
+            87.183457,
+            0.232342,
+            1269.712507,
+            78.067117
+          ],
+          "dTimesMs": [
+            377.675454,
+            973.850299,
+            1269.712507
+          ],
+          "totalMs": 2978.0846,
+          "dTotalMs": 2621.23826,
+          "memory": {
+            "vmPeakKiB": 636628,
+            "vmHwmKiB": 261276
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 15,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "workers": 3,
+      "rows": {
+        "original": {
+          "mode": "original",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            126.450327,
+            103.560141,
+            393.895421,
+            1063.098814,
+            118.600827,
+            0.243238,
+            1250.339001,
+            105.665169
+          ],
+          "dTimesMs": [
+            393.895421,
+            1063.098814,
+            1250.339001
+          ],
+          "totalMs": 3161.852938,
+          "dTotalMs": 2707.333236,
+          "memory": {
+            "vmPeakKiB": 454408,
+            "vmHwmKiB": 151356
+          },
+          "effectiveLimitBytes": null,
+          "stats": null,
+          "fullParity": true
+        },
+        "thread": {
+          "mode": "thread",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            103.774163,
+            83.745545,
+            486.354896,
+            1168.265192,
+            92.301493,
+            0.243239,
+            1538.213807,
+            89.677365
+          ],
+          "dTimesMs": [
+            486.354896,
+            1168.265192,
+            1538.213807
+          ],
+          "totalMs": 3562.5757,
+          "dTotalMs": 3192.833895,
+          "memory": {
+            "vmPeakKiB": 935192,
+            "vmHwmKiB": 371936
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 0,
+            "evictionsMax": 11,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        },
+        "process": {
+          "mode": "process",
+          "workers": 3,
+          "requests": 8,
+          "requestTimesMs": [
+            98.167545,
+            88.330533,
+            457.265403,
+            1211.163188,
+            101.07385,
+            0.228737,
+            1468.915801,
+            90.330275
+          ],
+          "dTimesMs": [
+            457.265403,
+            1211.163188,
+            1468.915801
+          ],
+          "totalMs": 3515.4753319999995,
+          "dTotalMs": 3137.344392,
+          "memory": {
+            "vmPeakKiB": 923608,
+            "vmHwmKiB": 219412
+          },
+          "effectiveLimitBytes": null,
+          "stats": {
+            "traceRows": 31,
+            "hits": 1,
+            "evictionsMax": 28,
+            "initialHits": [
+              0,
+              0
+            ]
+          },
+          "fullParity": true
+        }
+      },
+      "fullParity": true
+    }
+  ],
+  "cappedEvidence": {
+    "original": {
+      "mode": "original",
+      "workers": 1,
+      "requests": 8,
+      "requestTimesMs": [
+        182.540221,
+        87.765167,
+        919.564972,
+        1810.513847,
+        174.429435,
+        0.212502,
+        2537.482696,
+        95.102367
+      ],
+      "dTimesMs": [
+        919.564972,
+        1810.513847,
+        2537.482696
+      ],
+      "totalMs": 5807.611207000001,
+      "dTotalMs": 5267.561514999999,
+      "memory": {
+        "vmPeakKiB": 464904,
+        "vmHwmKiB": 72856
+      },
+      "effectiveLimitBytes": null,
+      "stats": null,
+      "fullParity": true
+    },
+    "thread": {
+      "mode": "thread",
+      "workers": 1,
+      "requests": 8,
+      "requestTimesMs": [
+        151.779161,
+        76.04404,
+        414.004499,
+        1058.815493,
+        140.063819,
+        0.220885,
+        1330.750393,
+        68.279859
+      ],
+      "dTimesMs": [
+        414.004499,
+        1058.815493,
+        1330.750393
+      ],
+      "totalMs": 3239.958149,
+      "dTotalMs": 2803.570385,
+      "memory": {
+        "vmPeakKiB": 414020,
+        "vmHwmKiB": 141432
+      },
+      "effectiveLimitBytes": 536870912,
+      "stats": {
+        "traceRows": 31,
+        "hits": 1,
+        "evictionsMax": 28,
+        "initialHits": [
+          0,
+          0
+        ]
+      },
+      "fullParity": true
+    },
+    "process": {
+      "mode": "process",
+      "workers": 1,
+      "requests": 8,
+      "requestTimesMs": [
+        144.321993,
+        69.360427,
+        416.43957,
+        1034.841665,
+        140.71127,
+        0.20416,
+        1373.040136,
+        74.530113
+      ],
+      "dTimesMs": [
+        416.43957,
+        1034.841665,
+        1373.040136
+      ],
+      "totalMs": 3253.449334,
+      "dTotalMs": 2824.321371,
+      "memory": {
+        "vmPeakKiB": 414020,
+        "vmHwmKiB": 141860
+      },
+      "effectiveLimitBytes": 536870912,
+      "stats": {
+        "traceRows": 31,
+        "hits": 1,
+        "evictionsMax": 28,
+        "initialHits": [
+          0,
+          0
+        ]
+      },
+      "fullParity": true
+    }
+  },
+  "caveats": [
+    "Uncapped D concurrency 1/2/3 is measured in separate fresh processes and includes nested native OpenMP/replay activity.",
+    "First distinct R year keys must both miss for thread and process-scoped initializer caches.",
+    "Every full R/Y/D native response is deep-equal to unchanged Seer, not only hashes or sample fields.",
+    "The effective 512MiB Linux virtual-space cap is tested with D workers=1 only. Two/three D worker capped workloads are NOT certified.",
+    "The two-slot cache is entry bounded and not byte/RSS bounded, and pinned process-shared engines can outlive LRU eviction.",
+    "A mutex around process-cache construction can reduce contention or serialize expensive cold misses; performance is an empirical tradeoff.",
+    "Only the isolated research cold probe is changed; released Seer and the research hybrid remain untouched."
+  ]
+}

@@ -1,0 +1,2204 @@
+{
+  "schema": "seer-next-cold-rns-engine-reuse-v1",
+  "baselineCommit": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "sourceParent": "caa4b9aa312a2b0c40bf44aae3f8c37cd4b0e15f",
+  "platform": "linux",
+  "arch": "x64",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "trials": 2,
+  "contexts": 20,
+  "candidateNativeRReplies": 125,
+  "referenceNativeRReplies": 65,
+  "fullParity": true,
+  "workers": {
+    "rns": 4,
+    "replay": 2
+  },
+  "samples": [
+    {
+      "calc": 2461290,
+      "year": 4997,
+      "yearLength": 3324,
+      "targets": [
+        2447875,
+        2447876,
+        2449535
+      ]
+    },
+    {
+      "calc": 2461290,
+      "year": 4999,
+      "yearLength": 5766,
+      "targets": [
+        2456078,
+        2456079,
+        2458959
+      ]
+    },
+    {
+      "calc": 2461290,
+      "year": 5000,
+      "yearLength": 4047,
+      "targets": [
+        2460984,
+        2460985,
+        2463006
+      ]
+    },
+    {
+      "calc": 2461290,
+      "year": 5002,
+      "yearLength": 5565,
+      "targets": [
+        2469079,
+        2469080,
+        2471860
+      ]
+    },
+    {
+      "calc": 2461290,
+      "year": 5003,
+      "yearLength": 5396,
+      "targets": [
+        2474560,
+        2474561,
+        2477256
+      ]
+    },
+    {
+      "calc": 2461400,
+      "year": 4997,
+      "yearLength": 4581,
+      "targets": [
+        2447246,
+        2447247,
+        2449535
+      ]
+    },
+    {
+      "calc": 2461400,
+      "year": 4999,
+      "yearLength": 4564,
+      "targets": [
+        2454861,
+        2454862,
+        2457141
+      ]
+    },
+    {
+      "calc": 2461400,
+      "year": 5000,
+      "yearLength": 4422,
+      "targets": [
+        2459354,
+        2459355,
+        2461563
+      ]
+    },
+    {
+      "calc": 2461400,
+      "year": 5002,
+      "yearLength": 3063,
+      "targets": [
+        2466960,
+        2466961,
+        2468490
+      ]
+    },
+    {
+      "calc": 2461400,
+      "year": 5003,
+      "yearLength": 5494,
+      "targets": [
+        2471239,
+        2471240,
+        2473984
+      ]
+    }
+  ],
+  "summary": [
+    {
+      "kind": "baseline",
+      "contexts": 20,
+      "firstRTotalMs": 2601.5439319999996,
+      "secondRTotalMs": 2352.847339000001,
+      "thirdRTotalMs": 2776.7410269999996,
+      "allThreeMs": 7731.132298,
+      "maxVmPeakKiB": 493576,
+      "maxRssHighWaterKiB": 72896
+    },
+    {
+      "kind": "control",
+      "contexts": 20,
+      "firstRTotalMs": 2166.339958,
+      "secondRTotalMs": 1971.3054359999999,
+      "thirdRTotalMs": 2297.2430719999998,
+      "allThreeMs": 6434.888466,
+      "maxVmPeakKiB": 457028,
+      "maxRssHighWaterKiB": 73432
+    },
+    {
+      "kind": "reuse",
+      "contexts": 20,
+      "firstRTotalMs": 2110.968095,
+      "secondRTotalMs": 920.8850309999999,
+      "thirdRTotalMs": 1247.7607489999998,
+      "allThreeMs": 4279.613875,
+      "maxVmPeakKiB": 457028,
+      "maxRssHighWaterKiB": 73904
+    }
+  ],
+  "results": [
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 4997,
+      "targets": [
+        2447875,
+        2447876,
+        2449535
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            79.917421,
+            71.349743,
+            84.013299
+          ],
+          "elapsedMs": 237.539166,
+          "spawnedToFirstMs": 81.162107,
+          "memory": {
+            "vmPeakKiB": 477956,
+            "rssHighWaterKiB": 26792
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            64.851192,
+            63.29259,
+            69.589265
+          ],
+          "elapsedMs": 201.00093,
+          "spawnedToFirstMs": 67.207915,
+          "memory": {
+            "vmPeakKiB": 455156,
+            "rssHighWaterKiB": 30168
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            62.265163,
+            20.83376,
+            28.865595
+          ],
+          "elapsedMs": 114.801868,
+          "spawnedToFirstMs": 64.458807,
+          "memory": {
+            "vmPeakKiB": 455156,
+            "rssHighWaterKiB": 30744
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 1,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 1,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 4999,
+      "targets": [
+        2456078,
+        2456079,
+        2458959
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            192.030302,
+            165.73911,
+            204.767079
+          ],
+          "elapsedMs": 566.076266,
+          "spawnedToFirstMs": 195.166355,
+          "memory": {
+            "vmPeakKiB": 493576,
+            "rssHighWaterKiB": 72896
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            146.13855,
+            76.878343,
+            99.958028
+          ],
+          "elapsedMs": 325.347559,
+          "spawnedToFirstMs": 147.823715,
+          "memory": {
+            "vmPeakKiB": 457028,
+            "rssHighWaterKiB": 73904
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 1,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 1,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            156.605415,
+            141.30954,
+            170.649984
+          ],
+          "elapsedMs": 470.888431,
+          "spawnedToFirstMs": 158.276388,
+          "memory": {
+            "vmPeakKiB": 423412,
+            "rssHighWaterKiB": 73432
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 5000,
+      "targets": [
+        2460984,
+        2460985,
+        2463006
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            102.284134,
+            91.66014,
+            110.808605
+          ],
+          "elapsedMs": 306.718549,
+          "spawnedToFirstMs": 103.907435,
+          "memory": {
+            "vmPeakKiB": 481224,
+            "rssHighWaterKiB": 38324
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            80.480423,
+            73.48492,
+            85.317555
+          ],
+          "elapsedMs": 241.343112,
+          "spawnedToFirstMs": 81.982871,
+          "memory": {
+            "vmPeakKiB": 455660,
+            "rssHighWaterKiB": 38872
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            83.428362,
+            29.170076,
+            41.085508
+          ],
+          "elapsedMs": 155.674754,
+          "spawnedToFirstMs": 84.903879,
+          "memory": {
+            "vmPeakKiB": 455660,
+            "rssHighWaterKiB": 39108
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 1,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 1,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 5002,
+      "targets": [
+        2469079,
+        2469080,
+        2471860
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            177.919722,
+            156.057034,
+            187.887794
+          ],
+          "elapsedMs": 523.689586,
+          "spawnedToFirstMs": 179.40896,
+          "memory": {
+            "vmPeakKiB": 489552,
+            "rssHighWaterKiB": 58344
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            137.218107,
+            67.915868,
+            91.364182
+          ],
+          "elapsedMs": 298.728598,
+          "spawnedToFirstMs": 138.886136,
+          "memory": {
+            "vmPeakKiB": 456836,
+            "rssHighWaterKiB": 59808
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 1,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 1,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            139.221955,
+            129.74526,
+            151.483862
+          ],
+          "elapsedMs": 425.03152,
+          "spawnedToFirstMs": 143.144512,
+          "memory": {
+            "vmPeakKiB": 456836,
+            "rssHighWaterKiB": 62280
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461290,
+      "year": 5003,
+      "targets": [
+        2474560,
+        2474561,
+        2477256
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            164.221389,
+            150.866726,
+            180.323387
+          ],
+          "elapsedMs": 497.416371,
+          "spawnedToFirstMs": 165.863137,
+          "memory": {
+            "vmPeakKiB": 490388,
+            "rssHighWaterKiB": 64260
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            133.833978,
+            130.858738,
+            169.157231
+          ],
+          "elapsedMs": 435.941838,
+          "spawnedToFirstMs": 135.411789,
+          "memory": {
+            "vmPeakKiB": 456684,
+            "rssHighWaterKiB": 65636
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            127.940664,
+            62.617587,
+            82.722862
+          ],
+          "elapsedMs": 276.307261,
+          "spawnedToFirstMs": 130.377258,
+          "memory": {
+            "vmPeakKiB": 456684,
+            "rssHighWaterKiB": 65972
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 1,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 1,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 4997,
+      "targets": [
+        2447246,
+        2447247,
+        2449535
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            108.290168,
+            99.668219,
+            118.740409
+          ],
+          "elapsedMs": 328.485063,
+          "spawnedToFirstMs": 109.733035,
+          "memory": {
+            "vmPeakKiB": 483964,
+            "rssHighWaterKiB": 45416
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            85.824734,
+            38.13121,
+            52.905365
+          ],
+          "elapsedMs": 178.996396,
+          "spawnedToFirstMs": 87.465202,
+          "memory": {
+            "vmPeakKiB": 455992,
+            "rssHighWaterKiB": 46768
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 1,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 1,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            93.616766,
+            77.213181,
+            93.304022
+          ],
+          "elapsedMs": 266.182343,
+          "spawnedToFirstMs": 95.086213,
+          "memory": {
+            "vmPeakKiB": 447800,
+            "rssHighWaterKiB": 46600
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 4999,
+      "targets": [
+        2454861,
+        2454862,
+        2457141
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            128.507344,
+            110.567741,
+            138.537307
+          ],
+          "elapsedMs": 379.448545,
+          "spawnedToFirstMs": 130.011113,
+          "memory": {
+            "vmPeakKiB": 483080,
+            "rssHighWaterKiB": 43292
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            111.639725,
+            91.946445,
+            116.183458
+          ],
+          "elapsedMs": 321.916932,
+          "spawnedToFirstMs": 113.258749,
+          "memory": {
+            "vmPeakKiB": 456000,
+            "rssHighWaterKiB": 43060
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            102.981435,
+            48.010917,
+            67.054755
+          ],
+          "elapsedMs": 220.857839,
+          "spawnedToFirstMs": 105.222452,
+          "memory": {
+            "vmPeakKiB": 456000,
+            "rssHighWaterKiB": 42160
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 1,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 1,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 5000,
+      "targets": [
+        2459354,
+        2459355,
+        2461563
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            122.869713,
+            110.730782,
+            116.998504
+          ],
+          "elapsedMs": 352.416113,
+          "spawnedToFirstMs": 124.376918,
+          "memory": {
+            "vmPeakKiB": 484164,
+            "rssHighWaterKiB": 46944
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            99.583645,
+            36.125791,
+            49.421446
+          ],
+          "elapsedMs": 187.201832,
+          "spawnedToFirstMs": 101.070519,
+          "memory": {
+            "vmPeakKiB": 455908,
+            "rssHighWaterKiB": 47588
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 1,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 1,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            93.903734,
+            91.164653,
+            98.300019
+          ],
+          "elapsedMs": 285.551836,
+          "spawnedToFirstMs": 95.51731,
+          "memory": {
+            "vmPeakKiB": 455908,
+            "rssHighWaterKiB": 47576
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 5002,
+      "targets": [
+        2466960,
+        2466961,
+        2468490
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            62.535775,
+            53.571096,
+            64.931717
+          ],
+          "elapsedMs": 183.029056,
+          "spawnedToFirstMs": 64.153888,
+          "memory": {
+            "vmPeakKiB": 476328,
+            "rssHighWaterKiB": 22656
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            55.851122,
+            43.609105,
+            56.374285
+          ],
+          "elapsedMs": 157.928297,
+          "spawnedToFirstMs": 57.394652,
+          "memory": {
+            "vmPeakKiB": 455012,
+            "rssHighWaterKiB": 23268
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            55.995822,
+            15.401076,
+            22.512125
+          ],
+          "elapsedMs": 96.081456,
+          "spawnedToFirstMs": 57.679443,
+          "memory": {
+            "vmPeakKiB": 455012,
+            "rssHighWaterKiB": 22740
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 1,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 1,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 0,
+      "calc": 2461400,
+      "year": 5003,
+      "targets": [
+        2471239,
+        2471240,
+        2473984
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            172.81313,
+            154.686192,
+            197.888181
+          ],
+          "elapsedMs": 527.773679,
+          "spawnedToFirstMs": 174.822255,
+          "memory": {
+            "vmPeakKiB": 490456,
+            "rssHighWaterKiB": 64576
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            139.046204,
+            67.036638,
+            88.934402
+          ],
+          "elapsedMs": 297.281257,
+          "spawnedToFirstMs": 140.701063,
+          "memory": {
+            "vmPeakKiB": 456784,
+            "rssHighWaterKiB": 66288
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 1,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 1,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            150.590935,
+            139.340001,
+            154.816961
+          ],
+          "elapsedMs": 446.873758,
+          "spawnedToFirstMs": 152.153763,
+          "memory": {
+            "vmPeakKiB": 456784,
+            "rssHighWaterKiB": 65988
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 4999,
+      "targets": [
+        2456078,
+        2456079,
+        2458959
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            183.12397,
+            163.34003,
+            190.127456
+          ],
+          "elapsedMs": 538.369652,
+          "spawnedToFirstMs": 184.559095,
+          "memory": {
+            "vmPeakKiB": 362504,
+            "rssHighWaterKiB": 72768
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            149.77655,
+            74.760597,
+            99.763047
+          ],
+          "elapsedMs": 326.565737,
+          "spawnedToFirstMs": 151.46545,
+          "memory": {
+            "vmPeakKiB": 457028,
+            "rssHighWaterKiB": 73704
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 1,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 1,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            145.493548,
+            139.328673,
+            174.542923
+          ],
+          "elapsedMs": 463.85644,
+          "spawnedToFirstMs": 149.331655,
+          "memory": {
+            "vmPeakKiB": 457028,
+            "rssHighWaterKiB": 73420
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            },
+            {
+              "hit": 0,
+              "npr": 1001,
+              "threads": 4,
+              "packs": 126
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 5000,
+      "targets": [
+        2460984,
+        2460985,
+        2463006
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            102.453685,
+            92.807332,
+            104.666831
+          ],
+          "elapsedMs": 302.379064,
+          "spawnedToFirstMs": 104.545907,
+          "memory": {
+            "vmPeakKiB": 481224,
+            "rssHighWaterKiB": 38240
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            80.197027,
+            81.164263,
+            90.756864
+          ],
+          "elapsedMs": 254.27209,
+          "spawnedToFirstMs": 81.758694,
+          "memory": {
+            "vmPeakKiB": 455660,
+            "rssHighWaterKiB": 38696
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            83.81383,
+            29.201055,
+            40.935513
+          ],
+          "elapsedMs": 157.116206,
+          "spawnedToFirstMs": 86.436726,
+          "memory": {
+            "vmPeakKiB": 455660,
+            "rssHighWaterKiB": 39044
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 1,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            },
+            {
+              "hit": 1,
+              "npr": 658,
+              "threads": 4,
+              "packs": 83
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 5002,
+      "targets": [
+        2469079,
+        2469080,
+        2471860
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            172.137426,
+            160.052217,
+            187.239469
+          ],
+          "elapsedMs": 521.391455,
+          "spawnedToFirstMs": 173.666053,
+          "memory": {
+            "vmPeakKiB": 489552,
+            "rssHighWaterKiB": 58440
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            148.560647,
+            68.073931,
+            91.569817
+          ],
+          "elapsedMs": 310.435816,
+          "spawnedToFirstMs": 150.214614,
+          "memory": {
+            "vmPeakKiB": 456836,
+            "rssHighWaterKiB": 59724
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 1,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 1,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            141.753508,
+            130.770259,
+            153.73489
+          ],
+          "elapsedMs": 428.537892,
+          "spawnedToFirstMs": 143.461937,
+          "memory": {
+            "vmPeakKiB": 456836,
+            "rssHighWaterKiB": 62224
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            },
+            {
+              "hit": 0,
+              "npr": 960,
+              "threads": 4,
+              "packs": 120
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 5003,
+      "targets": [
+        2474560,
+        2474561,
+        2477256
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            171.118221,
+            159.696167,
+            184.138568
+          ],
+          "elapsedMs": 516.865986,
+          "spawnedToFirstMs": 172.69453,
+          "memory": {
+            "vmPeakKiB": 490388,
+            "rssHighWaterKiB": 64164
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            139.214559,
+            130.502533,
+            143.231629
+          ],
+          "elapsedMs": 415.183129,
+          "spawnedToFirstMs": 140.879394,
+          "memory": {
+            "vmPeakKiB": 456684,
+            "rssHighWaterKiB": 65652
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            128.506758,
+            61.62808,
+            84.131361
+          ],
+          "elapsedMs": 276.566656,
+          "spawnedToFirstMs": 130.123038,
+          "memory": {
+            "vmPeakKiB": 456684,
+            "rssHighWaterKiB": 65912
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 1,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            },
+            {
+              "hit": 1,
+              "npr": 926,
+              "threads": 4,
+              "packs": 116
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 4997,
+      "targets": [
+        2447246,
+        2447247,
+        2449535
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            109.641881,
+            97.896327,
+            113.439789
+          ],
+          "elapsedMs": 323.081315,
+          "spawnedToFirstMs": 111.412705,
+          "memory": {
+            "vmPeakKiB": 483964,
+            "rssHighWaterKiB": 45424
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            91.716049,
+            38.125953,
+            53.243389
+          ],
+          "elapsedMs": 185.15586,
+          "spawnedToFirstMs": 93.264696,
+          "memory": {
+            "vmPeakKiB": 455992,
+            "rssHighWaterKiB": 46636
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 1,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 1,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            94.359325,
+            77.479238,
+            92.104424
+          ],
+          "elapsedMs": 266.013127,
+          "spawnedToFirstMs": 95.840541,
+          "memory": {
+            "vmPeakKiB": 455992,
+            "rssHighWaterKiB": 46544
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            },
+            {
+              "hit": 0,
+              "npr": 752,
+              "threads": 4,
+              "packs": 94
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 4999,
+      "targets": [
+        2454861,
+        2454862,
+        2457141
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            127.442773,
+            119.991109,
+            135.002862
+          ],
+          "elapsedMs": 384.305596,
+          "spawnedToFirstMs": 128.941755,
+          "memory": {
+            "vmPeakKiB": 483080,
+            "rssHighWaterKiB": 43216
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            105.35661,
+            96.513977,
+            105.800081
+          ],
+          "elapsedMs": 309.827508,
+          "spawnedToFirstMs": 106.952038,
+          "memory": {
+            "vmPeakKiB": 456000,
+            "rssHighWaterKiB": 42936
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            104.057881,
+            47.996675,
+            62.830867
+          ],
+          "elapsedMs": 216.937683,
+          "spawnedToFirstMs": 105.564244,
+          "memory": {
+            "vmPeakKiB": 456000,
+            "rssHighWaterKiB": 42172
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 1,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            },
+            {
+              "hit": 1,
+              "npr": 754,
+              "threads": 4,
+              "packs": 95
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 5000,
+      "targets": [
+        2459354,
+        2459355,
+        2461563
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            112.182655,
+            107.025089,
+            125.159833
+          ],
+          "elapsedMs": 346.217541,
+          "spawnedToFirstMs": 113.653585,
+          "memory": {
+            "vmPeakKiB": 484164,
+            "rssHighWaterKiB": 46900
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            98.599237,
+            36.033933,
+            49.663691
+          ],
+          "elapsedMs": 186.427482,
+          "spawnedToFirstMs": 100.155337,
+          "memory": {
+            "vmPeakKiB": 455908,
+            "rssHighWaterKiB": 47612
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 1,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 1,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            101.721139,
+            83.765095,
+            98.581321
+          ],
+          "elapsedMs": 286.169551,
+          "spawnedToFirstMs": 103.233902,
+          "memory": {
+            "vmPeakKiB": 455908,
+            "rssHighWaterKiB": 47516
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            },
+            {
+              "hit": 0,
+              "npr": 730,
+              "threads": 4,
+              "packs": 92
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 5002,
+      "targets": [
+        2466960,
+        2466961,
+        2468490
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            63.051842,
+            54.402383,
+            63.843411
+          ],
+          "elapsedMs": 183.156984,
+          "spawnedToFirstMs": 64.546958,
+          "memory": {
+            "vmPeakKiB": 476328,
+            "rssHighWaterKiB": 22756
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            58.147779,
+            48.826492,
+            50.393798
+          ],
+          "elapsedMs": 159.476385,
+          "spawnedToFirstMs": 59.682286,
+          "memory": {
+            "vmPeakKiB": 344436,
+            "rssHighWaterKiB": 23340
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            56.061187,
+            15.479471,
+            22.607023
+          ],
+          "elapsedMs": 96.234474,
+          "spawnedToFirstMs": 57.565237,
+          "memory": {
+            "vmPeakKiB": 455012,
+            "rssHighWaterKiB": 22732
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 1,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            },
+            {
+              "hit": 1,
+              "npr": 475,
+              "threads": 4,
+              "packs": 60
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461400,
+      "year": 5003,
+      "targets": [
+        2471239,
+        2471240,
+        2473984
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            170.441563,
+            163.229642,
+            189.725289
+          ],
+          "elapsedMs": 525.288833,
+          "spawnedToFirstMs": 171.882817,
+          "memory": {
+            "vmPeakKiB": 490456,
+            "rssHighWaterKiB": 64464
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            147.530479,
+            67.309855,
+            89.894124
+          ],
+          "elapsedMs": 306.850786,
+          "spawnedToFirstMs": 149.05537,
+          "memory": {
+            "vmPeakKiB": 456784,
+            "rssHighWaterKiB": 66280
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 1,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 1,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            }
+          ],
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            150.94952,
+            140.103242,
+            153.830537
+          ],
+          "elapsedMs": 447.001159,
+          "spawnedToFirstMs": 152.487301,
+          "memory": {
+            "vmPeakKiB": 456784,
+            "rssHighWaterKiB": 66084
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            },
+            {
+              "hit": 0,
+              "npr": 948,
+              "threads": 4,
+              "packs": 119
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    },
+    {
+      "trial": 1,
+      "calc": 2461290,
+      "year": 4997,
+      "targets": [
+        2447875,
+        2447876,
+        2449535
+      ],
+      "rows": {
+        "baseline": {
+          "kind": "baseline",
+          "requestMs": [
+            78.560818,
+            69.51026,
+            78.501237
+          ],
+          "elapsedMs": 228.606408,
+          "spawnedToFirstMs": 80.216957,
+          "memory": {
+            "vmPeakKiB": 477956,
+            "rssHighWaterKiB": 26832
+          },
+          "trace": null,
+          "allExact": true
+        },
+        "control": {
+          "kind": "control",
+          "requestMs": [
+            68.551698,
+            60.887231,
+            69.089963
+          ],
+          "elapsedMs": 200.784541,
+          "spawnedToFirstMs": 70.223441,
+          "memory": {
+            "vmPeakKiB": 455156,
+            "rssHighWaterKiB": 30104
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            }
+          ],
+          "allExact": true
+        },
+        "reuse": {
+          "kind": "reuse",
+          "requestMs": [
+            61.922791,
+            20.154215,
+            28.297649
+          ],
+          "elapsedMs": 112.382187,
+          "spawnedToFirstMs": 63.424016,
+          "memory": {
+            "vmPeakKiB": 455156,
+            "rssHighWaterKiB": 30736
+          },
+          "trace": [
+            {
+              "hit": 0,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 1,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            },
+            {
+              "hit": 1,
+              "npr": 537,
+              "threads": 4,
+              "packs": 68
+            }
+          ],
+          "allExact": true
+        }
+      },
+      "completeParity": true
+    }
+  ],
+  "eviction": {
+    "kind": "reuse",
+    "requestMs": [
+      85.38452,
+      132.471175,
+      74.820779
+    ],
+    "elapsedMs": 294.79828,
+    "spawnedToFirstMs": 86.960168,
+    "memory": {
+      "vmPeakKiB": 455660,
+      "rssHighWaterKiB": 83240
+    },
+    "trace": [
+      {
+        "hit": 0,
+        "npr": 658,
+        "threads": 4,
+        "packs": 83
+      },
+      {
+        "hit": 0,
+        "npr": 960,
+        "threads": 4,
+        "packs": 120
+      },
+      {
+        "hit": 0,
+        "npr": 658,
+        "threads": 4,
+        "packs": 83
+      }
+    ],
+    "allExact": true
+  },
+  "independentCalcs": {
+    "kind": "reuse",
+    "requestMs": [
+      85.068562,
+      96.785179
+    ],
+    "elapsedMs": 184.01776,
+    "spawnedToFirstMs": 86.720015,
+    "memory": {
+      "vmPeakKiB": 455660,
+      "rssHighWaterKiB": 72064
+    },
+    "trace": [
+      {
+        "hit": 0,
+        "npr": 658,
+        "threads": 4,
+        "packs": 83
+      },
+      {
+        "hit": 0,
+        "npr": 730,
+        "threads": 4,
+        "packs": 92
+      }
+    ],
+    "allExact": true
+  },
+  "caveats": [
+    "The retained engine includes a large year-specific RNS precomputation; its memory is not charged to BatchRecord memo budgets.",
+    "A single one-entry thread-local reuse slot means distinct month-length vectors replace the prior engine; context switches are tested explicitly.",
+    "Only the immutable RnsEngine is shared. Sauce, rank, FastState, predictor and replay pool are computed for every request.",
+    "No R or day memo is enabled in any variant; source Seer and exact full native R JSON are oracle controls.",
+    "All timings are from one hosted CPU and not an all-platform promise; VmPeak is address space, not RSS.",
+    "Spawn-to-first in this harness is captured separately from request wall times."
+  ]
+}
