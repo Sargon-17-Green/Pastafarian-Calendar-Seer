@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <list>
 #include <memory>
 #include <numeric>
 #include <random>
@@ -502,39 +503,62 @@ std::vector<int> weave_month_prefix(
     int npr=(int)ceill((bits+32.0L)/31.9L)+2;
     npr=std::clamp(npr,8,1050);
     const auto seerNextAfterSizing=Clock::now();
-    // Opt-in research only: retain a single immutable RNS initialization for
-    // repeated requests with identical month lengths, worker profile and
-    // constructor feature flags. The calculation-day-dependent rank and all
-    // FastState/ReplayPool objects are reconstructed on every request.
+    // Research-only bounded LRU of immutable RNS initializers. All dependent
+    // rank, sauce, predictor, FastState and replay objects remain per request.
     const char* cacheMode=std::getenv("SEER_NEXT_COLD_RNS_ENGINE_REUSE");
     if(cacheMode && *cacheMode && std::strcmp(cacheMode,"0")!=0 && std::strcmp(cacheMode,"1")!=0)
         throw std::runtime_error("SEER_NEXT_COLD_RNS_ENGINE_REUSE must be 0 or 1");
     const bool enableReuse=cacheMode && std::strcmp(cacheMode,"1")==0;
+    const char* slotsRaw=std::getenv("SEER_NEXT_COLD_RNS_ENGINE_SLOTS");
+    int slots=1;
+    if(slotsRaw && *slotsRaw){
+        if(std::strcmp(slotsRaw,"1")==0)slots=1;
+        else if(std::strcmp(slotsRaw,"2")==0)slots=2;
+        else throw std::runtime_error("SEER_NEXT_COLD_RNS_ENGINE_SLOTS must be 1 or 2");
+    }
     const auto ctorFlag=[](const char*name)->std::string{
         const char* value=std::getenv(name);
         return value?std::string(value):std::string();
     };
     const std::string flags=ctorFlag("SEER_NEXT_RNS_SHARED_PLAN")+"|"+ctorFlag("SEER_NEXT_RNS_FACT_POOL");
-    static thread_local std::unique_ptr<RnsEngine> cachedEngine;
-    static thread_local std::vector<int> cachedLengths;
-    static thread_local int cachedNpr=0, cachedThreads=0;
-    static thread_local std::string cachedFlags;
-    const bool engineHit=enableReuse && cachedEngine &&
-        cachedLengths==monthLengths && cachedNpr==npr &&
-        cachedThreads==threads && cachedFlags==flags;
+    struct EngineSlot {
+        std::unique_ptr<RnsEngine> engine;
+        std::vector<int> lengths;
+        int npr=0,threads=0;
+        std::string flags;
+    };
+    static thread_local std::list<EngineSlot> cache;
+    static thread_local uint64_t cacheEvictions=0;
+    bool engineHit=false;
     std::unique_ptr<RnsEngine> requestEngine;
-    if(!engineHit){
-        auto created=std::make_unique<RnsEngine>(monthLengths,npr,threads);
-        if(enableReuse){
-            cachedEngine=std::move(created);
-            cachedLengths=monthLengths;
-            cachedNpr=npr;
-            cachedThreads=threads;
-            cachedFlags=flags;
-        }else requestEngine=std::move(created);
-    }
-    const RnsEngine& eng=enableReuse?*cachedEngine:*requestEngine;
+    if(enableReuse){
+        const auto entry=std::find_if(cache.begin(),cache.end(),[&](const EngineSlot&s){
+            return s.lengths==monthLengths && s.npr==npr &&
+                   s.threads==threads && s.flags==flags;
+        });
+        if(entry!=cache.end()){
+            cache.splice(cache.begin(),cache,entry);
+            engineHit=true;
+        }else{
+            EngineSlot s;
+            s.engine=std::make_unique<RnsEngine>(monthLengths,npr,threads);
+            s.lengths=monthLengths;s.npr=npr;s.threads=threads;s.flags=flags;
+            cache.push_front(std::move(s));
+        }
+        while(cache.size()>static_cast<size_t>(slots)){
+            cache.pop_back();
+            ++cacheEvictions;
+        }
+    }else requestEngine=std::make_unique<RnsEngine>(monthLengths,npr,threads);
+    const RnsEngine& eng=enableReuse?*cache.front().engine:*requestEngine;
     const auto seerNextAfterEngine=Clock::now();
+    if(const char*file=std::getenv("SEER_NEXT_COLD_RNS_CACHE_STATS_FILE");file && *file){
+        std::ofstream out(file,std::ios::app);
+        if(!out)throw std::runtime_error("cannot open research RNS cache stats trace");
+        out<<(engineHit?1:0)<<'\t'<<(enableReuse?cache.size():0)<<'\t'
+           <<cacheEvictions<<'\t'<<slots<<'\n';
+        if(!out)throw std::runtime_error("research RNS cache stats write failure");
+    }
     if(const char*file=std::getenv("SEER_NEXT_COLD_RNS_ENGINE_REUSE_STAGE_FILE");file && *file){
         std::ofstream out(file,std::ios::app);
         if(!out)throw std::runtime_error("cannot open research RNS reuse trace");
