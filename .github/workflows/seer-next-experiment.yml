@@ -155,6 +155,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/verify_rns_mixed_wire.mjs --trials=2 --output=research/seer-next/results/working/rns-mixed-wire.json
           node -e "const x=require('./research/seer-next/results/working/rns-mixed-wire.json');if(!x.fullParity||x.contexts!==4||x.commandsPerContext!==18||x.primaryNativeReplies!==360||x.cappedNativeReplies!==36||x.groups.length!==5||x.results.some(r=>!r.fullParity)||x.results.some(r=>r.rows.probe2.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1')||x.cappedEvidence.effectiveLimitBytes!==536870912)throw Error('Incomplete mixed R/Y/D parity/memory evidence');console.log('RNS_MIXED_WIRE',JSON.stringify({cpu:x.cpu,requests:x.primaryNativeReplies,groups:x.groups.map(g=>({mode:g.mode,ms:g.totalMs,rss:g.maxVmHwmKiB,vm:g.maxVmPeakKiB,hits:g.totalInitHits}))}));"
+      - name: Test process-shared immutable RNS LRU against thread-local in mixed R Y D
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_process_shared.mjs --trials=2 --output=research/seer-next/results/working/rns-process-shared.json
+          node -e "const x=require('./research/seer-next/results/working/rns-process-shared.json');if(!x.fullParity||x.contexts!==4||x.primaryNativeReplies!==216||x.cappedNativeReplies!==54||x.groups.length!==3||x.results.some(v=>!v.fullParity||v.rows.probeShared.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1'||v.rows.probe2.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1')||x.cappedEvidence.threadLocal.effectiveLimitBytes!==536870912||x.cappedEvidence.processShared.effectiveLimitBytes!==536870912||!x.cappedEvidence.threadLocal.fullParity||!x.cappedEvidence.processShared.fullParity)throw Error('Incomplete process-shared RNS scope validation');console.log('RNS_PROCESS_SCOPE',JSON.stringify({cpu:x.cpu,groups:x.groups,capThread:x.cappedEvidence.threadLocal.memory,capProcess:x.cappedEvidence.processShared.memory}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -216,6 +221,7 @@ jobs:
             research/seer-next/results/working/rns-engine-reuse.json
             research/seer-next/results/working/rns-two-slot-lru.json
             research/seer-next/results/working/rns-mixed-wire.json
+            research/seer-next/results/working/rns-process-shared.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -229,7 +235,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

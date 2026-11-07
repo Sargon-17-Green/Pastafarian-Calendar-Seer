@@ -17,6 +17,7 @@
 #include <limits>
 #include <list>
 #include <memory>
+#include <mutex>
 #include <numeric>
 #include <random>
 #include <stdexcept>
@@ -521,17 +522,66 @@ std::vector<int> weave_month_prefix(
         return value?std::string(value):std::string();
     };
     const std::string flags=ctorFlag("SEER_NEXT_RNS_SHARED_PLAN")+"|"+ctorFlag("SEER_NEXT_RNS_FACT_POOL");
+    // Default remains the previously validated per-thread LRU. A separate
+    // process-scoped research mode shares only *immutable* constructor outputs.
+    // Both variants have <=2 entries; neither has a hard byte/RSS budget.
+    const char* scopeRaw=std::getenv("SEER_NEXT_COLD_RNS_ENGINE_SCOPE");
+    const std::string scope=scopeRaw && *scopeRaw ? scopeRaw : "thread";
+    if(scope!="thread" && scope!="process")
+        throw std::runtime_error("SEER_NEXT_COLD_RNS_ENGINE_SCOPE must be thread or process");
+    const bool processScope=enableReuse && scope=="process";
     struct EngineSlot {
         std::unique_ptr<RnsEngine> engine;
         std::vector<int> lengths;
         int npr=0,threads=0;
         std::string flags;
     };
+    struct SharedEngineSlot {
+        std::shared_ptr<const RnsEngine> engine;
+        std::vector<int> lengths;
+        int npr=0,threads=0;
+        std::string flags;
+    };
     static thread_local std::list<EngineSlot> cache;
     static thread_local uint64_t cacheEvictions=0;
+    static std::mutex processCacheMutex;
+    static std::list<SharedEngineSlot> processCache;
+    static uint64_t processCacheEvictions=0;
     bool engineHit=false;
+    size_t observedEntries=0;
+    uint64_t observedEvictions=0;
     std::unique_ptr<RnsEngine> requestEngine;
-    if(enableReuse){
+    std::shared_ptr<const RnsEngine> pinnedProcessEngine;
+    if(processScope){
+        // The lock covers lookup, LRU mutation and the full constructor:
+        // concurrent D workers cannot duplicate this large setup or
+        // compete to create nested OpenMP build teams for the same key.
+        // The shared_ptr pins the immutable engine while a caller computes,
+        // even when another thread evicts that entry in the meantime.
+        std::lock_guard<std::mutex> lock(processCacheMutex);
+        const auto entry=std::find_if(processCache.begin(),processCache.end(),
+                                     [&](const SharedEngineSlot&s){
+            return s.lengths==monthLengths && s.npr==npr &&
+                   s.threads==threads && s.flags==flags;
+        });
+        if(entry!=processCache.end()){
+            processCache.splice(processCache.begin(),processCache,entry);
+            engineHit=true;
+        }else{
+            SharedEngineSlot s;
+            s.engine=std::make_shared<RnsEngine>(monthLengths,npr,threads);
+            s.lengths=monthLengths;s.npr=npr;s.threads=threads;s.flags=flags;
+            processCache.push_front(std::move(s));
+        }
+        while(processCache.size()>static_cast<size_t>(slots)){
+            processCache.pop_back();
+            ++processCacheEvictions;
+        }
+        pinnedProcessEngine=processCache.front().engine;
+        observedEntries=processCache.size();
+        observedEvictions=processCacheEvictions;
+    }else if(enableReuse){
+        // Preserve previous thread_local behavior byte-for-byte.
         const auto entry=std::find_if(cache.begin(),cache.end(),[&](const EngineSlot&s){
             return s.lengths==monthLengths && s.npr==npr &&
                    s.threads==threads && s.flags==flags;
@@ -549,15 +599,25 @@ std::vector<int> weave_month_prefix(
             cache.pop_back();
             ++cacheEvictions;
         }
+        observedEntries=cache.size();
+        observedEvictions=cacheEvictions;
     }else requestEngine=std::make_unique<RnsEngine>(monthLengths,npr,threads);
-    const RnsEngine& eng=enableReuse?*cache.front().engine:*requestEngine;
+    const RnsEngine& eng=processScope?*pinnedProcessEngine:
+                           enableReuse?*cache.front().engine:*requestEngine;
     const auto seerNextAfterEngine=Clock::now();
     if(const char*file=std::getenv("SEER_NEXT_COLD_RNS_CACHE_STATS_FILE");file && *file){
         std::ofstream out(file,std::ios::app);
         if(!out)throw std::runtime_error("cannot open research RNS cache stats trace");
-        out<<(engineHit?1:0)<<'\t'<<(enableReuse?cache.size():0)<<'\t'
-           <<cacheEvictions<<'\t'<<slots<<'\n';
+        out<<(engineHit?1:0)<<'\t'<<observedEntries<<'\t'
+           <<observedEvictions<<'\t'<<slots<<'\n';
         if(!out)throw std::runtime_error("research RNS cache stats write failure");
+    }
+    if(const char*file=std::getenv("SEER_NEXT_COLD_RNS_PROCESS_SCOPE_TRACE_FILE");file && *file){
+        std::ofstream out(file,std::ios::app);
+        if(!out)throw std::runtime_error("cannot open research process-scoped RNS trace");
+        out<<(processScope?1:0)<<'\t'<<(engineHit?1:0)<<'\t'
+           <<observedEntries<<'\t'<<observedEvictions<<'\n';
+        if(!out)throw std::runtime_error("research process-scoped RNS trace write failure");
     }
     if(const char*file=std::getenv("SEER_NEXT_COLD_RNS_ENGINE_REUSE_STAGE_FILE");file && *file){
         std::ofstream out(file,std::ios::app);
