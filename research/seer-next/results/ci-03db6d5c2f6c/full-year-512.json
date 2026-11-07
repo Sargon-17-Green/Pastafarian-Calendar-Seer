@@ -1,0 +1,158 @@
+{
+  "schema": "seer-next-full-year-512-parity-v1",
+  "cpu": "AMD EPYC 7763 64-Core Processor",
+  "sourceBaseline": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "years": [
+    4999,
+    5000,
+    5001
+  ],
+  "calculationDays": [
+    2461290,
+    2461400
+  ],
+  "fullYearComparisons": 6,
+  "underCapSuccesses": 6,
+  "allUncappedFullRepliesEqual": true,
+  "records": [
+    {
+      "calc": 2461290,
+      "year": 4999,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 5766,
+      "responseSha256": "a6660f11f9780d1b9908d4d587678f06a440e0a8156d18392aff9e3190e7ae19",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6128,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 457004,
+        "vmSizeKiB": 353580,
+        "rssHighWaterKiB": 73120,
+        "effectiveLimitBytes": 536870912
+      }
+    },
+    {
+      "calc": 2461290,
+      "year": 5000,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 4047,
+      "responseSha256": "011c876bb1168d55fc3617d0171ae88014b0a15989b9c1f373ecddaf51273aac",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6144,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 455636,
+        "vmSizeKiB": 347072,
+        "rssHighWaterKiB": 39152,
+        "effectiveLimitBytes": 536870912
+      }
+    },
+    {
+      "calc": 2461290,
+      "year": 5001,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 3289,
+      "responseSha256": "d2a13533ec45aa4358ed91ba00f26555374e76b53579fe993647614bf951253d",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6052,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 455028,
+        "vmSizeKiB": 344220,
+        "rssHighWaterKiB": 26880,
+        "effectiveLimitBytes": 536870912
+      }
+    },
+    {
+      "calc": 2461400,
+      "year": 4999,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 4564,
+      "responseSha256": "2cbaaf8ffd38adfbe495de7f1a663f5c755a91c6d3b73bfb81afde9d7ef021cb",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6220,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 455976,
+        "vmSizeKiB": 349132,
+        "rssHighWaterKiB": 42252,
+        "effectiveLimitBytes": 536870912
+      }
+    },
+    {
+      "calc": 2461400,
+      "year": 5000,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 4422,
+      "responseSha256": "b3cc7c03dd4d81c994f23372b187ae80248aebd31d4eeae8048e079a633c6387",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6108,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 455884,
+        "vmSizeKiB": 349080,
+        "rssHighWaterKiB": 47596,
+        "effectiveLimitBytes": 536870912
+      }
+    },
+    {
+      "calc": 2461400,
+      "year": 5001,
+      "profile": "experimental42",
+      "requestedLimitBytes": 536870912,
+      "uncappedParity": true,
+      "underCapStatus": "SUCCESS_FULL_PARITY",
+      "lengthDays": 3864,
+      "responseSha256": "c888755071c09339f86fbc94b99004304ec23033155af8a635b04cbfca67d851",
+      "before": {
+        "vmPeakKiB": 9572,
+        "vmSizeKiB": 9180,
+        "rssHighWaterKiB": 6148,
+        "effectiveLimitBytes": 536870912
+      },
+      "after": {
+        "vmPeakKiB": 455512,
+        "vmSizeKiB": 346440,
+        "rssHighWaterKiB": 30156,
+        "effectiveLimitBytes": 536870912
+      }
+    }
+  ],
+  "notes": [
+    "The 512MiB cap bounds virtual address space, not RSS.",
+    "Full-year capped outcomes are observational; failures are retained as failures.",
+    "Every successful capped output has byte-for-byte equivalent parsed full JSON content.",
+    "No speed/throughput conclusion follows from this correctness and resource experiment.",
+    "Main, production Seer service and default hybrid profiles are unchanged."
+  ]
+}
