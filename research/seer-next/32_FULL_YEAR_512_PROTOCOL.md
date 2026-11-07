@@ -17,3 +17,11 @@ For every case:
 4. Make no speedup claim from this probe. Keep cache budgets at zero; cold construction is the relevant activity.
 
 This is only an exploratory Linux VM-space test on six full-year cases, **not** a physical RSS guarantee, general minimum memory bound, or proof for all years. Existing 64MiB memory-profile work remains independent and unchanged.
+
+## Completed evidence and limitation
+
+[Run 42360658075](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42360658075) completed SUCCESS on AMD EPYC 7763. The six uncapped full-year responses matched the unchanged original Seer JSON in full, including all 25,952 records. All six capped processes independently succeeded with `RLIMIT_AS=512MiB` and returned the same full JSON. Maximum observed VmPeak 456996KiB (446.29MiB), maximum VmHWM 73344KiB (71.63MiB). Record-level results and SHA-256 response digests are in `results/ci-2825ba6b9d8d/full-year-512.json`. This verifies only the selected years/calculation days on this Linux host.
+
+After completion, the test harness was hardened so any assertion failure involving a capped response (including a wrong day or an incorrect year boundary) cannot be misclassified as an ordinary resource-limit failure. That *harness change* is separate from the completed run and requires its own subsequent CI verification; no new engine calculation logic was altered.
+
+See [33_FULL_YEAR_512_RESULTS.md](33_FULL_YEAR_512_RESULTS.md).

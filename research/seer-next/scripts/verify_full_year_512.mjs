@@ -132,6 +132,10 @@ for(const {calc,year} of cases) {
    assert.ok(record.after.effectiveLimitBytes<=maxAddressBytes);
    assert.ok(record.after.vmPeakKiB*1024<=maxAddressBytes);
   }catch(e){
+   // A semantic mismatch or malformed native JSON is NEVER a tolerated
+   // resource-limit observation. Only explicit application errors, allocation
+   // failures and process exits may be recorded as non-PASS outcomes.
+   if(e?.code==='ERR_ASSERTION' || e instanceof SyntaxError)throw e;
    if(String(e).includes('full JSON year mismatch'))throw e;
    if(String(e).includes('kernel failed')||
       String(e).includes('exceeded requested')||

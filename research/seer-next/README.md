@@ -53,6 +53,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42358871316](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42358871316): experimental42 passed **108/108 full R/Y/D replies** and three long-year R requests under real Linux 512MiB RLIMIT_AS (peak VM 456996KiB, peak RSS 73312KiB). Same-run Intel Xeon 8370C cold 4/2 recorded 5012.103ms vs 3/3 5649.083ms, but 4/4 was quicker (4812.806ms) at ~701MiB VmPeak. **Only an opt-in research profile**, not a new default. Raw `results/ci-f734953dba54/` contains all records; [31_RNS_PROFILE42_CONFIRM_RESULTS.md](31_RNS_PROFILE42_CONFIRM_RESULTS.md) summarizes.
 
+- [42360658075](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42360658075) completed SUCCESS: **6/6 full-year Y exports** (25,952 day records) matched native Seer in complete JSON; all six also succeeded under a real Linux `RLIMIT_AS=512MiB` with complete parity. Maximum VmPeak 446.29MiB and VmHWM 71.63MiB (AMD EPYC 7763). This is not a hard RSS budget or all-years guarantee. Raw evidence: `results/ci-2825ba6b9d8d/full-year-512.json`; see [33_FULL_YEAR_512_RESULTS.md](33_FULL_YEAR_512_RESULTS.md). No default change.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.
