@@ -19,9 +19,11 @@ concurrency:
 jobs:
   linux-native-avx2:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - uses: ./.github/actions/node-setup
         with:
           node-version: '24'
@@ -190,11 +192,6 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/verify_long_lived_rns_d_policy.mjs --output=research/seer-next/results/working/long-lived-rns-d-policy.json
           node -e "const x=require('./research/seer-next/results/working/long-lived-rns-d-policy.json');if(x.candidateProcesses!==4||x.originalOracleUniqueReplies!==27||x.originalStatefulReplayedReplies!==81||x.expectedCandidateReplies!==324||x.contexts.length!==3||x.rounds!==3||!x.allCompletedWireParity||x.acceptedProcesses+x.resourceLimitedProcesses!==4||x.results.some(r=>r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==81||r.snapshots.length!==3||r.finalStatus.limitBytes!==r.capMiB*1048576||!r.traceEvidence||r.traceEvidence.dispatchRows!==27||r.traceEvidence.evictionsMax<1))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.resourceFailure||r.completeFullParity)))throw Error('Incomplete or inaccurately classified long-lived RNS policy study');console.log('LONG_LIVED_RNS_D',JSON.stringify({cpu:x.cpu,sourceReplayed:x.originalStatefulReplayedReplies,completed:x.observedCandidateReplies,accepted:x.acceptedProcesses,resourceLimited:x.resourceLimitedProcesses,summary:x.summary}));"
-      - name: Measure long-lived RNS cache ROI with zero one and two initializer slots
-        run: |
-          set -euo pipefail
-          node research/seer-next/scripts/profile_long_lived_rns_cache_roi.mjs --output=research/seer-next/results/working/long-lived-rns-cache-roi.json
-          node -e "const x=require('./research/seer-next/results/working/long-lived-rns-cache-roi.json');const ids=['off','thread1','thread2','process1','process2'];if(x.candidateProcesses!==10||x.originalOracleUniqueReplies!==27||x.originalStatefulReplayedReplies!==81||x.expectedCandidateReplies!==810||x.contexts.length!==3||x.rounds!==3||!x.allCompletedWireParity||x.acceptedProcesses+x.resourceLimitedProcesses!==10||x.results.some(r=>!ids.includes(r.arm)||r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==81||r.snapshots.length!==3||r.finalStatus.limitBytes!==r.capMiB*1048576||!r.traceEvidence||r.traceEvidence.dispatchRows!==27||r.traceEvidence.rows<4||r.reuse&&r.traceEvidence.evictionsMax<1||!r.reuse&&r.traceEvidence.hits!==0))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.resourceFailure||r.completeFullParity)))throw Error('Incomplete 0/1/2-slot long-lived cache ROI evidence');console.log('RNS_LONG_LIVED_CACHE_ROI',JSON.stringify({cpu:x.cpu,candidates:x.candidateProcesses,accepted:x.acceptedProcesses,resourceLimited:x.resourceLimitedProcesses,summary:x.summary}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -263,7 +260,6 @@ jobs:
             research/seer-next/results/working/d-cap-policy-boundaries.json
             research/seer-next/results/working/d-policy-holdout.json
             research/seer-next/results/working/long-lived-rns-d-policy.json
-            research/seer-next/results/working/long-lived-rns-cache-roi.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -277,7 +273,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,d-policy-holdout.json,long-lived-rns-d-policy.json,long-lived-rns-cache-roi.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,d-policy-holdout.json,long-lived-rns-d-policy.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
@@ -292,4 +288,73 @@ jobs:
           git add "$DEST"
           git diff --cached --quiet && { echo "No new evidence to archive."; exit 0; }
           git commit -m "research(seer-next): archive CI evidence for ${GITHUB_SHA:0:12} [skip ci]"
-          git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06
+          git fetch origin research/seer-next-first-principles-2026-11-06
+          git rebase origin/research/seer-next-first-principles-2026-11-06
+          for attempt in 1 2 3; do
+            if git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06; then exit 0; fi
+            git fetch origin research/seer-next-first-principles-2026-11-06
+            git rebase origin/research/seer-next-first-principles-2026-11-06
+          done
+          echo "Archive push could not be completed after three rebases" >&2
+          exit 1
+
+  rns-cache-roi-avx2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Syntax-check targeted research ROI benchmark
+        run: node --check research/seer-next/scripts/profile_long_lived_rns_cache_roi.mjs
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build unchanged original Seer oracle (isolated)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Build isolated cold-probe experiment (unchanged release)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_cold_probe.sh
+      - name: Compare disabled one-slot and two-slot RNS caches across persistent services
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/profile_long_lived_rns_cache_roi.mjs --output=research/seer-next/results/working/long-lived-rns-cache-roi.json
+          node -e "const x=require('./research/seer-next/results/working/long-lived-rns-cache-roi.json');const ids=['off','thread1','thread2','process1','process2'];if(x.candidateProcesses!==10||x.originalOracleUniqueReplies!==27||x.originalStatefulReplayedReplies!==81||x.expectedCandidateReplies!==810||x.contexts.length!==3||x.rounds!==3||!x.allCompletedWireParity||x.acceptedProcesses+x.resourceLimitedProcesses!==10||x.results.some(r=>!ids.includes(r.arm)||r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==81||r.snapshots.length!==3||r.finalStatus.limitBytes!==r.capMiB*1048576||!r.traceEvidence||r.traceEvidence.dispatchRows!==27||r.traceEvidence.rows<4||r.reuse&&r.traceEvidence.evictionsMax<1||!r.reuse&&r.traceEvidence.hits!==0))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.resourceFailure||r.completeFullParity)))throw Error('Incomplete 0/1/2-slot long-lived cache ROI evidence');console.log('RNS_LONG_LIVED_CACHE_ROI',JSON.stringify({cpu:x.cpu,candidates:x.candidateProcesses,accepted:x.acceptedProcesses,resourceLimited:x.resourceLimitedProcesses,summary:x.summary}));"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-next-long-lived-rns-cache-roi
+          path: research/seer-next/results/working/long-lived-rns-cache-roi.json
+          if-no-files-found: error
+      - name: Archive isolated ROI raw evidence without retriggering CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="$(git rev-parse --short=12 "$GITHUB_SHA")"
+          DEST="research/seer-next/results/ci-$SHORT_SHA-cache-roi"
+          mkdir -p "$DEST"
+          cp research/seer-next/results/working/long-lived-rns-cache-roi.json "$DEST/"
+          printf 'Source: %s\nRun: https://github.com/%s/actions/runs/%s\nJob: isolated RNS cache 0/1/2 slot ROI; study may contain RESOURCE_LIMITED results that are NOT PASS.\n' \
+            "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > "$DEST/README.md"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DEST"
+          git commit -m "research(seer-next): archive isolated RNS cache ROI for $SHORT_SHA [skip ci]"
+          git fetch origin research/seer-next-first-principles-2026-11-06
+          git rebase origin/research/seer-next-first-principles-2026-11-06
+          for attempt in 1 2 3; do
+            if git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06; then exit 0; fi
+            git fetch origin research/seer-next-first-principles-2026-11-06
+            git rebase origin/research/seer-next-first-principles-2026-11-06
+          done
+          echo "ROI archive push could not be completed after three rebases" >&2
+          exit 1
