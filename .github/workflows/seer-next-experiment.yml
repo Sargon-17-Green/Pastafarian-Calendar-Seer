@@ -72,6 +72,12 @@ jobs:
           SEER_RNS_BACKEND: avx2
           SEER_MARCH: x86-64
         run: bash research/seer-next/scripts/build_cold_probe.sh
+      - name: Test failure after partial native D worker launch (hybrid and probe)
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_d_thread_launch_cleanup.mjs --engines=hybrid,probe --output=research/seer-next/results/working/d-thread-launch-cleanup.json
+          node -e "const x=require('./research/seer-next/results/working/d-thread-launch-cleanup.json');if(!x.fullyVerified||x.cases!==2||x.sourceOracleReplies!==2||x.results.some(r=>!r.nativeProcessSurvived||r.rejectedDRequests!==2||r.successfulOriginalEqualRReplies!==3||r.successfulOriginalEqualYReplies!==1))throw Error('Incomplete native partial-thread-creation recovery regression');console.log('D_THREAD_LAUNCH_RECOVERY',JSON.stringify(x.results));"
       - name: Build independent canonical saved-sum oracle
         run: |
           set -euo pipefail
@@ -260,6 +266,7 @@ jobs:
             research/seer-next/results/working/d-cap-policy-boundaries.json
             research/seer-next/results/working/d-policy-holdout.json
             research/seer-next/results/working/long-lived-rns-d-policy.json
+            research/seer-next/results/working/d-thread-launch-cleanup.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -273,7 +280,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,d-policy-holdout.json,long-lived-rns-d-policy.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,d-policy-holdout.json,long-lived-rns-d-policy.json,d-thread-launch-cleanup.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
@@ -324,6 +331,12 @@ jobs:
           SEER_RNS_BACKEND: avx2
           SEER_MARCH: x86-64
         run: bash research/seer-next/scripts/build_cold_probe.sh
+      - name: Verify native D launch cleanup in independent cold probe
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_d_thread_launch_cleanup.mjs --engines=probe --output=research/seer-next/results/working/d-thread-launch-cleanup-probe.json
+          node -e "const x=require('./research/seer-next/results/working/d-thread-launch-cleanup-probe.json');if(!x.fullyVerified||x.cases!==1||x.results[0].engine!=='probe'||x.results[0].rejectedDRequests!==2)throw Error('Cold probe partial worker launch cleanup regression');console.log('PROBE_D_THREAD_RECOVERY',JSON.stringify(x.results));"
       - name: Compare disabled one-slot and two-slot RNS caches across persistent services
         run: |
           set -euo pipefail
@@ -333,7 +346,9 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-next-long-lived-rns-cache-roi
-          path: research/seer-next/results/working/long-lived-rns-cache-roi.json
+          path: |
+            research/seer-next/results/working/long-lived-rns-cache-roi.json
+            research/seer-next/results/working/d-thread-launch-cleanup-probe.json
           if-no-files-found: error
       - name: Archive isolated ROI raw evidence without retriggering CI
         shell: bash
@@ -343,6 +358,7 @@ jobs:
           DEST="research/seer-next/results/ci-$SHORT_SHA-cache-roi"
           mkdir -p "$DEST"
           cp research/seer-next/results/working/long-lived-rns-cache-roi.json "$DEST/"
+          cp research/seer-next/results/working/d-thread-launch-cleanup-probe.json "$DEST/"
           printf 'Source: %s\nRun: https://github.com/%s/actions/runs/%s\nJob: isolated RNS cache 0/1/2 slot ROI; study may contain RESOURCE_LIMITED results that are NOT PASS.\n' \
             "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > "$DEST/README.md"
           git config user.name "github-actions[bot]"

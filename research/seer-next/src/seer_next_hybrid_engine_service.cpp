@@ -20,6 +20,7 @@ using seer_native::detail::fanchor;
 #include <exception>
 #include <fstream>
 #include <functional>
+#include <system_error>
 #include <stdexcept>
 #include <iostream>
 #include <limits>
@@ -587,11 +588,34 @@ class SeerEngineService {
             }
         };
 
+        // std::thread can throw std::system_error after some workers started
+        // (particularly under RLIMIT_AS). Destroying a joinable std::thread
+        // calls std::terminate and used to abort the entire native service.
+        // Always quiesce and join every launched worker before rethrowing.
         std::vector<std::thread> pool;
         pool.reserve(workers > 0 ? workers - 1 : 0);
-        for (size_t i = 1; i < workers; ++i) pool.emplace_back(work);
-        work();
-        for (auto& thread : pool) thread.join();
+        std::exception_ptr launchError;
+        const char* failLaunchRaw=std::getenv("SEER_NEXT_TEST_D_LAUNCH_FAIL_AFTER");
+        const bool injectAfterOne=failLaunchRaw && std::string(failLaunchRaw)=="1";
+        if(failLaunchRaw && *failLaunchRaw && !injectAfterOne)
+            throw std::runtime_error("SEER_NEXT_TEST_D_LAUNCH_FAIL_AFTER must be 1 or unset");
+        try {
+            for (size_t i = 1; i < workers; ++i) {
+                // Test-only fault injection: fail after one successful launch.
+                // Never enabled in the ordinary research or original engine.
+                if(injectAfterOne && i==2)
+                    throw std::system_error(
+                        std::make_error_code(std::errc::resource_unavailable_try_again),
+                        "research-injected D worker launch failure");
+                pool.emplace_back(work);
+            }
+        } catch (...) {
+            failed.store(true, std::memory_order_relaxed);
+            launchError = std::current_exception();
+        }
+        if (!launchError) work();
+        for (auto& thread : pool) if(thread.joinable()) thread.join();
+        if (launchError) std::rethrow_exception(launchError);
         if (firstError) {
             try {
                 std::rethrow_exception(firstError);

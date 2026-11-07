@@ -340,6 +340,7 @@ try{
    'All released Seer, main, default cache and D policy modes remain unchanged.'
   ]
  };
+ const out=JSON.stringify(report,null,2)+'\n';
  if(opts.has('output'))await writeFile(path.resolve(opts.get('output')),out);
  else process.stdout.write(out);
 }finally{await rm(scratch,{recursive:true,force:true});}
