@@ -145,6 +145,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_full_year_warm_cold.mjs --trials=2 --output=research/seer-next/results/working/full-year-warm-cold.json
           node -e "const x=require('./research/seer-next/results/working/full-year-warm-cold.json');if(x.results.length!==12||!x.completeFullJsonParity)throw Error('Incomplete full-year benchmark');console.log('FULL_YEAR_WARM_COLD',JSON.stringify({cpu:x.cpu,rows:x.results.length,groups:x.groups.map(g=>({profile:g.profile,cold:g.coldTotalMs,warm:g.firstWarmTotalMs}))}));"
+      - name: Verify opt-in direct-Y memo cache, evictions and 512MiB repeated full-year exports
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_y_export_direct_memo.mjs --trials=2 --output=research/seer-next/results/working/y-export-direct-memo.json
+          node -e "const x=require('./research/seer-next/results/working/y-export-direct-memo.json');if(x.results.length!==12||x.interop.length!==4||!x.cappedEvidence.fullParity||!x.completeFullJsonParity)throw Error('Missing direct-Y memo checks');console.log('Y_MEMO_DIRECT',JSON.stringify({contexts:x.results.length,groups:x.groups.map(g=>({profile:g.profile,totalMs:g.allThreeTotalMs})),memo:x.interop.map(v=>({label:v.label,builds:v.memo.builds,hits:v.memo.hits}))}));"
       - name: Profile cold, repeat, memory and CPU policies with A/B parity
         run: |
           set -euo pipefail
@@ -178,6 +183,7 @@ jobs:
             research/seer-next/results/working/rns-replay-sweep.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
+            research/seer-next/results/working/y-export-direct-memo.json
             research/seer-next/results/working/second-day-exact.json
             research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
@@ -187,7 +193,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,full-year-512.json,full-year-warm-cold.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 

@@ -216,6 +216,7 @@ class SeerEngineService {
     size_t memoLimitBytes_;
     size_t memoUsedBytes_ = 0;
     size_t memoPromoteAfter_;
+    bool memoDirectYearExports_;
     std::list<MemoKey> memoAge_;
     std::unordered_map<MemoKey, MemoEntry, MemoHash> memo_;
     uint64_t memoHits_ = 0, memoBuilds_ = 0, memoEvictions_ = 0;
@@ -295,7 +296,8 @@ class SeerEngineService {
         ++memoEvictions_;
     }
 
-    const std::vector<BatchRecord>* yearRecords(int64_t calc, const FY& y) {
+    const std::vector<BatchRecord>* yearRecords(int64_t calc, const FY& y,
+                                                 bool explicitFullYear = false) {
         if (memoLimitBytes_ == 0) return nullptr;
         const MemoKey key{calc, y.num};
         auto it = memo_.find(key);
@@ -322,7 +324,10 @@ class SeerEngineService {
             return &e.records;
         }
         ++e.seen;
-        if (e.seen < memoPromoteAfter_) return nullptr;
+        // An explicit Y full-year export is already asking for the whole table.
+        // Opt-in only: build/store it on the first request without changing the
+        // R-path promotion threshold or memory accounting.
+        if (!explicitFullYear && e.seen < memoPromoteAfter_) return nullptr;
         if (length <= 0 || length > 5778) return nullptr;
         const size_t required = static_cast<size_t>(length) * sizeof(BatchRecord);
         if (required > memoLimitBytes_) return nullptr;
@@ -585,8 +590,23 @@ class SeerEngineService {
 
         const FSauce structSauce = fast_sauce(calc, start, stones_);
         const YBStructResult st = build_nonweave(calc, gates_, y, structSauce);
-        std::vector<BatchRecord> days;
-        if (includeDays) days = compute_full_year_days(calc, gates_, y, structSauce, st, seer_next_execution_params());
+        std::vector<BatchRecord> computedDays;
+        const std::vector<BatchRecord>* days = &computedDays;
+        if (includeDays) {
+            if (memoDirectYearExports_) {
+                // The cached table has the same canonical BatchRecord sequence.
+                // When the budget is zero/tiny, fall back to the original Y path.
+                if (const auto* full = yearRecords(calc, y, true)) {
+                    days = full;
+                } else {
+                    computedDays = compute_full_year_days(calc, gates_, y, structSauce,
+                                                         st, seer_next_execution_params());
+                }
+            } else {
+                computedDays = compute_full_year_days(calc, gates_, y, structSauce,
+                                                     st, seer_next_execution_params());
+            }
+        }
 
         std::cout << "{\"schema\":1,\"engine\":\"seer-v12-year-structure\",\"calcJdn\":" << calc
                   << ",\"year\":" << y.num << ",\"startJdn\":" << start << ",\"endJdn\":" << end
@@ -606,9 +626,9 @@ class SeerEngineService {
         std::cout << ']';
         if (includeDays) {
             std::cout << ",\"days\":[";
-            for (size_t i = 0; i < days.size(); ++i) {
+            for (size_t i = 0; i < days->size(); ++i) {
                 if (i) std::cout << ',';
-                printRecord(days[i]);
+                printRecord((*days)[i]);
             }
             std::cout << ']';
         }
@@ -665,6 +685,7 @@ public:
           maxCalcs_(svc_env_limit("SEER_SERVICE_MAX_CALCS", 8, 1, 64)),
           memoLimitBytes_(svc_env_limit("SEER_NEXT_CACHE_BYTES", 8 * 1024 * 1024, 0, 64 * 1024 * 1024)),
           memoPromoteAfter_(svc_env_limit("SEER_NEXT_PROMOTE_AFTER", 2, 1, 1000)),
+          memoDirectYearExports_(svc_env_limit("SEER_NEXT_Y_MEMO_DIRECT", 0, 0, 1) == 1),
           dayLimitBytes_(svc_env_limit("SEER_NEXT_DAY_CACHE_BYTES", 64 * 1024, 0, 1024 * 1024)) {}
 
     void handle(const std::string& line) {
