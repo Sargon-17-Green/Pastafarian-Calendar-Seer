@@ -94,7 +94,7 @@ try{
    }
  }
  assert.equal(cases.length,years.length*calculationDays.length*2);
- for(let trial=0;trial<trials++){
+ for(let trial=0;trial<trials;trial++){
   for(let caseIndex=0;caseIndex<cases.length;caseIndex++){
    const sample=cases[(caseIndex+trial)%cases.length];
    const cmd=['R',String(sample.c),String(sample.t),'1'];

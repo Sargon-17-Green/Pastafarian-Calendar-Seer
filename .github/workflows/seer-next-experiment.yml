@@ -26,6 +26,10 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Syntax-check all research JavaScript before native compilation
+        run: |
+          set -euo pipefail
+          find research/seer-next/scripts -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
       - uses: ./.github/actions/native-deps
         with:
           profile: standard-minimal
