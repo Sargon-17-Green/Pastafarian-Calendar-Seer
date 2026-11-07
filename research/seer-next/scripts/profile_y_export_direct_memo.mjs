@@ -40,6 +40,12 @@ function shuffle(v,rand){const a=[...v];for(let i=a.length-1;i>0;i--){
 }return a;}
 const tick=()=>process.hrtime.bigint();
 const elapsed=start=>Number(tick()-start)/1e6;
+async function kernelVirtualLimit(pid){
+ const limits=await readFile('/proc/'+pid+'/limits','utf8');
+ const match=/^Max address space\s+(\d+)\s+/m.exec(limits);
+ if(!match)throw Error('Kernel RLIMIT_AS missing or not numeric for PID '+pid);
+ return Number(match[1]);
+}
 async function memory(pid){
  const status=await readFile('/proc/'+pid+'/status','utf8');
  const field=(name)=>{
@@ -112,7 +118,8 @@ function verifyFullYear(answer,calc,year,role){
  if(answer.ok===false||answer.error)throw Error('Native Y request error '+role+': '+JSON.stringify(answer).slice(0,700));
 }
 async function collect(kind,testcase,reference){
- const child=startService(kind),spawnBegin=tick();
+ const spawnBegin=tick();
+ const child=startService(kind);
  const responses=[],durations=[];
  let firstToLastMs=null,fullReference=reference;
  try{
@@ -183,15 +190,17 @@ async function verifyInterop(label,budget,commands,expected){
   for(const fields of commands){
    const original=(await reference.call(fields)).response;
    const candidate=(await native.call(fields)).response;
+   if(original?.ok===false||original?.error||candidate?.ok===false||candidate?.error)
+     throw Error('Unexpected native error in '+label+' command '+fields.join(' '));
    assert.deepStrictEqual(candidate,original,label+' command '+fields.join(' '));
   }
   const diagnostic=(await native.call(['M'])).response;
   assert.ok(diagnostic?.memo,label+' missing memo diagnostics');
   evidence.memo=diagnostic.memo;
   assert.ok(evidence.memo.payloadBytes<=budget,label+' memo budget exceeded');
-  for(const [field,min] of Object.entries(expected)){
-   assert.ok(evidence.memo[field]>=min,
-      label+' expected '+field+'>='+min+', got '+evidence.memo[field]);
+  for(const [field,exact] of Object.entries(expected)){
+   assert.equal(evidence.memo[field],exact,
+      label+' expected exact '+field+'='+exact);
   }
   evidence.memory=await memory(native.pid);
   evidence.fullRepliesMatch=true;
@@ -200,12 +209,23 @@ async function verifyInterop(label,budget,commands,expected){
 }
 const y5000=['Y','2461290','5000','1'];
 const y5001=['Y','2461290','5001','1'];
+const y5000SecondCalc=['Y','2461400','5000','1'];
 const rMid=['R','2461290','2460984','1'];
+const rMidNext=['R','2461290','2460985','1'];
 const interop=[
- await verifyInterop('zero-payload-budget',0,[y5000,y5000,rMid],{builds:0,hits:0}),
- await verifyInterop('tiny-payload-budget',1024,[y5000,y5000],{builds:0,hits:0}),
- await verifyInterop('Y-then-R-cross-route',budgetBytes,[y5000,rMid,y5000],{builds:1,hits:2}),
- await verifyInterop('one-year-LRU-eviction',180000,[y5000,y5001,y5000],{builds:3,evictions:2})
+ await verifyInterop('zero-payload-budget',0,[y5000,y5000,rMid],
+   {builds:0,hits:0,keys:0,evictions:0}),
+ await verifyInterop('tiny-payload-budget',1024,[y5000,y5000],
+   {builds:0,hits:0,keys:1,evictions:0}),
+ await verifyInterop('Y-then-R-cross-route',budgetBytes,[y5000,rMid,y5000],
+   {builds:1,hits:2,keys:1,evictions:0}),
+ await verifyInterop('R-then-Y-cross-route',budgetBytes,[rMid,rMidNext,y5000],
+   {builds:1,hits:1,keys:1,evictions:0}),
+ await verifyInterop('distinct-calculation-contexts',budgetBytes,
+   [y5000,y5000SecondCalc,y5000],
+   {builds:2,hits:1,keys:2,evictions:0}),
+ await verifyInterop('one-year-LRU-eviction',180000,[y5000,y5001,y5000],
+   {builds:3,hits:0,keys:1,evictions:2})
 ];
 // Resource observation with a *real* address-space cap, distinct from memo
 // payload accounting. Calendar parity failures remain hard test failures.
@@ -222,8 +242,13 @@ try{
  const m=(await capped.call(['M'])).response.memo;
  assert.equal(m.builds,1);assert.equal(m.hits,1);
  const mem=await memory(capped.pid);
- assert.ok(mem.vmPeakKiB<=512*1024,'512MiB virtual address cap overrun');
- cappedEvidence={limitBytes:512*1024*1024,fullParity:true,memo:m,memory:mem};
+ const effectiveLimitBytes=await kernelVirtualLimit(capped.pid);
+ assert.ok(effectiveLimitBytes>0&&effectiveLimitBytes<=512*1024*1024,
+   'Kernel did not enforce RLIMIT_AS <= 512MiB');
+ assert.ok(mem.vmPeakKiB*1024<=effectiveLimitBytes,
+   'Observed VmPeak exceeds kernel RLIMIT_AS');
+ cappedEvidence={limitBytes:512*1024*1024,effectiveLimitBytes,
+   fullParity:true,memo:m,memory:mem};
 }finally{capped.close();cappedReference.close();}
 
 const profiles=['reference','latency','experimental42','experimental42Memo'];
@@ -253,6 +278,8 @@ const final={
   'This measures repeated Y full-year exports, not R cache lookup, full-domain correctness, physical RAM caps or Windows.',
   'An opt-in year-record table is created once on the initial Y, then hit twice; default Y path still bypasses it.',
   'The existing R-to-year promotion threshold is unchanged; zero/tiny payload budgets retain correct uncached answers.',
+  'Exact memo counters are checked, including R-to-Y and two independent calculation-day contexts.',
+  'The capped repeated Y test reads and verifies the effective Linux RLIMIT_AS from /proc/PID/limits.',
   'Memo counters are measured, not inferred; RNS internals and source main unchanged.',
   'One hosted CPU and two trials: numbers are exploratory and not universal speed guarantees.',
   'Selected capped year fits under 512MiB in this Linux runner; no all-year minimum is proven.'

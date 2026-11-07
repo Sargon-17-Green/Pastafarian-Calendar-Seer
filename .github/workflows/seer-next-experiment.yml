@@ -149,7 +149,7 @@ jobs:
         run: |
           set -euo pipefail
           node research/seer-next/scripts/profile_y_export_direct_memo.mjs --trials=2 --output=research/seer-next/results/working/y-export-direct-memo.json
-          node -e "const x=require('./research/seer-next/results/working/y-export-direct-memo.json');if(x.results.length!==12||x.interop.length!==4||!x.cappedEvidence.fullParity||!x.completeFullJsonParity)throw Error('Missing direct-Y memo checks');console.log('Y_MEMO_DIRECT',JSON.stringify({contexts:x.results.length,groups:x.groups.map(g=>({profile:g.profile,totalMs:g.allThreeTotalMs})),memo:x.interop.map(v=>({label:v.label,builds:v.memo.builds,hits:v.memo.hits}))}));"
+          node -e "const x=require('./research/seer-next/results/working/y-export-direct-memo.json');if(x.results.length!==12||x.interop.length!==6||!x.cappedEvidence.fullParity||x.cappedEvidence.effectiveLimitBytes!==536870912||!x.completeFullJsonParity)throw Error('Missing direct-Y memo checks');console.log('Y_MEMO_DIRECT',JSON.stringify({contexts:x.results.length,groups:x.groups.map(g=>({profile:g.profile,totalMs:g.allThreeTotalMs})),memo:x.interop.map(v=>({label:v.label,builds:v.memo.builds,hits:v.memo.hits}))}));"
       - name: Profile cold, repeat, memory and CPU policies with A/B parity
         run: |
           set -euo pipefail

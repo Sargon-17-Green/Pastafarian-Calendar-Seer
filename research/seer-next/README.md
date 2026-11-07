@@ -55,6 +55,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42360658075](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42360658075) completed SUCCESS: **6/6 full-year Y exports** (25,952 day records) matched native Seer in complete JSON; all six also succeeded under a real Linux `RLIMIT_AS=512MiB` with complete parity. Maximum VmPeak 446.29MiB and VmHWM 71.63MiB (AMD EPYC 7763). This is not a hard RSS budget or all-years guarantee. Raw evidence: `results/ci-2825ba6b9d8d/full-year-512.json`; see [33_FULL_YEAR_512_RESULTS.md](33_FULL_YEAR_512_RESULTS.md). No default change.
 
+- [42363472716](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42363472716) completed SUCCESS. `SEER_NEXT_Y_MEMO_DIRECT=1` retained full native response equivalence for 144 complete Y replies. Warm second Y was **19.71× faster** than uncached 4/2 on sampled AMD EPYC 9V45; all-three-request cumulative time fell 61.65%. Exact one build/two hits per tested memo context, tiny and zero budgets, Y→R and LRU paths passed; one repeated long year succeeded under a configured 512MiB Linux virtual cap. See `results/ci-44c11b2fb985/y-export-direct-memo.json` and [37_DIRECT_Y_MEMO_RESULTS.md](37_DIRECT_Y_MEMO_RESULTS.md). Research opt-in only; no change to default.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.
