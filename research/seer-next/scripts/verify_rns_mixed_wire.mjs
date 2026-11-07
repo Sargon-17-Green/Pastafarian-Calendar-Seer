@@ -48,6 +48,14 @@ function start(mode,traceFile='',capBytes=0){
    SEER_NEXT_COLD_ADAPT_SUPERBLOCK:'0',
    SEER_NEXT_COLD_RNS_ENGINE_REUSE:on?'1':'0',
    SEER_NEXT_COLD_RNS_ENGINE_SLOTS:mode==='probe2'?'2':'1',
+   // The mixed harness nests native OpenMP RNS builders and D workers. Bound
+   // hosted-CI thread creation explicitly for all source/candidate arms.
+   // The cap remains a real RLIMIT_AS and is never silently lifted.
+   OMP_NUM_THREADS:'4',
+   OMP_THREAD_LIMIT:'8',
+   OMP_DYNAMIC:'FALSE',
+   OMP_STACKSIZE:'2M',
+   SEER_DIAGONAL_THREADS:'2',
    SEER_NEXT_COLD_RNS_CACHE_STATS_FILE:probe?traceFile:'',
    ...(capBytes?{SEER_NEXT_MAX_VIRTUAL_BYTES:String(capBytes)}:{})
   },stdio:['pipe','pipe','pipe']
@@ -158,7 +166,18 @@ async function run(mode,commands,oracle,tag,cap=0){
  let spawnToFirstMs=null;
  try{
   for(let i=0;i<commands.length;i++){
-   const x=await s.call(commands[i]);
+   const command=commands[i];
+   // Preserve exact failed index in CI logs when a native subprocess fails.
+   if(process.env.SEER_NEXT_MIXED_PROGRESS==='1')
+     process.stderr.write('MIXED_BEGIN '+JSON.stringify({mode,tag,cap,commandIndex:i,command})+'\n');
+   let x;
+   try{x=await s.call(command);}
+   catch(e){
+    throw new Error('Mixed native request failed '+JSON.stringify({mode,tag,cap,
+      commandIndex:i,command,cause:String(e)}),{cause:e});
+   }
+   if(process.env.SEER_NEXT_MIXED_PROGRESS==='1')
+     process.stderr.write('MIXED_DONE '+JSON.stringify({mode,tag,cap,commandIndex:i,ms:x.requestMs})+'\n');
    if(i===0)spawnToFirstMs=x.spawnToReplyMs;
    if(oracle)assert.deepStrictEqual(x.value,oracle[i],
     'Complete native R/Y/D mismatch: '+mode+' at #'+i+' '+commands[i].join(','));
@@ -269,7 +288,8 @@ try{
   primaryNativeReplies:results.length*18*5,
   cappedNativeReplies:capCommands.length*2,fullParity:true,
   workerProfile:{rns:4,replay:2},
-  disabledResultCaches:true,groups,results,
+  disabledResultCaches:true,hostThreadLimits:{ompNumThreads:4,ompThreadLimit:8,
+   ompStack:'2M',diagonalThreads:2},groups,results,
   cappedEvidence:capped.evidence,
   caveats:[
    'Actual research hybrid control uses unchanged prototype arithmetic, while experimental cold probe uses independent research core/weave.',
