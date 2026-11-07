@@ -41,6 +41,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42307243480](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42307243480): an exact GMP DP shortcut for year day 2 passed 51 full native JSON differential cases and 8 independent oracle checks. **Performance mixed, not accepted as default**: baseline 3822.019 ms vs DP 3617.807 ms in aggregate (1.0564× ratio), with individual queries from 0.678× to 1.946×. The invalid first-only alternative was retracted after CI [42306463421](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42306463421) exposed an actual wrong month.
 
+- [42310523750](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42310523750) completed success; RNS Pascal-plan sharing was correct in 52 A/B requests but 0.747% slower overall, so **DO NOT ADOPT**. Complete evidence is in `results/ci-d6def355fd9b/rns-shared-plan.json`; new allocator/scratch research is separate.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.

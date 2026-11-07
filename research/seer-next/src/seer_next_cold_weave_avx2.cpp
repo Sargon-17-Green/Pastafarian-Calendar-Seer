@@ -201,6 +201,7 @@ struct RnsEngine{
     // Original per-pack planning remains selectable as the exact control.
     struct LadderGroup {size_t begin,end;int maxr;bool ladder;};
     bool sharedPlan=false;
+    bool pooledFactScratch=false;
     std::array<int,124> sharedFreq{},sharedMaxr{};
     std::vector<int> sharedNeed;
     std::vector<LadderGroup> sharedGroups;
@@ -213,6 +214,11 @@ struct RnsEngine{
         if(const char*env=std::getenv("SEER_NEXT_RNS_SHARED_PLAN");env&&*env){
             if(std::strcmp(env,"1")==0)sharedPlan=true;
             else if(std::strcmp(env,"0")!=0)throw std::runtime_error("SEER_NEXT_RNS_SHARED_PLAN must be 0 or 1");
+        }
+        if(const char*env=std::getenv("SEER_NEXT_RNS_FACT_POOL");env&&*env){
+            if(std::strcmp(env,"1")==0)pooledFactScratch=true;
+            else if(std::strcmp(env,"0")!=0)
+                throw std::runtime_error("SEER_NEXT_RNS_FACT_POOL must be 0 or 1");
         }
         if(sharedPlan){
             for(int h=0;h<m-1;h++){
@@ -250,7 +256,26 @@ struct RnsEngine{
     void build_pack(int pk){
         const auto packBegin=Clock::now();
         auto &q=pc[pk];for(int l=0;l<8;l++){int i=pk*8+l;uint64_t p=i<npr?primes[i]:primes.back();q.p[l]=p;q.c[l]=B52-p;}q.vp=vload(q.p);q.vc=vload(q.c);
-        int maxv=total+2;q.inv.resize(maxv);std::vector<V8> fact(maxv);fact[0]=vsmall(1);for(int i=1;i<maxv;i++)fact[i]=VMod::mul_small(fact[i-1],i,q.vp,q.vc);alignas(64)uint64_t ff[8],ii[8];vstore(ff,fact[maxv-1]);for(int l=0;l<8;l++)ii[l]=inv_mod_u64(ff[l],q.p[l]);V8 acc=vload(ii);for(int i=maxv-1;i>=1;i--){q.inv[i]=VMod::mul(acc,fact[i-1],q.vp,q.vc);acc=VMod::mul_small(acc,i,q.vp,q.vc);}q.inv[0]=vzero();fact.clear();fact.shrink_to_fit();
+        const int maxv=total+2;
+        q.inv.resize(maxv);
+        // Experimental: one reusable scratch vector per OpenMP thread.
+        // The first maxv slots are fully overwritten on every pack, and no
+        // worker can see another worker's thread-local data.
+        static thread_local std::vector<V8> threadFact;
+        std::vector<V8> localFact;
+        std::vector<V8>&fact=pooledFactScratch?threadFact:localFact;
+        fact.resize(maxv);
+        fact[0]=vsmall(1);
+        for(int i=1;i<maxv;i++)fact[i]=VMod::mul_small(fact[i-1],i,q.vp,q.vc);
+        alignas(64)uint64_t ff[8],ii[8];vstore(ff,fact[maxv-1]);
+        for(int l=0;l<8;l++)ii[l]=inv_mod_u64(ff[l],q.p[l]);
+        V8 acc=vload(ii);
+        for(int i=maxv-1;i>=1;i--){
+            q.inv[i]=VMod::mul(acc,fact[i-1],q.vp,q.vc);
+            acc=VMod::mul_small(acc,i,q.vp,q.vc);
+        }
+        q.inv[0]=vzero();
+        if(!pooledFactScratch){fact.clear();fact.shrink_to_fit();}
         const auto afterInverse=Clock::now();
         auto &st=initPacks[pk];st.H[m-1]=vsmall(1);st.B[m-1]=vzero();
         int cn=commonN;std::array<int,124> localFreq{},localMaxr{};
