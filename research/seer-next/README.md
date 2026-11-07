@@ -47,6 +47,8 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 
 - [42346477835](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42346477835) confirmed the research-only `experimental4` 4-RNS/1-replay profile in 96 cold native comparisons and 45 R/Y/D full-wire parity checks. A 9.24% aggregate cold-time reduction versus the unchanged 3/3 default was observed on hosted AMD EPYC 9V45, **not** asserted as universal. Raw results: `results/ci-3bac030f32dc/rns-four-confirm.json` and `experimental4-parity.json`.
 
+- [42348089979](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/42348089979) completed SUCCESS with 144 cross-year full JSON comparisons. The earlier 4/1 speed result did **not** generalize: 4/1 was 2.76% slower than default 3/3 across six year/calculation-day structures; 4/3 was 5.16% faster but increased VmPeak to as much as 557MiB. See `results/ci-fd387c915de7/rns-cross-year.json`. Neither is adopted as default; opt-in 4/1 remains experimental.
+
 ## Artifacts and decision rules
 
 - [00_BASELINE.md](00_BASELINE.md): fixed SHA, code-level findings, evidence vs inference.

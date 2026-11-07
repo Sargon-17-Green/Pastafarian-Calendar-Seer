@@ -125,6 +125,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_rns_cross_year.mjs --trials=3 --output=research/seer-next/results/working/rns-cross-year.json
           node -e "const x=require('./research/seer-next/results/working/rns-cross-year.json');console.log('RNS_CROSS_YEAR',JSON.stringify({comparisons:x.results.length,years:x.years,calcs:x.calculationDays}));"
+      - name: Re-evaluate exact 4-worker replay with 1-4 threads across canonical years
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_replay_sweep.mjs --trials=3 --output=research/seer-next/results/working/rns-replay-sweep.json
+          node -e "const x=require('./research/seer-next/results/working/rns-replay-sweep.json');if(x.results.length!==180)throw Error('Incomplete RNS replay sweep');console.log('RNS_REPLAY_SWEEP',JSON.stringify({cases:x.results.length,years:x.years,policies:x.policies}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -160,6 +165,7 @@ jobs:
             research/seer-next/results/working/rns-four-confirm.json
             research/seer-next/results/working/experimental4-parity.json
             research/seer-next/results/working/rns-cross-year.json
+            research/seer-next/results/working/rns-replay-sweep.json
             research/seer-next/results/working/second-day-exact.json
             research/seer-next/results/working/linux-as-limit.json
           if-no-files-found: error
@@ -169,7 +175,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
