@@ -1,0 +1,5351 @@
+{
+  "schema": "seer-next-profile-matrix-v1",
+  "utc": "2026-11-07T16:04:10.442Z",
+  "researchBaseCommit": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "environment": {
+    "os": "linux",
+    "arch": "x64",
+    "cpu": "AMD EPYC 9V45 96-Core Processor",
+    "logicalCpus": 4,
+    "node": "v24.22.2",
+    "tickHz": 100
+  },
+  "assumptions": [
+    "Separate native processes for every scenario and policy.",
+    "Full baseline/candidate JSON response equivalence for every command.",
+    "Linux /proc stat CPU tick resolution and VmHWM, not cgroup total memory.",
+    "First-result metric includes spawn and initialization; per-call metrics exclude spawn.",
+    "No external network; no speculative prefetch; one native service request at a time."
+  ],
+  "trials": 1,
+  "workloads": [
+    {
+      "id": "interior-1",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "interior-2",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "interior-4",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "interior-16",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "interior-32",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "early-1",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "early-2",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "early-4",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "early-16",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "early-32",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458962",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "late-1",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "late-2",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "late-4",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "late-16",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "late-32",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463006",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "distinct-c-18",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461291",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461292",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461293",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461294",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461295",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461296",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461297",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461298",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461299",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461300",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461301",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461302",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461303",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461304",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461305",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461306",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461307",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "rotating-9-by-two",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461291",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461292",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461294",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461295",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461299",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461310",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461400",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461500",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461291",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461292",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461294",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461295",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461299",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461310",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461400",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461500",
+          "2460984",
+          "1"
+        ]
+      ]
+    },
+    {
+      "id": "sparse-same-year-8",
+      "commands": [
+        [
+          "R",
+          "2461290",
+          "2458961",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2461290",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463007",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2460984",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2458961",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2461290",
+          "1"
+        ],
+        [
+          "R",
+          "2461290",
+          "2463007",
+          "1"
+        ]
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "name": "disabled",
+      "threshold": 2,
+      "budgetBytes": 0
+    },
+    {
+      "name": "eager-second",
+      "threshold": 2,
+      "budgetBytes": 8388608
+    },
+    {
+      "name": "delayed-eighth",
+      "threshold": 8,
+      "budgetBytes": 8388608
+    },
+    {
+      "name": "tight-one-year",
+      "threshold": 2,
+      "budgetBytes": 180000
+    }
+  ],
+  "results": [
+    {
+      "trial": 0,
+      "scenario": "interior-1",
+      "policy": "disabled",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "d005c889439a7fbc2314475518ce91b47f33b58e9099da810a0990b7bf66b914",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 94.163262,
+          "maxMs": 94.163262,
+          "minMs": 94.163262,
+          "p95Ms": null,
+          "totalMs": 94.163262
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.684319,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38300,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 98.925093,
+          "maxMs": 98.925093,
+          "minMs": 98.925093,
+          "p95Ms": null,
+          "totalMs": 98.925093
+        },
+        "timeToFirstResultIncludingProcessStartMs": 102.034558,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38256,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 0.9518642757303245,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-1",
+      "policy": "eager-second",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "d005c889439a7fbc2314475518ce91b47f33b58e9099da810a0990b7bf66b914",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 94.02853,
+          "maxMs": 94.02853,
+          "minMs": 94.02853,
+          "p95Ms": null,
+          "totalMs": 94.02853
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.315272,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38296,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 90.754397,
+          "maxMs": 90.754397,
+          "minMs": 90.754397,
+          "p95Ms": null,
+          "totalMs": 90.754397
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.040389,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38292,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0360768525628572,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-1",
+      "policy": "delayed-eighth",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "d005c889439a7fbc2314475518ce91b47f33b58e9099da810a0990b7bf66b914",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 97.276414,
+          "maxMs": 97.276414,
+          "minMs": 97.276414,
+          "p95Ms": null,
+          "totalMs": 97.276414
+        },
+        "timeToFirstResultIncludingProcessStartMs": 100.773464,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38216,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 92.640512,
+          "maxMs": 92.640512,
+          "minMs": 92.640512,
+          "p95Ms": null,
+          "totalMs": 92.640512
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.382753,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38312,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0500418434647685,
+      "cpuRatio": 1.0416666666666667
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-1",
+      "policy": "tight-one-year",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "d005c889439a7fbc2314475518ce91b47f33b58e9099da810a0990b7bf66b914",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 96.351117,
+          "maxMs": 96.351117,
+          "minMs": 96.351117,
+          "p95Ms": null,
+          "totalMs": 96.351117
+        },
+        "timeToFirstResultIncludingProcessStartMs": 98.485519,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38192,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 93.069392,
+          "maxMs": 93.069392,
+          "minMs": 93.069392,
+          "p95Ms": null,
+          "totalMs": 93.069392
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.082851,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38208,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0352610555358523,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-2",
+      "policy": "disabled",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "feca8d94b114f3f8753484c69f51f0266fe7606c86fc40338dba69df515ff641",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 89.047178,
+          "maxMs": 93.959445,
+          "minMs": 89.047178,
+          "p95Ms": null,
+          "totalMs": 183.006623
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.035009,
+        "processCpuMs": 500,
+        "nativePeakRssKiB": 38228,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.09931,
+          "maxMs": 96.843921,
+          "minMs": 0.09931,
+          "p95Ms": null,
+          "totalMs": 96.943231
+        },
+        "timeToFirstResultIncludingProcessStartMs": 99.188671,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38308,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8877710296245438,
+      "cpuRatio": 2
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-2",
+      "policy": "eager-second",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "feca8d94b114f3f8753484c69f51f0266fe7606c86fc40338dba69df515ff641",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 80.096101,
+          "maxMs": 96.328914,
+          "minMs": 80.096101,
+          "p95Ms": null,
+          "totalMs": 176.425015
+        },
+        "timeToFirstResultIncludingProcessStartMs": 98.449005,
+        "processCpuMs": 480,
+        "nativePeakRssKiB": 38188,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.074833,
+          "maxMs": 94.394542,
+          "minMs": 0.074833,
+          "p95Ms": null,
+          "totalMs": 94.469375
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.68436,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38328,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8675365958544767,
+      "cpuRatio": 1.92
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-2",
+      "policy": "delayed-eighth",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "feca8d94b114f3f8753484c69f51f0266fe7606c86fc40338dba69df515ff641",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 92.109671,
+          "maxMs": 93.414903,
+          "minMs": 92.109671,
+          "p95Ms": null,
+          "totalMs": 185.524574
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.509646,
+        "processCpuMs": 500,
+        "nativePeakRssKiB": 38252,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.091769,
+          "maxMs": 119.746593,
+          "minMs": 0.091769,
+          "p95Ms": null,
+          "totalMs": 119.838362
+        },
+        "timeToFirstResultIncludingProcessStartMs": 121.848326,
+        "processCpuMs": 320,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.5481234131020583,
+      "cpuRatio": 1.5625
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-2",
+      "policy": "tight-one-year",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "feca8d94b114f3f8753484c69f51f0266fe7606c86fc40338dba69df515ff641",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 80.349875,
+          "maxMs": 91.840927,
+          "minMs": 80.349875,
+          "p95Ms": null,
+          "totalMs": 172.190802
+        },
+        "timeToFirstResultIncludingProcessStartMs": 94.070633,
+        "processCpuMs": 460,
+        "nativePeakRssKiB": 38148,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.076426,
+          "maxMs": 94.164805,
+          "minMs": 0.076426,
+          "p95Ms": null,
+          "totalMs": 94.241231
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.979334,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38324,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8271281070171927,
+      "cpuRatio": 1.84
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-4",
+      "policy": "disabled",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "8fbbd5b0fe984489d47b77b72fa6b3f56ee3bda83df2ee5ce1010d298c6dd8f0",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 79.246299,
+          "maxMs": 97.152306,
+          "minMs": 77.881528,
+          "p95Ms": null,
+          "totalMs": 339.071775
+        },
+        "timeToFirstResultIncludingProcessStartMs": 99.294651,
+        "processCpuMs": 940,
+        "nativePeakRssKiB": 38336,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.044156,
+          "maxMs": 95.688937,
+          "minMs": 0.033691,
+          "p95Ms": null,
+          "totalMs": 95.846304
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.757982,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38228,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.537661452235028,
+      "cpuRatio": 3.76
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-4",
+      "policy": "eager-second",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "8fbbd5b0fe984489d47b77b72fa6b3f56ee3bda83df2ee5ce1010d298c6dd8f0",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 82.305058,
+          "maxMs": 96.755017,
+          "minMs": 76.605852,
+          "p95Ms": null,
+          "totalMs": 340.43829800000003
+        },
+        "timeToFirstResultIncludingProcessStartMs": 99.029723,
+        "processCpuMs": 940,
+        "nativePeakRssKiB": 38188,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.030666,
+          "maxMs": 107.226748,
+          "minMs": 0.030266,
+          "p95Ms": null,
+          "totalMs": 107.36817099999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 109.805381,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38272,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.1707562383641616,
+      "cpuRatio": 3.2413793103448274
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-4",
+      "policy": "delayed-eighth",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "8fbbd5b0fe984489d47b77b72fa6b3f56ee3bda83df2ee5ce1010d298c6dd8f0",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 85.397979,
+          "maxMs": 92.421994,
+          "minMs": 77.793425,
+          "p95Ms": null,
+          "totalMs": 341.513442
+        },
+        "timeToFirstResultIncludingProcessStartMs": 94.590909,
+        "processCpuMs": 940,
+        "nativePeakRssKiB": 38124,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.07914,
+          "maxMs": 91.833485,
+          "minMs": 0.037066,
+          "p95Ms": null,
+          "totalMs": 92.05018299999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 94.030903,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.710078903373826,
+      "cpuRatio": 3.9166666666666665
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-4",
+      "policy": "tight-one-year",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "8fbbd5b0fe984489d47b77b72fa6b3f56ee3bda83df2ee5ce1010d298c6dd8f0",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 83.155482,
+          "maxMs": 95.036532,
+          "minMs": 78.967669,
+          "p95Ms": null,
+          "totalMs": 347.804123
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.037903,
+        "processCpuMs": 950,
+        "nativePeakRssKiB": 38240,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.039179,
+          "maxMs": 90.052858,
+          "minMs": 0.031978,
+          "p95Ms": null,
+          "totalMs": 90.209214
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.16759,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38328,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.8555276958737275,
+      "cpuRatio": 3.9583333333333335
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-16",
+      "policy": "disabled",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "247cde8827e682f917cfbf3370a869c81708228eac9d33ae258e19edc4afe49e",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 79.169934,
+          "maxMs": 88.568035,
+          "minMs": 76.188611,
+          "p95Ms": null,
+          "totalMs": 1283.846828
+        },
+        "timeToFirstResultIncludingProcessStartMs": 91.696937,
+        "processCpuMs": 3630,
+        "nativePeakRssKiB": 38252,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.024937,
+          "maxMs": 89.957222,
+          "minMs": 0.023035,
+          "p95Ms": null,
+          "totalMs": 90.39825699999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.700605,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38252,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 14.202119273162536,
+      "cpuRatio": 15.125
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-16",
+      "policy": "eager-second",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "247cde8827e682f917cfbf3370a869c81708228eac9d33ae258e19edc4afe49e",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 81.45203,
+          "maxMs": 90.899534,
+          "minMs": 76.878033,
+          "p95Ms": null,
+          "totalMs": 1320.457078
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.344917,
+        "processCpuMs": 3700,
+        "nativePeakRssKiB": 38224,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.027261,
+          "maxMs": 89.418418,
+          "minMs": 0.023675,
+          "p95Ms": null,
+          "totalMs": 90.119087
+        },
+        "timeToFirstResultIncludingProcessStartMs": 91.705712,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 14.652357474504818,
+      "cpuRatio": 15.416666666666666
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-16",
+      "policy": "delayed-eighth",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "247cde8827e682f917cfbf3370a869c81708228eac9d33ae258e19edc4afe49e",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 77.69749,
+          "maxMs": 90.042479,
+          "minMs": 76.183374,
+          "p95Ms": null,
+          "totalMs": 1266.435938
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.318766,
+        "processCpuMs": 3580,
+        "nativePeakRssKiB": 38132,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.028523,
+          "maxMs": 90.329754,
+          "minMs": 0.027091,
+          "p95Ms": null,
+          "totalMs": 90.83998600000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.41934,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38248,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.941392923596442,
+      "cpuRatio": 14.916666666666666
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-16",
+      "policy": "tight-one-year",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "247cde8827e682f917cfbf3370a869c81708228eac9d33ae258e19edc4afe49e",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 83.303946,
+          "maxMs": 94.029761,
+          "minMs": 78.752707,
+          "p95Ms": null,
+          "totalMs": 1352.010689
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.454532,
+        "processCpuMs": 3770,
+        "nativePeakRssKiB": 38248,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.027161,
+          "maxMs": 88.406945,
+          "minMs": 0.025999,
+          "p95Ms": null,
+          "totalMs": 88.880982
+        },
+        "timeToFirstResultIncludingProcessStartMs": 90.495269,
+        "processCpuMs": 230,
+        "nativePeakRssKiB": 38128,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 15.21147334983315,
+      "cpuRatio": 16.391304347826086
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-32",
+      "policy": "disabled",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "defc2d749d427472854457167da22336a56294ed027a2296b2511a446a845993",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 78.236878,
+          "maxMs": 90.167192,
+          "minMs": 75.835172,
+          "p95Ms": 87.410891,
+          "totalMs": 2544.00105
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.45017,
+        "processCpuMs": 7170,
+        "nativePeakRssKiB": 38184,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.027662,
+          "maxMs": 90.647319,
+          "minMs": 0.022895,
+          "p95Ms": 0.085955,
+          "totalMs": 91.69062200000003
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.126192,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38308,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 27.745487973677385,
+      "cpuRatio": 29.875
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-32",
+      "policy": "eager-second",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "defc2d749d427472854457167da22336a56294ed027a2296b2511a446a845993",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 79.677734,
+          "maxMs": 98.15253,
+          "minMs": 75.54958,
+          "p95Ms": 96.194464,
+          "totalMs": 2623.7699610000004
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.561153,
+        "processCpuMs": 7360,
+        "nativePeakRssKiB": 38304,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.024276,
+          "maxMs": 91.820369,
+          "minMs": 0.022885,
+          "p95Ms": 0.075204,
+          "totalMs": 92.649864
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.907851,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38220,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 28.31919927049219,
+      "cpuRatio": 30.666666666666668
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-32",
+      "policy": "delayed-eighth",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "defc2d749d427472854457167da22336a56294ed027a2296b2511a446a845993",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 81.725035,
+          "maxMs": 99.700348,
+          "minMs": 75.617913,
+          "p95Ms": 89.575475,
+          "totalMs": 2630.1053950000005
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.531803,
+        "processCpuMs": 7390,
+        "nativePeakRssKiB": 38060,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.026309,
+          "maxMs": 94.93267,
+          "minMs": 0.022885,
+          "p95Ms": 0.259802,
+          "totalMs": 96.10422099999997
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.139243,
+        "processCpuMs": 250,
+        "nativePeakRssKiB": 38176,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 27.367220374222704,
+      "cpuRatio": 29.56
+    },
+    {
+      "trial": 0,
+      "scenario": "interior-32",
+      "policy": "tight-one-year",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "defc2d749d427472854457167da22336a56294ed027a2296b2511a446a845993",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 78.764312,
+          "maxMs": 101.400181,
+          "minMs": 74.416066,
+          "p95Ms": 94.641496,
+          "totalMs": 2589.770524000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.694065,
+        "processCpuMs": 7300,
+        "nativePeakRssKiB": 38152,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.024958,
+          "maxMs": 90.993281,
+          "minMs": 0.022914,
+          "p95Ms": 0.075114,
+          "totalMs": 91.84303400000003
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.335688,
+        "processCpuMs": 240,
+        "nativePeakRssKiB": 38268,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 28.197789328257603,
+      "cpuRatio": 30.416666666666668
+    },
+    {
+      "trial": 0,
+      "scenario": "early-1",
+      "policy": "disabled",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "707ec0b51b8e707034e435690b72dad201d263c221eb9c576390ead5428bca12",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 56.921411,
+          "maxMs": 56.921411,
+          "minMs": 56.921411,
+          "p95Ms": null,
+          "totalMs": 56.921411
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.071868,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38284,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 57.687983,
+          "maxMs": 57.687983,
+          "minMs": 57.687983,
+          "p95Ms": null,
+          "totalMs": 57.687983
+        },
+        "timeToFirstResultIncludingProcessStartMs": 60.138694,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38224,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 0.9867117558955042,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "early-1",
+      "policy": "eager-second",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "707ec0b51b8e707034e435690b72dad201d263c221eb9c576390ead5428bca12",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 60.294411,
+          "maxMs": 60.294411,
+          "minMs": 60.294411,
+          "p95Ms": null,
+          "totalMs": 60.294411
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.360442,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38184,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 58.31898,
+          "maxMs": 58.31898,
+          "minMs": 58.31898,
+          "p95Ms": null,
+          "totalMs": 58.31898
+        },
+        "timeToFirstResultIncludingProcessStartMs": 60.948461,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38236,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0338728660892216,
+      "cpuRatio": 1.0666666666666667
+    },
+    {
+      "trial": 0,
+      "scenario": "early-1",
+      "policy": "delayed-eighth",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "707ec0b51b8e707034e435690b72dad201d263c221eb9c576390ead5428bca12",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 57.043033,
+          "maxMs": 57.043033,
+          "minMs": 57.043033,
+          "p95Ms": null,
+          "totalMs": 57.043033
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.549431,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38232,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 57.410257,
+          "maxMs": 57.410257,
+          "minMs": 57.410257,
+          "p95Ms": null,
+          "totalMs": 57.410257
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.595467,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38320,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 0.9936035123479764,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "early-1",
+      "policy": "tight-one-year",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "707ec0b51b8e707034e435690b72dad201d263c221eb9c576390ead5428bca12",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 56.763452,
+          "maxMs": 56.763452,
+          "minMs": 56.763452,
+          "p95Ms": null,
+          "totalMs": 56.763452
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.928711,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38128,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 56.813552,
+          "maxMs": 56.813552,
+          "minMs": 56.813552,
+          "p95Ms": null,
+          "totalMs": 56.813552
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.744027,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38212,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 0.9991181681441076,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "early-2",
+      "policy": "disabled",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "38a5e0a91b8eded4365ae2093d6ad381cae5316d8fc0f8fa419dd1941e9475c5",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 49.306161,
+          "maxMs": 56.632413,
+          "minMs": 49.306161,
+          "p95Ms": null,
+          "totalMs": 105.938574
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.265714,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38244,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.071558,
+          "maxMs": 59.870442,
+          "minMs": 0.071558,
+          "p95Ms": null,
+          "totalMs": 59.942
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.044425,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38240,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.7673513396283074,
+      "cpuRatio": 1.875
+    },
+    {
+      "trial": 0,
+      "scenario": "early-2",
+      "policy": "eager-second",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "38a5e0a91b8eded4365ae2093d6ad381cae5316d8fc0f8fa419dd1941e9475c5",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 49.955782,
+          "maxMs": 57.72032,
+          "minMs": 49.955782,
+          "p95Ms": null,
+          "totalMs": 107.676102
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.781573,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38144,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.166337,
+          "maxMs": 57.464649,
+          "minMs": 0.166337,
+          "p95Ms": null,
+          "totalMs": 57.630986
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.926366,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38264,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.868371677694357,
+      "cpuRatio": 1.875
+    },
+    {
+      "trial": 0,
+      "scenario": "early-2",
+      "policy": "delayed-eighth",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "38a5e0a91b8eded4365ae2093d6ad381cae5316d8fc0f8fa419dd1941e9475c5",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 48.893668,
+          "maxMs": 58.244988,
+          "minMs": 48.893668,
+          "p95Ms": null,
+          "totalMs": 107.138656
+        },
+        "timeToFirstResultIncludingProcessStartMs": 60.482757,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38156,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.136215,
+          "maxMs": 56.937644,
+          "minMs": 0.136215,
+          "p95Ms": null,
+          "totalMs": 57.073859
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.470238,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38152,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8771931296953304,
+      "cpuRatio": 1.9333333333333333
+    },
+    {
+      "trial": 0,
+      "scenario": "early-2",
+      "policy": "tight-one-year",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "38a5e0a91b8eded4365ae2093d6ad381cae5316d8fc0f8fa419dd1941e9475c5",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 50.028302,
+          "maxMs": 56.747089,
+          "minMs": 50.028302,
+          "p95Ms": null,
+          "totalMs": 106.775391
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.292683,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38288,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.089745,
+          "maxMs": 57.56635,
+          "minMs": 0.089745,
+          "p95Ms": null,
+          "totalMs": 57.656095
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.584738,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8519358794590581,
+      "cpuRatio": 1.875
+    },
+    {
+      "trial": 0,
+      "scenario": "early-4",
+      "policy": "disabled",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "834a124a0150d084b5928e707bc6b335812ea53b6b199b59fca422445b5e6c13",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 48.885556,
+          "maxMs": 56.83636,
+          "minMs": 48.776051,
+          "p95Ms": null,
+          "totalMs": 203.94859599999998
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.145838,
+        "processCpuMs": 580,
+        "nativePeakRssKiB": 38208,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.029494,
+          "maxMs": 60.976929,
+          "minMs": 0.023365,
+          "p95Ms": null,
+          "totalMs": 61.095738
+        },
+        "timeToFirstResultIncludingProcessStartMs": 63.233637,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38272,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.338180414483249,
+      "cpuRatio": 3.625
+    },
+    {
+      "trial": 0,
+      "scenario": "early-4",
+      "policy": "eager-second",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "834a124a0150d084b5928e707bc6b335812ea53b6b199b59fca422445b5e6c13",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 49.374094,
+          "maxMs": 56.881303,
+          "minMs": 49.060099,
+          "p95Ms": null,
+          "totalMs": 204.859906
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.398233,
+        "processCpuMs": 590,
+        "nativePeakRssKiB": 38168,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.029074,
+          "maxMs": 61.00409,
+          "minMs": 0.023696,
+          "p95Ms": null,
+          "totalMs": 61.127727
+        },
+        "timeToFirstResultIncludingProcessStartMs": 63.011401,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.351341789626825,
+      "cpuRatio": 3.6875
+    },
+    {
+      "trial": 0,
+      "scenario": "early-4",
+      "policy": "delayed-eighth",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "834a124a0150d084b5928e707bc6b335812ea53b6b199b59fca422445b5e6c13",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 48.465262,
+          "maxMs": 55.794553,
+          "minMs": 48.294653,
+          "p95Ms": null,
+          "totalMs": 201.377229
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.472832,
+        "processCpuMs": 580,
+        "nativePeakRssKiB": 38324,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.035704,
+          "maxMs": 60.122954,
+          "minMs": 0.032529,
+          "p95Ms": null,
+          "totalMs": 60.295905
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.494604,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38312,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.3398160123809406,
+      "cpuRatio": 3.625
+    },
+    {
+      "trial": 0,
+      "scenario": "early-4",
+      "policy": "tight-one-year",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "834a124a0150d084b5928e707bc6b335812ea53b6b199b59fca422445b5e6c13",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 49.579634,
+          "maxMs": 57.118588,
+          "minMs": 48.631672,
+          "p95Ms": null,
+          "totalMs": 204.933715
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.013068,
+        "processCpuMs": 580,
+        "nativePeakRssKiB": 38236,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.028603,
+          "maxMs": 59.759845,
+          "minMs": 0.026049,
+          "p95Ms": null,
+          "totalMs": 59.877672
+        },
+        "timeToFirstResultIncludingProcessStartMs": 61.876421,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38132,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.422539790792134,
+      "cpuRatio": 3.625
+    },
+    {
+      "trial": 0,
+      "scenario": "early-16",
+      "policy": "disabled",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "12b30a0f15866504deb16226070db97e8554c2969f13458432b29ea85a8941bd",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 51.069754,
+          "maxMs": 57.700996,
+          "minMs": 48.803306,
+          "p95Ms": null,
+          "totalMs": 823.834659
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.327683,
+        "processCpuMs": 2380,
+        "nativePeakRssKiB": 39476,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.025889,
+          "maxMs": 57.022707,
+          "minMs": 0.024917,
+          "p95Ms": null,
+          "totalMs": 57.46763
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.085011,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38256,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 14.335629623146108,
+      "cpuRatio": 15.866666666666667
+    },
+    {
+      "trial": 0,
+      "scenario": "early-16",
+      "policy": "eager-second",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "12b30a0f15866504deb16226070db97e8554c2969f13458432b29ea85a8941bd",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 49.755579,
+          "maxMs": 57.532072,
+          "minMs": 48.165522,
+          "p95Ms": null,
+          "totalMs": 804.717667
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.482577,
+        "processCpuMs": 2320,
+        "nativePeakRssKiB": 39400,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.023525,
+          "maxMs": 56.936863,
+          "minMs": 0.021652,
+          "p95Ms": null,
+          "totalMs": 57.34220500000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.052137,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38268,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 14.033601724942386,
+      "cpuRatio": 15.466666666666667
+    },
+    {
+      "trial": 0,
+      "scenario": "early-16",
+      "policy": "delayed-eighth",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "12b30a0f15866504deb16226070db97e8554c2969f13458432b29ea85a8941bd",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 49.626845,
+          "maxMs": 55.963785,
+          "minMs": 47.776491,
+          "p95Ms": null,
+          "totalMs": 798.3971879999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.623241,
+        "processCpuMs": 2310,
+        "nativePeakRssKiB": 39468,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.02675,
+          "maxMs": 56.862958,
+          "minMs": 0.025648,
+          "p95Ms": null,
+          "totalMs": 57.31878399999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.0697,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38260,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.929067092560793,
+      "cpuRatio": 15.4
+    },
+    {
+      "trial": 0,
+      "scenario": "early-16",
+      "policy": "tight-one-year",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "12b30a0f15866504deb16226070db97e8554c2969f13458432b29ea85a8941bd",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 50.744893,
+          "maxMs": 61.419191,
+          "minMs": 48.914009,
+          "p95Ms": null,
+          "totalMs": 828.2830570000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.746033,
+        "processCpuMs": 2390,
+        "nativePeakRssKiB": 39560,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.022624,
+          "maxMs": 60.320302,
+          "minMs": 0.021543,
+          "p95Ms": null,
+          "totalMs": 60.70000700000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.500123,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38160,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.645518311060492,
+      "cpuRatio": 14.9375
+    },
+    {
+      "trial": 0,
+      "scenario": "early-32",
+      "policy": "disabled",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "5914f1bbd54c5c07b41df0c4555743158134d37643498826a25fe2ffd9860994",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 51.106599,
+          "maxMs": 59.865691,
+          "minMs": 48.515422,
+          "p95Ms": 52.202674,
+          "totalMs": 1637.399856
+        },
+        "timeToFirstResultIncludingProcessStartMs": 62.19673,
+        "processCpuMs": 4740,
+        "nativePeakRssKiB": 39372,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.032218,
+          "maxMs": 56.196949,
+          "minMs": 0.027081,
+          "p95Ms": 0.071708,
+          "totalMs": 57.25325
+        },
+        "timeToFirstResultIncludingProcessStartMs": 58.657235,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38200,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 28.599247309104722,
+      "cpuRatio": 31.6
+    },
+    {
+      "trial": 0,
+      "scenario": "early-32",
+      "policy": "eager-second",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "5914f1bbd54c5c07b41df0c4555743158134d37643498826a25fe2ffd9860994",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 49.762349,
+          "maxMs": 66.5448,
+          "minMs": 47.975742,
+          "p95Ms": 60.573204,
+          "totalMs": 1629.4959990000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 61.69636,
+        "processCpuMs": 4800,
+        "nativePeakRssKiB": 39484,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.021723,
+          "maxMs": 60.756035,
+          "minMs": 0.020892,
+          "p95Ms": 0.059209,
+          "totalMs": 61.484832000000004
+        },
+        "timeToFirstResultIncludingProcessStartMs": 63.198864,
+        "processCpuMs": 160,
+        "nativePeakRssKiB": 38308,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 26.502406300793016,
+      "cpuRatio": 30
+    },
+    {
+      "trial": 0,
+      "scenario": "early-32",
+      "policy": "delayed-eighth",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "5914f1bbd54c5c07b41df0c4555743158134d37643498826a25fe2ffd9860994",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 49.657382,
+          "maxMs": 65.342485,
+          "minMs": 47.654186,
+          "p95Ms": 62.193109,
+          "totalMs": 1615.762088
+        },
+        "timeToFirstResultIncludingProcessStartMs": 64.319551,
+        "processCpuMs": 4720,
+        "nativePeakRssKiB": 39680,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.022685,
+          "maxMs": 57.845014,
+          "minMs": 0.020841,
+          "p95Ms": 0.175345,
+          "totalMs": 58.768379999999986
+        },
+        "timeToFirstResultIncludingProcessStartMs": 60.002191,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38212,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 27.493731969470662,
+      "cpuRatio": 31.466666666666665
+    },
+    {
+      "trial": 0,
+      "scenario": "early-32",
+      "policy": "tight-one-year",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "5914f1bbd54c5c07b41df0c4555743158134d37643498826a25fe2ffd9860994",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 49.872045,
+          "maxMs": 57.826041,
+          "minMs": 47.779817,
+          "p95Ms": 54.001079,
+          "totalMs": 1607.3690799999995
+        },
+        "timeToFirstResultIncludingProcessStartMs": 60.356151,
+        "processCpuMs": 4670,
+        "nativePeakRssKiB": 39584,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.025688,
+          "maxMs": 56.542958,
+          "minMs": 0.022514,
+          "p95Ms": 0.076035,
+          "totalMs": 57.387515999999984
+        },
+        "timeToFirstResultIncludingProcessStartMs": 59.019127,
+        "processCpuMs": 150,
+        "nativePeakRssKiB": 38320,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 28.0090373662453,
+      "cpuRatio": 31.133333333333333
+    },
+    {
+      "trial": 0,
+      "scenario": "late-1",
+      "policy": "disabled",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "bef05e89c0d0d95981c7a940c1755dfba1fa8f7186b0e935b128f6800796a6d3",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 101.693212,
+          "maxMs": 101.693212,
+          "minMs": 101.693212,
+          "p95Ms": null,
+          "totalMs": 101.693212
+        },
+        "timeToFirstResultIncludingProcessStartMs": 103.815526,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38320,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 101.615684,
+          "maxMs": 101.615684,
+          "minMs": 101.615684,
+          "p95Ms": null,
+          "totalMs": 101.615684
+        },
+        "timeToFirstResultIncludingProcessStartMs": 103.736867,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38376,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0007629530890134,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "late-1",
+      "policy": "eager-second",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "bef05e89c0d0d95981c7a940c1755dfba1fa8f7186b0e935b128f6800796a6d3",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 101.927457,
+          "maxMs": 101.927457,
+          "minMs": 101.927457,
+          "p95Ms": null,
+          "totalMs": 101.927457
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.189372,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38300,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 102.238926,
+          "maxMs": 102.238926,
+          "minMs": 102.238926,
+          "p95Ms": null,
+          "totalMs": 102.238926
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.704268,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38340,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 0.9969535184671248,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "late-1",
+      "policy": "delayed-eighth",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "bef05e89c0d0d95981c7a940c1755dfba1fa8f7186b0e935b128f6800796a6d3",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 108.321279,
+          "maxMs": 108.321279,
+          "minMs": 108.321279,
+          "p95Ms": null,
+          "totalMs": 108.321279
+        },
+        "timeToFirstResultIncludingProcessStartMs": 110.551337,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38268,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 102.316884,
+          "maxMs": 102.316884,
+          "minMs": 102.316884,
+          "p95Ms": null,
+          "totalMs": 102.316884
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.497165,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38368,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0586843027784154,
+      "cpuRatio": 1.0740740740740742
+    },
+    {
+      "trial": 0,
+      "scenario": "late-1",
+      "policy": "tight-one-year",
+      "commandCount": 1,
+      "fullParity": true,
+      "responseSha256": "bef05e89c0d0d95981c7a940c1755dfba1fa8f7186b0e935b128f6800796a6d3",
+      "baseline": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 110.139836,
+          "maxMs": 110.139836,
+          "minMs": 110.139836,
+          "p95Ms": null,
+          "totalMs": 110.139836
+        },
+        "timeToFirstResultIncludingProcessStartMs": 112.177393,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38240,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 1,
+        "latency": {
+          "count": 1,
+          "p50Ms": 106.759992,
+          "maxMs": 106.759992,
+          "minMs": 106.759992,
+          "p95Ms": null,
+          "totalMs": 106.759992
+        },
+        "timeToFirstResultIncludingProcessStartMs": 109.391586,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38428,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.031658338827901,
+      "cpuRatio": 1.0714285714285714
+    },
+    {
+      "trial": 0,
+      "scenario": "late-2",
+      "policy": "disabled",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "a9f1fde3120b9f875f79258ef3f02aa2867b2ba01dcad1935547ae9659dc441b",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 97.894956,
+          "maxMs": 105.872021,
+          "minMs": 97.894956,
+          "p95Ms": null,
+          "totalMs": 203.766977
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.932022,
+        "processCpuMs": 560,
+        "nativePeakRssKiB": 38556,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.060301,
+          "maxMs": 102.69826,
+          "minMs": 0.060301,
+          "p95Ms": null,
+          "totalMs": 102.758561
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.77106,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38368,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.982968377690692,
+      "cpuRatio": 2
+    },
+    {
+      "trial": 0,
+      "scenario": "late-2",
+      "policy": "eager-second",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "a9f1fde3120b9f875f79258ef3f02aa2867b2ba01dcad1935547ae9659dc441b",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 93.497207,
+          "maxMs": 108.96972,
+          "minMs": 93.497207,
+          "p95Ms": null,
+          "totalMs": 202.466927
+        },
+        "timeToFirstResultIncludingProcessStartMs": 111.140717,
+        "processCpuMs": 550,
+        "nativePeakRssKiB": 38540,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.061302,
+          "maxMs": 101.824641,
+          "minMs": 0.061302,
+          "p95Ms": null,
+          "totalMs": 101.885943
+        },
+        "timeToFirstResultIncludingProcessStartMs": 103.889258,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38328,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.9871919622906176,
+      "cpuRatio": 2.037037037037037
+    },
+    {
+      "trial": 0,
+      "scenario": "late-2",
+      "policy": "delayed-eighth",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "a9f1fde3120b9f875f79258ef3f02aa2867b2ba01dcad1935547ae9659dc441b",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 97.635815,
+          "maxMs": 103.983951,
+          "minMs": 97.635815,
+          "p95Ms": null,
+          "totalMs": 201.619766
+        },
+        "timeToFirstResultIncludingProcessStartMs": 105.997952,
+        "processCpuMs": 540,
+        "nativePeakRssKiB": 38384,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.060051,
+          "maxMs": 106.484276,
+          "minMs": 0.060051,
+          "p95Ms": null,
+          "totalMs": 106.544327
+        },
+        "timeToFirstResultIncludingProcessStartMs": 108.886794,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38168,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8923557140681926,
+      "cpuRatio": 1.8620689655172413
+    },
+    {
+      "trial": 0,
+      "scenario": "late-2",
+      "policy": "tight-one-year",
+      "commandCount": 2,
+      "fullParity": true,
+      "responseSha256": "a9f1fde3120b9f875f79258ef3f02aa2867b2ba01dcad1935547ae9659dc441b",
+      "baseline": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 95.216252,
+          "maxMs": 105.411867,
+          "minMs": 95.216252,
+          "p95Ms": null,
+          "totalMs": 200.628119
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.494331,
+        "processCpuMs": 550,
+        "nativePeakRssKiB": 38588,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 2,
+        "latency": {
+          "count": 2,
+          "p50Ms": 0.061843,
+          "maxMs": 102.694514,
+          "minMs": 0.061843,
+          "p95Ms": null,
+          "totalMs": 102.756357
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.906184,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38244,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 1,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.952464303498031,
+      "cpuRatio": 2.037037037037037
+    },
+    {
+      "trial": 0,
+      "scenario": "late-4",
+      "policy": "disabled",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "617d6d8d79ce79ab44ae2517d67f843852a3aff153e939653be701a3e7097017",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 99.479491,
+          "maxMs": 103.103321,
+          "minMs": 88.521524,
+          "p95Ms": null,
+          "totalMs": 391.58212299999997
+        },
+        "timeToFirstResultIncludingProcessStartMs": 105.314039,
+        "processCpuMs": 1090,
+        "nativePeakRssKiB": 38400,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.029274,
+          "maxMs": 105.919423,
+          "minMs": 0.026029,
+          "p95Ms": null,
+          "totalMs": 106.037111
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.91795,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38252,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.6928780811465147,
+      "cpuRatio": 3.892857142857143
+    },
+    {
+      "trial": 0,
+      "scenario": "late-4",
+      "policy": "eager-second",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "617d6d8d79ce79ab44ae2517d67f843852a3aff153e939653be701a3e7097017",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 97.119447,
+          "maxMs": 105.915708,
+          "minMs": 88.08899,
+          "p95Ms": null,
+          "totalMs": 390.921774
+        },
+        "timeToFirstResultIncludingProcessStartMs": 108.388301,
+        "processCpuMs": 1080,
+        "nativePeakRssKiB": 38480,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.029084,
+          "maxMs": 102.038012,
+          "minMs": 0.024116,
+          "p95Ms": null,
+          "totalMs": 102.157822
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.0691,
+        "processCpuMs": 270,
+        "nativePeakRssKiB": 38276,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.826645540661586,
+      "cpuRatio": 4
+    },
+    {
+      "trial": 0,
+      "scenario": "late-4",
+      "policy": "delayed-eighth",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "617d6d8d79ce79ab44ae2517d67f843852a3aff153e939653be701a3e7097017",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 99.636476,
+          "maxMs": 107.019714,
+          "minMs": 94.381692,
+          "p95Ms": null,
+          "totalMs": 406.216637
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.319527,
+        "processCpuMs": 1110,
+        "nativePeakRssKiB": 38396,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.029795,
+          "maxMs": 101.342082,
+          "minMs": 0.025308,
+          "p95Ms": null,
+          "totalMs": 101.457416
+        },
+        "timeToFirstResultIncludingProcessStartMs": 103.428533,
+        "processCpuMs": 260,
+        "nativePeakRssKiB": 38432,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 4.003814142083019,
+      "cpuRatio": 4.269230769230769
+    },
+    {
+      "trial": 0,
+      "scenario": "late-4",
+      "policy": "tight-one-year",
+      "commandCount": 4,
+      "fullParity": true,
+      "responseSha256": "617d6d8d79ce79ab44ae2517d67f843852a3aff153e939653be701a3e7097017",
+      "baseline": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 94.092365,
+          "maxMs": 101.80429,
+          "minMs": 89.165185,
+          "p95Ms": null,
+          "totalMs": 381.804787
+        },
+        "timeToFirstResultIncludingProcessStartMs": 103.94356,
+        "processCpuMs": 1060,
+        "nativePeakRssKiB": 38640,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 4,
+        "latency": {
+          "count": 4,
+          "p50Ms": 0.028694,
+          "maxMs": 102.969037,
+          "minMs": 0.02615,
+          "p95Ms": null,
+          "totalMs": 103.090391
+        },
+        "timeToFirstResultIncludingProcessStartMs": 105.93756,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38312,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 3,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.7035923842795397,
+      "cpuRatio": 3.7857142857142856
+    },
+    {
+      "trial": 0,
+      "scenario": "late-16",
+      "policy": "disabled",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "688440e36748c907ce8e22ea48026df32503d96c2cfeadb632c249530b2cc1b7",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 94.87025,
+          "maxMs": 107.026869,
+          "minMs": 87.175621,
+          "p95Ms": null,
+          "totalMs": 1530.003875
+        },
+        "timeToFirstResultIncludingProcessStartMs": 109.141822,
+        "processCpuMs": 4270,
+        "nativePeakRssKiB": 38508,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.022354,
+          "maxMs": 110.072094,
+          "minMs": 0.021332,
+          "p95Ms": null,
+          "totalMs": 110.45146800000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 112.38293,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38428,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.852272882421081,
+      "cpuRatio": 14.724137931034482
+    },
+    {
+      "trial": 0,
+      "scenario": "late-16",
+      "policy": "eager-second",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "688440e36748c907ce8e22ea48026df32503d96c2cfeadb632c249530b2cc1b7",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 99.667904,
+          "maxMs": 121.753252,
+          "minMs": 93.164043,
+          "p95Ms": null,
+          "totalMs": 1618.424253
+        },
+        "timeToFirstResultIncludingProcessStartMs": 105.03457,
+        "processCpuMs": 4470,
+        "nativePeakRssKiB": 38488,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.022624,
+          "maxMs": 109.089453,
+          "minMs": 0.021913,
+          "p95Ms": null,
+          "totalMs": 109.47066600000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 111.425671,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38400,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 14.784090680511616,
+      "cpuRatio": 15.413793103448276
+    },
+    {
+      "trial": 0,
+      "scenario": "late-16",
+      "policy": "delayed-eighth",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "688440e36748c907ce8e22ea48026df32503d96c2cfeadb632c249530b2cc1b7",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 95.976023,
+          "maxMs": 106.048748,
+          "minMs": 90.653383,
+          "p95Ms": null,
+          "totalMs": 1535.7302669999997
+        },
+        "timeToFirstResultIncludingProcessStartMs": 108.43382,
+        "processCpuMs": 4280,
+        "nativePeakRssKiB": 38496,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.022945,
+          "maxMs": 112.017131,
+          "minMs": 0.018078,
+          "p95Ms": null,
+          "totalMs": 112.39668500000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 114.398727,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38408,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.66348364277825,
+      "cpuRatio": 14.758620689655173
+    },
+    {
+      "trial": 0,
+      "scenario": "late-16",
+      "policy": "tight-one-year",
+      "commandCount": 16,
+      "fullParity": true,
+      "responseSha256": "688440e36748c907ce8e22ea48026df32503d96c2cfeadb632c249530b2cc1b7",
+      "baseline": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 95.96392,
+          "maxMs": 106.531261,
+          "minMs": 91.437646,
+          "p95Ms": null,
+          "totalMs": 1560.2572600000003
+        },
+        "timeToFirstResultIncludingProcessStartMs": 105.216506,
+        "processCpuMs": 4350,
+        "nativePeakRssKiB": 38492,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 16,
+        "latency": {
+          "count": 16,
+          "p50Ms": 0.022965,
+          "maxMs": 111.137661,
+          "minMs": 0.022153,
+          "p95Ms": null,
+          "totalMs": 111.52623799999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 113.340527,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38428,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 15,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 13.990046539541668,
+      "cpuRatio": 14.5
+    },
+    {
+      "trial": 0,
+      "scenario": "late-32",
+      "policy": "disabled",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "7287742bd7e2a67b3403a30c38feb81968e412336ad54bcbcba9c03d118ba7bb",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 98.680422,
+          "maxMs": 105.706801,
+          "minMs": 90.927256,
+          "p95Ms": 105.476954,
+          "totalMs": 3170.904029
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.895226,
+        "processCpuMs": 8850,
+        "nativePeakRssKiB": 38676,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.022544,
+          "maxMs": 105.491591,
+          "minMs": 0.021302,
+          "p95Ms": 0.305782,
+          "totalMs": 106.551761
+        },
+        "timeToFirstResultIncludingProcessStartMs": 107.638081,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38336,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 29.759283180688115,
+      "cpuRatio": 31.607142857142858
+    },
+    {
+      "trial": 0,
+      "scenario": "late-32",
+      "policy": "eager-second",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "7287742bd7e2a67b3403a30c38feb81968e412336ad54bcbcba9c03d118ba7bb",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 96.476845,
+          "maxMs": 105.308486,
+          "minMs": 88.931425,
+          "p95Ms": 104.952598,
+          "totalMs": 3097.484532
+        },
+        "timeToFirstResultIncludingProcessStartMs": 108.393934,
+        "processCpuMs": 8670,
+        "nativePeakRssKiB": 38540,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.023345,
+          "maxMs": 118.099142,
+          "minMs": 0.021021,
+          "p95Ms": 0.243227,
+          "totalMs": 120.28492900000006
+        },
+        "timeToFirstResultIncludingProcessStartMs": 120.533477,
+        "processCpuMs": 300,
+        "nativePeakRssKiB": 38312,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 25.751227171610154,
+      "cpuRatio": 28.9
+    },
+    {
+      "trial": 0,
+      "scenario": "late-32",
+      "policy": "delayed-eighth",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "7287742bd7e2a67b3403a30c38feb81968e412336ad54bcbcba9c03d118ba7bb",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 96.824011,
+          "maxMs": 105.558019,
+          "minMs": 88.688919,
+          "p95Ms": 103.201176,
+          "totalMs": 3100.4454869999995
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.667339,
+        "processCpuMs": 8710,
+        "nativePeakRssKiB": 38620,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.025258,
+          "maxMs": 106.242989,
+          "minMs": 0.016305,
+          "p95Ms": 0.058338,
+          "totalMs": 107.06915799999997
+        },
+        "timeToFirstResultIncludingProcessStartMs": 108.203388,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38336,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 28.957409817307056,
+      "cpuRatio": 31.107142857142858
+    },
+    {
+      "trial": 0,
+      "scenario": "late-32",
+      "policy": "tight-one-year",
+      "commandCount": 32,
+      "fullParity": true,
+      "responseSha256": "7287742bd7e2a67b3403a30c38feb81968e412336ad54bcbcba9c03d118ba7bb",
+      "baseline": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 95.615217,
+          "maxMs": 104.335854,
+          "minMs": 87.690251,
+          "p95Ms": 102.120008,
+          "totalMs": 3065.8764500000007
+        },
+        "timeToFirstResultIncludingProcessStartMs": 104.988209,
+        "processCpuMs": 8570,
+        "nativePeakRssKiB": 38528,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 32,
+        "latency": {
+          "count": 32,
+          "p50Ms": 0.022594,
+          "maxMs": 109.723252,
+          "minMs": 0.021823,
+          "p95Ms": 0.061042,
+          "totalMs": 110.46855099999998
+        },
+        "timeToFirstResultIncludingProcessStartMs": 111.958988,
+        "processCpuMs": 290,
+        "nativePeakRssKiB": 38312,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 31,
+          "dayStores": 1,
+          "dayEvictions": 0,
+          "dayEntries": 1,
+          "dayPayloadBytes": 40,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 27.75338702505477,
+      "cpuRatio": 29.551724137931036
+    },
+    {
+      "trial": 0,
+      "scenario": "distinct-c-18",
+      "policy": "disabled",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "8cf09b21c96dceb32becbe72410a4146251320a2dfc17a4c66743fec07b75004",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 94.008504,
+          "maxMs": 160.698206,
+          "minMs": 42.038987,
+          "p95Ms": null,
+          "totalMs": 1813.5685819999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 96.278883,
+        "processCpuMs": 5010,
+        "nativePeakRssKiB": 56848,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 91.816933,
+          "maxMs": 159.598569,
+          "minMs": 40.086418,
+          "p95Ms": null,
+          "totalMs": 1798.4587600000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.984205,
+        "processCpuMs": 4970,
+        "nativePeakRssKiB": 57504,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 18,
+          "dayEvictions": 0,
+          "dayEntries": 18,
+          "dayPayloadBytes": 720,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0084015393269288,
+      "cpuRatio": 1.0080482897384306
+    },
+    {
+      "trial": 0,
+      "scenario": "distinct-c-18",
+      "policy": "eager-second",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "8cf09b21c96dceb32becbe72410a4146251320a2dfc17a4c66743fec07b75004",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 94.250744,
+          "maxMs": 156.081776,
+          "minMs": 41.70338,
+          "p95Ms": null,
+          "totalMs": 1817.235522
+        },
+        "timeToFirstResultIncludingProcessStartMs": 97.105374,
+        "processCpuMs": 5020,
+        "nativePeakRssKiB": 57192,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 92.185966,
+          "maxMs": 153.322709,
+          "minMs": 42.568597,
+          "p95Ms": null,
+          "totalMs": 1791.0432240000005
+        },
+        "timeToFirstResultIncludingProcessStartMs": 94.445167,
+        "processCpuMs": 4950,
+        "nativePeakRssKiB": 58532,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 18,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 18,
+          "dayEvictions": 0,
+          "dayEntries": 18,
+          "dayPayloadBytes": 720,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0146240457231976,
+      "cpuRatio": 1.0141414141414142
+    },
+    {
+      "trial": 0,
+      "scenario": "distinct-c-18",
+      "policy": "delayed-eighth",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "8cf09b21c96dceb32becbe72410a4146251320a2dfc17a4c66743fec07b75004",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 91.367078,
+          "maxMs": 155.376288,
+          "minMs": 37.499041,
+          "p95Ms": null,
+          "totalMs": 1785.9322160000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.604958,
+        "processCpuMs": 4910,
+        "nativePeakRssKiB": 56584,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 89.978581,
+          "maxMs": 157.807398,
+          "minMs": 37.539121,
+          "p95Ms": null,
+          "totalMs": 1775.5011290000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.161889,
+        "processCpuMs": 4910,
+        "nativePeakRssKiB": 58276,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 18,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 18,
+          "dayEvictions": 0,
+          "dayEntries": 18,
+          "dayPayloadBytes": 720,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0058750100631448,
+      "cpuRatio": 1
+    },
+    {
+      "trial": 0,
+      "scenario": "distinct-c-18",
+      "policy": "tight-one-year",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "8cf09b21c96dceb32becbe72410a4146251320a2dfc17a4c66743fec07b75004",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 90.429573,
+          "maxMs": 153.934881,
+          "minMs": 40.879535,
+          "p95Ms": null,
+          "totalMs": 1767.803792
+        },
+        "timeToFirstResultIncludingProcessStartMs": 99.013513,
+        "processCpuMs": 4880,
+        "nativePeakRssKiB": 56608,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 89.549624,
+          "maxMs": 153.652525,
+          "minMs": 39.442085,
+          "p95Ms": null,
+          "totalMs": 1753.1345380000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 92.360197,
+        "processCpuMs": 4840,
+        "nativePeakRssKiB": 58468,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 18,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 0,
+          "dayStores": 18,
+          "dayEvictions": 0,
+          "dayEntries": 18,
+          "dayPayloadBytes": 720,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.0083674433889909,
+      "cpuRatio": 1.0082644628099173
+    },
+    {
+      "trial": 0,
+      "scenario": "rotating-9-by-two",
+      "policy": "disabled",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "1df3676266d5e7d784e2118004da242886cd7fba8abfa1689c5d34a71f19b5a3",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 90.003739,
+          "maxMs": 156.191198,
+          "minMs": 66.234453,
+          "p95Ms": null,
+          "totalMs": 1817.2738229999995
+        },
+        "timeToFirstResultIncludingProcessStartMs": 94.879712,
+        "processCpuMs": 5010,
+        "nativePeakRssKiB": 56144,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 0.101924,
+          "maxMs": 148.996768,
+          "minMs": 0.041052,
+          "p95Ms": null,
+          "totalMs": 900.6623490000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 91.015357,
+        "processCpuMs": 2490,
+        "nativePeakRssKiB": 56536,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 9,
+          "dayStores": 9,
+          "dayEvictions": 0,
+          "dayEntries": 9,
+          "dayPayloadBytes": 360,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 2.017708217755197,
+      "cpuRatio": 2.0120481927710845
+    },
+    {
+      "trial": 0,
+      "scenario": "rotating-9-by-two",
+      "policy": "eager-second",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "1df3676266d5e7d784e2118004da242886cd7fba8abfa1689c5d34a71f19b5a3",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 87.349009,
+          "maxMs": 159.943896,
+          "minMs": 69.273552,
+          "p95Ms": null,
+          "totalMs": 1805.1979359999998
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.14795,
+        "processCpuMs": 4980,
+        "nativePeakRssKiB": 56116,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 0.101684,
+          "maxMs": 147.828334,
+          "minMs": 0.042955,
+          "p95Ms": null,
+          "totalMs": 875.7612700000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 93.610218,
+        "processCpuMs": 2430,
+        "nativePeakRssKiB": 56068,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 9,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 9,
+          "dayStores": 9,
+          "dayEvictions": 0,
+          "dayEntries": 9,
+          "dayPayloadBytes": 360,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 2.061289986025529,
+      "cpuRatio": 2.049382716049383
+    },
+    {
+      "trial": 0,
+      "scenario": "rotating-9-by-two",
+      "policy": "delayed-eighth",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "1df3676266d5e7d784e2118004da242886cd7fba8abfa1689c5d34a71f19b5a3",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 90.051085,
+          "maxMs": 165.609038,
+          "minMs": 67.565237,
+          "p95Ms": null,
+          "totalMs": 1840.7812569999996
+        },
+        "timeToFirstResultIncludingProcessStartMs": 90.950082,
+        "processCpuMs": 5080,
+        "nativePeakRssKiB": 56056,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 0.101383,
+          "maxMs": 147.109128,
+          "minMs": 0.042555,
+          "p95Ms": null,
+          "totalMs": 922.9017990000004
+        },
+        "timeToFirstResultIncludingProcessStartMs": 100.239506,
+        "processCpuMs": 2540,
+        "nativePeakRssKiB": 56156,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 9,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 9,
+          "dayStores": 9,
+          "dayEvictions": 0,
+          "dayEntries": 9,
+          "dayPayloadBytes": 360,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.9945580981579587,
+      "cpuRatio": 2
+    },
+    {
+      "trial": 0,
+      "scenario": "rotating-9-by-two",
+      "policy": "tight-one-year",
+      "commandCount": 18,
+      "fullParity": true,
+      "responseSha256": "1df3676266d5e7d784e2118004da242886cd7fba8abfa1689c5d34a71f19b5a3",
+      "baseline": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 87.986651,
+          "maxMs": 149.671341,
+          "minMs": 68.900035,
+          "p95Ms": null,
+          "totalMs": 1801.5603600000002
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.918273,
+        "processCpuMs": 5000,
+        "nativePeakRssKiB": 56148,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 18,
+        "latency": {
+          "count": 18,
+          "p50Ms": 0.107452,
+          "maxMs": 156.139612,
+          "minMs": 0.041082,
+          "p95Ms": null,
+          "totalMs": 911.7827909999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 95.533702,
+        "processCpuMs": 2520,
+        "nativePeakRssKiB": 55820,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 9,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 9,
+          "dayStores": 9,
+          "dayEvictions": 0,
+          "dayEntries": 9,
+          "dayPayloadBytes": 360,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.9758657190975657,
+      "cpuRatio": 1.9841269841269842
+    },
+    {
+      "trial": 0,
+      "scenario": "sparse-same-year-8",
+      "policy": "disabled",
+      "commandCount": 8,
+      "fullParity": true,
+      "responseSha256": "48c4f599b1fca22e0fcbdd8516689e4affa7f6c22b3b7ed1577827efb6797383",
+      "baseline": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 5.59048,
+          "maxMs": 88.090548,
+          "minMs": 0.168805,
+          "p95Ms": null,
+          "totalMs": 336.70504000000005
+        },
+        "timeToFirstResultIncludingProcessStartMs": 7.839866,
+        "processCpuMs": 930,
+        "nativePeakRssKiB": 38248,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 0.033521,
+          "maxMs": 88.430371,
+          "minMs": 0.025268,
+          "p95Ms": null,
+          "totalMs": 177.45935599999999
+        },
+        "timeToFirstResultIncludingProcessStartMs": 6.862952,
+        "processCpuMs": 470,
+        "nativePeakRssKiB": 38736,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 0,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 0,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 4,
+          "dayStores": 4,
+          "dayEvictions": 0,
+          "dayEntries": 4,
+          "dayPayloadBytes": 160,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 1.8973642618200421,
+      "cpuRatio": 1.9787234042553192
+    },
+    {
+      "trial": 0,
+      "scenario": "sparse-same-year-8",
+      "policy": "eager-second",
+      "commandCount": 8,
+      "fullParity": true,
+      "responseSha256": "48c4f599b1fca22e0fcbdd8516689e4affa7f6c22b3b7ed1577827efb6797383",
+      "baseline": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 4.820367,
+          "maxMs": 91.062115,
+          "minMs": 0.168945,
+          "p95Ms": null,
+          "totalMs": 338.68606200000005
+        },
+        "timeToFirstResultIncludingProcessStartMs": 7.044245,
+        "processCpuMs": 940,
+        "nativePeakRssKiB": 38212,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 0.02663,
+          "maxMs": 101.743661,
+          "minMs": 0.025148,
+          "p95Ms": null,
+          "totalMs": 106.966796
+        },
+        "timeToFirstResultIncludingProcessStartMs": 7.29214,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38376,
+        "memo": {
+          "hits": 2,
+          "builds": 1,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 161880,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 1,
+          "dayHits": 4,
+          "dayStores": 4,
+          "dayEvictions": 0,
+          "dayEntries": 4,
+          "dayPayloadBytes": 160,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.166272849754236,
+      "cpuRatio": 3.357142857142857
+    },
+    {
+      "trial": 0,
+      "scenario": "sparse-same-year-8",
+      "policy": "delayed-eighth",
+      "commandCount": 8,
+      "fullParity": true,
+      "responseSha256": "48c4f599b1fca22e0fcbdd8516689e4affa7f6c22b3b7ed1577827efb6797383",
+      "baseline": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 4.810673,
+          "maxMs": 92.770954,
+          "minMs": 0.167844,
+          "p95Ms": null,
+          "totalMs": 365.439846
+        },
+        "timeToFirstResultIncludingProcessStartMs": 6.923223,
+        "processCpuMs": 1000,
+        "nativePeakRssKiB": 38224,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 0.176306,
+          "maxMs": 85.663964,
+          "minMs": 0.025879,
+          "p95Ms": null,
+          "totalMs": 174.320647
+        },
+        "timeToFirstResultIncludingProcessStartMs": 6.840237,
+        "processCpuMs": 470,
+        "nativePeakRssKiB": 38316,
+        "memo": {
+          "hits": 0,
+          "builds": 0,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 0,
+          "payloadBudgetBytes": 8388608,
+          "promoteAfter": 8,
+          "serviceYearStructBuilds": 0,
+          "dayHits": 4,
+          "dayStores": 4,
+          "dayEvictions": 0,
+          "dayEntries": 4,
+          "dayPayloadBytes": 160,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 2.096365819477483,
+      "cpuRatio": 2.127659574468085
+    },
+    {
+      "trial": 0,
+      "scenario": "sparse-same-year-8",
+      "policy": "tight-one-year",
+      "commandCount": 8,
+      "fullParity": true,
+      "responseSha256": "48c4f599b1fca22e0fcbdd8516689e4affa7f6c22b3b7ed1577827efb6797383",
+      "baseline": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 4.738615,
+          "maxMs": 88.558254,
+          "minMs": 0.166972,
+          "p95Ms": null,
+          "totalMs": 350.9564410000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 6.896352,
+        "processCpuMs": 970,
+        "nativePeakRssKiB": 38128,
+        "memo": null
+      },
+      "candidate": {
+        "requestCount": 8,
+        "latency": {
+          "count": 8,
+          "p50Ms": 0.023275,
+          "maxMs": 102.949641,
+          "minMs": 0.022154,
+          "p95Ms": null,
+          "totalMs": 107.86336000000001
+        },
+        "timeToFirstResultIncludingProcessStartMs": 6.828409,
+        "processCpuMs": 280,
+        "nativePeakRssKiB": 38336,
+        "memo": {
+          "hits": 2,
+          "builds": 1,
+          "evictions": 0,
+          "keys": 1,
+          "payloadBytes": 161880,
+          "payloadBudgetBytes": 180000,
+          "promoteAfter": 2,
+          "serviceYearStructBuilds": 1,
+          "dayHits": 4,
+          "dayStores": 4,
+          "dayEvictions": 0,
+          "dayEntries": 4,
+          "dayPayloadBytes": 160,
+          "dayBudgetBytes": 65536
+        }
+      },
+      "totalWallRatio": 3.253713225695918,
+      "cpuRatio": 3.4642857142857144
+    }
+  ]
+}
