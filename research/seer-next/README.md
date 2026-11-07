@@ -67,3 +67,5 @@ The engine may eventually use several interchangeable strategies and/or builds: 
 - [11_ONLINE_UNKNOWN_COST_LIMIT.md](11_ONLINE_UNKNOWN_COST_LIMIT.md): impossibility theorem under genuinely unknown request costs.
 
 For every experiment, retain its source, exact environment, command, raw measurements, summary, correctness artifacts, and reason to adopt/reject. Do not commit large generated data, secrets, or transient toolchains. A green run alone is not a benchmark result.
+
+- **Next isolated experiment (not adopted):** `SEER_NEXT_Y_STRUCT_REUSE=1` (default 0) shares canonical year structure with the direct-Y memo table. An independent A/B harness is designed to check **108 additional complete Y replies**, six cache/interoperability scenarios and a 512MiB capped case, while the existing 144-reply memo verification is retained. No new acceleration is claimed until completed CI. See [39_Y_STRUCTURE_REUSE_PROTOCOL.md](39_Y_STRUCTURE_REUSE_PROTOCOL.md).
