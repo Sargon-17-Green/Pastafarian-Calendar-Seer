@@ -165,6 +165,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_rns_d_workers.mjs --trials=2 --output=research/seer-next/results/working/rns-d-workers.json
           node -e "const x=require('./research/seer-next/results/working/rns-d-workers.json');if(!x.fullParity||x.contexts!==12||x.requestsPerContext!==8||x.primaryNativeReplies!==288||x.cappedNativeReplies!==24||x.groups.length!==9||x.results.some(v=>!v.fullParity||!v.rows.thread.fullParity||!v.rows.process.fullParity||!v.rows.original.fullParity)||['original','thread','process'].some(m=>!x.cappedEvidence[m].fullParity)||x.cappedEvidence.thread.effectiveLimitBytes!==536870912||x.cappedEvidence.process.effectiveLimitBytes!==536870912)throw Error('Incomplete D concurrency RNS cache result');console.log('RNS_D_WORKERS',JSON.stringify({cpu:x.cpu,contexts:x.contexts,groups:x.groups.map(g=>({scope:g.mode,workers:g.workers,dMs:g.dTotalMs,all:g.totalMs,rss:g.maxVmHwmKiB,vm:g.maxVmPeakKiB,hits:g.cacheHits}))}));"
+      - name: Measure real 512 768 1024 1280MiB virtual-space frontier for D workers 1 2 3
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_cap_frontier.mjs --output=research/seer-next/results/working/rns-cap-frontier.json
+          node -e "const x=require('./research/seer-next/results/working/rns-cap-frontier.json');if(x.attempts!==48||x.oracleFullReplies!==16||x.essentialGates.length!==12||x.essentialGates.some(v=>v.status!=='ACCEPTED')||!x.fullParityOfAllCompletedReplies||x.summary.length!==6||x.results.some(v=>v.status==='ACCEPTED'&&(!v.completeFullParity||v.completedReplies!==8||v.effectiveLimitBytes!==v.capMiB*1048576))||x.results.some(v=>v.status==='RESOURCE_LIMITED'&&(!v.resourceFailure||v.completeFullParity)))throw Error('Incomplete or incorrect RNS address-space frontier');console.log('RNS_CAP_FRONTIER',JSON.stringify({cpu:x.cpu,attempts:x.attempts,accepted:x.acceptedTrials,resourceLimited:x.resourceLimitedTrials,summary:x.summary}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -228,6 +233,7 @@ jobs:
             research/seer-next/results/working/rns-mixed-wire.json
             research/seer-next/results/working/rns-process-shared.json
             research/seer-next/results/working/rns-d-workers.json
+            research/seer-next/results/working/rns-cap-frontier.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -241,7 +247,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
