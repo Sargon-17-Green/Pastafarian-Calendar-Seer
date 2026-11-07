@@ -55,7 +55,10 @@ function start(mode,traceFile='',capBytes=0){
    OMP_THREAD_LIMIT:'8',
    OMP_DYNAMIC:'FALSE',
    OMP_STACKSIZE:'2M',
-   SEER_DIAGONAL_THREADS:'2',
+   // The 512MiB address-space cap cannot sustain the two native D
+   // dispatch threads plus OpenMP/replay stacks in this observed CI profile.
+   // Keep the uncapped two-worker integration A/B; exercise capped D serially.
+   SEER_DIAGONAL_THREADS:capBytes?'1':'2',
    SEER_NEXT_COLD_RNS_CACHE_STATS_FILE:probe?traceFile:'',
    ...(capBytes?{SEER_NEXT_MAX_VIRTUAL_BYTES:String(capBytes)}:{})
   },stdio:['pipe','pipe','pipe']
@@ -289,7 +292,7 @@ try{
   cappedNativeReplies:capCommands.length*2,fullParity:true,
   workerProfile:{rns:4,replay:2},
   disabledResultCaches:true,hostThreadLimits:{ompNumThreads:4,ompThreadLimit:8,
-   ompStack:'2M',diagonalThreads:2},groups,results,
+   ompStack:'2M',diagonalThreadsUncapped:2,diagonalThreadsCapped:1},groups,results,
   cappedEvidence:capped.evidence,
   caveats:[
    'Actual research hybrid control uses unchanged prototype arithmetic, while experimental cold probe uses independent research core/weave.',
@@ -299,6 +302,8 @@ try{
    'All record/day memo caches are disabled, so this isolates RNS initializer reuse.',
    'Two cache slots bound entries but not allocated bytes; process VmHWM is measured and not a portable hard limit.',
    'Linux RLIMIT_AS is an address-space cap, not a physical RAM guarantee.',
+   'Under 512MiB the D dispatcher uses one worker; two-worker capped D previously failed at command index 8 with Resource temporarily unavailable in completed CI 42395106652. The capped test does NOT certify two-worker D.',
+   'Uncapped mixed matrix retains two D dispatcher workers; capped versus uncapped wall timings are NOT directly comparable.',
    'Single-host observations cannot prove universal performance or correctness.'
   ]
  };
