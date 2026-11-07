@@ -175,6 +175,11 @@ jobs:
           set -euo pipefail
           node research/seer-next/scripts/profile_d_cap_policy.mjs --output=research/seer-next/results/working/d-cap-policy.json
           node -e "const x=require('./research/seer-next/results/working/d-cap-policy.json');if(x.contexts!==12||x.sourceOracleReplies!==16||x.candidateReplies!==192||!x.allFullParity||!x.everyEffectiveKernelCapVerified||!x.policyReadbackVerified||x.summary.length!==6||x.results.some(r=>!r.static.fullParity||!r.policy.fullParity||r.policy.dispatcherTrace.length!==3))throw Error('Incomplete research D-cap scheduling policy verification');console.log('D_CAP_POLICY',JSON.stringify({cpu:x.cpu,contexts:x.contexts,summary:x.summary}));"
+      - name: Verify RLIMIT_AS D policy threshold and disabled-path boundary regressions
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_d_cap_policy_boundaries.mjs --output=research/seer-next/results/working/d-cap-policy-boundaries.json
+          node -e "const x=require('./research/seer-next/results/working/d-cap-policy-boundaries.json');if(!x.fullParity||!x.kernelCapEvidence||!x.allPolicyTracesExact||x.contexts!==28||x.scenarioCount!==7||x.originalFullReplies!==16||x.candidateFullReplies!==224||x.negativeCaseCount!==4||x.results.some(r=>r.requests!==8||!r.fullParity)||x.negative.some(r=>!r.validated))throw Error('Incomplete D-cap policy boundary / default / invalid-mode evidence');console.log('D_CAP_POLICY_BOUNDARIES',JSON.stringify({cpu:x.cpu,contexts:x.contexts,negative:x.negativeCaseCount,scenarios:x.cases.map(s=>s.key)}));"
       - name: Enforce and measure Linux virtual-address-space limit
         run: |
           set -euo pipefail
@@ -240,6 +245,7 @@ jobs:
             research/seer-next/results/working/rns-d-workers.json
             research/seer-next/results/working/rns-cap-frontier.json
             research/seer-next/results/working/d-cap-policy.json
+            research/seer-next/results/working/d-cap-policy-boundaries.json
             research/seer-next/results/working/full-year-512.json
             research/seer-next/results/working/full-year-warm-cold.json
             research/seer-next/results/working/y-export-direct-memo.json
@@ -253,7 +259,7 @@ jobs:
           set -euo pipefail
           DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
           mkdir -p "$DEST"
-          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
           cat > "$DEST/README.md" <<EOF
           # Seer Next independent oracle, full-year and hybrid raw CI evidence
 
