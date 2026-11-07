@@ -1,0 +1,376 @@
+name: Seer Next isolated native year-cache experiment
+
+on:
+  push:
+    branches: [research/seer-next-first-principles-2026-11-06]
+    paths:
+      - 'research/seer-next/**'
+      - 'bench/next/**'
+      - '.github/workflows/seer-next-experiment.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write  # research branch only: archive verified raw output; no deploy or release
+
+concurrency:
+  group: seer-next-experiment-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-native-avx2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Syntax-check all research JavaScript before native compilation
+        run: |
+          set -euo pipefail
+          find research/seer-next/scripts -type f -name '*.mjs' -print0 | xargs -0 -r -n1 node --check
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build unchanged baseline
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Build isolated experimental candidate
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_candidate.sh
+      - name: Build isolated hybrid day-plus-year cache candidate
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_hybrid.sh
+      - name: Differential stress across calculation days and cache eviction
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_candidate.mjs --output=research/seer-next/results/working/differential.json
+          cat research/seer-next/results/working/differential.json
+      - name: Compare full numeric records and warm/cumulative work
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/compare_candidate.mjs --repetitions=32 --output=research/seer-next/results/working/ab.json
+          cat research/seer-next/results/working/ab.json
+      - name: Verify hybrid cache eviction, small budgets and range correctness
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_hybrid_eviction.mjs --output=research/seer-next/results/working/hybrid-eviction.json
+          node -e "const x=require('./research/seer-next/results/working/hybrid-eviction.json');console.log('HYBRID_EVICTION',JSON.stringify({verdict:x.verdict,phases:x.phaseCount}));"
+      - name: Build cold-stage instrumented hybrid (baseline core retained independently)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_cold_probe.sh
+      - name: Test failure after partial native D worker launch (hybrid and probe)
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_d_thread_launch_cleanup.mjs --engines=hybrid,probe --output=research/seer-next/results/working/d-thread-launch-cleanup.json
+          node -e "const x=require('./research/seer-next/results/working/d-thread-launch-cleanup.json');if(!x.fullyVerified||x.cases!==2||x.sourceOracleReplies!==2||x.results.some(r=>!r.nativeProcessSurvived||r.rejectedDRequests!==2||r.successfulOriginalEqualRReplies!==3||r.successfulOriginalEqualYReplies!==1))throw Error('Incomplete native partial-thread-creation recovery regression');console.log('D_THREAD_LAUNCH_RECOVERY',JSON.stringify(x.results));"
+      - name: Build independent canonical saved-sum oracle
+        run: |
+          set -euo pipefail
+          g++ -O2 -std=c++20 -Iprototype/tools prototype/tools/canonical_vector_oracle.cpp -o research/seer-next/build/independent_canonical_oracle
+      - name: Verify hybrid and original against independent canonical oracle
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_independent_oracle.mjs --output=research/seer-next/results/working/oracle.json
+          node -e "const x=require('./research/seer-next/results/working/oracle.json');console.log('INDEPENDENT_ORACLE_SUMMARY',JSON.stringify({caseCount:x.count,verdict:x.verdict,dayHits:x.hybridMemo.dayHits}));"
+      - name: Validate exact second-day dynamic recurrence against baseline and independent oracle
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_second_day_shortcut.mjs --output=research/seer-next/results/working/second-day-exact.json
+          node -e "const x=require('./research/seer-next/results/working/second-day-exact.json');console.log('SECOND_DAY_EXACT',JSON.stringify({requests:x.requests,oracle:x.independentOracleRequests,ratio:x.totalRatio}));"
+      - name: Capture exact cold-stage decomposition with one process per request
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/measure_cold_stages.mjs --trials=2 --output=research/seer-next/results/working/cold-stages.json
+          node -e "const x=require('./research/seer-next/results/working/cold-stages.json');console.log('COLD_STAGE_SUMMARY',JSON.stringify({cases:x.resultCount,tests:x.trials}));"
+      - name: Evaluate RNS and replay-thread cold-cost/memory tradeoffs
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_workers.mjs --trials=2 --output=research/seer-next/results/working/cold-rns-workers.json
+          node -e "const x=require('./research/seer-next/results/working/cold-rns-workers.json');console.log('RNS_WORKERS',JSON.stringify({samples:x.results.length,policies:x.policies.length}));"
+      - name: Differential A/B of shared prime-independent Pascal plan and per-pack construction
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_shared_plan.mjs --trials=2 --output=research/seer-next/results/working/rns-shared-plan.json
+          node -e "const x=require('./research/seer-next/results/working/rns-shared-plan.json');console.log('SHARED_RNS_PLAN',JSON.stringify({cases:x.results.length,ratio:x.ratio,fullParity:x.fullJsonParity}));"
+      - name: Factorial scratch buffer reuse A/B with full parity, native HWM and pack phases
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_fact_pool.mjs --trials=2 --output=research/seer-next/results/working/rns-fact-pool.json
+          node -e "const x=require('./research/seer-next/results/working/rns-fact-pool.json');console.log('RNS_FACT_POOL',JSON.stringify({cases:x.results.length,ratio:x.ratio,fullParity:x.fullJsonParity,memorySamples:x.memorySnapshots.length}));"
+      - name: Compare 3-8 RNS workers and replay-worker tradeoffs on independent cold processes
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_scaling.mjs --trials=2 --output=research/seer-next/results/working/rns-worker-scaling.json
+          node -e "const x=require('./research/seer-next/results/working/rns-worker-scaling.json');console.log('RNS_WORKER_SCALING',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,caseCount:x.samples.length}));"
+      - name: Confirm cold 4-RNS worker scaling in six paired trials
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_rns_confirm.mjs --trials=6 --output=research/seer-next/results/working/rns-four-confirm.json
+          node -e "const x=require('./research/seer-next/results/working/rns-four-confirm.json');console.log('RNS4_CONFIRM',JSON.stringify({comparisons:x.results.length,policies:x.policies.length,trials:x.trials}));"
+      - name: Verify experimental42 and older profiles with cross-year R/Y/D full JSON parity
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_experimental4_profile.mjs --output=research/seer-next/results/working/experimental4-parity.json
+          node -e "const x=require('./research/seer-next/results/working/experimental4-parity.json');if(!x.allPassed||x.profiles.length!==4||x.requests.length!==27)throw Error('Missing experimental42 parity evidence');console.log('RNS42_PROFILE_PARITY',JSON.stringify({profiles:x.profiles.length,queries:x.requests.length,passed:x.allPassed}));"
+      - name: Cross-year exact cold profile comparison across 4999-5001
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_cross_year.mjs --trials=3 --output=research/seer-next/results/working/rns-cross-year.json
+          node -e "const x=require('./research/seer-next/results/working/rns-cross-year.json');console.log('RNS_CROSS_YEAR',JSON.stringify({comparisons:x.results.length,years:x.years,calcs:x.calculationDays}));"
+      - name: Re-evaluate exact 4-worker replay with 1-4 threads across canonical years
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_replay_sweep.mjs --trials=3 --output=research/seer-next/results/working/rns-replay-sweep.json
+          node -e "const x=require('./research/seer-next/results/working/rns-replay-sweep.json');if(x.results.length!==180)throw Error('Incomplete RNS replay sweep');console.log('RNS_REPLAY_SWEEP',JSON.stringify({cases:x.results.length,years:x.years,policies:x.policies}));"
+      - name: Sweep cold RNS superblock sizes with fixed four/two workers
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_superblock_sweep.mjs --trials=2 --output=research/seer-next/results/working/cold-superblock-sweep.json
+          node -e "const x=require('./research/seer-next/results/working/cold-superblock-sweep.json');if(x.results.length!==120||x.policies.length!==5||x.samples.length!==12||x.results.some(v=>!v.fullJsonParity)||x.results.some(v=>v.policy.rns!==4||v.policy.replay!==2))throw Error('Incomplete exact superblock sweep');console.log('COLD_SUPERBLOCK_SWEEP',JSON.stringify({cpu:x.cpu,results:x.results.length,policies:x.policies.map(p=>p.superblock)}));"
+      - name: Compare failure-responsive adaptive superblock against fixed policies on held-out years
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_cold_adaptive_block.mjs --trials=3 --output=research/seer-next/results/working/cold-adaptive-block.json
+          node -e "const x=require('./research/seer-next/results/working/cold-adaptive-block.json');if(x.results.length!==192||x.policies.length!==4||x.samples.length!==16||x.trials!==3||x.results.some(v=>!v.fullJsonParity)||x.results.some(v=>v.policy.rns!==4||v.policy.replay!==2)||x.results.filter(v=>v.policy.adaptive).length!==48||x.results.some(v=>v.adaptiveTrace.enabled!==Number(v.policy.adaptive)))throw Error('Incomplete adaptive RNS exact-holdout evidence');console.log('COLD_ADAPTIVE_BLOCK',JSON.stringify({cpu:x.cpu,rows:x.results.length,holdoutYears:x.years,policies:x.policies}));"
+      - name: Compare cold RNS engine initialization reuse across repeated exact R requests
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_engine_reuse.mjs --trials=2 --output=research/seer-next/results/working/rns-engine-reuse.json
+          node -e "const x=require('./research/seer-next/results/working/rns-engine-reuse.json');if(x.contexts!==20||x.candidateNativeRReplies!==125||x.referenceNativeRReplies!==65||x.summary.length!==3||!x.fullParity||x.results.some(v=>!v.completeParity)||x.results.some(v=>v.rows.reuse.trace.map(t=>t.hit).join(',')!=='0,1,1')||x.results.some(v=>v.rows.control.trace.map(t=>t.hit).join(',')!=='0,0,0')||x.eviction.trace.map(t=>t.hit).join(',')!=='0,0,0')throw Error('Incomplete exact RNS engine reuse evidence');console.log('RNS_ENGINE_REUSE',JSON.stringify({cpu:x.cpu,rows:x.contexts,summary:x.summary.map(g=>({kind:g.kind,first:g.firstRTotalMs,second:g.secondRTotalMs,third:g.thirdRTotalMs,all:g.allThreeMs,vm:g.maxVmPeakKiB,rss:g.maxRssHighWaterKiB}))}));"
+      - name: Compare two-slot bounded RNS initializer LRU against one-slot and original
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_two_slot_lru.mjs --trials=2 --output=research/seer-next/results/working/rns-two-slot-lru.json
+          node -e "const x=require('./research/seer-next/results/working/rns-two-slot-lru.json');if(!x.fullParity||x.contexts!==8||x.groups.length!==3||x.trialsData.length!==8||x.trialsData.some(v=>!v.fullParity)||x.trialsData.some(v=>v.rows.slots2.trace.map(q=>q.hit).join(',')!=='0,0,1,1')||x.trialsData.some(v=>v.rows.slots1.trace.map(q=>q.hit).join(',')!=='0,0,0,0')||x.eviction.trace.map(q=>q.hit).join(',')!=='0,0,0,0'||x.cappedEvidence.effectiveLimitBytes!==536870912||x.cappedEvidence.trace.map(q=>q.hit).join(',')!=='0,0,1')throw Error('Missing exact bounded LRU parity/counters/cap');console.log('RNS_TWO_SLOT',JSON.stringify({cpu:x.cpu,contexts:x.contexts,groups:x.groups,cap:x.cappedEvidence.memory}));"
+      - name: Verify mixed R Y D exact wire parity and RNS initializer reuse in hybrid probe
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_rns_mixed_wire.mjs --trials=2 --output=research/seer-next/results/working/rns-mixed-wire.json
+          node -e "const x=require('./research/seer-next/results/working/rns-mixed-wire.json');if(!x.fullParity||x.contexts!==4||x.commandsPerContext!==18||x.primaryNativeReplies!==360||x.cappedNativeReplies!==36||x.groups.length!==5||x.results.some(r=>!r.fullParity)||x.results.some(r=>r.rows.probe2.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1')||x.cappedEvidence.effectiveLimitBytes!==536870912)throw Error('Incomplete mixed R/Y/D parity/memory evidence');console.log('RNS_MIXED_WIRE',JSON.stringify({cpu:x.cpu,requests:x.primaryNativeReplies,groups:x.groups.map(g=>({mode:g.mode,ms:g.totalMs,rss:g.maxVmHwmKiB,vm:g.maxVmPeakKiB,hits:g.totalInitHits}))}));"
+      - name: Test process-shared immutable RNS LRU against thread-local in mixed R Y D
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_process_shared.mjs --trials=2 --output=research/seer-next/results/working/rns-process-shared.json
+          node -e "const x=require('./research/seer-next/results/working/rns-process-shared.json');if(!x.fullParity||x.contexts!==4||x.primaryNativeReplies!==216||x.cappedNativeReplies!==54||x.groups.length!==3||x.results.some(v=>!v.fullParity||v.rows.probeShared.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1'||v.rows.probe2.trace.slice(0,4).map(t=>t.hit).join(',')!=='0,0,1,1')||x.cappedEvidence.threadLocal.effectiveLimitBytes!==536870912||x.cappedEvidence.processShared.effectiveLimitBytes!==536870912||!x.cappedEvidence.threadLocal.fullParity||!x.cappedEvidence.processShared.fullParity)throw Error('Incomplete process-shared RNS scope validation');console.log('RNS_PROCESS_SCOPE',JSON.stringify({cpu:x.cpu,groups:x.groups,capThread:x.cappedEvidence.threadLocal.memory,capProcess:x.cappedEvidence.processShared.memory}));"
+      - name: Profile D concurrency 1 2 3 for thread-local and process-shared RNS LRU
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_d_workers.mjs --trials=2 --output=research/seer-next/results/working/rns-d-workers.json
+          node -e "const x=require('./research/seer-next/results/working/rns-d-workers.json');if(!x.fullParity||x.contexts!==12||x.requestsPerContext!==8||x.primaryNativeReplies!==288||x.cappedNativeReplies!==24||x.groups.length!==9||x.results.some(v=>!v.fullParity||!v.rows.thread.fullParity||!v.rows.process.fullParity||!v.rows.original.fullParity)||['original','thread','process'].some(m=>!x.cappedEvidence[m].fullParity)||x.cappedEvidence.thread.effectiveLimitBytes!==536870912||x.cappedEvidence.process.effectiveLimitBytes!==536870912)throw Error('Incomplete D concurrency RNS cache result');console.log('RNS_D_WORKERS',JSON.stringify({cpu:x.cpu,contexts:x.contexts,groups:x.groups.map(g=>({scope:g.mode,workers:g.workers,dMs:g.dTotalMs,all:g.totalMs,rss:g.maxVmHwmKiB,vm:g.maxVmPeakKiB,hits:g.cacheHits}))}));"
+      - name: Measure real 512 768 1024 1280MiB virtual-space frontier for D workers 1 2 3
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_rns_cap_frontier.mjs --output=research/seer-next/results/working/rns-cap-frontier.json
+          node -e "const x=require('./research/seer-next/results/working/rns-cap-frontier.json');if(x.attempts!==48||x.oracleFullReplies!==16||x.essentialGates.length!==12||x.essentialGates.some(v=>v.status!=='ACCEPTED')||!x.fullParityOfAllCompletedReplies||x.summary.length!==6||x.results.some(v=>v.status==='ACCEPTED'&&(!v.completeFullParity||v.completedReplies!==8||v.effectiveLimitBytes!==v.capMiB*1048576))||x.results.some(v=>v.status==='RESOURCE_LIMITED'&&(!v.resourceFailure||v.completeFullParity)))throw Error('Incomplete or incorrect RNS address-space frontier');console.log('RNS_CAP_FRONTIER',JSON.stringify({cpu:x.cpu,attempts:x.attempts,accepted:x.acceptedTrials,resourceLimited:x.resourceLimitedTrials,summary:x.summary}));"
+      - name: Validate opt-in RLIMIT_AS-aware D worker policy against fixed D scheduling
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_d_cap_policy.mjs --output=research/seer-next/results/working/d-cap-policy.json
+          node -e "const x=require('./research/seer-next/results/working/d-cap-policy.json');if(x.contexts!==12||x.sourceOracleReplies!==16||x.candidateReplies!==192||!x.allFullParity||!x.everyEffectiveKernelCapVerified||!x.policyReadbackVerified||x.summary.length!==6||x.results.some(r=>!r.static.fullParity||!r.policy.fullParity||r.policy.dispatcherTrace.length!==3))throw Error('Incomplete research D-cap scheduling policy verification');console.log('D_CAP_POLICY',JSON.stringify({cpu:x.cpu,contexts:x.contexts,summary:x.summary}));"
+      - name: Verify RLIMIT_AS D policy threshold and disabled-path boundary regressions
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_d_cap_policy_boundaries.mjs --output=research/seer-next/results/working/d-cap-policy-boundaries.json
+          node -e "const x=require('./research/seer-next/results/working/d-cap-policy-boundaries.json');if(!x.fullParity||!x.kernelCapEvidence||!x.allPolicyTracesExact||x.contexts!==28||x.scenarioCount!==7||x.originalFullReplies!==16||x.candidateFullReplies!==224||x.negativeCaseCount!==4||x.results.some(r=>r.requests!==8||!r.fullParity)||x.negative.some(r=>!r.validated))throw Error('Incomplete D-cap policy boundary / default / invalid-mode evidence');console.log('D_CAP_POLICY_BOUNDARIES',JSON.stringify({cpu:x.cpu,contexts:x.contexts,negative:x.negativeCaseCount,scenarios:x.cases.map(s=>s.key)}));"
+      - name: Falsify cap-aware D policy on six never-tuned calculation contexts
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_d_policy_holdout.mjs --output=research/seer-next/results/working/d-policy-holdout.json
+          node -e "const x=require('./research/seer-next/results/working/d-policy-holdout.json');if(x.trials!==54||x.sourceOracleReplies!==54||x.expectedCandidateReplies!==486||x.holdoutCalculationJdns.length!==6||x.groups.length!==9||!x.allCompletedFullParity||x.acceptedTrials+x.resourceLimitedTrials!==54||x.results.some(r=>r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==9||r.kernel.limitBytes!==r.capMiB*1048576||!r.dispatcherTrace||r.dispatcherTrace.length!==3))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.fail||r.completeFullParity)))throw Error('Incomplete holdout study or incorrectly classified replies');console.log('D_POLICY_HOLDOUT',JSON.stringify({cpu:x.cpu,trials:x.trials,accepted:x.acceptedTrials,resourceLimited:x.resourceLimitedTrials,allTrialAccepted:x.allTrialAccepted,groups:x.groups}));"
+      - name: Stress long-lived RNS LRU and D cap policy across repeated mixed contexts
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_long_lived_rns_d_policy.mjs --output=research/seer-next/results/working/long-lived-rns-d-policy.json
+          node -e "const x=require('./research/seer-next/results/working/long-lived-rns-d-policy.json');if(x.candidateProcesses!==4||x.originalOracleUniqueReplies!==27||x.originalStatefulReplayedReplies!==81||x.expectedCandidateReplies!==324||x.contexts.length!==3||x.rounds!==3||!x.allCompletedWireParity||x.acceptedProcesses+x.resourceLimitedProcesses!==4||x.results.some(r=>r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==81||r.snapshots.length!==3||r.finalStatus.limitBytes!==r.capMiB*1048576||!r.traceEvidence||r.traceEvidence.dispatchRows!==27||r.traceEvidence.evictionsMax<1))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.resourceFailure||r.completeFullParity)))throw Error('Incomplete or inaccurately classified long-lived RNS policy study');console.log('LONG_LIVED_RNS_D',JSON.stringify({cpu:x.cpu,sourceReplayed:x.originalStatefulReplayedReplies,completed:x.observedCandidateReplies,accepted:x.acceptedProcesses,resourceLimited:x.resourceLimitedProcesses,summary:x.summary}));"
+      - name: Enforce and measure Linux virtual-address-space limit
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_linux_as_limit.mjs --output=research/seer-next/results/working/linux-as-limit.json
+          cat research/seer-next/results/working/linux-as-limit.json
+      - name: Verify complete Y 4999-5001 exports against original Seer under 512MiB
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/verify_full_year_512.mjs --output=research/seer-next/results/working/full-year-512.json
+          node -e "const x=require('./research/seer-next/results/working/full-year-512.json');if(x.fullYearComparisons!==6||!x.allUncappedFullRepliesEqual)throw Error('Missing full-year equivalence');console.log('FULL_YEAR_512',JSON.stringify({fullYearComparisons:x.fullYearComparisons,underCapSuccesses:x.underCapSuccesses}));"
+      - name: Measure exact full-year Y cold/warm exports for latency and experimental42
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_full_year_warm_cold.mjs --trials=2 --output=research/seer-next/results/working/full-year-warm-cold.json
+          node -e "const x=require('./research/seer-next/results/working/full-year-warm-cold.json');if(x.results.length!==12||!x.completeFullJsonParity)throw Error('Incomplete full-year benchmark');console.log('FULL_YEAR_WARM_COLD',JSON.stringify({cpu:x.cpu,rows:x.results.length,groups:x.groups.map(g=>({profile:g.profile,cold:g.coldTotalMs,warm:g.firstWarmTotalMs}))}));"
+      - name: Verify opt-in direct-Y memo cache, evictions and 512MiB repeated full-year exports
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_y_export_direct_memo.mjs --trials=2 --output=research/seer-next/results/working/y-export-direct-memo.json
+          node -e "const x=require('./research/seer-next/results/working/y-export-direct-memo.json');if(x.results.length!==12||x.interop.length!==6||!x.cappedEvidence.fullParity||x.cappedEvidence.effectiveLimitBytes!==536870912||!x.completeFullJsonParity)throw Error('Missing direct-Y memo checks');console.log('Y_MEMO_DIRECT',JSON.stringify({contexts:x.results.length,groups:x.groups.map(g=>({profile:g.profile,totalMs:g.allThreeTotalMs})),memo:x.interop.map(v=>({label:v.label,builds:v.memo.builds,hits:v.memo.hits}))}));"
+      - name: Compare opt-in Y structure reuse with original direct-Y memo
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_y_struct_reuse.mjs --trials=2 --output=research/seer-next/results/working/y-struct-reuse.json
+          node -e "const x=require('./research/seer-next/results/working/y-struct-reuse.json');if(x.contexts!==12||x.fullYearReplies!==108||x.interop.length!==6||x.summary.length!==3||!x.fullParity||!x.cappedEvidence.fullParity||x.cappedEvidence.effectiveLimitBytes!==536870912)throw Error('Incomplete structure-reuse proof');console.log('Y_STRUCT_REUSE',JSON.stringify({cpu:x.cpu,contexts:x.contexts,summary:x.summary.map(g=>({kind:g.kind,cold:g.coldTotalMs,warm:g.firstWarmTotalMs,all:g.allThreeTotalMs})),interop:x.interop.map(v=>v.label)}));"
+      - name: Profile cold, repeat, memory and CPU policies with A/B parity
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_policies.mjs --trials=2 --output=research/seer-next/results/working/profile-matrix.json
+          node -e "const x=require('./research/seer-next/results/working/profile-matrix.json'); console.log('PROFILE_SUMMARY',JSON.stringify({results:x.results.length,scenarios:x.workloads.length,policies:x.policies.length,trials:x.trials}));"
+      - name: Profile hybrid against unchanged Seer using the same workload matrix
+        env:
+          SEER_NEXT_CANDIDATE_BIN: ${{ github.workspace }}/research/seer-next/build/seer_next_hybrid_engine_service
+        run: |
+          set -euo pipefail
+          node research/seer-next/scripts/profile_policies.mjs --trials=1 --output=research/seer-next/results/working/profile-hybrid.json
+          node -e "const x=require('./research/seer-next/results/working/profile-hybrid.json'); console.log('HYBRID_PROFILE_SUMMARY',JSON.stringify({results:x.results.length,scenarios:x.workloads.length,policies:x.policies.length,trials:x.trials}));"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-next-native-ab-linux-avx2
+          path: |
+            research/seer-next/results/working/ab.json
+            research/seer-next/results/working/differential.json
+            research/seer-next/results/working/profile-matrix.json
+            research/seer-next/results/working/profile-hybrid.json
+            research/seer-next/results/working/oracle.json
+            research/seer-next/results/working/hybrid-eviction.json
+            research/seer-next/results/working/cold-stages.json
+            research/seer-next/results/working/cold-rns-workers.json
+            research/seer-next/results/working/rns-shared-plan.json
+            research/seer-next/results/working/rns-fact-pool.json
+            research/seer-next/results/working/rns-worker-scaling.json
+            research/seer-next/results/working/rns-four-confirm.json
+            research/seer-next/results/working/experimental4-parity.json
+            research/seer-next/results/working/rns-cross-year.json
+            research/seer-next/results/working/rns-replay-sweep.json
+            research/seer-next/results/working/cold-superblock-sweep.json
+            research/seer-next/results/working/cold-adaptive-block.json
+            research/seer-next/results/working/rns-engine-reuse.json
+            research/seer-next/results/working/rns-two-slot-lru.json
+            research/seer-next/results/working/rns-mixed-wire.json
+            research/seer-next/results/working/rns-process-shared.json
+            research/seer-next/results/working/rns-d-workers.json
+            research/seer-next/results/working/rns-cap-frontier.json
+            research/seer-next/results/working/d-cap-policy.json
+            research/seer-next/results/working/d-cap-policy-boundaries.json
+            research/seer-next/results/working/d-policy-holdout.json
+            research/seer-next/results/working/long-lived-rns-d-policy.json
+            research/seer-next/results/working/d-thread-launch-cleanup.json
+            research/seer-next/results/working/full-year-512.json
+            research/seer-next/results/working/full-year-warm-cold.json
+            research/seer-next/results/working/y-export-direct-memo.json
+            research/seer-next/results/working/y-struct-reuse.json
+            research/seer-next/results/working/second-day-exact.json
+            research/seer-next/results/working/linux-as-limit.json
+          if-no-files-found: error
+      - name: Archive raw experiment results in research branch without retriggering CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEST="research/seer-next/results/ci-${GITHUB_SHA:0:12}"
+          mkdir -p "$DEST"
+          cp research/seer-next/results/working/{ab.json,differential.json,profile-matrix.json,profile-hybrid.json,oracle.json,hybrid-eviction.json,cold-stages.json,linux-as-limit.json,cold-rns-workers.json,second-day-exact.json,rns-shared-plan.json,rns-fact-pool.json,rns-worker-scaling.json,rns-four-confirm.json,experimental4-parity.json,rns-cross-year.json,rns-replay-sweep.json,cold-superblock-sweep.json,cold-adaptive-block.json,rns-engine-reuse.json,rns-two-slot-lru.json,rns-mixed-wire.json,rns-process-shared.json,rns-d-workers.json,rns-cap-frontier.json,d-cap-policy.json,d-cap-policy-boundaries.json,d-policy-holdout.json,long-lived-rns-d-policy.json,d-thread-launch-cleanup.json,full-year-512.json,full-year-warm-cold.json,y-export-direct-memo.json,y-struct-reuse.json} "$DEST/"
+          cat > "$DEST/README.md" <<EOF
+          # Seer Next independent oracle, full-year and hybrid raw CI evidence
+
+          Run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          Source commit: ${GITHUB_SHA}
+          Runner: ${RUNNER_OS} / ${RUNNER_ARCH}
+
+          All results are raw exact-candidate comparison artifacts from this run; they are not global speed claims. See each JSON for metrics, CPU/RSS snapshots, independent canonical vector results and statistical sample counts.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DEST"
+          git diff --cached --quiet && { echo "No new evidence to archive."; exit 0; }
+          git commit -m "research(seer-next): archive CI evidence for ${GITHUB_SHA:0:12} [skip ci]"
+          git fetch origin research/seer-next-first-principles-2026-11-06
+          git rebase origin/research/seer-next-first-principles-2026-11-06
+          for attempt in 1 2 3; do
+            if git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06; then exit 0; fi
+            git fetch origin research/seer-next-first-principles-2026-11-06
+            git rebase origin/research/seer-next-first-principles-2026-11-06
+          done
+          echo "Archive push could not be completed after three rebases" >&2
+          exit 1
+
+  rns-cache-roi-avx2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/node-setup
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Syntax-check targeted research ROI benchmark
+        run: node --check research/seer-next/scripts/profile_long_lived_rns_cache_roi.mjs
+      - uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build unchanged original Seer oracle (isolated)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Build isolated cold-probe experiment (unchanged release)
+        env:
+          SEER_RNS_BACKEND: avx2
+          SEER_MARCH: x86-64
+        run: bash research/seer-next/scripts/build_cold_probe.sh
+      - name: Verify native D launch cleanup in independent cold probe
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/verify_d_thread_launch_cleanup.mjs --engines=probe --output=research/seer-next/results/working/d-thread-launch-cleanup-probe.json
+          node -e "const x=require('./research/seer-next/results/working/d-thread-launch-cleanup-probe.json');if(!x.fullyVerified||x.cases!==1||x.results[0].engine!=='probe'||x.results[0].rejectedDRequests!==2)throw Error('Cold probe partial worker launch cleanup regression');console.log('PROBE_D_THREAD_RECOVERY',JSON.stringify(x.results));"
+      - name: Compare disabled one-slot and two-slot RNS caches across persistent services
+        run: |
+          set -euo pipefail
+          mkdir -p research/seer-next/results/working
+          node research/seer-next/scripts/profile_long_lived_rns_cache_roi.mjs --output=research/seer-next/results/working/long-lived-rns-cache-roi.json
+          node -e "const x=require('./research/seer-next/results/working/long-lived-rns-cache-roi.json');const ids=['off','thread1','thread2','process1','process2'];if(x.candidateProcesses!==10||x.originalOracleUniqueReplies!==27||x.originalStatefulReplayedReplies!==81||x.expectedCandidateReplies!==810||x.contexts.length!==3||x.rounds!==3||!x.allCompletedWireParity||x.acceptedProcesses+x.resourceLimitedProcesses!==10||x.results.some(r=>!ids.includes(r.arm)||r.status==='ACCEPTED'&&(!r.completeFullParity||r.completedReplies!==81||r.snapshots.length!==3||r.finalStatus.limitBytes!==r.capMiB*1048576||!r.traceEvidence||r.traceEvidence.dispatchRows!==27||r.traceEvidence.rows<4||r.reuse&&r.traceEvidence.evictionsMax<1||!r.reuse&&r.traceEvidence.hits!==0))||x.results.some(r=>r.status==='RESOURCE_LIMITED'&&(!r.resourceFailure||r.completeFullParity)))throw Error('Incomplete 0/1/2-slot long-lived cache ROI evidence');console.log('RNS_LONG_LIVED_CACHE_ROI',JSON.stringify({cpu:x.cpu,candidates:x.candidateProcesses,accepted:x.acceptedProcesses,resourceLimited:x.resourceLimitedProcesses,summary:x.summary}));"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-next-long-lived-rns-cache-roi
+          path: |
+            research/seer-next/results/working/long-lived-rns-cache-roi.json
+            research/seer-next/results/working/d-thread-launch-cleanup-probe.json
+          if-no-files-found: error
+      - name: Archive isolated ROI raw evidence without retriggering CI
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHORT_SHA="$(git rev-parse --short=12 "$GITHUB_SHA")"
+          DEST="research/seer-next/results/ci-$SHORT_SHA-cache-roi"
+          mkdir -p "$DEST"
+          cp research/seer-next/results/working/long-lived-rns-cache-roi.json "$DEST/"
+          cp research/seer-next/results/working/d-thread-launch-cleanup-probe.json "$DEST/"
+          printf 'Source: %s\nRun: https://github.com/%s/actions/runs/%s\nJob: isolated RNS cache 0/1/2 slot ROI; study may contain RESOURCE_LIMITED results that are NOT PASS.\n' \
+            "$GITHUB_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > "$DEST/README.md"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DEST"
+          git commit -m "research(seer-next): archive isolated RNS cache ROI for $SHORT_SHA [skip ci]"
+          git fetch origin research/seer-next-first-principles-2026-11-06
+          git rebase origin/research/seer-next-first-principles-2026-11-06
+          for attempt in 1 2 3; do
+            if git push origin HEAD:refs/heads/research/seer-next-first-principles-2026-11-06; then exit 0; fi
+            git fetch origin research/seer-next-first-principles-2026-11-06
+            git rebase origin/research/seer-next-first-principles-2026-11-06
+          done
+          echo "ROI archive push could not be completed after three rebases" >&2
+          exit 1

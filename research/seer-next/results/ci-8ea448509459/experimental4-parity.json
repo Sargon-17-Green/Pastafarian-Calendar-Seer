@@ -1,0 +1,202 @@
+{
+  "schema": "seer-next-experimental42-profile-parity-v2",
+  "baselineCommit": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "profiles": [
+    {
+      "profile": "experimental42",
+      "comparisons": 27,
+      "fullWireParity": true,
+      "responseSha256": "465ee55625879cd525e465c099663404799b64803caaf449fd3eceb471acb406"
+    },
+    {
+      "profile": "experimental4",
+      "comparisons": 27,
+      "fullWireParity": true,
+      "responseSha256": "465ee55625879cd525e465c099663404799b64803caaf449fd3eceb471acb406"
+    },
+    {
+      "profile": "latency",
+      "comparisons": 27,
+      "fullWireParity": true,
+      "responseSha256": "465ee55625879cd525e465c099663404799b64803caaf449fd3eceb471acb406"
+    },
+    {
+      "profile": "memory",
+      "comparisons": 27,
+      "fullWireParity": true,
+      "responseSha256": "465ee55625879cd525e465c099663404799b64803caaf449fd3eceb471acb406"
+    }
+  ],
+  "requests": [
+    [
+      "R",
+      "2461290",
+      "2458961",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2458962",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2460984",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2461290",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463006",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463007",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463003",
+      "8"
+    ],
+    [
+      "R",
+      "2461291",
+      "2460984",
+      "4"
+    ],
+    [
+      "R",
+      "2461400",
+      "2461300",
+      "5"
+    ],
+    [
+      "R",
+      "-13334246",
+      "-13334246",
+      "1"
+    ],
+    [
+      "R",
+      "-13334245",
+      "-13334245",
+      "1"
+    ],
+    [
+      "Y",
+      "2461290",
+      "5000",
+      "0"
+    ],
+    [
+      "Y",
+      "2461290",
+      "5000",
+      "1"
+    ],
+    [
+      "D",
+      "2461290",
+      "5",
+      "1"
+    ],
+    [
+      "D",
+      "2461400",
+      "4",
+      "-1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2456078",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2458959",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2460984",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463006",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2464652",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2466295",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2454861",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2457141",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2459354",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2461563",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2463497",
+      "1"
+    ],
+    [
+      "R",
+      "2461400",
+      "2465427",
+      "1"
+    ]
+  ],
+  "allPassed": true,
+  "caveats": [
+    "One Linux host and limited cases; not proof of all-domain equivalence.",
+    "Experimental4 is 4 RNS and 1 replay worker; experimental42 is 4 RNS and 2 replay workers for R and Y paths.",
+    "Diagonal D uses its existing one-worker-per-record exact compute profile.",
+    "Cross-year R requests are derived from original Seer inclusive Year metadata for each calculation day.",
+    "No cache and no production Seer source changes."
+  ]
+}

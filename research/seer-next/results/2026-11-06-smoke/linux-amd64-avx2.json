@@ -1,0 +1,105 @@
+{
+  "evidence": {
+    "repo": "Sargon-17-Green/Pastafarian-Calendar-Seer",
+    "run": 42284571453,
+    "jobId": 128122145872,
+    "head": "44fae96a5324b2b0e431382c5857f9acd950e63a",
+    "platform": "linux-amd64-avx2"
+  },
+  "instrumentationStatus": "VERIFIED_INSTRUMENTATION",
+  "data": {
+    "schema": "seer-next-recomputation-probe-v1",
+    "baselineCommit": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+    "launchedAtUtc": "2026-11-06T20:02:43.332Z",
+    "enginePath": "/home/runner/work/Pastafarian-Calendar-Seer/Pastafarian-Calendar-Seer/prototype/build/seer_engine_service",
+    "engineSha256": "8191de4ccd416f159ac8400a7e12920b8464a0066b32651be69d76c54c47ab2b",
+    "positiveGateSha256": "4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8",
+    "negativeGateSha256": "40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884",
+    "host": {
+      "platform": "linux",
+      "arch": "x64",
+      "cpuModel": "AMD EPYC 9V74 80-Core Processor",
+      "logicalCpus": 4,
+      "node": "v24.22.2"
+    },
+    "workload": {
+      "calculationJdn": 2461290,
+      "independentReference": "prototype/BENCHMARK_CASES.md",
+      "iterations": 3
+    },
+    "cold": {
+      "name": "first_exact_request",
+      "targets": [
+        "2460984"
+      ],
+      "weaveEvents": 1,
+      "latency": {
+        "n": 1,
+        "minMs": 108.196019,
+        "p50Ms": 108.196019,
+        "maxMs": 108.196019
+      },
+      "sampleMs": [
+        108.196019
+      ],
+      "outputSha256": [
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5"
+      ]
+    },
+    "repeated": {
+      "name": "repeated_same_target",
+      "targets": [
+        "2460984",
+        "2460984",
+        "2460984"
+      ],
+      "weaveEvents": 3,
+      "latency": {
+        "n": 3,
+        "minMs": 89.019025,
+        "p50Ms": 92.158295,
+        "maxMs": 99.815466
+      },
+      "sampleMs": [
+        99.815466,
+        89.019025,
+        92.158295
+      ],
+      "outputSha256": [
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5",
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5",
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5"
+      ]
+    },
+    "alternating": {
+      "name": "alternating_same_year",
+      "targets": [
+        "2460984",
+        "2461290",
+        "2460984"
+      ],
+      "weaveEvents": 3,
+      "latency": {
+        "n": 3,
+        "minMs": 84.872474,
+        "p50Ms": 88.189472,
+        "maxMs": 92.070111
+      },
+      "sampleMs": [
+        92.070111,
+        88.189472,
+        84.872474
+      ],
+      "outputSha256": [
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5",
+        "b878adadde211c8773ecdbbca3de9e817f900b43f1c9009614ecaa5b9bd02738",
+        "355c5cf03b0803b34a855097a5227333d93fa489336d0c61ad879014b6a65cf5"
+      ]
+    },
+    "yearWithoutDays": {
+      "elapsedMs": 0.223347,
+      "weaveEvents": 0
+    },
+    "caveat": "Native service + pipe wall latency; no native CPU/RSS measurement, no performance claim."
+  }
+}

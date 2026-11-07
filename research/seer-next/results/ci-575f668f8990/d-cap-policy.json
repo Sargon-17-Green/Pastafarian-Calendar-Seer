@@ -1,0 +1,1057 @@
+{
+  "schema": "seer-next-d-cap-policy-v1",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "researchSourceParent": "af2ebe5f5182b80b214f3329634729e0ea5aef18",
+  "capMiB": [
+    512,
+    768,
+    1024
+  ],
+  "calculationJdns": [
+    2461290,
+    2461400
+  ],
+  "cacheScopes": [
+    "thread",
+    "process"
+  ],
+  "contexts": 12,
+  "sourceOracleReplies": 16,
+  "candidateReplies": 192,
+  "allFullParity": true,
+  "everyEffectiveKernelCapVerified": true,
+  "policyReadbackVerified": true,
+  "summary": [
+    {
+      "capMiB": 512,
+      "scope": "thread",
+      "contexts": 2,
+      "staticMs": 6296.732218000001,
+      "policyMs": 6345.014243,
+      "staticDms": 5529.119350999999,
+      "policyDms": 5543.4260730000005,
+      "maxStaticVmPeakKiB": 414020,
+      "maxPolicyVmPeakKiB": 414020,
+      "maxStaticVmHwmKiB": 147572,
+      "maxPolicyVmHwmKiB": 147428,
+      "selectedWorkers": 1
+    },
+    {
+      "capMiB": 512,
+      "scope": "process",
+      "contexts": 2,
+      "staticMs": 6303.228974000001,
+      "policyMs": 6311.545545999999,
+      "staticDms": 5535.930169,
+      "policyDms": 5536.176202000001,
+      "maxStaticVmPeakKiB": 414020,
+      "maxPolicyVmPeakKiB": 414020,
+      "maxStaticVmHwmKiB": 147620,
+      "maxPolicyVmHwmKiB": 146628,
+      "selectedWorkers": 1
+    },
+    {
+      "capMiB": 768,
+      "scope": "thread",
+      "contexts": 2,
+      "staticMs": 5993.69836,
+      "policyMs": 6046.263353,
+      "staticDms": 5210.0254780000005,
+      "policyDms": 5240.371643,
+      "maxStaticVmPeakKiB": 681496,
+      "maxPolicyVmPeakKiB": 681496,
+      "maxStaticVmHwmKiB": 268260,
+      "maxPolicyVmHwmKiB": 262496,
+      "selectedWorkers": 2
+    },
+    {
+      "capMiB": 768,
+      "scope": "process",
+      "contexts": 2,
+      "staticMs": 6240.579805,
+      "policyMs": 6132.5312269999995,
+      "staticDms": 5457.2084350000005,
+      "policyDms": 5335.7659060000005,
+      "maxStaticVmPeakKiB": 681388,
+      "maxPolicyVmPeakKiB": 633892,
+      "maxStaticVmHwmKiB": 192008,
+      "maxPolicyVmHwmKiB": 190384,
+      "selectedWorkers": 2
+    },
+    {
+      "capMiB": 1024,
+      "scope": "thread",
+      "contexts": 2,
+      "staticMs": 6019.5015650000005,
+      "policyMs": 6075.615413,
+      "staticDms": 5217.209285999999,
+      "policyDms": 5271.571266,
+      "maxStaticVmPeakKiB": 635304,
+      "maxPolicyVmPeakKiB": 685212,
+      "maxStaticVmHwmKiB": 261692,
+      "maxPolicyVmHwmKiB": 262500,
+      "selectedWorkers": 2
+    },
+    {
+      "capMiB": 1024,
+      "scope": "process",
+      "contexts": 2,
+      "staticMs": 6118.097055,
+      "policyMs": 6142.304303000001,
+      "staticDms": 5333.673938,
+      "policyDms": 5361.685115,
+      "maxStaticVmPeakKiB": 684824,
+      "maxPolicyVmPeakKiB": 681388,
+      "maxStaticVmHwmKiB": 198388,
+      "maxPolicyVmHwmKiB": 189716,
+      "selectedWorkers": 2
+    }
+  ],
+  "results": [
+    {
+      "calc": 2461290,
+      "capMiB": 512,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 1,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3193.122684,
+        "dMs": 2779.241651,
+        "requestTimesMs": [
+          144.552831,
+          69.935091,
+          418.948596,
+          1051.784434,
+          131.043673,
+          0.211631,
+          1308.508621,
+          68.137807
+        ],
+        "memory": {
+          "vmPeakKiB": 414020,
+          "vmHwmKiB": 141144
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3236.30388,
+        "dMs": 2810.902234,
+        "requestTimesMs": [
+          145.10595,
+          77.704799,
+          415.992916,
+          1045.229527,
+          133.662002,
+          0.210359,
+          1349.679791,
+          68.718536
+        ],
+        "memory": {
+          "vmPeakKiB": 414020,
+          "vmHwmKiB": 141436
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            1,
+            536870912,
+            6
+          ],
+          [
+            3,
+            1,
+            536870912,
+            9
+          ],
+          [
+            3,
+            1,
+            536870912,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461290,
+      "capMiB": 512,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 1,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3219.9203890000003,
+        "dMs": 2798.5982320000003,
+        "requestTimesMs": [
+          143.18804,
+          68.870266,
+          408.231341,
+          1043.928022,
+          140.525695,
+          0.282048,
+          1346.438869,
+          68.456108
+        ],
+        "memory": {
+          "vmPeakKiB": 414020,
+          "vmHwmKiB": 141944
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3183.991357,
+        "dMs": 2771.8561170000003,
+        "requestTimesMs": [
+          143.312959,
+          68.910778,
+          405.400069,
+          1033.370319,
+          132.034042,
+          0.21108,
+          1333.085729,
+          67.666381
+        ],
+        "memory": {
+          "vmPeakKiB": 414020,
+          "vmHwmKiB": 143660
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            1,
+            536870912,
+            6
+          ],
+          [
+            3,
+            1,
+            536870912,
+            9
+          ],
+          [
+            3,
+            1,
+            536870912,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461290,
+      "capMiB": 768,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 2,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3005.802202,
+        "dMs": 2571.447191,
+        "requestTimesMs": [
+          151.957513,
+          79.921918,
+          392.620908,
+          910.855788,
+          133.823925,
+          0.23727,
+          1267.970495,
+          68.414385
+        ],
+        "memory": {
+          "vmPeakKiB": 635812,
+          "vmHwmKiB": 268260
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 2989.827189,
+        "dMs": 2568.1757230000003,
+        "requestTimesMs": [
+          146.279936,
+          69.223382,
+          379.039471,
+          917.154486,
+          137.545747,
+          0.209889,
+          1271.981766,
+          68.392512
+        ],
+        "memory": {
+          "vmPeakKiB": 633368,
+          "vmHwmKiB": 262496
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            805306368,
+            6
+          ],
+          [
+            3,
+            2,
+            805306368,
+            9
+          ],
+          [
+            3,
+            2,
+            805306368,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461290,
+      "capMiB": 768,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 2,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3065.33437,
+        "dMs": 2635.842791,
+        "requestTimesMs": [
+          143.470427,
+          76.665513,
+          379.630458,
+          929.606521,
+          130.649713,
+          0.227335,
+          1326.605812,
+          78.478591
+        ],
+        "memory": {
+          "vmPeakKiB": 634424,
+          "vmHwmKiB": 190056
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3043.897144,
+        "dMs": 2614.727308,
+        "requestTimesMs": [
+          145.557908,
+          81.53836,
+          395.061059,
+          905.413585,
+          132.960657,
+          0.23089,
+          1314.252664,
+          68.882021
+        ],
+        "memory": {
+          "vmPeakKiB": 633892,
+          "vmHwmKiB": 190384
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            805306368,
+            6
+          ],
+          [
+            3,
+            2,
+            805306368,
+            9
+          ],
+          [
+            3,
+            2,
+            805306368,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461290,
+      "capMiB": 1024,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 2,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 2988.673153,
+        "dMs": 2557.611838,
+        "requestTimesMs": [
+          144.733118,
+          76.428442,
+          390.853819,
+          898.79501,
+          132.313186,
+          0.21076,
+          1267.963009,
+          77.375809
+        ],
+        "memory": {
+          "vmPeakKiB": 635304,
+          "vmHwmKiB": 261692
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3022.98309,
+        "dMs": 2584.489756,
+        "requestTimesMs": [
+          151.524664,
+          77.141364,
+          386.245152,
+          899.438755,
+          130.710727,
+          0.210199,
+          1298.805849,
+          78.90638
+        ],
+        "memory": {
+          "vmPeakKiB": 685212,
+          "vmHwmKiB": 262500
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            1073741824,
+            6
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            9
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461290,
+      "capMiB": 1024,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 2,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3044.1664450000003,
+        "dMs": 2616.110869,
+        "requestTimesMs": [
+          150.633587,
+          69.052593,
+          378.670426,
+          922.148164,
+          131.898237,
+          0.20424,
+          1315.292279,
+          76.266919
+        ],
+        "memory": {
+          "vmPeakKiB": 684824,
+          "vmHwmKiB": 187628
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3018.261538,
+        "dMs": 2603.8514480000003,
+        "requestTimesMs": [
+          144.274758,
+          68.573597,
+          373.535904,
+          925.568129,
+          132.459478,
+          0.208325,
+          1304.747415,
+          68.893932
+        ],
+        "memory": {
+          "vmPeakKiB": 652432,
+          "vmHwmKiB": 188544
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            1073741824,
+            6
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            9
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 512,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 1,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3103.6095340000006,
+        "dMs": 2749.8777,
+        "requestTimesMs": [
+          103.905355,
+          84.682735,
+          425.542678,
+          1010.90756,
+          87.629358,
+          0.276581,
+          1313.427462,
+          77.237805
+        ],
+        "memory": {
+          "vmPeakKiB": 412992,
+          "vmHwmKiB": 147572
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3108.710363,
+        "dMs": 2732.523839,
+        "requestTimesMs": [
+          106.552163,
+          91.928495,
+          413.690477,
+          1004.40311,
+          87.357065,
+          0.220735,
+          1314.430252,
+          90.128066
+        ],
+        "memory": {
+          "vmPeakKiB": 412992,
+          "vmHwmKiB": 147428
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            1,
+            536870912,
+            6
+          ],
+          [
+            3,
+            1,
+            536870912,
+            9
+          ],
+          [
+            3,
+            1,
+            536870912,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 512,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 1,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3083.308585,
+        "dMs": 2737.331937,
+        "requestTimesMs": [
+          98.914766,
+          81.470672,
+          417.567843,
+          1003.747176,
+          87.313419,
+          0.220074,
+          1316.016918,
+          78.057717
+        ],
+        "memory": {
+          "vmPeakKiB": 412816,
+          "vmHwmKiB": 147620
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 512,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3127.554189,
+        "dMs": 2764.3200850000003,
+        "requestTimesMs": [
+          106.098089,
+          81.368804,
+          435.195359,
+          1001.913319,
+          91.256283,
+          0.208276,
+          1327.211407,
+          84.302652
+        ],
+        "memory": {
+          "vmPeakKiB": 412992,
+          "vmHwmKiB": 146628
+        },
+        "kernelLimit": 536870912,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            1,
+            536870912,
+            6
+          ],
+          [
+            3,
+            1,
+            536870912,
+            9
+          ],
+          [
+            3,
+            1,
+            536870912,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 768,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 2,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 2987.896158,
+        "dMs": 2638.5782870000003,
+        "requestTimesMs": [
+          99.910562,
+          83.790596,
+          374.204014,
+          1002.526779,
+          87.031749,
+          0.258742,
+          1261.847494,
+          78.326222
+        ],
+        "memory": {
+          "vmPeakKiB": 681496,
+          "vmHwmKiB": 261384
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3056.4361639999997,
+        "dMs": 2672.19592,
+        "requestTimesMs": [
+          100.184577,
+          94.562304,
+          386.493904,
+          984.818696,
+          103.767672,
+          0.211962,
+          1300.88332,
+          85.513729
+        ],
+        "memory": {
+          "vmPeakKiB": 681496,
+          "vmHwmKiB": 258008
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            805306368,
+            6
+          ],
+          [
+            3,
+            2,
+            805306368,
+            9
+          ],
+          [
+            3,
+            2,
+            805306368,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 768,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 2,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3175.2454350000003,
+        "dMs": 2821.365644,
+        "requestTimesMs": [
+          101.071524,
+          83.882666,
+          386.999412,
+          1016.355616,
+          89.600775,
+          0.205842,
+          1418.010616,
+          79.118984
+        ],
+        "memory": {
+          "vmPeakKiB": 681388,
+          "vmHwmKiB": 192008
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 768,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3088.634083,
+        "dMs": 2721.038598,
+        "requestTimesMs": [
+          104.311115,
+          81.261553,
+          382.502554,
+          1029.623701,
+          89.587445,
+          0.228687,
+          1308.912343,
+          92.206685
+        ],
+        "memory": {
+          "vmPeakKiB": 625676,
+          "vmHwmKiB": 176240
+        },
+        "kernelLimit": 805306368,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            805306368,
+            6
+          ],
+          [
+            3,
+            2,
+            805306368,
+            9
+          ],
+          [
+            3,
+            2,
+            805306368,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 1024,
+      "scope": "thread",
+      "static": {
+        "mode": "thread",
+        "workers": 2,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3030.828412,
+        "dMs": 2659.597448,
+        "requestTimesMs": [
+          107.163381,
+          91.116653,
+          374.935903,
+          1002.749282,
+          95.103807,
+          0.279133,
+          1281.912263,
+          77.56799
+        ],
+        "memory": {
+          "vmPeakKiB": 634928,
+          "vmHwmKiB": 253844
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyThread",
+        "workers": 3,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3052.6323230000003,
+        "dMs": 2687.08151,
+        "requestTimesMs": [
+          104.341374,
+          88.20667,
+          392.741429,
+          999.210908,
+          87.577686,
+          0.208716,
+          1295.129173,
+          85.216367
+        ],
+        "memory": {
+          "vmPeakKiB": 681496,
+          "vmHwmKiB": 260328
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            1073741824,
+            6
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            9
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            12
+          ]
+        ]
+      }
+    },
+    {
+      "calc": 2461400,
+      "capMiB": 1024,
+      "scope": "process",
+      "static": {
+        "mode": "process",
+        "workers": 2,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3073.93061,
+        "dMs": 2717.563069,
+        "requestTimesMs": [
+          104.23333,
+          82.688213,
+          392.163654,
+          999.390489,
+          90.072678,
+          0.207976,
+          1326.008926,
+          79.165344
+        ],
+        "memory": {
+          "vmPeakKiB": 625752,
+          "vmHwmKiB": 198388
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": []
+      },
+      "policy": {
+        "mode": "policyProcess",
+        "workers": 3,
+        "capMiB": 1024,
+        "fullParity": true,
+        "requests": 8,
+        "totalMs": 3124.042765,
+        "dMs": 2757.833667,
+        "requestTimesMs": [
+          107.446717,
+          82.506299,
+          380.737451,
+          1028.45392,
+          90.782064,
+          0.23118,
+          1348.642296,
+          85.242838
+        ],
+        "memory": {
+          "vmPeakKiB": 681388,
+          "vmHwmKiB": 189716
+        },
+        "kernelLimit": 1073741824,
+        "hits": 1,
+        "traceRows": 31,
+        "dispatcherTrace": [
+          [
+            3,
+            2,
+            1073741824,
+            6
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            9
+          ],
+          [
+            3,
+            2,
+            1073741824,
+            12
+          ]
+        ]
+      }
+    }
+  ],
+  "caveats": [
+    "RLIMIT_AS policy is research-only opt-in. No production/default change.",
+    "For finite kernel limits below 768MiB, opt-in caps D dispatch to one worker; from 768MiB it caps to two. This is a heuristic derived from two calculation contexts, NOT a universal guarantee.",
+    "These are fresh native processes with all result caches disabled; RNS initializer caching is a separate opt-in parameter.",
+    "All R/Y/D JSON answers matched the unchanged original Seer in full, not by hash.",
+    "Effective Linux RLIMIT_AS is measured separately for each process. It is not an RSS/physical memory constraint.",
+    "No fallback after allocation failure is provided, and an unlimited kernel cap leaves the existing requested D worker count unchanged.",
+    "Static-policy comparisons are same cap, same cache scope, same commands, not a proof of universal performance."
+  ]
+}

@@ -1,0 +1,1022 @@
+{
+  "schema": "seer-next-d-cap-policy-boundaries-v1",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "platform": "linux",
+  "arch": "x64",
+  "originalFullReplies": 16,
+  "candidateFullReplies": 224,
+  "scenarioCount": 7,
+  "contexts": 28,
+  "fullParity": true,
+  "kernelCapEvidence": true,
+  "allPolicyTracesExact": true,
+  "negativeCaseCount": 4,
+  "cases": [
+    {
+      "key": "below-boundary",
+      "limitMiB": 767,
+      "requested": 3,
+      "policy": "1",
+      "expectedWorkers": 1
+    },
+    {
+      "key": "at-boundary",
+      "limitMiB": 768,
+      "requested": 3,
+      "policy": "1",
+      "expectedWorkers": 2
+    },
+    {
+      "key": "respect-requested-one",
+      "limitMiB": 1024,
+      "requested": 1,
+      "policy": "1",
+      "expectedWorkers": 1
+    },
+    {
+      "key": "unlimited",
+      "limitMiB": 0,
+      "requested": 3,
+      "policy": "1",
+      "expectedWorkers": 3
+    },
+    {
+      "key": "memory-profile",
+      "limitMiB": 768,
+      "requested": 3,
+      "policy": "1",
+      "profile": "memory",
+      "expectedWorkers": 1
+    },
+    {
+      "key": "explicitly-off",
+      "limitMiB": 0,
+      "requested": 3,
+      "policy": "0",
+      "expectedWorkers": 3
+    },
+    {
+      "key": "default-absent",
+      "limitMiB": 0,
+      "requested": 3,
+      "policy": null,
+      "expectedWorkers": 3
+    }
+  ],
+  "results": [
+    {
+      "calc": 2461290,
+      "case": "below-boundary",
+      "mode": "hybrid",
+      "limitMiB": 767,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          1,
+          804257792,
+          6
+        ],
+        [
+          3,
+          1,
+          804257792,
+          9
+        ],
+        [
+          3,
+          1,
+          804257792,
+          12
+        ]
+      ],
+      "totalMs": 5708.126115,
+      "memory": {
+        "limitBytes": 804257792,
+        "vmPeakKiB": 380376,
+        "vmHwmKiB": 83008
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "below-boundary",
+      "mode": "probe",
+      "limitMiB": 767,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          1,
+          804257792,
+          6
+        ],
+        [
+          3,
+          1,
+          804257792,
+          9
+        ],
+        [
+          3,
+          1,
+          804257792,
+          12
+        ]
+      ],
+      "totalMs": 3192.3885520000003,
+      "memory": {
+        "limitBytes": 804257792,
+        "vmPeakKiB": 414020,
+        "vmHwmKiB": 142456
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "at-boundary",
+      "mode": "hybrid",
+      "limitMiB": 768,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 2,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          2,
+          805306368,
+          6
+        ],
+        [
+          3,
+          2,
+          805306368,
+          9
+        ],
+        [
+          3,
+          2,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3260.6888649999996,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 413992,
+        "vmHwmKiB": 104580
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "at-boundary",
+      "mode": "probe",
+      "limitMiB": 768,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 2,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          2,
+          805306368,
+          6
+        ],
+        [
+          3,
+          2,
+          805306368,
+          9
+        ],
+        [
+          3,
+          2,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3078.878014,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 633184,
+        "vmHwmKiB": 262352
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "respect-requested-one",
+      "mode": "hybrid",
+      "limitMiB": 1024,
+      "profile": "experimental42",
+      "requested": 1,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          1073741824,
+          6
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          9
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          12
+        ]
+      ],
+      "totalMs": 5625.225420000001,
+      "memory": {
+        "limitBytes": 1073741824,
+        "vmPeakKiB": 413768,
+        "vmHwmKiB": 83164
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "respect-requested-one",
+      "mode": "probe",
+      "limitMiB": 1024,
+      "profile": "experimental42",
+      "requested": 1,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          1073741824,
+          6
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          9
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          12
+        ]
+      ],
+      "totalMs": 3202.989935,
+      "memory": {
+        "limitBytes": 1073741824,
+        "vmPeakKiB": 414020,
+        "vmHwmKiB": 142436
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "unlimited",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          3,
+          0,
+          6
+        ],
+        [
+          3,
+          3,
+          0,
+          9
+        ],
+        [
+          3,
+          3,
+          0,
+          12
+        ]
+      ],
+      "totalMs": 3040.918831,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 415992,
+        "vmHwmKiB": 146292
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "unlimited",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          3,
+          0,
+          6
+        ],
+        [
+          3,
+          3,
+          0,
+          9
+        ],
+        [
+          3,
+          3,
+          0,
+          12
+        ]
+      ],
+      "totalMs": 3550.7101949999997,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 995088,
+        "vmHwmKiB": 367608
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "memory-profile",
+      "mode": "hybrid",
+      "limitMiB": 768,
+      "profile": "memory",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          805306368,
+          6
+        ],
+        [
+          1,
+          1,
+          805306368,
+          9
+        ],
+        [
+          1,
+          1,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 6004.796133,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 74704,
+        "vmHwmKiB": 71900
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "memory-profile",
+      "mode": "probe",
+      "limitMiB": 768,
+      "profile": "memory",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          805306368,
+          6
+        ],
+        [
+          1,
+          1,
+          805306368,
+          9
+        ],
+        [
+          1,
+          1,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3220.277611,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 414020,
+        "vmHwmKiB": 142508
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "explicitly-off",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "0",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3088.987885,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 422524,
+        "vmHwmKiB": 148836
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "explicitly-off",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "0",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3676.9239000000002,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 995088,
+        "vmHwmKiB": 342512
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "default-absent",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": null,
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3108.0515250000003,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 458032,
+        "vmHwmKiB": 148796
+      }
+    },
+    {
+      "calc": 2461290,
+      "case": "default-absent",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": null,
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3704.645914,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 943296,
+        "vmHwmKiB": 388936
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "below-boundary",
+      "mode": "hybrid",
+      "limitMiB": 767,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          1,
+          804257792,
+          6
+        ],
+        [
+          3,
+          1,
+          804257792,
+          9
+        ],
+        [
+          3,
+          1,
+          804257792,
+          12
+        ]
+      ],
+      "totalMs": 5705.772555,
+      "memory": {
+        "limitBytes": 804257792,
+        "vmPeakKiB": 412964,
+        "vmHwmKiB": 81804
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "below-boundary",
+      "mode": "probe",
+      "limitMiB": 767,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          1,
+          804257792,
+          6
+        ],
+        [
+          3,
+          1,
+          804257792,
+          9
+        ],
+        [
+          3,
+          1,
+          804257792,
+          12
+        ]
+      ],
+      "totalMs": 3125.149224,
+      "memory": {
+        "limitBytes": 804257792,
+        "vmPeakKiB": 338332,
+        "vmHwmKiB": 146536
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "at-boundary",
+      "mode": "hybrid",
+      "limitMiB": 768,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 2,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          2,
+          805306368,
+          6
+        ],
+        [
+          3,
+          2,
+          805306368,
+          9
+        ],
+        [
+          3,
+          2,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3204.1460580000003,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 412788,
+        "vmHwmKiB": 109196
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "at-boundary",
+      "mode": "probe",
+      "limitMiB": 768,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 2,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          2,
+          805306368,
+          6
+        ],
+        [
+          3,
+          2,
+          805306368,
+          9
+        ],
+        [
+          3,
+          2,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3047.024501,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 639356,
+        "vmHwmKiB": 258048
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "respect-requested-one",
+      "mode": "hybrid",
+      "limitMiB": 1024,
+      "profile": "experimental42",
+      "requested": 1,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          1073741824,
+          6
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          9
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          12
+        ]
+      ],
+      "totalMs": 5704.666819,
+      "memory": {
+        "limitBytes": 1073741824,
+        "vmPeakKiB": 412788,
+        "vmHwmKiB": 81888
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "respect-requested-one",
+      "mode": "probe",
+      "limitMiB": 1024,
+      "profile": "experimental42",
+      "requested": 1,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          1073741824,
+          6
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          9
+        ],
+        [
+          1,
+          1,
+          1073741824,
+          12
+        ]
+      ],
+      "totalMs": 3132.841658,
+      "memory": {
+        "limitBytes": 1073741824,
+        "vmPeakKiB": 412992,
+        "vmHwmKiB": 146572
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "unlimited",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          3,
+          0,
+          6
+        ],
+        [
+          3,
+          3,
+          0,
+          9
+        ],
+        [
+          3,
+          3,
+          0,
+          12
+        ]
+      ],
+      "totalMs": 3011.677655,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 424024,
+        "vmHwmKiB": 139364
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "unlimited",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          3,
+          3,
+          0,
+          6
+        ],
+        [
+          3,
+          3,
+          0,
+          9
+        ],
+        [
+          3,
+          3,
+          0,
+          12
+        ]
+      ],
+      "totalMs": 3847.57282,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 987436,
+        "vmHwmKiB": 359184
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "memory-profile",
+      "mode": "hybrid",
+      "limitMiB": 768,
+      "profile": "memory",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          805306368,
+          6
+        ],
+        [
+          1,
+          1,
+          805306368,
+          9
+        ],
+        [
+          1,
+          1,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 6001.078271,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 62316,
+        "vmHwmKiB": 59512
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "memory-profile",
+      "mode": "probe",
+      "limitMiB": 768,
+      "profile": "memory",
+      "requested": 3,
+      "selected": 1,
+      "policy": "1",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [
+        [
+          1,
+          1,
+          805306368,
+          6
+        ],
+        [
+          1,
+          1,
+          805306368,
+          9
+        ],
+        [
+          1,
+          1,
+          805306368,
+          12
+        ]
+      ],
+      "totalMs": 3089.918264,
+      "memory": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 412992,
+        "vmHwmKiB": 146660
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "explicitly-off",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "0",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3169.894392,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 453580,
+        "vmHwmKiB": 151196
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "explicitly-off",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": "0",
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3670.907229,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 987436,
+        "vmHwmKiB": 365872
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "default-absent",
+      "mode": "hybrid",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": null,
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3102.094467,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 453580,
+        "vmHwmKiB": 151116
+      }
+    },
+    {
+      "calc": 2461400,
+      "case": "default-absent",
+      "mode": "probe",
+      "limitMiB": 0,
+      "profile": "experimental42",
+      "requested": 3,
+      "selected": 3,
+      "policy": null,
+      "requests": 8,
+      "fullParity": true,
+      "dispatch": [],
+      "totalMs": 3700.938397,
+      "memory": {
+        "limitBytes": null,
+        "vmPeakKiB": 987436,
+        "vmHwmKiB": 366056
+      }
+    }
+  ],
+  "negative": [
+    {
+      "mode": "hybrid",
+      "invalid": "2",
+      "validated": true,
+      "error": "SEER_NEXT_D_CAP_POLICY must be 0 or 1",
+      "previousRMatches": true,
+      "followingRMatches": true
+    },
+    {
+      "mode": "hybrid",
+      "invalid": "invalid",
+      "validated": true,
+      "error": "SEER_NEXT_D_CAP_POLICY must be 0 or 1",
+      "previousRMatches": true,
+      "followingRMatches": true
+    },
+    {
+      "mode": "probe",
+      "invalid": "2",
+      "validated": true,
+      "error": "SEER_NEXT_D_CAP_POLICY must be 0 or 1",
+      "previousRMatches": true,
+      "followingRMatches": true
+    },
+    {
+      "mode": "probe",
+      "invalid": "invalid",
+      "validated": true,
+      "error": "SEER_NEXT_D_CAP_POLICY must be 0 or 1",
+      "previousRMatches": true,
+      "followingRMatches": true
+    }
+  ],
+  "caveats": [
+    "Real Linux /proc/PID/limits was checked for each native process, including unlimited RLIMIT_AS.",
+    "The thresholds 767/768MiB are opt-in experimental policy cutoffs, not universal success guarantees.",
+    "Memory execution profile is required to retain exactly one D worker independently of the address-space ceiling.",
+    "Policy absent or explicitly disabled must not create policy diagnostic rows.",
+    "Research-only hybrid and cold-probe binaries are validated independently; untouched original Seer supplies full wire JSON replies.",
+    "This is a narrow boundary and error-path test, not a byte-bounded RAM scheme, throughput claim, or production release authorization."
+  ]
+}

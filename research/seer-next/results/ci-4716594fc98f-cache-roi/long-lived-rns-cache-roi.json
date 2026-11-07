@@ -1,0 +1,1022 @@
+{
+  "schema": "seer-next-long-lived-rns-cache-roi-v1",
+  "cpu": "AMD EPYC 9V74 80-Core Processor",
+  "platform": "linux",
+  "arch": "x64",
+  "researchSourceParent": "bab1c998ebfb01d75884c1e4fd6a6bb5b2cc9ff5",
+  "contexts": [
+    {
+      "calc": 2461007,
+      "years": [
+        4997,
+        5001
+      ]
+    },
+    {
+      "calc": 2461247,
+      "years": [
+        4999,
+        5003
+      ]
+    },
+    {
+      "calc": 2461593,
+      "years": [
+        4998,
+        5003
+      ]
+    }
+  ],
+  "rounds": 3,
+  "capsMiB": [
+    512,
+    768
+  ],
+  "arms": [
+    {
+      "id": "off",
+      "reuse": false,
+      "slots": 1,
+      "scope": "thread"
+    },
+    {
+      "id": "thread1",
+      "reuse": true,
+      "slots": 1,
+      "scope": "thread"
+    },
+    {
+      "id": "thread2",
+      "reuse": true,
+      "slots": 2,
+      "scope": "thread"
+    },
+    {
+      "id": "process1",
+      "reuse": true,
+      "slots": 1,
+      "scope": "process"
+    },
+    {
+      "id": "process2",
+      "reuse": true,
+      "slots": 2,
+      "scope": "process"
+    }
+  ],
+  "originalOracleUniqueReplies": 27,
+  "originalStatefulReplayedReplies": 81,
+  "expectedCandidateReplies": 810,
+  "observedCandidateReplies": 810,
+  "candidateProcesses": 10,
+  "acceptedProcesses": 10,
+  "resourceLimitedProcesses": 0,
+  "allCompletedWireParity": true,
+  "allAccepted": true,
+  "unchanged": {
+    "mode": "original",
+    "scope": null,
+    "capMiB": 0,
+    "expectedDWorkers": null,
+    "requestedDWorkers": 1,
+    "reuse": false,
+    "slots": 2,
+    "completedReplies": 81,
+    "expectedReplies": 81,
+    "fullParityOfCompletedReplies": true,
+    "snapshots": [
+      {
+        "completedReplies": 27,
+        "limitBytes": null,
+        "vmPeakKiB": 457424,
+        "vmHwmKiB": 78156
+      },
+      {
+        "completedReplies": 54,
+        "limitBytes": null,
+        "vmPeakKiB": 457424,
+        "vmHwmKiB": 78156
+      },
+      {
+        "completedReplies": 81,
+        "limitBytes": null,
+        "vmPeakKiB": 457424,
+        "vmHwmKiB": 78156
+      }
+    ],
+    "finalStatus": {
+      "limitBytes": null,
+      "vmPeakKiB": 457424,
+      "vmHwmKiB": 78156
+    },
+    "totalObservedMs": 51559.99685000001,
+    "resourceFailure": null,
+    "status": "ACCEPTED",
+    "completeFullParity": true
+  },
+  "summary": [
+    {
+      "capMiB": 512,
+      "arm": "off",
+      "scope": "thread",
+      "reuse": false,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 30429.360370000006,
+      "vmPeakKiB": 413536,
+      "vmHwmKiB": 77864,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 0,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        }
+      ]
+    },
+    {
+      "capMiB": 512,
+      "arm": "thread1",
+      "scope": "thread",
+      "reuse": true,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 29286.257010000012,
+      "vmPeakKiB": 413536,
+      "vmHwmKiB": 115176,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 287,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 109948
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 110560
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 115176
+        }
+      ]
+    },
+    {
+      "capMiB": 512,
+      "arm": "thread2",
+      "scope": "thread",
+      "reuse": true,
+      "slots": 2,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 26824.543184000002,
+      "vmPeakKiB": 413536,
+      "vmHwmKiB": 150932,
+      "initTraceRows": 288,
+      "initHits": 18,
+      "evictionsMax": 268,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150096
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150500
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150932
+        }
+      ]
+    },
+    {
+      "capMiB": 512,
+      "arm": "process1",
+      "scope": "process",
+      "reuse": true,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 27305.721057999992,
+      "vmPeakKiB": 330008,
+      "vmHwmKiB": 115336,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 287,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 329216,
+          "vmHwmKiB": 109788
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 329812,
+          "vmHwmKiB": 111568
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 330008,
+          "vmHwmKiB": 115336
+        }
+      ]
+    },
+    {
+      "capMiB": 512,
+      "arm": "process2",
+      "scope": "process",
+      "reuse": true,
+      "slots": 2,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 26936.528933,
+      "vmPeakKiB": 413536,
+      "vmHwmKiB": 151744,
+      "initTraceRows": 288,
+      "initHits": 18,
+      "evictionsMax": 268,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        }
+      ]
+    },
+    {
+      "capMiB": 768,
+      "arm": "process2",
+      "scope": "process",
+      "reuse": true,
+      "slots": 2,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 26063.938468999997,
+      "vmPeakKiB": 694160,
+      "vmHwmKiB": 204412,
+      "initTraceRows": 288,
+      "initHits": 18,
+      "evictionsMax": 268,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        }
+      ]
+    },
+    {
+      "capMiB": 768,
+      "arm": "process1",
+      "scope": "process",
+      "reuse": true,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 27839.967059999995,
+      "vmPeakKiB": 682608,
+      "vmHwmKiB": 186348,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 287,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 184144
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 185300
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 186348
+        }
+      ]
+    },
+    {
+      "capMiB": 768,
+      "arm": "thread2",
+      "scope": "thread",
+      "reuse": true,
+      "slots": 2,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 26051.36428700002,
+      "vmPeakKiB": 691584,
+      "vmHwmKiB": 273084,
+      "initTraceRows": 288,
+      "initHits": 18,
+      "evictionsMax": 156,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        }
+      ]
+    },
+    {
+      "capMiB": 768,
+      "arm": "thread1",
+      "scope": "thread",
+      "reuse": true,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 26871.06041000001,
+      "vmPeakKiB": 693768,
+      "vmHwmKiB": 198240,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 173,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 691768,
+          "vmHwmKiB": 198240
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 693144,
+          "vmHwmKiB": 198240
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 693768,
+          "vmHwmKiB": 198240
+        }
+      ]
+    },
+    {
+      "capMiB": 768,
+      "arm": "off",
+      "scope": "thread",
+      "reuse": false,
+      "slots": 1,
+      "status": "ACCEPTED",
+      "completed": 81,
+      "ms": 27351.843765999998,
+      "vmPeakKiB": 677132,
+      "vmHwmKiB": 137216,
+      "initTraceRows": 288,
+      "initHits": 0,
+      "evictionsMax": 0,
+      "snapshots": [
+        {
+          "completed": 27,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        },
+        {
+          "completed": 54,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        },
+        {
+          "completed": 81,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        }
+      ]
+    }
+  ],
+  "results": [
+    {
+      "arm": "off",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 512,
+      "expectedDWorkers": 1,
+      "requestedDWorkers": 3,
+      "reuse": false,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 77864
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 536870912,
+        "vmPeakKiB": 413536,
+        "vmHwmKiB": 77864
+      },
+      "totalObservedMs": 30429.360370000006,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 0,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": false,
+        "slots": 1,
+        "scope": "thread"
+      }
+    },
+    {
+      "arm": "thread1",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 512,
+      "expectedDWorkers": 1,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 109948
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 110560
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 115176
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 536870912,
+        "vmPeakKiB": 413536,
+        "vmHwmKiB": 115176
+      },
+      "totalObservedMs": 29286.257010000012,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 287,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": true,
+        "slots": 1,
+        "scope": "thread"
+      }
+    },
+    {
+      "arm": "thread2",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 512,
+      "expectedDWorkers": 1,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 2,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150096
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150500
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 150932
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 536870912,
+        "vmPeakKiB": 413536,
+        "vmHwmKiB": 150932
+      },
+      "totalObservedMs": 26824.543184000002,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 18,
+        "evictionsMax": 268,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "reuse": true,
+        "slots": 2,
+        "scope": "thread"
+      }
+    },
+    {
+      "arm": "process1",
+      "mode": "probe",
+      "scope": "process",
+      "capMiB": 512,
+      "expectedDWorkers": 1,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 329216,
+          "vmHwmKiB": 109788
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 329812,
+          "vmHwmKiB": 111568
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 330008,
+          "vmHwmKiB": 115336
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 536870912,
+        "vmPeakKiB": 330008,
+        "vmHwmKiB": 115336
+      },
+      "totalObservedMs": 27305.721057999992,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 287,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": true,
+        "slots": 1,
+        "scope": "process"
+      }
+    },
+    {
+      "arm": "process2",
+      "mode": "probe",
+      "scope": "process",
+      "capMiB": 512,
+      "expectedDWorkers": 1,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 2,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 536870912,
+          "vmPeakKiB": 413536,
+          "vmHwmKiB": 151744
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 536870912,
+        "vmPeakKiB": 413536,
+        "vmHwmKiB": 151744
+      },
+      "totalObservedMs": 26936.528933,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 18,
+        "evictionsMax": 268,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "reuse": true,
+        "slots": 2,
+        "scope": "process"
+      }
+    },
+    {
+      "arm": "process2",
+      "mode": "probe",
+      "scope": "process",
+      "capMiB": 768,
+      "expectedDWorkers": 2,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 2,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 694160,
+          "vmHwmKiB": 204412
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 694160,
+        "vmHwmKiB": 204412
+      },
+      "totalObservedMs": 26063.938468999997,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 18,
+        "evictionsMax": 268,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "reuse": true,
+        "slots": 2,
+        "scope": "process"
+      }
+    },
+    {
+      "arm": "process1",
+      "mode": "probe",
+      "scope": "process",
+      "capMiB": 768,
+      "expectedDWorkers": 2,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 184144
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 185300
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 682608,
+          "vmHwmKiB": 186348
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 682608,
+        "vmHwmKiB": 186348
+      },
+      "totalObservedMs": 27839.967059999995,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 287,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": true,
+        "slots": 1,
+        "scope": "process"
+      }
+    },
+    {
+      "arm": "thread2",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 768,
+      "expectedDWorkers": 2,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 2,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 691584,
+          "vmHwmKiB": 273084
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 691584,
+        "vmHwmKiB": 273084
+      },
+      "totalObservedMs": 26051.36428700002,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 18,
+        "evictionsMax": 156,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "reuse": true,
+        "slots": 2,
+        "scope": "thread"
+      }
+    },
+    {
+      "arm": "thread1",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 768,
+      "expectedDWorkers": 2,
+      "requestedDWorkers": 3,
+      "reuse": true,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 691768,
+          "vmHwmKiB": 198240
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 693144,
+          "vmHwmKiB": 198240
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 693768,
+          "vmHwmKiB": 198240
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 693768,
+        "vmHwmKiB": 198240
+      },
+      "totalObservedMs": 26871.06041000001,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 173,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": true,
+        "slots": 1,
+        "scope": "thread"
+      }
+    },
+    {
+      "arm": "off",
+      "mode": "probe",
+      "scope": "thread",
+      "capMiB": 768,
+      "expectedDWorkers": 2,
+      "requestedDWorkers": 3,
+      "reuse": false,
+      "slots": 1,
+      "completedReplies": 81,
+      "expectedReplies": 81,
+      "fullParityOfCompletedReplies": true,
+      "snapshots": [
+        {
+          "completedReplies": 27,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        },
+        {
+          "completedReplies": 54,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        },
+        {
+          "completedReplies": 81,
+          "limitBytes": 805306368,
+          "vmPeakKiB": 677132,
+          "vmHwmKiB": 137216
+        }
+      ],
+      "finalStatus": {
+        "limitBytes": 805306368,
+        "vmPeakKiB": 677132,
+        "vmHwmKiB": 137216
+      },
+      "totalObservedMs": 27351.843765999998,
+      "resourceFailure": null,
+      "status": "ACCEPTED",
+      "completeFullParity": true,
+      "traceEvidence": {
+        "rows": 288,
+        "hits": 0,
+        "evictionsMax": 0,
+        "dispatchRows": 27,
+        "firstFour": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "reuse": false,
+        "slots": 1,
+        "scope": "thread"
+      }
+    }
+  ],
+  "caveats": [
+    "All five initializer cache policies run identical original-Seer-equal 81-request R/Y/D wire in fresh native processes.",
+    "Initializer reuse OFF is still an experimental cold-probe candidate, not production Seer.",
+    "One slot and reuse OFF must both start with R A/B/A/B misses [0,0,0,0]; two slots reuse [0,0,1,1].",
+    "Per-thread eviction counters have different semantics than process-global counters: do not compare maxima as sums.",
+    "512MiB/768MiB Linux RLIMIT_AS and native cap-aware D scheduling are real, but virtual-space limits are not physical RSS limits.",
+    "All accepted native processes have three complete 27-request memory checkpoints, 27 D dispatcher policy traces and independent RNS initializer trace schemas.",
+    "A RESOURCE_LIMITED attempt is not accepted despite any earlier full-wire-equal responses.",
+    "RNS LRU slot count is not a byte budget and does not bound in-flight shared_ptr-pinned engines.",
+    "All released Seer, main, default cache and D policy modes remain unchanged."
+  ]
+}

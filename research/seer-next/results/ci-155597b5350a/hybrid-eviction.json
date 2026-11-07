@@ -1,0 +1,119 @@
+{
+  "schema": "seer-next-hybrid-eviction-v1",
+  "commitAtStart": "ffa3bf0584e31367b77223419d303a1d3f96c484",
+  "verdict": "ALL_PHASES_MATCH_BASELINE_AND_CACHE_INVARIANTS",
+  "phaseCount": 5,
+  "evidence": [
+    {
+      "id": "both-disabled",
+      "count": 4,
+      "responseHash": "9b2159619df22b7470b22496c728771aef0dd82d917a17eae7150ede46248a13",
+      "fullReplyParity": true,
+      "memo": {
+        "hits": 0,
+        "builds": 0,
+        "evictions": 0,
+        "keys": 0,
+        "payloadBytes": 0,
+        "payloadBudgetBytes": 0,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 0,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      }
+    },
+    {
+      "id": "two-record-day-cache-eviction",
+      "count": 9,
+      "responseHash": "f235c7d74646f32c6498390bc2dcb8a048f5a88ba993063a2f7c223a074269d2",
+      "fullReplyParity": true,
+      "memo": {
+        "hits": 0,
+        "builds": 0,
+        "evictions": 0,
+        "keys": 0,
+        "payloadBytes": 0,
+        "payloadBudgetBytes": 0,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 0,
+        "dayHits": 3,
+        "dayStores": 6,
+        "dayEvictions": 4,
+        "dayEntries": 2,
+        "dayPayloadBytes": 80,
+        "dayBudgetBytes": 80
+      }
+    },
+    {
+      "id": "one-year-table-eviction",
+      "count": 4,
+      "responseHash": "212619737586cd9dcda2c09f9995f12cde35047d5711169c100b8ef9244bca3e",
+      "fullReplyParity": true,
+      "memo": {
+        "hits": 0,
+        "builds": 3,
+        "evictions": 3,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 180000,
+        "promoteAfter": 1,
+        "serviceYearStructBuilds": 3,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 0
+      }
+    },
+    {
+      "id": "hybrid-and-year-promotion",
+      "count": 7,
+      "responseHash": "c0f32a539ae9f89465c6b05cac42d6c9536a1bfd9868068afc7e792859ecc60d",
+      "fullReplyParity": true,
+      "memo": {
+        "hits": 3,
+        "builds": 1,
+        "evictions": 0,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 180000,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 1,
+        "dayHits": 2,
+        "dayStores": 5,
+        "dayEvictions": 3,
+        "dayEntries": 2,
+        "dayPayloadBytes": 80,
+        "dayBudgetBytes": 80
+      }
+    },
+    {
+      "id": "range-crosses-boundary",
+      "count": 4,
+      "responseHash": "21efdcaadac2fc6fbb5ea90f66a521d62433329eb8a2bc215b1d1313427feb6d",
+      "fullReplyParity": true,
+      "memo": {
+        "hits": 0,
+        "builds": 3,
+        "evictions": 2,
+        "keys": 1,
+        "payloadBytes": 161880,
+        "payloadBudgetBytes": 180000,
+        "promoteAfter": 2,
+        "serviceYearStructBuilds": 3,
+        "dayHits": 0,
+        "dayStores": 0,
+        "dayEvictions": 0,
+        "dayEntries": 0,
+        "dayPayloadBytes": 0,
+        "dayBudgetBytes": 80
+      }
+    }
+  ],
+  "caveat": "Caps apply to cache record payloads, not RSS/heap metadata/temporary weaving."
+}
