@@ -1,0 +1,123 @@
+{
+  "schema": "seer-next-experimental4-profile-parity-v1",
+  "baselineCommit": "7f1b3098332d891a9ea6cf8e31383d4fd39141cf",
+  "profiles": [
+    {
+      "profile": "experimental4",
+      "comparisons": 15,
+      "fullWireParity": true,
+      "responseSha256": "0fe7195e4106af591c70287591e25629beb6f0668ae2dac3f9d5b32a13597e75"
+    },
+    {
+      "profile": "latency",
+      "comparisons": 15,
+      "fullWireParity": true,
+      "responseSha256": "0fe7195e4106af591c70287591e25629beb6f0668ae2dac3f9d5b32a13597e75"
+    },
+    {
+      "profile": "memory",
+      "comparisons": 15,
+      "fullWireParity": true,
+      "responseSha256": "0fe7195e4106af591c70287591e25629beb6f0668ae2dac3f9d5b32a13597e75"
+    }
+  ],
+  "requests": [
+    [
+      "R",
+      "2461290",
+      "2458961",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2458962",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2460984",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2461290",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463006",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463007",
+      "1"
+    ],
+    [
+      "R",
+      "2461290",
+      "2463003",
+      "8"
+    ],
+    [
+      "R",
+      "2461291",
+      "2460984",
+      "4"
+    ],
+    [
+      "R",
+      "2461400",
+      "2461300",
+      "5"
+    ],
+    [
+      "R",
+      "-13334246",
+      "-13334246",
+      "1"
+    ],
+    [
+      "R",
+      "-13334245",
+      "-13334245",
+      "1"
+    ],
+    [
+      "Y",
+      "2461290",
+      "5000",
+      "0"
+    ],
+    [
+      "Y",
+      "2461290",
+      "5000",
+      "1"
+    ],
+    [
+      "D",
+      "2461290",
+      "5",
+      "1"
+    ],
+    [
+      "D",
+      "2461400",
+      "4",
+      "-1"
+    ]
+  ],
+  "allPassed": true,
+  "caveats": [
+    "One Linux host and limited cases; not proof of all-domain equivalence.",
+    "Experimental4 is 4 RNS and 1 replay worker for R and Y paths.",
+    "Diagonal D uses its existing one-worker-per-record exact compute profile.",
+    "No cache and no production Seer source changes."
+  ]
+}
