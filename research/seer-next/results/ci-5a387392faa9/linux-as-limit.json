@@ -1,0 +1,104 @@
+{
+  "schema": "seer-next-linux-rlimit-as-v1",
+  "kernelEnforcement": "RLIMIT_AS",
+  "outcome": "2GiB latency and 64MiB memory profiles must succeed; 64MiB latency mode must refuse at startup",
+  "results": [
+    {
+      "name": "2GiB-latency",
+      "requestedBytes": 2147483648,
+      "profile": "latency",
+      "before": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 9180,
+        "vmPeakKiB": 9572,
+        "rssHighWaterKiB": 6272
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 2147483648,
+        "vmSizeKiB": 349356,
+        "vmPeakKiB": 481252,
+        "rssHighWaterKiB": 38292
+      }
+    },
+    {
+      "name": "512MiB-experimental4-observed",
+      "requestedBytes": 536870912,
+      "profile": "experimental4",
+      "before": {
+        "effectiveLimitBytes": 536870912,
+        "vmSizeKiB": 9180,
+        "vmPeakKiB": 9572,
+        "rssHighWaterKiB": 6352
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 536870912,
+        "vmSizeKiB": 265716,
+        "vmPeakKiB": 455636,
+        "rssHighWaterKiB": 38860
+      }
+    },
+    {
+      "name": "512MiB-experimental42-long-year-observed",
+      "requestedBytes": 536870912,
+      "profile": "experimental42",
+      "before": {
+        "effectiveLimitBytes": 536870912,
+        "vmSizeKiB": 9180,
+        "vmPeakKiB": 9572,
+        "rssHighWaterKiB": 6348
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 536870912,
+        "vmSizeKiB": 354116,
+        "vmPeakKiB": 457004,
+        "rssHighWaterKiB": 73464
+      }
+    },
+    {
+      "name": "64MiB-memory",
+      "requestedBytes": 67108864,
+      "profile": "memory",
+      "before": {
+        "effectiveLimitBytes": 67108864,
+        "vmSizeKiB": 9180,
+        "vmPeakKiB": 9572,
+        "rssHighWaterKiB": 6276
+      },
+      "successfulQueries": 3,
+      "outcome": "SUCCESS_UNDER_CAP",
+      "after": {
+        "effectiveLimitBytes": 67108864,
+        "vmSizeKiB": 29320,
+        "vmPeakKiB": 39644,
+        "rssHighWaterKiB": 36864
+      },
+      "memo": {
+        "fullYearBuilds": 1,
+        "dayStores": 0,
+        "yearPayloadBytes": 161880
+      }
+    },
+    {
+      "name": "64MiB-latency-refused",
+      "requestedBytes": 67108864,
+      "profile": "latency",
+      "outcome": "EXPLICIT_STARTUP_REFUSAL",
+      "failure": "Error: native close 1/null: seer_engine_service: virtual cap below 512MiB requires SEER_NEXT_EXECUTION_PROFILE=memory\n"
+    }
+  ],
+  "qualifications": [
+    "This is an address-space limit, NOT an RSS limit, and only Linux is implemented.",
+    "The limit is installed early in main, after the system loader has mapped shared libraries.",
+    "Under 64MiB the explicit memory profile uses 1 OpenMP + 1 replay worker; its acceptance is only tested for selected inputs.",
+    "Experimental42 512MiB long-year stress is an observation only: its failure is retained and not represented as a correctness failure of the native calendar.",
+    "The startup refusal for latency profile under 512MiB is conservative policy, not a proven lower bound.",
+    "RNS and thread stacks count toward virtual memory. This experiment does not establish a safe minimum.",
+    "No Windows Job Object or cgroup memory.max was implemented."
+  ]
+}
