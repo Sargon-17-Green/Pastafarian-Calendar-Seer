@@ -523,8 +523,44 @@ class SeerEngineService {
         std::exception_ptr firstError;
         const size_t requestedWorkers = seer_next_execution_profile()=="memory"
             ? 1 : svc_env_limit("SEER_DIAGONAL_THREADS", 3, 1, 16);
+        // Research-only opt-in: choose worker count from *actual* kernel
+        // RLIMIT_AS, never the environment request or resident RSS. These
+        // thresholds come from limited experimental measurements, not a
+        // universal guarantee of memory or thread-allocation success.
+        const char* policyRaw=std::getenv("SEER_NEXT_D_CAP_POLICY");
+        const std::string policy=policyRaw && *policyRaw ? policyRaw : "0";
+        if(policy!="0" && policy!="1")
+            throw std::runtime_error("SEER_NEXT_D_CAP_POLICY must be 0 or 1");
+        size_t capWorkers=requestedWorkers;
+        unsigned long long observedCapBytes=0; // 0 denotes unlimited.
+        if(policy=="1") {
+#ifdef __linux__
+            struct rlimit lim{};
+            if(getrlimit(RLIMIT_AS,&lim)!=0)
+                throw std::runtime_error(std::string("getrlimit(RLIMIT_AS): ")+
+                                         std::strerror(errno));
+            if(lim.rlim_cur!=RLIM_INFINITY) {
+                observedCapBytes=static_cast<unsigned long long>(lim.rlim_cur);
+                constexpr unsigned long long twoWorkerMin =
+                    768ULL * 1024ULL * 1024ULL;
+                capWorkers=std::min(capWorkers,
+                                    observedCapBytes<twoWorkerMin ? size_t{1}:size_t{2});
+            }
+#else
+            throw std::runtime_error("SEER_NEXT_D_CAP_POLICY supported only on Linux");
+#endif
+        }
         const size_t hardware = std::max<unsigned>(1, std::thread::hardware_concurrency());
-        const size_t workers = std::min({requestedWorkers, hardware, static_cast<size_t>(count)});
+        const size_t workers = std::min({capWorkers, hardware, static_cast<size_t>(count)});
+        if(policy=="1") {
+            if(const char*trace=std::getenv("SEER_NEXT_D_CAP_POLICY_TRACE_FILE"); trace && *trace) {
+                std::ofstream out(trace,std::ios::app);
+                if(!out)throw std::runtime_error("cannot open research D cap policy trace");
+                out<<requestedWorkers<<'\t'<<workers<<'\t'
+                   <<observedCapBytes<<'\t'<<count<<'\n';
+                if(!out)throw std::runtime_error("research D cap policy trace write failed");
+            }
+        }
 
         auto work = [&]() {
             while (!failed.load(std::memory_order_relaxed)) {
