@@ -1,0 +1,55 @@
+name: Seer Kotlin P0 native ABI probe
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'prototype/tests/seer_mobile_p0_bench.cpp'
+      - '.github/workflows/seer-kotlin-p0-native.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  portable-native-probe:
+    name: Verify and sample mobile ABI on Linux host (not Android)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Seer native dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Compile mobile C ABI harness
+        run: |
+          set -euo pipefail
+          mkdir -p prototype/build/p0
+          clang++ -std=c++20 -O2 -DNDEBUG -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 \
+            -Iprototype/include -Iprototype/src -pthread \
+            prototype/src/seer_year_core.cpp \
+            prototype/src/seer_calendar_core.cpp \
+            prototype/src/seer_weave_portable.cpp \
+            prototype/src/seer_mobile.cpp \
+            prototype/tests/seer_mobile_p0_bench.cpp \
+            -o prototype/build/p0/seer_mobile_p0_bench
+      - name: Smoke test with raw output (no speed assertion)
+        run: |
+          set -euo pipefail
+          {
+            printf 'commit=%s\n' "$GITHUB_SHA"
+            uname -a
+            clang++ --version | head -n 1
+          } > prototype/build/p0/environment.txt
+          prototype/build/p0/seer_mobile_p0_bench \
+            prototype/data/gates_100k_u16.bin \
+            prototype/data/gates_negative_100k_u16.bin 1 \
+            | tee prototype/build/p0/host-samples.ndjson
+          grep -q '"event":"P0_COMPLETE"' prototype/build/p0/host-samples.ndjson
+      - name: Upload raw evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-p0-linux-host-diagnostic
+          path: |
+            prototype/build/p0/host-samples.ndjson
+            prototype/build/p0/environment.txt
+          if-no-files-found: error
