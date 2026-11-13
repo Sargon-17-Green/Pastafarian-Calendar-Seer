@@ -23,6 +23,13 @@ static seer_mobile_config config(const char* pos,const char* neg){
     return c;
 }
 
+static bool same_record(const seer_mobile_record& a,const seer_mobile_record& b) {
+    return a.target_jdn==b.target_jdn && a.year==b.year &&
+        a.cutlet_index==b.cutlet_index && a.day_in_cutlet==b.day_in_cutlet &&
+        a.month_index==b.month_index && a.day_in_month==b.day_in_month &&
+        a.cutlet_count==b.cutlet_count && a.month_count==b.month_count;
+}
+
 int main(int argc,char**argv){
     if(argc!=3){std::cerr<<"usage: test POS NEG\n";return 2;}
     seer_mobile_error err{};
@@ -51,6 +58,39 @@ int main(int argc,char**argv){
     assert(seer_mobile_query_batch(ctx,-13334246LL,targets,3,nullptr,batch,&err)==SEER_MOBILE_OK);
     for(int i=0;i<3;i++) assert(batch[i].target_jdn==targets[i]);
 
+    // Compare every field of optimized contiguous batches with independent
+    // single queries. Reverse/duplicate/sparse inputs exercise the fallback.
+    const int64_t sample_calc=2461290LL;
+    auto parity=[&](const std::vector<int64_t>& days){
+        std::vector<seer_mobile_record> results(days.size());
+        assert(seer_mobile_query_batch(
+            ctx,sample_calc,days.data(),days.size(),nullptr,results.data(),&err)
+            ==SEER_MOBILE_OK);
+        for(size_t i=0;i<days.size();++i){
+            seer_mobile_record one{};
+            assert(seer_mobile_query(
+                ctx,sample_calc,days[i],nullptr,&one,&err)==SEER_MOBILE_OK);
+            assert(same_record(results[i],one));
+        }
+    };
+    std::vector<int64_t> seven(7);
+    for(size_t i=0;i<seven.size();++i) seven[i]=sample_calc-3+static_cast<int64_t>(i);
+    parity(seven);
+    parity(std::vector<int64_t>(seven.rbegin(),seven.rend()));
+    parity({sample_calc-1,sample_calc-1,sample_calc,sample_calc+1});
+    parity({sample_calc-21,sample_calc-7,sample_calc+7,sample_calc+21});
+    std::vector<int64_t> month_view(42);
+    for(size_t i=0;i<month_view.size();++i)
+        month_view[i]=sample_calc-21+static_cast<int64_t>(i);
+    parity(month_view);
+
+    // A malformed member must retain the same per-item domain error as before.
+    const int64_t invalid_days[3]={sample_calc,sample_calc+1,
+                                     std::numeric_limits<int64_t>::max()};
+    seer_mobile_record invalid_out[3]{};
+    assert(seer_mobile_query_batch(ctx,sample_calc,invalid_days,3,nullptr,
+                                   invalid_out,&err)==SEER_MOBILE_TARGET_OUT_OF_DOMAIN);
+
     seer_mobile_cancel_token* token=nullptr;
     assert(seer_mobile_cancel_token_create(&token,&err)==SEER_MOBILE_OK);
     seer_mobile_cancel_token_retain(token);
@@ -58,6 +98,9 @@ int main(int argc,char**argv){
     seer_mobile_cancel(token);
     seer_mobile_record cancelled{};
     assert(seer_mobile_query(ctx,-13334246LL,-13334246LL,token,&cancelled,&err)==SEER_MOBILE_CANCELLED);
+    seer_mobile_record cancelled_batch[7]{};
+    assert(seer_mobile_query_batch(ctx,sample_calc,seven.data(),seven.size(),token,
+                                   cancelled_batch,&err)==SEER_MOBILE_CANCELLED);
     seer_mobile_cancel_token_reset(token);
 
     std::atomic<int> ready{0};
