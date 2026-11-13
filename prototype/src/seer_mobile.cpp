@@ -402,30 +402,52 @@ seer_mobile_status seer_mobile_query_batch(
             if (calculation_jdn > min_day && calculation_jdn <= max_day &&
                 first > min_day && last <= max_day) {
                 try {
-                    const FY year = target_year(
+                    FY year = target_year(
                         calculation_jdn, first, context->gates, context->stones, cancel_token);
-                    if (last <= year.b) {
-                        const auto records = compute_segment(
-                            calculation_jdn, first, last, context->gates,
-                            context->stones, year, context->params);
-                        if (records.size() != target_count) {
-                            throw std::runtime_error("contiguous batch record count mismatch");
-                        }
+                    std::vector<BatchRecord> records;
+                    records.reserve(target_count);
+                    int64_t cursor = first;
+                    while (cursor <= last) {
                         if (cancelled(cancel_token)) throw Cancelled{};
-                        for (size_t i = 0; i < target_count; ++i) {
-                            if (cancelled(cancel_token)) throw Cancelled{};
-                            if (records[i].targetJdn != target_jdns[i]) {
-                                throw std::runtime_error("contiguous batch target mismatch");
-                            }
-                            out_records[i] = to_c_record(records[i]);
+                        const int64_t segment_end = std::min(last, year.b);
+                        if (segment_end < cursor) {
+                            throw std::runtime_error("non-progressing contiguous year segment");
                         }
-                        return SEER_MOBILE_OK;
+                        const auto part = compute_segment(
+                            calculation_jdn, cursor, segment_end, context->gates,
+                            context->stones, year, context->params);
+                        const auto expected = static_cast<size_t>(segment_end - cursor + 1);
+                        if (part.size() != expected) {
+                            throw std::runtime_error("contiguous year segment count mismatch");
+                        }
+                        records.insert(records.end(), part.begin(), part.end());
+                        if (segment_end == last) break;
+                        // The range has been checked against finite Gate bounds.
+                        // Still guard this operation independently from signed overflow.
+                        if (segment_end == std::numeric_limits<int64_t>::max()) {
+                            throw std::runtime_error("contiguous target increment overflow");
+                        }
+                        cursor = segment_end + 1;
+                        year = fadj(calculation_jdn, context->gates,
+                                    context->stones, year, true);
                     }
+                    if (records.size() != target_count) {
+                        throw std::runtime_error("contiguous batch record count mismatch");
+                    }
+                    if (cancelled(cancel_token)) throw Cancelled{};
+                    for (size_t i = 0; i < target_count; ++i) {
+                        if (cancelled(cancel_token)) throw Cancelled{};
+                        if (records[i].targetJdn != target_jdns[i]) {
+                            throw std::runtime_error("contiguous batch target mismatch");
+                        }
+                        out_records[i] = to_c_record(records[i]);
+                    }
+                    return SEER_MOBILE_OK;
                 } catch (const Cancelled&) {
                     throw;
                 } catch (const std::exception&) {
-                    // Preserve the old, per-item error behavior if the
-                    // optimization cannot produce an exact answer.
+                    // Retain the exact original per-item error semantics when
+                    // a range candidate cannot be completed.
                 }
             }
         }
