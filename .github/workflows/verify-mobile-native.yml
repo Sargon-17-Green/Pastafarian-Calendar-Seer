@@ -37,6 +37,11 @@ jobs:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1
         run: python prototype/scripts/check_mobile_parity.py prototype/build/seer_mobile_dump prototype/build/seer_engine_service prototype/data
+      - name: Deterministic extended mobile range parity (cross-year and negative dates)
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1
+        run: python prototype/scripts/check_mobile_extended_parity.py prototype/build/seer_mobile_dump prototype/build/seer_engine_service prototype/data
       - name: Fixed canonical known-answer corpus
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
