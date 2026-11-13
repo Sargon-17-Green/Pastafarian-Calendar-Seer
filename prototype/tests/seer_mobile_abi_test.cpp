@@ -70,24 +70,39 @@ int main(int argc,char**argv){
             seer_mobile_record one{};
             assert(seer_mobile_query(
                 ctx,sample_calc,days[i],nullptr,&one,&err)==SEER_MOBILE_OK);
-            assert(same_record(results[i],one));
+            if (!same_record(results[i],one)) {
+                const auto print=[&](const char* name,const seer_mobile_record& r){
+                    std::cerr<<name<<" target="<<r.target_jdn
+                      <<" year="<<r.year<<" cutletIndex="<<r.cutlet_index
+                      <<" dayInCutlet="<<r.day_in_cutlet<<" monthIndex="<<r.month_index
+                      <<" dayInMonth="<<r.day_in_month<<" cutletCount="<<r.cutlet_count
+                      <<" monthCount="<<r.month_count<<"\\n";
+                };
+                std::cerr<<"SEER_MOBILE_CROSS_YEAR_PARITY_FAIL calc="<<sample_calc
+                         <<" range_start="<<days.front()<<" count="<<days.size()
+                         <<" index="<<i<<" requested="<<days[i]<<"\\n";
+                print("batch",results[i]);
+                print("single",one);
+                return false;
+            }
         }
+        return true;
     };
     std::vector<int64_t> seven(7);
     for(size_t i=0;i<seven.size();++i) seven[i]=sample_calc-3+static_cast<int64_t>(i);
-    parity(seven);
-    parity(std::vector<int64_t>(seven.rbegin(),seven.rend()));
-    parity({sample_calc-1,sample_calc-1,sample_calc,sample_calc+1});
-    parity({sample_calc-21,sample_calc-7,sample_calc+7,sample_calc+21});
+    assert(parity(seven));
+    assert(parity(std::vector<int64_t>(seven.rbegin(),seven.rend())));
+    assert(parity({sample_calc-1,sample_calc-1,sample_calc,sample_calc+1}));
+    assert(parity({sample_calc-21,sample_calc-7,sample_calc+7,sample_calc+21}));
     std::vector<int64_t> month_view(42);
     for(size_t i=0;i<month_view.size();++i)
         month_view[i]=sample_calc-21+static_cast<int64_t>(i);
-    parity(month_view);
+    assert(parity(month_view));
     // Canonical year-5000 starts at 2458961 and ends at 2463007.
     // Exercise the genuinely optimized cross-year path, not just fallback.
-    parity({2458958LL,2458959LL,2458960LL,2458961LL,2458962LL,2458963LL,2458964LL});
-    parity({2463005LL,2463006LL,2463007LL,2463008LL,2463009LL,2463010LL,2463011LL});
-    parity({2463006LL,2463007LL,2463008LL}); // smallest near-end crossing
+    assert(parity({2458958LL,2458959LL,2458960LL,2458961LL,2458962LL,2458963LL,2458964LL}));
+    assert(parity({2463005LL,2463006LL,2463007LL,2463008LL,2463009LL,2463010LL,2463011LL}));
+    assert(parity({2463006LL,2463007LL,2463008LL}); // smallest near-end crossing
 
     // A malformed member must retain the same per-item domain error as before.
     const int64_t invalid_days[3]={sample_calc,sample_calc+1,
