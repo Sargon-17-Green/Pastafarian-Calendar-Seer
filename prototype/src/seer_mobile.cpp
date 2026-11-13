@@ -384,6 +384,52 @@ seer_mobile_status seer_mobile_query_batch(
     if (acquired != SEER_MOBILE_OK) return acquired;
     CancelScope cancel_scope(cancel_token);
     try {
+        // A contiguous target span in a single computed year can reuse the
+        // canonical year structure and prefix weave. This is a strictly
+        // optional acceleration: all other inputs use the original loop.
+        bool contiguous = target_count > 1;
+        for (size_t i = 1; contiguous && i < target_count; ++i) {
+            if (target_jdns[i - 1] == std::numeric_limits<int64_t>::max() ||
+                target_jdns[i] != target_jdns[i - 1] + 1) {
+                contiguous = false;
+            }
+        }
+        if (contiguous && !cancelled(cancel_token)) {
+            const int64_t min_day = context->gates.at(context->gates.min_index());
+            const int64_t max_day = context->gates.at(context->gates.max_index());
+            const int64_t first = target_jdns[0];
+            const int64_t last = target_jdns[target_count - 1];
+            if (calculation_jdn > min_day && calculation_jdn <= max_day &&
+                first > min_day && last <= max_day) {
+                try {
+                    const FY year = target_year(
+                        calculation_jdn, first, context->gates, context->stones, cancel_token);
+                    if (last <= year.b) {
+                        const auto records = compute_segment(
+                            calculation_jdn, first, last, context->gates,
+                            context->stones, year, context->params);
+                        if (records.size() != target_count) {
+                            throw std::runtime_error("contiguous batch record count mismatch");
+                        }
+                        if (cancelled(cancel_token)) throw Cancelled{};
+                        for (size_t i = 0; i < target_count; ++i) {
+                            if (cancelled(cancel_token)) throw Cancelled{};
+                            if (records[i].targetJdn != target_jdns[i]) {
+                                throw std::runtime_error("contiguous batch target mismatch");
+                            }
+                            out_records[i] = to_c_record(records[i]);
+                        }
+                        return SEER_MOBILE_OK;
+                    }
+                } catch (const Cancelled&) {
+                    throw;
+                } catch (const std::exception&) {
+                    // Preserve the old, per-item error behavior if the
+                    // optimization cannot produce an exact answer.
+                }
+            }
+        }
+
         for (size_t i = 0; i < target_count; ++i) {
             if (cancelled(cancel_token)) throw Cancelled{};
             out_records[i] = compute_one(*context, calculation_jdn, target_jdns[i], cancel_token);
