@@ -83,6 +83,11 @@ int main(int argc,char**argv){
     for(size_t i=0;i<month_view.size();++i)
         month_view[i]=sample_calc-21+static_cast<int64_t>(i);
     parity(month_view);
+    // Canonical year-5000 starts at 2458961 and ends at 2463007.
+    // Exercise the genuinely optimized cross-year path, not just fallback.
+    parity({2458958LL,2458959LL,2458960LL,2458961LL,2458962LL,2458963LL,2458964LL});
+    parity({2463005LL,2463006LL,2463007LL,2463008LL,2463009LL,2463010LL,2463011LL});
+    parity({2463006LL,2463007LL,2463008LL}); // smallest near-end crossing
 
     // A malformed member must retain the same per-item domain error as before.
     const int64_t invalid_days[3]={sample_calc,sample_calc+1,
