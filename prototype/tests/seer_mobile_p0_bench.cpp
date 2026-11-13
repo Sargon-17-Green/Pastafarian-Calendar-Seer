@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
+#include <limits>
 #include <iostream>
 #include <numeric>
 #include <string>
@@ -43,12 +44,28 @@ static void print_samples(const char* scenario, const std::vector<double>& sampl
               << sorted[i95] << ",\"maxRssKb\":" << maxrss << "}" << std::endl;
 }
 int main(int argc, char** argv) {
-    if(argc < 3 || argc > 4) {
-        std::cerr << "usage: seer_mobile_p0_bench POSITIVE_GATES NEGATIVE_GATES [reps=3]\n";
+    if(!(argc==3 || argc==4 || argc==6)) {
+        std::cerr << "usage: seer_mobile_p0_bench POSITIVE_GATES NEGATIVE_GATES [reps=3 [calculation_jdn center_target_jdn]]\n";
         return 2;
     }
-    const int reps = argc==4 ? std::atoi(argv[3]) : 3;
+    const int reps = argc>=4 ? std::atoi(argv[3]) : 3;
     if(reps<1 || reps>60) { std::cerr << "reps must be 1..60\n"; return 2; }
+    int64_t calculation=2461290LL;
+    int64_t center=calculation;
+    if(argc==6) {
+        try {
+            calculation=std::stoll(argv[4]);
+            center=std::stoll(argv[5]);
+        } catch(const std::exception& e) {
+            std::cerr<<"invalid JDN argument: "<<e.what()<<"\n";
+            return 2;
+        }
+    }
+    if(center < std::numeric_limits<int64_t>::min()+42 ||
+       center > std::numeric_limits<int64_t>::max()-42) {
+        std::cerr<<"target JDN too close to int64 overflow\n";
+        return 2;
+    }
     seer_mobile_config config{};
     config.struct_size=sizeof(config);
     config.max_concurrent=2; config.max_queued=8;
@@ -69,12 +86,14 @@ int main(int argc, char** argv) {
               << "\",\"commit\":\"" << identity.source_commit
               << "\",\"backend\":\"" << identity.backend
               << "\",\"contextCreateMs\":" << millis(start,end)
-              << ",\"reps\":" << reps << "}" << std::endl;
+              << ",\"reps\":" << reps
+              << ",\"calculationJdn\":" << calculation
+              << ",\"centerTargetJdn\":" << center << "}" << std::endl;
 
-    constexpr int64_t calculation=2461290LL;
+    // Calculation and target centers are independently configurable.
     for(int count : {1,7,42}) {
         std::vector<int64_t> dates(count);
-        for(int i=0;i<count;i++) dates[i]=calculation - count/2 + i;
+        for(int i=0;i<count;i++) dates[i]=center - count/2 + i;
         std::vector<seer_mobile_record> output(count);
         std::vector<double> samples;
         for(int trial=-1;trial<reps;trial++) {
