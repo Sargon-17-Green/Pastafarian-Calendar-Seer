@@ -428,8 +428,13 @@ seer_mobile_status seer_mobile_query_batch(
                             throw std::runtime_error("contiguous target increment overflow");
                         }
                         cursor = segment_end + 1;
-                        year = fadj(calculation_jdn, context->gates,
-                                    context->stones, year, true);
+                        // Never invert a prior-year step by taking a forward step:
+                        // fadj(..., false) and fadj(..., true) use distinct ranks.
+                        // Match compute_one exactly by independently resolving
+                        // each next segment's canonical year from calculation day.
+                        year = target_year(calculation_jdn, cursor,
+                                           context->gates, context->stones,
+                                           cancel_token);
                     }
                     if (records.size() != target_count) {
                         throw std::runtime_error("contiguous batch record count mismatch");
