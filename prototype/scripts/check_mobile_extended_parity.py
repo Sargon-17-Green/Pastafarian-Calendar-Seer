@@ -54,10 +54,11 @@ def cases() -> list[tuple[str, int, int, int]]:
     return known
 
 
-def invoke(command: list[str], *, stdin: str | None = None) -> dict:
+def invoke(command: list[str], *, stdin: str | None = None, cwd: Path | None = None) -> dict:
     result = subprocess.run(
         command,
         input=stdin,
+        cwd=cwd,
         text=True,
         encoding="utf-8",
         errors="replace",
@@ -98,7 +99,7 @@ def main() -> int:
     for name, calc, first, count in suites:
         try:
             m = invoke([str(mobile), str(pos), str(neg), str(calc), str(first), str(count)])
-            s = invoke([str(service)], stdin=f"R\t{calc}\t{first}\t{count}\nX\n",)
+            s = invoke([str(service)], stdin=f"R\t{calc}\t{first}\t{count}\nX\n", cwd=data)
             left, right = normalized(m, count), normalized(s, count)
             if left != right:
                 for i, (a, b) in enumerate(zip(left, right)):
