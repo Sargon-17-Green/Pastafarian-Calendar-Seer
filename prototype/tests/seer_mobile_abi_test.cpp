@@ -76,11 +76,11 @@ int main(int argc,char**argv){
                       <<" year="<<r.year<<" cutletIndex="<<r.cutlet_index
                       <<" dayInCutlet="<<r.day_in_cutlet<<" monthIndex="<<r.month_index
                       <<" dayInMonth="<<r.day_in_month<<" cutletCount="<<r.cutlet_count
-                      <<" monthCount="<<r.month_count<<"\\n";
+                      <<" monthCount="<<r.month_count<<"\n";
                 };
                 std::cerr<<"SEER_MOBILE_CROSS_YEAR_PARITY_FAIL calc="<<sample_calc
                          <<" range_start="<<days.front()<<" count="<<days.size()
-                         <<" index="<<i<<" requested="<<days[i]<<"\\n";
+                         <<" index="<<i<<" requested="<<days[i]<<"\n";
                 print("batch",results[i]);
                 print("single",one);
                 return false;
@@ -102,7 +102,7 @@ int main(int argc,char**argv){
     // Exercise the genuinely optimized cross-year path, not just fallback.
     assert(parity({2458958LL,2458959LL,2458960LL,2458961LL,2458962LL,2458963LL,2458964LL}));
     assert(parity({2463005LL,2463006LL,2463007LL,2463008LL,2463009LL,2463010LL,2463011LL}));
-    assert(parity({2463006LL,2463007LL,2463008LL}); // smallest near-end crossing
+    assert(parity({2463006LL,2463007LL,2463008LL})); // smallest near-end crossing
 
     // A malformed member must retain the same per-item domain error as before.
     const int64_t invalid_days[3]={sample_calc,sample_calc+1,
