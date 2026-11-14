@@ -230,6 +230,23 @@ jobs:
           done
           printf 'SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS variants=debug,release\n' \
             | tee sdk/kotlin/build/android/consumer-sentinel.txt
+      - name: Boot Android 35 x86_64 emulator and execute real Seer Kotlin JNI smoke
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug/*.apk)
+          if [[ "${#apks[@]}" -ne 1 ]]; then
+            echo "Expected one debug APK for device installation" >&2
+            exit 1
+          fi
+          bash sdk/kotlin/tools/run_android_emulator_smoke.sh \
+            "${apks[0]}" \
+            sdk/kotlin/build/android/emulator-evidence \
+            | tee sdk/kotlin/build/android/emulator-verdict.txt
+          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified' \
+            sdk/kotlin/build/android/emulator-verdict.txt
       - name: Upload unreleased Android AAR and paired JNI binaries
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
@@ -237,4 +254,6 @@ jobs:
           name: seer-kotlin-android-aar-unreleased
           path: |
             sdk/kotlin/build/android
+            sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug
+            sdk/kotlin/android-consumer-smoke/build/outputs/apk/release
           if-no-files-found: warn
