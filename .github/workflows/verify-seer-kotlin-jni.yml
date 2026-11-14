@@ -373,6 +373,18 @@ jobs:
             readelf -h "$dst/libseer_mobile_kotlin_jni.so" | grep -F "$machine"
             echo "SEER_ANDROID_ART_DEX_PAYLOAD_BUILD_PASS abi=$abi"
           done
+      - name: Verify both Android no-install ART/JNI payloads are authentic before device execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          for abi in arm64-v8a x86_64; do
+            python3 sdk/kotlin/tools/run_android_art_shell_jni.py \
+              --payload-dir "sdk/kotlin/build/android-app-process/$abi" \
+              --abi "$abi" --verify-only \
+              | tee "sdk/kotlin/build/android-app-process/$abi/offline-verification.txt"
+            grep -F "SEER_ANDROID_ART_PAYLOAD_VERIFIED abi=$abi source=" \
+              "sdk/kotlin/build/android-app-process/$abi/offline-verification.txt"
+          done
       - name: Upload bounded no-install ART/JNI payloads for real Android hardware
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -468,12 +480,15 @@ jobs:
           bash sdk/kotlin/tools/run_android_emulator_smoke.sh \
             "${debug_apks[0]}" "${release_apks[0]}" \
             sdk/kotlin/build/android/emulator-evidence \
+            sdk/kotlin/build/android-app-process/x86_64 \
             | tee sdk/kotlin/build/android/emulator-verdict.txt
           grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=debug JNI=real R8=no' \
             sdk/kotlin/build/android/emulator-verdict.txt
           grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=release JNI=real R8=yes' \
             sdk/kotlin/build/android/emulator-verdict.txt
-          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release' \
+          grep -F 'SEER_ANDROID_ART_JNI_DEVICE_PASS abi=x86_64 source=' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release artShell=PASS' \
             sdk/kotlin/build/android/emulator-verdict.txt
       - name: Upload unreleased Android AAR and paired JNI binaries
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
