@@ -152,6 +152,13 @@ java -jar seer-kotlin-wire-tests.jar
 
 Required sentinels: `SEER_KOTLIN_WIRE_PURE_PASS` and `SEER_KOTLIN_CLIENT_PURE_PASS`.
 
+## 2026-11-14 — cancellation reset-guard and physical-device checkpoint
+
+- Commit `8a16f123ec5bbfbd50d78dec3bc1949d83c8bc77` completed **11/11 GitHub CI workflows successfully**. On Linux x86_64 and real Linux ARM64, JNI emitted `SEER_KOTLIN_REAL_JNI_RESET_GUARD_PASS`; on Android 35 x86_64 ART, the device emitted `SEER_ANDROID_ART_JNI_RESET_GUARD_PASS activeCallProtected=true`. Independent Debug and R8 Release emulator apps passed as well. Proof: [run 43632452398](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43632452398).
+- One **new** no-install physical ARM64 retest of that patch was attempted with the same SHA-pinned ARM64 payload from artifact 14129016259. The Windows one-shot runner verified the embedded artifact but reported `BLOCKED reason=AUTHORIZED_PHYSICAL_DEVICE_NOT_CONNECTED` at ADB preflight, exit code 2. **No files were pushed to the phone, no app installed, and no physical runtime PASS is claimed on this patch.** Earlier physical ART/JNI successes apply to a prior source version only.
+- `tools/test_android_art_runner.py` is a nine-case, no-ADB mock of the physical verdict handler. `.github/workflows/verify-seer-kotlin-wire.yml` now executes these fail-closed tests in CI. Their CI verdict must be established on the new branch head before accepting them.
+- The private App repository's pre-run CI failure remains tracked in its [issue #53](https://github.com/Sargon-17-Green/Pastafarian-Calendar-App/issues/53). No source repin, production SDK merge, signed release or installed-App upgrade was performed.
+
 ## Outstanding release gates
 
 1. Android 35 x86_64 emulator passed Debug/R8 JNI, Gate self-healing and UI-thread safety. Kotlin/JNI also passed on Linux ARM64 and **physically on Android ARM64 via unprivileged ART app_process without APK installation**. Still required: executing the SDK as part of the actual installed Android app (Context, private Gate cache and lifecycle), compatibility with the app's existing JNI binding, signed release acceptance and physical-device resource profiling. The phone's diagnostic APK install policy remains restrictive; do not bypass it.
