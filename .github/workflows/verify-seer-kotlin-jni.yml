@@ -194,6 +194,38 @@ jobs:
             | tee sdk/kotlin/build/android/aar-verification.txt
           unzip -t sdk/kotlin/build/android/seer-kotlin-android-abi1-UNRELEASED.aar
           grep -F 'SEER_KOTLIN_ANDROID_AAR_PASS' sdk/kotlin/build/android/aar-verification.txt
+      - name: Compile and shrink a separate Java Android app consuming the actual AAR
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          gradle_zip="$RUNNER_TEMP/gradle-9.5.0-bin.zip"
+          curl --fail --location --retry 3 --silent --show-error \
+            'https://services.gradle.org/distributions/gradle-9.5.0-bin.zip' \
+            -o "$gradle_zip"
+          echo "553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746  $gradle_zip" \
+            | sha256sum --check --status
+          unzip -q "$gradle_zip" -d "$RUNNER_TEMP"
+          export GRADLE_USER_HOME="$RUNNER_TEMP/seer-android-smoke-gradle"
+          echo "Android consumer test: AGP 9.3.1; Gradle 9.5.0; compile SDK 35"
+          "$RUNNER_TEMP/gradle-9.5.0/bin/gradle" \
+            --no-daemon --console=plain \
+            -p sdk/kotlin/android-consumer-smoke \
+            assembleDebug assembleRelease \
+            | tee sdk/kotlin/build/android/consumer-build-output.txt
+          for variant in debug release; do
+            apk="sdk/kotlin/android-consumer-smoke/build/outputs/apk/$variant/android-consumer-smoke-$variant.apk"
+            if [[ ! -f "$apk" ]]; then
+              apk="sdk/kotlin/android-consumer-smoke/build/outputs/apk/$variant/SeerKotlinAarConsumerSmoke-$variant.apk"
+            fi
+            test -s "$apk"
+            unzip -l "$apk" | grep -F 'lib/arm64-v8a/libseer_mobile_kotlin_jni.so'
+            unzip -l "$apk" | grep -F 'lib/x86_64/libseer_mobile_kotlin_jni.so'
+            unzip -l "$apk" | grep -F 'assets/seer-kotlin/build-info.properties'
+            sha256sum "$apk" >> sdk/kotlin/build/android/consumer-apk-sha256.txt
+          done
+          printf 'SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS variants=debug,release\n' \
+            | tee sdk/kotlin/build/android/consumer-sentinel.txt
       - name: Upload unreleased Android AAR and paired JNI binaries
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
