@@ -17,10 +17,32 @@ ADB="$ANDROID_SDK_ROOT/platform-tools/adb"
 AVD_NAME="seer_sdk_kotlin_ci_35"
 
 "$SDKMANAGER" "emulator" "platform-tools" "system-images;android-35;google_apis;x86_64"
-printf 'no\n' | "$AVDMANAGER" create avd --force --name "$AVD_NAME" \
-  --package "system-images;android-35;google_apis;x86_64" \
-  --device pixel_5 > "$OUT/avd-create.log" 2>&1
-"$EMULATOR" -list-avds | grep -Fx "$AVD_NAME"
+# Explicit AVD_HOME keeps avdmanager and the emulator in the same isolated
+# directory. A Bash here-string avoids pipefail/SIGPIPE false failures when
+# avdmanager does not consume its optional custom-hardware answer.
+export ANDROID_AVD_HOME="$OUT/avds"
+mkdir -p "$ANDROID_AVD_HOME"
+echo "SEER_EMULATOR_STAGE=avd_create"
+if ! "$AVDMANAGER" create avd --force --name "$AVD_NAME" \
+    --package "system-images;android-35;google_apis;x86_64" \
+    --device pixel_5 <<<"no" > "$OUT/avd-create.log" 2>&1; then
+  cat "$OUT/avd-create.log" >&2
+  echo "SEER_ANDROID_AVD_CREATE_FAIL" >&2
+  exit 1
+fi
+echo "SEER_EMULATOR_STAGE=avd_list"
+"$EMULATOR" -list-avds > "$OUT/avd-list.txt" 2>&1 || {
+  cat "$OUT/avd-list.txt" >&2
+  echo "SEER_ANDROID_AVD_LIST_FAIL" >&2
+  exit 1
+}
+if ! grep -Fx "$AVD_NAME" "$OUT/avd-list.txt"; then
+  echo "AVD creation reported success but emulator does not list it" >&2
+  cat "$OUT/avd-create.log" "$OUT/avd-list.txt" >&2
+  ls -la "$ANDROID_AVD_HOME" >&2 || true
+  echo "SEER_ANDROID_AVD_UNLISTED_FAIL" >&2
+  exit 1
+fi
 
 ACCEL=off
 if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=on; fi
