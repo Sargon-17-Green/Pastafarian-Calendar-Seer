@@ -90,6 +90,18 @@ jobs:
           test -s "$out/build/seer_engine_service.exe"
           test -s "$out/data/gates_100k_u16.bin"
           test -s "$out/data/gates_negative_100k_u16.bin"
+      - name: Test bundled Windows service without MSYS2 toolchain on PATH
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $bundle = (Resolve-Path "prototype/build/h200-windows-portable").Path
+          $service = Join-Path $bundle "build/seer_engine_service.exe"
+          $gateDir = Join-Path $bundle "data"
+          $python = (Get-Command python).Source
+          $win = $env:SystemRoot
+          $env:PATH = "$(Split-Path $service);$win\System32;$win;$win\System32\Wbem"
+          & $python prototype/tests/test_seer_h200_native_smoke_v1.py --service $service --data $gateDir
+          if ($LASTEXITCODE -ne 0) { throw "Portable Windows Seer service failed outside MSYS2 PATH" }
       - name: Upload Windows pilot (not H200 outputs)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
