@@ -36,6 +36,7 @@ PINNED = (*FILES, "source-commit.txt")
 CLASS = "org.pastafarian.seer.kotlin.SeerAndroidAppProcessSmoke"
 PASS = "SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1 source="
 CONCURRENCY_PASS = "SEER_ANDROID_ART_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true sharedContext=true"
+RESET_GUARD_PASS = "SEER_ANDROID_ART_JNI_RESET_GUARD_PASS activeCallProtected=true"
 MACHINES = {"arm64-v8a": 183, "x86_64": 62}
 
 class Failure(RuntimeError): pass
@@ -178,10 +179,12 @@ class Device:
         )
         rc, output = self.call("shell", command, check=False,
                                timeout=180, label="art-jni-execution")
-        if rc != 0 or (PASS + commit) not in output or CONCURRENCY_PASS not in output:
+        if (rc != 0 or (PASS + commit) not in output or
+                CONCURRENCY_PASS not in output or RESET_GUARD_PASS not in output):
             if "Permission denied" in output or "avc: denied" in output:
                 raise Blocked("ART_SHELL_EXECUTION_RESTRICTED:" + output[-700:])
             raise Failure("ART_JNI_RUNTIME_FAILED rc=" + str(rc) + ":" + output[-1400:])
+        print(RESET_GUARD_PASS, flush=True)
         print("SEER_ANDROID_ART_JNI_DEVICE_PASS abi=" + abi + " source=" + commit,
               flush=True)
         self.report["jni_result"] = "PASS"
