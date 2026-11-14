@@ -26,7 +26,7 @@ for line in sys.stdin:
         'births_sha256':'SYNTHETIC','frozen_sample_sha256':SAMPLE,'age_start':10,'age_end':12,'expected_evaluations':6}
   task['task_sha256']=hashlib.sha256(canonical(task)).hexdigest()
   tf=p/'task.json';tf.write_bytes(canonical(task));evt=p/'events.tsv';done=p/'completion.json'
-  cmd=[sys.executable,str(BASE/'seer_h200_group_worker_v1.py'),'--task',str(tf),'--events',str(evt),
+  cmd=[sys.executable,str(BASE.parent/'scripts'/'seer_h200_group_worker_v1.py'),'--task',str(tf),'--events',str(evt),
        '--completion',str(done),'--service',str(service),'--service-cwd',str(p)]
   r=subprocess.run(cmd,capture_output=True,text=True,timeout=30);assert r.returncode==0,(r.stdout,r.stderr)
   cert=json.loads(done.read_text());assert cert['pair_evaluations']==6 and cert['positive_events']==4
