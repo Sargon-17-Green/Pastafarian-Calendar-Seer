@@ -93,3 +93,75 @@ jobs:
             sdk/kotlin/build/needed.txt
             sdk/kotlin/build/integration-output.txt
           if-no-files-found: warn
+
+
+  android-jni-packaging:
+    name: Build SDK JNI for Android ARM64 and x86_64 (cross-compile only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install canonical Boost headers
+        uses: ./.github/actions/native-deps
+        with:
+          profile: boost-minimal
+      - name: Stage isolated Boost for Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="$RUNNER_TEMP/seer-kotlin-boost"
+          mkdir -p "$prefix/include"
+          cp -a /usr/include/boost "$prefix/include/"
+          echo "BOOST_ROOT=$prefix" >> "$GITHUB_ENV"
+      - name: Install pinned Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdk"
+          yes | "$sdk" --licenses >/dev/null 2>&1 || true
+          "$sdk" "ndk;28.2.13676358"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - name: Build canonical C ABI libraries and matching SDK JNI for both architectures
+        env:
+          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_PACKAGE_VERSION: '0.2.5'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash prototype/scripts/build_mobile_library.sh android-arm64
+          bash prototype/scripts/build_mobile_library.sh android-x86_64
+          toolchain="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          mkdir -p sdk/kotlin/build/android/arm64-v8a sdk/kotlin/build/android/x86_64
+          compile_jni() {
+            local abi="$1" target="$2" lib="$3"
+            local out="sdk/kotlin/build/android/$abi"
+            "$toolchain/$target" -std=c++20 -O2 -fPIC \
+              -fno-exceptions -fno-rtti -nostdlib++ \
+              -shared -Wl,-z,defs -Iprototype/include \
+              sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+              -L"prototype/build/mobile/$lib" -lseer_mobile \
+              -Wl,-soname,libseer_mobile_kotlin_jni.so \
+              -o "$out/libseer_mobile_kotlin_jni.so"
+            cp "prototype/build/mobile/$lib/libseer_mobile.so" "$out/"
+            file "$out/"*.so
+            readelf -d "$out/libseer_mobile_kotlin_jni.so" \
+              | tee "$out/needed.txt"
+            grep -F 'libseer_mobile.so' "$out/needed.txt"
+            ! grep -Ei 'libgmp|libgomp|libomp|libc\+\+_shared' "$out/needed.txt"
+            sha256sum "$out/"*.so > "$out/sha256.txt"
+          }
+          compile_jni arm64-v8a aarch64-linux-android26-clang++ android-arm64
+          compile_jni x86_64 x86_64-linux-android26-clang++ android-x86_64
+          readelf -h sdk/kotlin/build/android/arm64-v8a/libseer_mobile_kotlin_jni.so \
+            | grep -E 'AArch64|ARM aarch64'
+          readelf -h sdk/kotlin/build/android/x86_64/libseer_mobile_kotlin_jni.so \
+            | grep -E 'X86-64|Advanced Micro Devices X86-64'
+      - name: Upload paired Android JNI and Native binaries
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: seer-kotlin-android-jni-libraries-unreleased
+          path: |
+            sdk/kotlin/build/android
+          if-no-files-found: warn
