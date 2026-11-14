@@ -54,6 +54,15 @@ public final class SmokeActivity extends Activity {
             if (client.provenance().getSourceCommit().length() != 40) {
                 throw new IllegalStateException("Missing pinned Native provenance");
             }
+            try {
+                client.queryBlocking(Long.MIN_VALUE, calculation);
+                throw new IllegalStateException("Invalid calculation JDN was accepted");
+            } catch (SeerNativeException error) {
+                if (error.getStatus() != SeerStatus.CALCULATION_OUT_OF_DOMAIN) throw error;
+            }
+            if (!single.equals(client.queryBlocking(calculation, calculation))) {
+                throw new IllegalStateException("Native context unusable after domain error");
+            }
             try (SeerCancellation cancellation = client.newCancellation()) {
                 cancellation.cancel();
                 try {
