@@ -102,6 +102,27 @@ jobs:
           $env:PATH = "$(Split-Path $service);$win\System32;$win;$win\System32\Wbem"
           & $python prototype/tests/test_seer_h200_native_smoke_v1.py --service $service --data $gateDir
           if ($LASTEXITCODE -ne 0) { throw "Portable Windows Seer service failed outside MSYS2 PATH" }
+      - name: Obtain uninstalled Python 3.13.3 embeddable runtime for offline research package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $url = "https://www.python.org/ftp/python/3.13.3/python-3.13.3-embed-amd64.zip"
+          $zip = Join-Path $env:RUNNER_TEMP "python-3.13.3-embed-amd64.zip"
+          $dest = "prototype/build/h200-embedded-python"
+          Invoke-WebRequest -Uri $url -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath $dest -Force
+          $exe = Join-Path $dest "python.exe"
+          if (!(Test-Path $exe)) {throw "Python embeddable binary missing"}
+          & $exe -c "import sys,json,hashlib; assert sys.version_info[:3] == (3,13,3); print(sys.version)"
+          if ($LASTEXITCODE -ne 0) {throw "Python embeddable smoke test failed"}
+          Get-FileHash -Algorithm SHA256 -LiteralPath $zip | Format-List
+      - name: Upload uninstalled official Python runtime for manual H200 package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: csp-h200-windows-python-embed-research-only
+          path: prototype/build/h200-embedded-python/
+          retention-days: 1
+          if-no-files-found: error
       - name: Upload Windows pilot (not H200 outputs)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
