@@ -174,6 +174,24 @@ fun main(arguments: Array<String>) {
             check(client.queryBlocking(negativeCalc, negativeCalc, token) == singles.first())
         }
 
+        // Native retained references must bar a reset until the ongoing call
+        // releases its reference. A direct retain makes this race deterministic.
+        val busyToken = client.newCancellation() as SeerJniCancellation
+        val heldHandle = busyToken.retainForCall()
+        try {
+            val failure = runCatching { busyToken.reset() }.exceptionOrNull()
+            check(failure is IllegalStateException &&
+                failure.message == "Cannot reset Seer cancellation token while Native calls are active") {
+                "Reset was allowed while a Native call retained the token: $failure"
+            }
+        } finally {
+            busyToken.releaseForCall(heldHandle)
+        }
+        busyToken.reset()
+        check(client.queryBlocking(negativeCalc, negativeCalc, busyToken) == singles.first())
+        busyToken.close()
+        println("SEER_KOTLIN_REAL_JNI_RESET_GUARD_PASS activeCallProtected=true")
+
         val closedToken = client.newCancellation()
         closedToken.close()
         check(runCatching {
