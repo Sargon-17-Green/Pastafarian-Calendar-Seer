@@ -68,4 +68,5 @@ fun main() {
         SeerMobileWire.decodeProvenance(arrayOf("1", "", "rev", "portable-cppint"))
     }
     println("SEER_KOTLIN_WIRE_PURE_PASS status, length, ordering, numeric ranges, ABI, provenance")
+    verifySeerKotlinClientSmoke()
 }
