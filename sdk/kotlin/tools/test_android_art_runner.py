@@ -155,24 +155,24 @@ class ArtRunnerAuthorizedDeviceTests(unittest.TestCase):
         return SimpleNamespace(stdout=stdout, stderr="", returncode=rc)
 
     def test_one_connected_adb_device_can_be_selected(self):
-        listing = "List of devices attached\ntransport-serial\\tdevice product:safe\n"
+        listing = "List of devices attached\ntransport-serial\tdevice product:safe\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             self.assertEqual(runner.select_connected_device("fake-adb"), "transport-serial")
 
     def test_two_connected_devices_rejected(self):
-        listing = "List of devices attached\na\\tdevice\nb\\tdevice\n"
+        listing = "List of devices attached\na\tdevice\nb\tdevice\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             with self.assertRaises(runner.Blocked):
                 runner.select_connected_device("fake-adb")
 
     def test_unauthorized_device_rejected(self):
-        listing = "List of devices attached\na\\tunauthorized\n"
+        listing = "List of devices attached\na\tunauthorized\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             with self.assertRaises(runner.Blocked):
                 runner.select_connected_device("fake-adb")
 
     def test_offline_device_rejected(self):
-        listing = "List of devices attached\na\\toffline\n"
+        listing = "List of devices attached\na\toffline\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             with self.assertRaises(runner.Blocked):
                 runner.select_connected_device("fake-adb")
@@ -191,7 +191,7 @@ class ArtRunnerAuthorizedDeviceTests(unittest.TestCase):
 
     def test_exact_authorized_product_model_passes(self):
         phone = FakeModelDevice()
-        listing = "List of devices attached\ntransport-serial\\tdevice\n"
+        listing = "List of devices attached\ntransport-serial\tdevice\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             phone.preflight("arm64-v8a")
         self.assertTrue(phone.report["authorized_product_model_matched"])
@@ -199,7 +199,7 @@ class ArtRunnerAuthorizedDeviceTests(unittest.TestCase):
 
     def test_wrong_product_model_blocked_before_transfer(self):
         phone = FakeModelDevice(model="DIFFERENT_PHONE")
-        listing = "List of devices attached\ntransport-serial\\tdevice\n"
+        listing = "List of devices attached\ntransport-serial\tdevice\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             with self.assertRaises(runner.Blocked):
                 phone.preflight("arm64-v8a")
@@ -208,7 +208,7 @@ class ArtRunnerAuthorizedDeviceTests(unittest.TestCase):
 
     def test_emulator_rejected_even_if_model_matches(self):
         phone = FakeModelDevice(emulator=True)
-        listing = "List of devices attached\ntransport-serial\\tdevice\n"
+        listing = "List of devices attached\ntransport-serial\tdevice\n"
         with patch.object(runner.subprocess, "run", return_value=self.adb(listing)):
             with self.assertRaises(runner.Blocked):
                 phone.preflight("arm64-v8a")
