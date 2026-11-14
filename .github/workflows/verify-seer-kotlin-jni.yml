@@ -323,6 +323,65 @@ jobs:
             -d sdk/kotlin/build/android/classes.jar
           jar tf sdk/kotlin/build/android/classes.jar \
             | grep -Fx 'org/pastafarian/seer/kotlin/android/SeerAndroid.class'
+      - name: Build no-install Kotlin/JNI ART shell payloads for Android ARM64 and x86_64
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          root="sdk/kotlin/build/android-app-process"
+          mkdir -p "$root"
+          # A single fat JVM JAR includes the actual typed Kotlin SDK and
+          # stdlib. D8 converts its JVM bytecode to ART DEX; no Android app,
+          # PackageManager, signing or UI context is involved.
+          kotlinc -jvm-target 17 -include-runtime \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerJniTransport.kt \
+            sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerAndroidAppProcessSmoke.kt \
+            -d "$root/smoke-host-fat.jar"
+          d8="$ANDROID_SDK_ROOT/build-tools/35.0.0/d8"
+          test -x "$d8"
+          "$d8" --min-api 26 --release \
+            --lib "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" \
+            --output "$root/smoke-dex.jar" "$root/smoke-host-fat.jar"
+          unzip -t "$root/smoke-dex.jar"
+          unzip -l "$root/smoke-dex.jar" | grep -F 'classes.dex'
+          test "$(unzip -p "$root/smoke-dex.jar" classes.dex | wc -c)" -gt 10000
+          for abi in arm64-v8a x86_64; do
+            dst="$root/$abi"
+            mkdir -p "$dst"
+            cp "$root/smoke-dex.jar" "$dst/"
+            cp "sdk/kotlin/build/android/$abi/libseer_mobile.so" \
+              "sdk/kotlin/build/android/$abi/libseer_mobile_kotlin_jni.so" "$dst/"
+            cp prototype/data/gates_100k_u16.bin \
+              prototype/data/gates_negative_100k_u16.bin "$dst/"
+            git rev-parse HEAD > "$dst/source-commit.txt"
+            cat > "$dst/build-info.txt" <<EOF
+          mode=android-art-shell-app_process
+          platform=android-$abi-api26-plus
+          source_workflow=verify-seer-kotlin-jni.yml
+          execution_status=NOT_TESTED_ON_PHONE
+          EOF
+            (cd "$dst" && sha256sum smoke-dex.jar libseer_mobile.so \
+              libseer_mobile_kotlin_jni.so gates_100k_u16.bin \
+              gates_negative_100k_u16.bin source-commit.txt > SHA256SUMS)
+            case "$abi" in
+              arm64-v8a) machine="AArch64" ;;
+              x86_64) machine="Advanced Micro Devices X86-64" ;;
+            esac
+            readelf -h "$dst/libseer_mobile_kotlin_jni.so" | grep -F "$machine"
+            echo "SEER_ANDROID_ART_DEX_PAYLOAD_BUILD_PASS abi=$abi"
+          done
+      - name: Upload bounded no-install ART/JNI payloads for real Android hardware
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-android-art-shell-jni-unreleased
+          path: |
+            sdk/kotlin/build/android-app-process/arm64-v8a
+            sdk/kotlin/build/android-app-process/x86_64
+          if-no-files-found: error
+          retention-days: 3
       - name: Assemble deterministic AAR with both Android ABIs and verified offline Gate assets
         shell: bash
         run: |
