@@ -50,11 +50,18 @@ jobs:
             prototype/data/gates_negative_100k_u16.bin 1 \
             | tee prototype/build/p0/host-samples.ndjson
           grep -q '"event":"P0_COMPLETE"' prototype/build/p0/host-samples.ndjson
+          # Year-5000 ends at JDN 2463007; target center 2463008 crosses into 5001.
+          prototype/build/p0/seer_mobile_p0_bench \
+            prototype/data/gates_100k_u16.bin \
+            prototype/data/gates_negative_100k_u16.bin 1 2461290 2463008 \
+            | tee prototype/build/p0/cross-year-host-samples.ndjson
+          grep -q '"event":"P0_COMPLETE"' prototype/build/p0/cross-year-host-samples.ndjson
       - name: Upload raw evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: seer-kotlin-p0-linux-host-diagnostic
           path: |
             prototype/build/p0/host-samples.ndjson
+            prototype/build/p0/cross-year-host-samples.ndjson
             prototype/build/p0/environment.txt
           if-no-files-found: error

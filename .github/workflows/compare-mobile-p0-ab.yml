@@ -1,0 +1,88 @@
+name: Compare Seer mobile P0 baseline and candidate on one runner
+on:
+  pull_request:
+    paths:
+      - 'prototype/scripts/compare_mobile_p0_ab.py'
+      - 'prototype/tests/seer_mobile_p0_bench.cpp'
+      - 'prototype/src/seer_mobile.cpp'
+      - '.github/workflows/compare-mobile-p0-ab.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paired-native:
+    name: P0 host A/B with full 42-record native parity (not Android)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: candidate
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: baseline
+          ref: 47827be5506aa9ba7b348c7cf6d486f9947938bf
+      - name: Install native dependencies
+        uses: ./candidate/.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Compile original and candidate with identical host settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/baseline out/candidate
+          test "$(git -C baseline rev-parse HEAD)" = "47827be5506aa9ba7b348c7cf6d486f9947938bf"
+          cat > out/environment.txt <<EOF
+          baseline_commit=$(git -C baseline rev-parse HEAD)
+          candidate_commit=$(git -C candidate rev-parse HEAD)
+          runner_os=$(uname -a)
+          compiler=$(clang++ --version | head -n 1)
+          compiler_options=-std=c++20 -O2 -DNDEBUG -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -pthread
+          EOF
+          compile_variant() {
+            local variant="$1"
+            local root="$PWD/$variant"
+            local flags=(-std=c++20 -O2 -DNDEBUG -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 -pthread
+              "-I$root/prototype/include" "-I$root/prototype/src")
+            local sources=(
+              "$root/prototype/src/seer_year_core.cpp"
+              "$root/prototype/src/seer_calendar_core.cpp"
+              "$root/prototype/src/seer_weave_portable.cpp"
+              "$root/prototype/src/seer_mobile.cpp"
+            )
+            clang++ "${flags[@]}" "${sources[@]}" \
+              candidate/prototype/tests/seer_mobile_p0_bench.cpp \
+              -o "out/$variant/seer_mobile_p0_bench"
+            clang++ "${flags[@]}" "${sources[@]}" \
+              "$root/prototype/tests/seer_mobile_dump.cpp" \
+              -o "out/$variant/seer_mobile_dump"
+          }
+          compile_variant baseline
+          compile_variant candidate
+          sha256sum out/{baseline,candidate}/* \
+            candidate/prototype/data/gates_100k_u16.bin \
+            candidate/prototype/data/gates_negative_100k_u16.bin \
+            >> out/environment.txt
+          python3 -m py_compile candidate/prototype/scripts/compare_mobile_p0_ab.py
+      - name: Paired same-runner measurements and 42-record exact parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -u candidate/prototype/scripts/compare_mobile_p0_ab.py \
+            --baseline-bench out/baseline/seer_mobile_p0_bench \
+            --candidate-bench out/candidate/seer_mobile_p0_bench \
+            --baseline-dump out/baseline/seer_mobile_dump \
+            --candidate-dump out/candidate/seer_mobile_dump \
+            --data candidate/prototype/data \
+            --pairs 2 \
+            --output out/ab-results.ndjson
+          grep -F '"event":"P0_AB_COMPLETE"' out/ab-results.ndjson
+      - name: Upload raw evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: seer-p0-matched-linux-ab-evidence
+          path: |
+            out/environment.txt
+            out/ab-results.ndjson
+          if-no-files-found: warn
