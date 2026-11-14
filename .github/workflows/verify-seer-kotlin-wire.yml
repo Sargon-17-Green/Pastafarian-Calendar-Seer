@@ -45,8 +45,12 @@ jobs:
           kotlinc -version
           kotlinc \
             sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
             sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerMobileWireSmoke.kt \
+            sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClientSmoke.kt \
             -include-runtime -d "$RUNNER_TEMP/seer-kotlin-wire-tests.jar"
           java -jar "$RUNNER_TEMP/seer-kotlin-wire-tests.jar" | tee "$RUNNER_TEMP/wire-results.txt"
           grep -Fx 'SEER_KOTLIN_WIRE_PURE_PASS status, length, ordering, numeric ranges, ABI, provenance' \
+            "$RUNNER_TEMP/wire-results.txt"
+          grep -Fx 'SEER_KOTLIN_CLIENT_PURE_PASS queries, batch ordering, provenance, one-time close, in-flight safety' \
             "$RUNNER_TEMP/wire-results.txt"
