@@ -145,6 +145,10 @@ run_variant() {
     echo "SEER_KOTLIN_ANDROID_VARIANT_FAIL $variant missing UI-thread guard" >&2
     return 1
   fi
+  if ! grep -F 'SEER_KOTLIN_ANDROID_GATE_RECOVERY_PASS' "$log"; then
+    echo "SEER_KOTLIN_ANDROID_VARIANT_FAIL $variant missing Gate self-healing verdict" >&2
+    return 1
+  fi
   echo "SEER_KOTLIN_ANDROID_VARIANT_PASS variant=$variant JNI=real R8=$([[ "$variant" == release ]] && echo yes || echo no)"
 }
 run_variant debug "$DEBUG_APK"
