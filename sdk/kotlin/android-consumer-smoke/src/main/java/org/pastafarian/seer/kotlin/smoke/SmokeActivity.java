@@ -49,8 +49,9 @@ public final class SmokeActivity extends Activity {
                     throw new IllegalStateException("Seer target ordering mismatch: " + i);
                 }
             }
-            if (client.provenance().getAbiVersion() != 1) {
-                throw new IllegalStateException("Wrong Native ABI");
+            // SeerAndroid.open() already verifies ABI 1 and source provenance.
+            if (client.provenance().getSourceCommit().length() != 40) {
+                throw new IllegalStateException("Missing pinned Native provenance");
             }
             try (SeerCancellation cancellation = client.newCancellation()) {
                 cancellation.cancel();
