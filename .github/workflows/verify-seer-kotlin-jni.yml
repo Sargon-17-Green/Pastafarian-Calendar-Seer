@@ -256,16 +256,21 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug/*.apk)
-          if [[ "${#apks[@]}" -ne 1 ]]; then
-            echo "Expected one debug APK for device installation" >&2
+          debug_apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug/*.apk)
+          release_apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/release/*.apk)
+          if [[ "${#debug_apks[@]}" -ne 1 || "${#release_apks[@]}" -ne 1 ]]; then
+            echo "Expected exactly one debug and one signed diagnostic R8 release APK" >&2
             exit 1
           fi
           bash sdk/kotlin/tools/run_android_emulator_smoke.sh \
-            "${apks[0]}" \
+            "${debug_apks[0]}" "${release_apks[0]}" \
             sdk/kotlin/build/android/emulator-evidence \
             | tee sdk/kotlin/build/android/emulator-verdict.txt
-          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified' \
+          grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=debug JNI=real R8=no' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+          grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=release JNI=real R8=yes' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release' \
             sdk/kotlin/build/android/emulator-verdict.txt
       - name: Upload unreleased Android AAR and paired JNI binaries
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
