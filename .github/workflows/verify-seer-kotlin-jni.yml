@@ -245,6 +245,49 @@ jobs:
             | grep -E 'AArch64|ARM aarch64'
           readelf -h sdk/kotlin/build/android/x86_64/libseer_mobile_kotlin_jni.so \
             | grep -E 'X86-64|Advanced Micro Devices X86-64'
+      - name: Compile and stage standalone Android ARM64 physical-device Native smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++"
+          smoke_root="sdk/kotlin/build/android-arm64-physical-payload"
+          mkdir -p "$smoke_root"
+          "$target" -std=c++20 -O2 -DNDEBUG -fPIE -pie \
+            -fno-exceptions -fno-rtti -nostdlib++ \
+            -Wl,-z,defs -Iprototype/include \
+            sdk/kotlin/src/test/cpp/SeerAndroidArm64DeviceSmoke.cpp \
+            -Lprototype/build/mobile/android-arm64 -lseer_mobile \
+            -Wl,-rpath,'$ORIGIN' \
+            -o "$smoke_root/seer_arm64_device_smoke"
+          readelf -h "$smoke_root/seer_arm64_device_smoke" \
+            | grep -F 'AArch64'
+          readelf -d "$smoke_root/seer_arm64_device_smoke" \
+            | tee "$smoke_root/dependencies.txt"
+          grep -F 'libseer_mobile.so' "$smoke_root/dependencies.txt"
+          ! grep -Ei 'libgmp|libgomp|libomp|libc\+\+_shared' \
+            "$smoke_root/dependencies.txt"
+          cp prototype/build/mobile/android-arm64/libseer_mobile.so \
+            "$smoke_root/libseer_mobile.so"
+          cp prototype/data/gates_100k_u16.bin \
+            prototype/data/gates_negative_100k_u16.bin "$smoke_root/"
+          git rev-parse HEAD > "$smoke_root/source-commit.txt"
+          echo "source_workflow=verify-seer-kotlin-jni.yml" \
+            > "$smoke_root/build-info.txt"
+          echo "abi=1" >> "$smoke_root/build-info.txt"
+          echo "platform=android-arm64-api26-plus" >> "$smoke_root/build-info.txt"
+          echo "execution_status=NOT_TESTED_ON_PHONE" >> "$smoke_root/build-info.txt"
+          (cd "$smoke_root" && sha256sum \
+            seer_arm64_device_smoke libseer_mobile.so \
+            gates_100k_u16.bin gates_negative_100k_u16.bin source-commit.txt \
+            > SHA256SUMS)
+          echo 'SEER_ARM64_ANDROID_NATIVE_PAYLOAD_BUILD_PASS executable=ELF_AARCH64'
+      - name: Upload isolated ARM64 device smoke payload (unreleased, not executable by CI host)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-arm64-android-physical-native-smoke-unreleased
+          path: sdk/kotlin/build/android-arm64-physical-payload
+          if-no-files-found: error
+          retention-days: 3
       - name: Install Android API 35 for SDK Kotlin wrapper compile
         shell: bash
         run: |
