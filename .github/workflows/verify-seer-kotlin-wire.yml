@@ -1,0 +1,52 @@
+name: Verify Seer Kotlin ABI v1 wire codec
+
+on:
+  pull_request:
+    paths:
+      - 'sdk/kotlin/**'
+      - '.github/workflows/verify-seer-kotlin-wire.yml'
+      - 'prototype/include/seer_mobile.h'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pure-wire:
+    name: Kotlin/JVM contract and C ABI status equality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check C ABI numeric status contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/abi_contract.c" <<'EOF'
+          #include "seer_mobile.h"
+          _Static_assert(SEER_MOBILE_ABI_VERSION == 1u, "ABI version changed");
+          _Static_assert(SEER_MOBILE_OK == 0, "status changed");
+          _Static_assert(SEER_MOBILE_INVALID_ARGUMENT == 1, "status changed");
+          _Static_assert(SEER_MOBILE_CALCULATION_OUT_OF_DOMAIN == 2, "status changed");
+          _Static_assert(SEER_MOBILE_TARGET_OUT_OF_DOMAIN == 3, "status changed");
+          _Static_assert(SEER_MOBILE_CANCELLED == 4, "status changed");
+          _Static_assert(SEER_MOBILE_QUEUE_FULL == 5, "status changed");
+          _Static_assert(SEER_MOBILE_INTERNAL_ERROR == 6, "status changed");
+          int main(void) { return 0; }
+          EOF
+          cc -std=c11 -Wall -Wextra -Werror -Iprototype/include \
+            "$RUNNER_TEMP/abi_contract.c" -o "$RUNNER_TEMP/abi_contract"
+          "$RUNNER_TEMP/abi_contract"
+      - name: Compile and run dependency-free Kotlin/JVM wire contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v kotlinc
+          kotlinc -version
+          kotlinc \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerMobileWireSmoke.kt \
+            -include-runtime -d "$RUNNER_TEMP/seer-kotlin-wire-tests.jar"
+          java -jar "$RUNNER_TEMP/seer-kotlin-wire-tests.jar" | tee "$RUNNER_TEMP/wire-results.txt"
+          grep -Fx 'SEER_KOTLIN_WIRE_PURE_PASS status, length, ordering, numeric ranges, ABI, provenance' \
+            "$RUNNER_TEMP/wire-results.txt"
