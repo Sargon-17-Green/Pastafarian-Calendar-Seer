@@ -137,6 +137,24 @@ object SeerAndroidAppProcessSmoke {
                         token.reset()
                         check(client.queryBlocking(negativeCalc, negativeCalc, token) == negativeSingles.first())
                     }
+                    // Deterministic guard regression: Native retains its own
+                    // reference for the duration of a query, so reset must fail
+                    // until that reference is released, even on Android ART.
+                    val busyToken = client.newCancellation() as SeerJniCancellation
+                    val retained = busyToken.retainForCall()
+                    try {
+                        val failure = runCatching { busyToken.reset() }.exceptionOrNull()
+                        check(failure is IllegalStateException &&
+                            failure.message == "Cannot reset Seer cancellation token while Native calls are active") {
+                            "Reset was allowed with an active Native retain: $failure"
+                        }
+                    } finally {
+                        busyToken.releaseForCall(retained)
+                    }
+                    busyToken.reset()
+                    check(client.queryBlocking(negativeCalc, negativeCalc, busyToken) == negativeSingles.first())
+                    busyToken.close()
+                    println("SEER_ANDROID_ART_JNI_RESET_GUARD_PASS activeCallProtected=true")
                     println(
                         "SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1 source=$commit " +
                             "knownAnswers=3 negativeBatch=3 domainErrors=true " +
