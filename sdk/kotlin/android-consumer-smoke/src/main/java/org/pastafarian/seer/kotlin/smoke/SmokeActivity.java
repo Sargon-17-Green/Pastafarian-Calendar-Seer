@@ -2,6 +2,7 @@ package org.pastafarian.seer.kotlin.smoke;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import java.util.List;
@@ -72,6 +73,11 @@ public final class SmokeActivity extends Activity {
                     + error.getClass().getSimpleName() + ": " + error.getMessage();
         }
         final String output = verdict;
+        if (output.startsWith("SEER_KOTLIN_ANDROID_SMOKE_PASS")) {
+            Log.i("SeerKotlinSmoke", output);
+        } else {
+            Log.e("SeerKotlinSmoke", output);
+        }
         runOnUiThread(() -> status.setText(output));
     }
 }
