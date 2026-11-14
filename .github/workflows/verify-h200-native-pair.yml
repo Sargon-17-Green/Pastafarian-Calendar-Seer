@@ -44,3 +44,56 @@ jobs:
             prototype/data/gates_negative_100k_u16.bin
           retention-days: 1
           if-no-files-found: error
+
+  windows-native:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: msys2/setup-msys2@66cd2cce69caa17b53920067426061ca1de3a884 # v2.32.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-libgomp
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-boost
+            mingw-w64-ucrt-x86_64-python
+      - name: Build portable Windows native Seer service
+        shell: msys2 {0}
+        env:
+          SEER_ARCH: amd64
+          SEER_MARCH: x86-64
+          SEER_RNS_BACKEND: portable
+        run: |
+          bash prototype/scripts/build_engine_service.sh
+          test -f prototype/build/seer_engine_service.exe
+      - name: Check Windows P/B/R native parity
+        shell: msys2 {0}
+        run: |
+          /ucrt64/bin/python3.exe prototype/tests/test_seer_h200_native_smoke_v1.py \
+            --service prototype/build/seer_engine_service.exe \
+            --data prototype/data
+      - name: Collect portable Windows DLL dependencies and gate data
+        shell: msys2 {0}
+        run: |
+          set -euo pipefail
+          out=prototype/build/h200-windows-portable
+          mkdir -p "$out/build" "$out/data"
+          cp prototype/build/seer_engine_service.exe "$out/build/"
+          cp prototype/data/gates_100k_u16.bin prototype/data/gates_negative_100k_u16.bin "$out/data/"
+          while read -r dll; do
+            [[ -f "$dll" ]] || continue
+            cp -n "$dll" "$out/build/"
+          done < <(ldd prototype/build/seer_engine_service.exe | awk '$3 ~ /^\/ucrt64\/bin\// {print $3}' | sort -u)
+          test -s "$out/build/seer_engine_service.exe"
+          test -s "$out/data/gates_100k_u16.bin"
+          test -s "$out/data/gates_negative_100k_u16.bin"
+      - name: Upload Windows pilot (not H200 outputs)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: csp-h200-native-group-windows-pilot
+          path: prototype/build/h200-windows-portable/
+          retention-days: 1
+          if-no-files-found: error
