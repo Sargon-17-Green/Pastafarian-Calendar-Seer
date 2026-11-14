@@ -334,8 +334,7 @@ class SeerEngineService {
                       << ",\"cutletMatch\":" << (cut[i] ? "true" : "false")
                       << ",\"monthMatch\":" << (month[i] ? "true" : "false") << '}';
         }
-        std::cout << "]}
-";
+        std::cout << "]}\n";
     }
 
     void handleRange(const std::vector<std::string>& f) {
