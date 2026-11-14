@@ -15,6 +15,10 @@ seer_mobile_context* context(jlong handle) {
     return reinterpret_cast<seer_mobile_context*>(static_cast<uintptr_t>(handle));
 }
 
+seer_mobile_cancel_token* token(jlong handle) {
+    return reinterpret_cast<seer_mobile_cancel_token*>(static_cast<uintptr_t>(handle));
+}
+
 jlong handle_of(const void* pointer) {
     return static_cast<jlong>(reinterpret_cast<uintptr_t>(pointer));
 }
@@ -104,15 +108,48 @@ Java_org_pastafarian_seer_kotlin_SeerKotlinJni_destroy(
     seer_mobile_destroy(context(nativeHandle));
 }
 
+extern "C" JNIEXPORT jlong JNICALL
+Java_org_pastafarian_seer_kotlin_SeerKotlinJni_createCancel(
+    JNIEnv*, jobject) {
+    seer_mobile_cancel_token* created = nullptr;
+    seer_mobile_error error{};
+    return seer_mobile_cancel_token_create(&created, &error) == SEER_MOBILE_OK
+        ? handle_of(created) : 0;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_pastafarian_seer_kotlin_SeerKotlinJni_retainCancel(
+    JNIEnv*, jobject, jlong tokenHandle) {
+    seer_mobile_cancel_token_retain(token(tokenHandle));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_pastafarian_seer_kotlin_SeerKotlinJni_destroyCancel(
+    JNIEnv*, jobject, jlong tokenHandle) {
+    seer_mobile_cancel_token_destroy(token(tokenHandle));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_pastafarian_seer_kotlin_SeerKotlinJni_cancel(
+    JNIEnv*, jobject, jlong tokenHandle) {
+    seer_mobile_cancel(token(tokenHandle));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_org_pastafarian_seer_kotlin_SeerKotlinJni_resetCancel(
+    JNIEnv*, jobject, jlong tokenHandle) {
+    seer_mobile_cancel_token_reset(token(tokenHandle));
+}
+
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_org_pastafarian_seer_kotlin_SeerKotlinJni_query(
     JNIEnv* env, jobject, jlong nativeHandle,
-    jlong calculationJdn, jlong targetJdn) {
+    jlong calculationJdn, jlong targetJdn, jlong tokenHandle) {
     seer_mobile_record record{};
     seer_mobile_error error{};
     const auto status = seer_mobile_query(
         context(nativeHandle), static_cast<int64_t>(calculationJdn),
-        static_cast<int64_t>(targetJdn), nullptr, &record, &error);
+        static_cast<int64_t>(targetJdn), token(tokenHandle), &record, &error);
     if (status != SEER_MOBILE_OK) return status_only(env, status);
     return make_records(env, &record, 1);
 }
@@ -120,7 +157,7 @@ Java_org_pastafarian_seer_kotlin_SeerKotlinJni_query(
 extern "C" JNIEXPORT jlongArray JNICALL
 Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch(
     JNIEnv* env, jobject, jlong nativeHandle,
-    jlong calculationJdn, jlongArray requestedTargets) {
+    jlong calculationJdn, jlongArray requestedTargets, jlong tokenHandle) {
     if (!requestedTargets) return status_only(env, SEER_MOBILE_INVALID_ARGUMENT);
     const jsize count = env->GetArrayLength(requestedTargets);
     if (count <= 0 || count > kMaxBatch) {
@@ -157,7 +194,7 @@ Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch(
     seer_mobile_error error{};
     const auto status = seer_mobile_query_batch(
         context(nativeHandle), static_cast<int64_t>(calculationJdn),
-        targets, static_cast<size_t>(count), nullptr, records, &error);
+        targets, static_cast<size_t>(count), token(tokenHandle), records, &error);
     std::free(targets);
     if (status != SEER_MOBILE_OK) {
         std::free(records);
