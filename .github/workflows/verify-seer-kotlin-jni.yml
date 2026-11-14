@@ -82,6 +82,13 @@ jobs:
             "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
             "$(git rev-parse HEAD)" | tee sdk/kotlin/build/integration-output.txt
           grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' sdk/kotlin/build/integration-output.txt
+      - name: Publish architecture-neutral Kotlin integration JAR for ARM64 hardware
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-jvm-integration-jar
+          path: sdk/kotlin/build/integration.jar
+          if-no-files-found: error
+          retention-days: 3
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -94,6 +101,87 @@ jobs:
             sdk/kotlin/build/integration-output.txt
           if-no-files-found: warn
 
+
+  real-jni-arm64-host:
+    name: Real Kotlin/JVM -> JNI -> C++ on native ARM64 Linux hardware
+    needs: real-jni-host
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17.0.20+8'
+          check-latest: false
+      - name: Restore exactly the Kotlin JAR compiled by the x86_64 host job
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: seer-kotlin-jvm-integration-jar
+          path: sdk/kotlin/build
+      - name: Install exact backend dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Compile actual JNI C++ bridge natively on AArch64 hardware
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test -s sdk/kotlin/build/integration.jar
+          mkdir -p sdk/kotlin/build/arm64-jni
+          commit="$(git rev-parse HEAD)"
+          printf 'platform=%s\nnative=%s\njava=%s\n' \
+            "$(uname -a)" "$(g++ --version | sed -n '1p')" \
+            "$(java -version 2>&1 | sed -n '1p')" \
+            > sdk/kotlin/build/arm64-jni/provenance.txt
+          g++ -std=c++20 -O2 -DNDEBUG -fPIC -shared -pthread \
+            -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 \
+            "-DSEER_BUILD_COMMIT=\"$commit\"" \
+            '-DSEER_PACKAGE_VERSION="0.2.5"' \
+            -Iprototype/include -Iprototype/src \
+            "-I$JAVA_HOME/include" "-I$JAVA_HOME/include/linux" \
+            prototype/src/seer_year_core.cpp \
+            prototype/src/seer_calendar_core.cpp \
+            prototype/src/seer_weave_portable.cpp \
+            prototype/src/seer_mobile.cpp \
+            sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+            -o sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so
+          file sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/arm64-jni/elf.txt
+          readelf -h sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'AArch64'
+          nm -D sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch'
+          ldd sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/arm64-jni/needed.txt
+          ! grep -E 'not found|libgmp|libgomp|libomp' \
+            sdk/kotlin/build/arm64-jni/needed.txt
+          sha256sum sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            > sdk/kotlin/build/arm64-jni/native-sha256.txt
+      - name: Execute canonical Kotlin JNI single/batch/error/cancellation tests on ARM64 hardware
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -Djava.library.path="$PWD/sdk/kotlin/build/arm64-jni" \
+            -cp "$PWD/sdk/kotlin/build/integration.jar" \
+            org.pastafarian.seer.kotlin.SeerJniIntegrationSmokeKt \
+            "$PWD/prototype/data/gates_100k_u16.bin" \
+            "$PWD/prototype/data/gates_negative_100k_u16.bin" \
+            "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
+            "$(git rev-parse HEAD)" \
+            | tee sdk/kotlin/build/arm64-jni/integration-output.txt
+          grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' \
+            sdk/kotlin/build/arm64-jni/integration-output.txt
+          echo 'SEER_KOTLIN_ARM64_HARDWARE_JNI_PASS native=aarch64 kotlinJVM=true canonicalGates=true' \
+            | tee sdk/kotlin/build/arm64-jni/arm64-verdict.txt
+      - name: Upload native ARM64 Kotlin-JNI evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-arm64-hardware-jni-evidence
+          path: sdk/kotlin/build/arm64-jni
+          if-no-files-found: warn
 
   android-jni-packaging:
     name: Build SDK JNI for Android ARM64 and x86_64 (cross-compile only)
