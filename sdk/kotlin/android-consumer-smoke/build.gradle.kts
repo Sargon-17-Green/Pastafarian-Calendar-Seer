@@ -22,6 +22,10 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            // Diagnostic APK only: use the temporary debug test signature
+            // so an emulator can INSTALL and execute the R8-shrunk build.
+            // Never distribute this artifact as a production-signed release.
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
