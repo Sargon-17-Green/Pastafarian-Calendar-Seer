@@ -238,6 +238,7 @@ jobs:
           # GitHub's ubuntu-24.04 image can lack libpulse.so.0; the QEMU
           # Android emulator needs it even with -no-audio and -no-window.
           sudo apt-get install -y --no-install-recommends libpulse0
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "emulator"
           qemu="$ANDROID_SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64"
           test -x "$qemu"
           ldd "$qemu" | tee sdk/kotlin/build/android/emulator-ldd.txt
