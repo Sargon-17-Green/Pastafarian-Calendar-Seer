@@ -5,7 +5,7 @@ on:
       - 'prototype/src/seer_engine_service.cpp'
       - 'prototype/scripts/seer_h200_pair_worker_v1.py'
       - 'prototype/scripts/seer_h200_group_worker_v1.py'
-      - 'prototype/tests/test_seer_h200_*'
+      - 'prototype/tests/test_seer_h200_*'\n      - 'prototype/tests/*h200_windows_adaptive*v002.py'
       - '.github/workflows/verify-h200-native-pair.yml'
   workflow_dispatch:
 permissions:
@@ -60,7 +60,7 @@ jobs:
             mingw-w64-ucrt-x86_64-gmp
             mingw-w64-ucrt-x86_64-boost
             mingw-w64-ucrt-x86_64-python
-      - name: Build portable Windows native Seer service
+      - name: Verify Windows 8-thread lock collision handling and session-display API\n        shell: pwsh\n        run: python prototype/tests/test_h200_windows_adaptive_runtime_v002.py\n      - name: Build portable Windows native Seer service
         shell: msys2 {0}
         env:
           SEER_ARCH: amd64
