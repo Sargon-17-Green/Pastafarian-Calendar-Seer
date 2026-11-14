@@ -1,0 +1,372 @@
+name: Verify real Seer Kotlin JNI integration
+
+on:
+  pull_request:
+    paths:
+      - 'sdk/kotlin/**'
+      - 'prototype/src/seer_mobile.cpp'
+      - 'prototype/src/seer_calendar_core.cpp'
+      - 'prototype/src/seer_year_core.cpp'
+      - 'prototype/src/seer_weave_portable.cpp'
+      - 'prototype/include/seer_mobile.h'
+      - '.github/workflows/verify-seer-kotlin-jni.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-jni-host:
+    name: Real Kotlin/JVM to JNI to canonical Seer C ABI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17.0.20+8'
+          check-latest: false
+      - name: Install canonical native dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build JNI shared object linked to real portable Seer engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sdk/kotlin/build/jni
+          commit="$(git rev-parse HEAD)"
+          printf 'sourceCommit=%s\n' "$commit" > sdk/kotlin/build/build-provenance.txt
+          printf 'compiler=%s\n' "$(clang++ --version | head -1)" >> sdk/kotlin/build/build-provenance.txt
+          printf 'java=%s\n' "$(java -version 2>&1 | head -1)" >> sdk/kotlin/build/build-provenance.txt
+          printf 'kotlin=%s\n' "$(kotlinc -version 2>&1)" >> sdk/kotlin/build/build-provenance.txt
+          clang++ -std=c++20 -O2 -DNDEBUG -fPIC -shared -pthread \
+            -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 \
+            "-DSEER_BUILD_COMMIT=\"$commit\"" \
+            '-DSEER_PACKAGE_VERSION="0.2.5"' \
+            -Iprototype/include -Iprototype/src \
+            "-I$JAVA_HOME/include" "-I$JAVA_HOME/include/linux" \
+            prototype/src/seer_year_core.cpp \
+            prototype/src/seer_calendar_core.cpp \
+            prototype/src/seer_weave_portable.cpp \
+            prototype/src/seer_mobile.cpp \
+            sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+            -o sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so
+          nm -D sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch'
+          ldd sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/needed.txt
+          ! grep -Ei 'libgmp|libgomp|libomp' sdk/kotlin/build/needed.txt
+          sha256sum sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            > sdk/kotlin/build/native-sha256.txt
+      - name: Compile typed Kotlin with actual JNI transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          kotlinc \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerJniTransport.kt \
+            sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerJniIntegrationSmoke.kt \
+            -include-runtime -d sdk/kotlin/build/integration.jar
+      - name: Execute true Kotlin/JNI/Native/Gates known-answer and batch verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -Djava.library.path="$PWD/sdk/kotlin/build/jni" \
+            -cp "$PWD/sdk/kotlin/build/integration.jar" \
+            org.pastafarian.seer.kotlin.SeerJniIntegrationSmokeKt \
+            "$PWD/prototype/data/gates_100k_u16.bin" \
+            "$PWD/prototype/data/gates_negative_100k_u16.bin" \
+            "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
+            "$(git rev-parse HEAD)" | tee sdk/kotlin/build/integration-output.txt
+          grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' sdk/kotlin/build/integration-output.txt
+      - name: Publish architecture-neutral Kotlin integration JAR for ARM64 hardware
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-jvm-integration-jar
+          path: sdk/kotlin/build/integration.jar
+          if-no-files-found: error
+          retention-days: 3
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-real-jni-host-evidence
+          path: |
+            sdk/kotlin/build/build-provenance.txt
+            sdk/kotlin/build/native-sha256.txt
+            sdk/kotlin/build/needed.txt
+            sdk/kotlin/build/integration-output.txt
+          if-no-files-found: warn
+
+
+  real-jni-arm64-host:
+    name: Real Kotlin/JVM -> JNI -> C++ on native ARM64 Linux hardware
+    needs: real-jni-host
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17.0.20+8'
+          check-latest: false
+      - name: Restore exactly the Kotlin JAR compiled by the x86_64 host job
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: seer-kotlin-jvm-integration-jar
+          path: sdk/kotlin/build
+      - name: Install exact backend dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Compile actual JNI C++ bridge natively on AArch64 hardware
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = aarch64
+          test -s sdk/kotlin/build/integration.jar
+          mkdir -p sdk/kotlin/build/arm64-jni
+          commit="$(git rev-parse HEAD)"
+          printf 'platform=%s\nnative=%s\njava=%s\n' \
+            "$(uname -a)" "$(g++ --version | sed -n '1p')" \
+            "$(java -version 2>&1 | sed -n '1p')" \
+            > sdk/kotlin/build/arm64-jni/provenance.txt
+          g++ -std=c++20 -O2 -DNDEBUG -fPIC -shared -pthread \
+            -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 \
+            "-DSEER_BUILD_COMMIT=\"$commit\"" \
+            '-DSEER_PACKAGE_VERSION="0.2.5"' \
+            -Iprototype/include -Iprototype/src \
+            "-I$JAVA_HOME/include" "-I$JAVA_HOME/include/linux" \
+            prototype/src/seer_year_core.cpp \
+            prototype/src/seer_calendar_core.cpp \
+            prototype/src/seer_weave_portable.cpp \
+            prototype/src/seer_mobile.cpp \
+            sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+            -o sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so
+          file sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/arm64-jni/elf.txt
+          readelf -h sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'AArch64'
+          nm -D sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch'
+          ldd sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/arm64-jni/needed.txt
+          ! grep -E 'not found|libgmp|libgomp|libomp' \
+            sdk/kotlin/build/arm64-jni/needed.txt
+          sha256sum sdk/kotlin/build/arm64-jni/libseer_mobile_kotlin_jni.so \
+            > sdk/kotlin/build/arm64-jni/native-sha256.txt
+      - name: Execute canonical Kotlin JNI single/batch/error/cancellation tests on ARM64 hardware
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -Djava.library.path="$PWD/sdk/kotlin/build/arm64-jni" \
+            -cp "$PWD/sdk/kotlin/build/integration.jar" \
+            org.pastafarian.seer.kotlin.SeerJniIntegrationSmokeKt \
+            "$PWD/prototype/data/gates_100k_u16.bin" \
+            "$PWD/prototype/data/gates_negative_100k_u16.bin" \
+            "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
+            "$(git rev-parse HEAD)" \
+            | tee sdk/kotlin/build/arm64-jni/integration-output.txt
+          grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' \
+            sdk/kotlin/build/arm64-jni/integration-output.txt
+          echo 'SEER_KOTLIN_ARM64_HARDWARE_JNI_PASS native=aarch64 kotlinJVM=true canonicalGates=true' \
+            | tee sdk/kotlin/build/arm64-jni/arm64-verdict.txt
+      - name: Upload native ARM64 Kotlin-JNI evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-arm64-hardware-jni-evidence
+          path: sdk/kotlin/build/arm64-jni
+          if-no-files-found: warn
+
+  android-jni-packaging:
+    name: Build SDK JNI for Android ARM64 and x86_64 (cross-compile only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install canonical Boost headers
+        uses: ./.github/actions/native-deps
+        with:
+          profile: boost-minimal
+      - name: Stage isolated Boost for Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          prefix="$RUNNER_TEMP/seer-kotlin-boost"
+          mkdir -p "$prefix/include"
+          cp -a /usr/include/boost "$prefix/include/"
+          echo "BOOST_ROOT=$prefix" >> "$GITHUB_ENV"
+      - name: Install pinned Android NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdk"
+          yes | "$sdk" --licenses >/dev/null 2>&1 || true
+          "$sdk" "ndk;28.2.13676358"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
+      - name: Build canonical C ABI libraries and matching SDK JNI for both architectures
+        env:
+          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_PACKAGE_VERSION: '0.2.5'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash prototype/scripts/build_mobile_library.sh android-arm64
+          bash prototype/scripts/build_mobile_library.sh android-x86_64
+          toolchain="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          mkdir -p sdk/kotlin/build/android/arm64-v8a sdk/kotlin/build/android/x86_64
+          compile_jni() {
+            local abi="$1" target="$2" lib="$3"
+            local out="sdk/kotlin/build/android/$abi"
+            "$toolchain/$target" -std=c++20 -O2 -fPIC \
+              -fno-exceptions -fno-rtti -nostdlib++ \
+              -shared -Wl,-z,defs -Iprototype/include \
+              sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+              -L"prototype/build/mobile/$lib" -lseer_mobile \
+              -Wl,-soname,libseer_mobile_kotlin_jni.so \
+              -o "$out/libseer_mobile_kotlin_jni.so"
+            cp "prototype/build/mobile/$lib/libseer_mobile.so" "$out/"
+            file "$out/"*.so
+            readelf -d "$out/libseer_mobile_kotlin_jni.so" \
+              | tee "$out/needed.txt"
+            grep -F 'libseer_mobile.so' "$out/needed.txt"
+            ! grep -Ei 'libgmp|libgomp|libomp|libc\+\+_shared' "$out/needed.txt"
+            sha256sum "$out/"*.so > "$out/sha256.txt"
+          }
+          compile_jni arm64-v8a aarch64-linux-android26-clang++ android-arm64
+          compile_jni x86_64 x86_64-linux-android26-clang++ android-x86_64
+          readelf -h sdk/kotlin/build/android/arm64-v8a/libseer_mobile_kotlin_jni.so \
+            | grep -E 'AArch64|ARM aarch64'
+          readelf -h sdk/kotlin/build/android/x86_64/libseer_mobile_kotlin_jni.so \
+            | grep -E 'X86-64|Advanced Micro Devices X86-64'
+      - name: Install Android API 35 for SDK Kotlin wrapper compile
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -f "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" ]]; then
+            "$sdk" "platforms;android-35"
+          fi
+          test -f "$ANDROID_SDK_ROOT/platforms/android-35/android.jar"
+      - name: Compile Android worker-thread facade and portable SDK classes
+        shell: bash
+        run: |
+          set -euo pipefail
+          kotlinc -jvm-target 17 \
+            -classpath "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerJniTransport.kt \
+            sdk/kotlin/src/android/kotlin/org/pastafarian/seer/kotlin/android/SeerAndroid.kt \
+            -d sdk/kotlin/build/android/classes.jar
+          jar tf sdk/kotlin/build/android/classes.jar \
+            | grep -Fx 'org/pastafarian/seer/kotlin/android/SeerAndroid.class'
+      - name: Assemble deterministic AAR with both Android ABIs and verified offline Gate assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 sdk/kotlin/tools/build_aar.py \
+            --classes-jar sdk/kotlin/build/android/classes.jar \
+            --native-root sdk/kotlin/build/android \
+            --gates-root prototype/data \
+            --source-commit "$(git rev-parse HEAD)" \
+            --package-version 0.2.5 \
+            --output sdk/kotlin/build/android/seer-kotlin-android-abi1-UNRELEASED.aar \
+            --manifest-out sdk/kotlin/build/android/seer-kotlin-android-abi1-manifest.json \
+            | tee sdk/kotlin/build/android/aar-verification.txt
+          unzip -t sdk/kotlin/build/android/seer-kotlin-android-abi1-UNRELEASED.aar
+          grep -F 'SEER_KOTLIN_ANDROID_AAR_PASS' sdk/kotlin/build/android/aar-verification.txt
+      - name: Compile and shrink a separate Java Android app consuming the actual AAR
+        shell: bash
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          gradle_zip="$RUNNER_TEMP/gradle-9.5.0-bin.zip"
+          curl --fail --location --retry 3 --silent --show-error \
+            'https://services.gradle.org/distributions/gradle-9.5.0-bin.zip' \
+            -o "$gradle_zip"
+          echo "553c78f50dafcd54d65b9a444649057857469edf836431389695608536d6b746  $gradle_zip" \
+            | sha256sum --check --status
+          unzip -q "$gradle_zip" -d "$RUNNER_TEMP"
+          export GRADLE_USER_HOME="$RUNNER_TEMP/seer-android-smoke-gradle"
+          echo "Android consumer test: AGP 9.3.1; Gradle 9.5.0; compile SDK 35"
+          "$RUNNER_TEMP/gradle-9.5.0/bin/gradle" \
+            --no-daemon --console=plain \
+            -p sdk/kotlin/android-consumer-smoke \
+            assembleDebug assembleRelease \
+            | tee sdk/kotlin/build/android/consumer-build-output.txt
+          shopt -s nullglob
+          for variant in debug release; do
+            # Release artifacts may be unsigned, so avoid assuming one filename.
+            apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/"$variant"/*.apk)
+            if [[ "${#apks[@]}" -ne 1 ]]; then
+              echo "Expected one $variant APK; found ${#apks[@]}" >&2
+              exit 1
+            fi
+            apk="${apks[0]}"
+            test -s "$apk"
+            unzip -l "$apk" | grep -F 'lib/arm64-v8a/libseer_mobile_kotlin_jni.so'
+            unzip -l "$apk" | grep -F 'lib/x86_64/libseer_mobile_kotlin_jni.so'
+            unzip -l "$apk" | grep -F 'assets/seer-kotlin/build-info.properties'
+            sha256sum "$apk" >> sdk/kotlin/build/android/consumer-apk-sha256.txt
+          done
+          printf 'SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS variants=debug,release\n' \
+            | tee sdk/kotlin/build/android/consumer-sentinel.txt
+      - name: Install minimal Ubuntu emulator runtime dependency
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          # GitHub's ubuntu-24.04 image can lack libpulse.so.0; the QEMU
+          # Android emulator needs it even with -no-audio and -no-window.
+          sudo apt-get install -y --no-install-recommends libpulse0
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "emulator"
+          qemu="$ANDROID_SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64"
+          test -x "$qemu"
+          # ldd on the QEMU executable alone is not a reliable launch gate:
+          # the emulator wrapper supplies its own bundled lib64 search paths
+          # dynamically (Qt, tracing, graphics and protobuf). Record it only
+          # as diagnostic evidence; fail on the actual emulator invocation.
+          ldd "$qemu" > sdk/kotlin/build/android/emulator-ldd.txt 2>&1 || true
+          "$ANDROID_SDK_ROOT/emulator/emulator" -version \
+            > sdk/kotlin/build/android/emulator-version-preflight.txt 2>&1
+          cat sdk/kotlin/build/android/emulator-version-preflight.txt
+          echo "SEER_ANDROID_EMULATOR_EXEC_PREFLIGHT_PASS"
+      - name: Boot Android 35 x86_64 emulator and execute real Seer Kotlin JNI smoke
+        shell: bash
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          debug_apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug/*.apk)
+          release_apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/release/*.apk)
+          if [[ "${#debug_apks[@]}" -ne 1 || "${#release_apks[@]}" -ne 1 ]]; then
+            echo "Expected exactly one debug and one signed diagnostic R8 release APK" >&2
+            exit 1
+          fi
+          bash sdk/kotlin/tools/run_android_emulator_smoke.sh \
+            "${debug_apks[0]}" "${release_apks[0]}" \
+            sdk/kotlin/build/android/emulator-evidence \
+            | tee sdk/kotlin/build/android/emulator-verdict.txt
+          grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=debug JNI=real R8=no' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+          grep -F 'SEER_KOTLIN_ANDROID_VARIANT_PASS variant=release JNI=real R8=yes' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+          grep -Fx 'SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release' \
+            sdk/kotlin/build/android/emulator-verdict.txt
+      - name: Upload unreleased Android AAR and paired JNI binaries
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: seer-kotlin-android-aar-unreleased
+          path: |
+            sdk/kotlin/build/android
+            sdk/kotlin/android-consumer-smoke/build/outputs/apk/debug
+            sdk/kotlin/android-consumer-smoke/build/outputs/apk/release
+          if-no-files-found: warn
