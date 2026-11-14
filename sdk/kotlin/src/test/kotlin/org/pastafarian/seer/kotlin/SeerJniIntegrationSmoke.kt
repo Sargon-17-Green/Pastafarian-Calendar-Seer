@@ -2,6 +2,9 @@ package org.pastafarian.seer.kotlin
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private data class KnownAnswer(
     val name: String,
@@ -93,6 +96,43 @@ fun main(arguments: Array<String>) {
         val targets = known.map(KnownAnswer::targetJdn).toLongArray()
         val batch = client.queryBatchBlocking(calc, targets)
         check(batch == individual) { "JNI batch differs from independent canonical queries" }
+
+        // Exercise the *same* Kotlin/JNI/Native context from four real JVM
+        // worker threads. Each task starts on one latch, so queries overlap
+        // instead of merely testing independent sequential client instances.
+        // Reference results were computed above before any concurrent work.
+        val pool = Executors.newFixedThreadPool(4)
+        val start = CountDownLatch(1)
+        try {
+            val tasks = (0 until 4).map { worker ->
+                pool.submit<Boolean> {
+                    start.await()
+                    repeat(4) { iteration ->
+                        val batchResult = client.queryBatchBlocking(calc, targets)
+                        check(batchResult == individual) {
+                            "Parallel JNI batch differed from canonical result, worker=$worker iteration=$iteration"
+                        }
+                        val index = (worker + iteration) % known.size
+                        check(client.queryBlocking(calc, targets[index]) == individual[index]) {
+                            "Parallel JNI single differed from canonical result, worker=$worker iteration=$iteration"
+                        }
+                    }
+                    true
+                }
+            }
+            start.countDown()
+            tasks.forEachIndexed { index, task ->
+                check(task.get(60, TimeUnit.SECONDS)) {
+                    "Parallel JNI task $index did not pass"
+                }
+            }
+        } finally {
+            pool.shutdownNow()
+            check(pool.awaitTermination(15, TimeUnit.SECONDS)) {
+                "Parallel JNI worker pool did not shut down"
+            }
+        }
+        println("SEER_KOTLIN_REAL_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true")
 
         // The Native protocol supports negative JDNs; the JVM keeps Long
         // precision and never routes these through java.util.Date.
