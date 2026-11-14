@@ -70,7 +70,8 @@ SeerAndroid.open(applicationContext).use { client ->
 - Proven real-JNI passing run: [43586490367](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43586490367).
 - Proven JNI cancellation and both Android ABI binary builds: [43587083926](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43587083926).
 - First successfully assembled AAR with ZIP integrity and Gate hashes: [43589017830](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43589017830), artifact `seer-kotlin-android-aar-unreleased`, AAR SHA-256 `8eb0a04a318f5d65dfdd1920332bfe09cc8bccbc61541cb63064da619b21f42e`.
-- The standalone Android consumer Gradle build added later is a **separate acceptance gate**; its result must be inspected before an APK compilation claim.
+- **Android AAR consumer APKs verified:** [run 43589890205](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43589890205) built both Debug and minified Release APKs with AGP 9.3.1 and Gradle 9.5.0, verified JNI libraries and metadata in the resulting APKs, and emitted `SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS`.
+- **Android emulator execution is a separate, newer gate:** `sdk/kotlin/tools/run_android_emulator_smoke.sh` boots an API 35 x86_64 emulator on an ephemeral CI runner, installs the exact debug APK, starts its activity and requires `SEER_KOTLIN_ANDROID_SMOKE_PASS` from its Android logcat tag. The test checks on-device JNI/native loading, verified Gate staging, 3-target batch identity and real cancellation/reset. Do **not** assert it passes before its workflow result is inspected; the Android 35 emulator does not substitute for physical ARM64 device acceptance.
 
 The AAR build uses an exact 40-character Git checkout SHA for the Native source, emits SHA-256 for every package member and archives evidence. In pull-request CI, this may refer to the *test merge commit* rather than the branch tip.
 
@@ -90,7 +91,7 @@ Required sentinels: `SEER_KOTLIN_WIRE_PURE_PASS` and `SEER_KOTLIN_CLIENT_PURE_PA
 
 ## Outstanding release gates
 
-1. Confirm consumer Gradle debug + minified release compilation, then run the APK on a real Android emulator/device to verify JNI library load, Gate staging, cancellation and complete P(c,t) results.
+1. Consumer debug and minified release APK compilation is verified. **Still required:** real Android emulator execution (new CI gate), then physical ARM64 hardware acceptance for JNI loading, Gate staging, cancellation, and complete P(c,t) results.
 2. Restore the **private App repo's CI**, which continues to fail before jobs begin (App issue #53). Reconcile the experimental App batch viewport PR #56 and cancellation-lifetime PR #54 after full executable integration tests.
 3. Publish a versioned, pinned and signed SDK build only after Android consumer/device acceptance, compatibility and redistribution checks. AAR compilation is not an installable application or a public SDK release.
 4. Preserve Seer's Native batch optimizations in draft PRs #53 and #54 until separate correctness and performance acceptance. This Kotlin SDK branch currently builds from Seer's **main** and does not claim the prototype 19–42× Native acceleration in the app.
