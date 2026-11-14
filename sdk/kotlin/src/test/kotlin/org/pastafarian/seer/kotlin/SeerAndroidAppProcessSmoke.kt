@@ -1,6 +1,9 @@
 package org.pastafarian.seer.kotlin
 
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Executes the real Kotlin SDK/JNI bridge on Android's ART under the *adb shell*
@@ -63,6 +66,49 @@ object SeerAndroidAppProcessSmoke {
                     val batch = client.queryBatchBlocking(calc, targets)
                     check(batch == singles) { "Batch/serial field parity failure" }
 
+                    // Exercise the same ART/Kotlin/JNI/C++ context concurrently,
+                    // not four independent engine instances. Bound every await,
+                    // so a broken Native synchronization cannot hang the phone.
+                    val workers = 4
+                    val rounds = 4
+                    val executor = Executors.newFixedThreadPool(workers)
+                    val start = CountDownLatch(1)
+                    try {
+                        val futures = (0 until workers).map { worker ->
+                            executor.submit<Boolean> {
+                                check(start.await(15, TimeUnit.SECONDS)) {
+                                    "Timed out waiting to start JNI workers"
+                                }
+                                repeat(rounds) { round ->
+                                    check(client.queryBatchBlocking(calc, targets) == singles) {
+                                        "Concurrent Native batch differed: worker=${worker} round=${round}"
+                                    }
+                                    val index = (worker + round) % targets.size
+                                    check(client.queryBlocking(calc, targets[index]) == singles[index]) {
+                                        "Concurrent Native single differed: worker=${worker} round=${round}"
+                                    }
+                                }
+                                true
+                            }
+                        }
+                        start.countDown()
+                        futures.forEachIndexed { index, future ->
+                            check(future.get(90, TimeUnit.SECONDS)) {
+                                "Concurrent Native worker ${index} did not pass"
+                            }
+                        }
+                    } finally {
+                        start.countDown()
+                        executor.shutdownNow()
+                        check(executor.awaitTermination(20, TimeUnit.SECONDS)) {
+                            "Concurrent Native workers did not shut down"
+                        }
+                    }
+                    println(
+                        "SEER_ANDROID_ART_JNI_CONCURRENCY_PASS workers=4 rounds=4 " +
+                            "batchAndSingle=true sharedContext=true"
+                    )
+
                     val negativeCalc = -13334246L
                     val negativeTargets = longArrayOf(negativeCalc, negativeCalc + 1, negativeCalc + 2)
                     val negativeSingles = negativeTargets.map { client.queryBlocking(negativeCalc, it) }
@@ -92,14 +138,14 @@ object SeerAndroidAppProcessSmoke {
                         check(client.queryBlocking(negativeCalc, negativeCalc, token) == negativeSingles.first())
                     }
                     println(
-                        "SEER_ANDROID_ARM64_APP_PROCESS_JNI_PASS abi=1 source=$commit " +
+                        "SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1 source=$commit " +
                             "knownAnswers=3 negativeBatch=3 domainErrors=true " +
                             "cancellation=true runtime=ART noInstall=true"
                     )
                 }
             }
         } catch (error: Throwable) {
-            System.err.println("SEER_ANDROID_ARM64_APP_PROCESS_JNI_FAIL: " + error)
+            System.err.println("SEER_ANDROID_APP_PROCESS_JNI_FAIL: " + error)
             error.printStackTrace()
             throw error
         }
