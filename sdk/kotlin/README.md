@@ -9,6 +9,8 @@
 - an ordered batch: \`[status, N × record(8 longs)]\`, for 1..4096 targets;
 - native JNI provenance: \`[abiVersion, packageVersion, sourceCommit, backend]\`.
 
+`SeerKotlinClient.kt` adds a typed, thread-safe Kotlin/JVM client based on a narrow `SeerNativeTransport` interface. It accepts raw ABI responses only from the injected transport; it never implements date conversion. It copies batch request arrays to protect request-to-response identity against concurrent caller mutation, permits parallel queries through a read lock, and serializes `close()` through an exclusive write lock so the Native transport cannot be destroyed during an active call. The JNI implementation of that transport is **not yet supplied**.
+
 A failure status is represented by a **single long** and throws \`SeerNativeException\`, preserving the exact numeric status. Malformed successful results, unknown statuses, an incorrectly-sized response, a mismatch between returned JDN and requested JDN, an overflowing 32-bit field, or incorrect ABI provenance throw \`SeerProtocolException\` rather than silently corrupting a date.
 
 **Indexes are passed through unchanged.** This module makes no undocumented assumption about whether a Native ordinal or index starts at zero or one; it preserves Seer's exact eight field values.
@@ -20,7 +22,9 @@ On Linux/macOS/Windows with \`kotlinc\`, \`java\` and a JDK available, from the 
 \`\`\`bash
 kotlinc \
   sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+  sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
   sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerMobileWireSmoke.kt \
+  sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClientSmoke.kt \
   -include-runtime -d seer-kotlin-wire-tests.jar
 java -jar seer-kotlin-wire-tests.jar
 \`\`\`
@@ -29,7 +33,7 @@ The test must emit \`SEER_KOTLIN_WIRE_PURE_PASS\`; cases cover negative JDNs, ye
 
 ## Outstanding work, release gates
 
-1. Expose a stable **Native backend interface** for query, batch, cancellation, context and provenance ownership; thin Android JNI and desktop bindings should implement it.
+1. Implement the still-missing Android/JNI backend for `SeerNativeTransport`, including strict cancellation/token lifetime, build artifact pinning, and Android main-thread prohibition. A platform-independent typed interface for query/batch/provenance and serialized close has now been introduced; cancellation remains a separate design gate.
 2. Ensure all public API methods are typed and versioned, with an explicit compatibility policy; publish a buildable Kotlin JVM/Android artifact only after those steps.
 3. Reconcile overlapping typed names and duplicate decoding in App's \`computation/seer-bindings\` Kotlin wrapper; the current App still uses its own code and its pinned earlier Seer commit.
 4. Keep C ABI/known-answer/equivalence/security and full device/JNI tests mandatory. Passing this pure-codec CI does **not** establish JNI functionality or app UI performance.
