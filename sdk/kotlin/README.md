@@ -126,6 +126,16 @@ python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip seer-androi
 
 **Scope limit:** ART is running under the **ADB shell UID**, not the installed application's UID. This verifies actual Kotlin/JNI execution on a physical Android ARM64 CPU but does not verify Android `Context`, private Gate-cache staging, PackageManager installation, production signing, permission handling or Activity lifecycle on that phone. Android UI-thread/Gate-cache/R8 tests were separately verified on the emulator; do not extrapolate their physical-device success.
 
+### Shared Kotlin/JNI context concurrency on Android — emulator and physical ARM64
+
+**Verified**, without installing a new APK, on Android 35 x86_64 emulator and independently on **physical Android 16/API 36 ARM64**. The ART-shell fixture starts four Java/Kotlin worker threads together and makes each execute four native batch queries and four single queries through the **same** `SeerKotlinClient`, JNI transport and canonical C++ context (16 batches and 16 singles in total). Every complete record must match a serially computed reference; the fixture bounds future joins and thread-pool shutdown.
+
+- [CI run 43627394110](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43627394110): all three Kotlin/JNI jobs PASS (Linux x86_64, real Linux ARM64 and Android emulator). The emulator's archived `app-process/art-jni-execution.txt` contained both `SEER_ANDROID_ART_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true sharedContext=true` and `SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1`. Debug and R8-minified Release APK consumer smokes also passed.
+- Identical **physical Android ARM64** test used SHA-256-verified payload from CI artifact **14126702631**, source test-merge `27c0423eb5fd28d9d42ce93267695fb6748f32dd`. On-device DEX and JNI execution returned exit code 0, authenticated all five transferred files and emitted both required sentinels. All temporary files were removed. A separate read-only audit of the authorized Windows host's execution archive produced `SEER_ART_PHYSICAL_CONCURRENCY_EVIDENCE_AUDIT_PASS`.
+- Reproducibility and public-safe SHA-256 evidence: `sdk/kotlin/evidence/android-arm64-art-jni-concurrency-physical-20261114.json`.
+
+**Scope:** These are correctness/lifetime regressions under `app_process` and ADB shell identity, not app-UID Android lifecycle acceptance or a p95/speedup measurement. The already installed calendar application was neither modified nor replaced.
+
 The AAR build uses an exact 40-character Git checkout SHA for the Native source, emits SHA-256 for every package member and archives evidence. In pull-request CI, this may refer to the *test merge commit* rather than the branch tip.
 
 Local pure JVM test, without JNI or Android:
