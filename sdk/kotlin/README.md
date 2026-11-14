@@ -79,7 +79,9 @@ A diagnostic release APK is now **R8-minified and signed with the Gradle debug/t
 
 The updated \`sdk/kotlin/tools/run_android_emulator_smoke.sh\` accepts both the debug and release APK and runs them **sequentially with a full uninstall between variants**. The fresh app-private storage forces Gate re-staging and digest verification for each variant; the script separately requires both the real JNI calculation/cancellation smoke and the exact Android main-thread safety exception. A final \`SEER_KOTLIN_ANDROID_EMULATOR_PASS\` now additionally identifies \`variants=debug,release\`. The workflow archives distinct \`debug-logcat.txt\` and \`release-logcat.txt\` along with install evidence.
 
-The earlier passed Android emulator runs above exercised the **Debug APK only**. They do **not** prove release/R8 runtime compatibility. The new dual-variant test must pass on its own CI run before that property is marked verified.
+**Debug and R8-minified Release were both executed successfully** on an Android 35 x86_64 emulator in [CI run 43600218062](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43600218062). Both installations were separated by an uninstall/reinstall; the real app logged `SEER_KOTLIN_ANDROID_SMOKE_PASS` and `SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS` independently for each variant. The CI gate recorded `SEER_KOTLIN_ANDROID_VARIANT_PASS variant=debug JNI=real R8=no` and `... variant=release JNI=real R8=yes`. Its AAR evidence artifact ID is **14116436662**.
+ 
+**Additional Android Gate corruption-recovery regression is a separate, newer gate.** The app now deliberately changes one byte in each staged private Gate file *after* closing the native context; the SDK must detect the digest mismatch, rewrite the exact original authenticated bytes and return the identical canonical result after reopening. Both Debug and Release must emit `SEER_KOTLIN_ANDROID_GATE_RECOVERY_PASS` before CI accepts the variant. This new on-device regression is **not yet claimed passing** (run [43608692510](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43608692510)).
 
 The AAR build uses an exact 40-character Git checkout SHA for the Native source, emits SHA-256 for every package member and archives evidence. In pull-request CI, this may refer to the *test merge commit* rather than the branch tip.
 
@@ -99,7 +101,7 @@ Required sentinels: `SEER_KOTLIN_WIRE_PURE_PASS` and `SEER_KOTLIN_CLIENT_PURE_PA
 
 ## Outstanding release gates
 
-1. Consumer debug/minified release APK compilation and actual Android 35 x86_64 emulator execution have passed. **Still required:** physical ARM64 hardware acceptance for native loading, Gate staging, cancellation and complete P(c,t) results, plus device-specific performance/resource profiling.
+1. Consumer Debug/R8-minified Release APK compilation **and runtime execution** have passed on Android 35 x86_64. Gate-cache corruption/recovery is an additional pending on-device regression. **Still required:** physical ARM64 hardware acceptance for Native loading, Gate staging, cancellation, full P(c,t) correctness and resource profiling.
 2. Restore the **private App repo's CI**, which continues to fail before jobs begin (App issue #53). Reconcile the experimental App batch viewport PR #56 and cancellation-lifetime PR #54 after full executable integration tests.
 3. Publish a versioned, pinned and signed SDK build only after Android consumer/device acceptance, compatibility and redistribution checks. AAR compilation is not an installable application or a public SDK release.
 4. Preserve Seer's Native batch optimizations in draft PRs #53 and #54 until separate correctness and performance acceptance. This Kotlin SDK branch currently builds from Seer's **main** and does not claim the prototype 19–42× Native acceleration in the app.
