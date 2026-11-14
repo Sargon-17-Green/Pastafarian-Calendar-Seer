@@ -1,0 +1,95 @@
+name: Verify real Seer Kotlin JNI integration
+
+on:
+  pull_request:
+    paths:
+      - 'sdk/kotlin/**'
+      - 'prototype/src/seer_mobile.cpp'
+      - 'prototype/src/seer_calendar_core.cpp'
+      - 'prototype/src/seer_year_core.cpp'
+      - 'prototype/src/seer_weave_portable.cpp'
+      - 'prototype/include/seer_mobile.h'
+      - '.github/workflows/verify-seer-kotlin-jni.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-jni-host:
+    name: Real Kotlin/JVM to JNI to canonical Seer C ABI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17.0.20+8'
+          check-latest: false
+      - name: Install canonical native dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Build JNI shared object linked to real portable Seer engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p sdk/kotlin/build/jni
+          commit="$(git rev-parse HEAD)"
+          printf 'sourceCommit=%s\n' "$commit" > sdk/kotlin/build/build-provenance.txt
+          printf 'compiler=%s\n' "$(clang++ --version | head -1)" >> sdk/kotlin/build/build-provenance.txt
+          printf 'java=%s\n' "$(java -version 2>&1 | head -1)" >> sdk/kotlin/build/build-provenance.txt
+          printf 'kotlin=%s\n' "$(kotlinc -version 2>&1)" >> sdk/kotlin/build/build-provenance.txt
+          clang++ -std=c++20 -O2 -DNDEBUG -fPIC -shared -pthread \
+            -DSEER_MOBILE_CPPINT=1 -DSEER_NO_OPENMP=1 \
+            "-DSEER_BUILD_COMMIT=\"$commit\"" \
+            '-DSEER_PACKAGE_VERSION="0.2.5"' \
+            -Iprototype/include -Iprototype/src \
+            "-I$JAVA_HOME/include" "-I$JAVA_HOME/include/linux" \
+            prototype/src/seer_year_core.cpp \
+            prototype/src/seer_calendar_core.cpp \
+            prototype/src/seer_weave_portable.cpp \
+            prototype/src/seer_mobile.cpp \
+            sdk/kotlin/src/main/cpp/seer_kotlin_jni.cpp \
+            -o sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so
+          nm -D sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            | grep -F 'Java_org_pastafarian_seer_kotlin_SeerKotlinJni_queryBatch'
+          ldd sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            | tee sdk/kotlin/build/needed.txt
+          ! grep -Ei 'libgmp|libgomp|libomp' sdk/kotlin/build/needed.txt
+          sha256sum sdk/kotlin/build/jni/libseer_mobile_kotlin_jni.so \
+            > sdk/kotlin/build/native-sha256.txt
+      - name: Compile typed Kotlin with actual JNI transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          kotlinc \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerJniTransport.kt \
+            sdk/kotlin/src/test/kotlin/org/pastafarian/seer/kotlin/SeerJniIntegrationSmoke.kt \
+            -include-runtime -d sdk/kotlin/build/integration.jar
+      - name: Execute true Kotlin/JNI/Native/Gates known-answer and batch verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -Djava.library.path="$PWD/sdk/kotlin/build/jni" \
+            -cp "$PWD/sdk/kotlin/build/integration.jar" \
+            org.pastafarian.seer.kotlin.SeerJniIntegrationSmokeKt \
+            "$PWD/prototype/data/gates_100k_u16.bin" \
+            "$PWD/prototype/data/gates_negative_100k_u16.bin" \
+            "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
+            "$(git rev-parse HEAD)" | tee sdk/kotlin/build/integration-output.txt
+          grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' sdk/kotlin/build/integration-output.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: seer-kotlin-real-jni-host-evidence
+          path: |
+            sdk/kotlin/build/build-provenance.txt
+            sdk/kotlin/build/native-sha256.txt
+            sdk/kotlin/build/needed.txt
+            sdk/kotlin/build/integration-output.txt
+          if-no-files-found: warn
