@@ -20,6 +20,31 @@ interface SeerNativeTransport : AutoCloseable {
 }
 
 /**
+ * A Native cancellation token. cancel() is safe to call concurrently with a
+ * running query; close() must not free any token still retained by a JNI call.
+ * reset() is intended only between calls, not while a query is active.
+ */
+interface SeerCancellation : AutoCloseable {
+    fun cancel()
+    fun reset()
+}
+
+/** Opt-in cancellation support; older backends retain their original API. */
+interface SeerCancellableNativeTransport : SeerNativeTransport {
+    fun newCancellation(): SeerCancellation
+    fun query(
+        calculationJdn: Long,
+        targetJdn: Long,
+        cancellation: SeerCancellation,
+    ): LongArray
+    fun queryBatch(
+        calculationJdn: Long,
+        targetJdns: LongArray,
+        cancellation: SeerCancellation,
+    ): LongArray
+}
+
+/**
  * Thread-safe typed Kotlin/JVM façade with no independent calendar logic.
  *
  * Parallel calls may hold the shared read lock concurrently. close() takes
@@ -60,6 +85,42 @@ class SeerKotlinClient(
         ensureOpen()
         SeerMobileWire.decodeProvenance(transport.provenance())
     }
+
+    /** Creates a Native cancellation token owned by the configured backend. */
+    fun newCancellation(): SeerCancellation = lifetime.read {
+        ensureOpen()
+        cancellableTransport().newCancellation()
+    }
+
+    fun queryBlocking(
+        calculationJdn: Long,
+        targetJdn: Long,
+        cancellation: SeerCancellation,
+    ): SeerRecord = lifetime.read {
+        ensureOpen()
+        SeerMobileWire.decodeSingle(
+            cancellableTransport().query(calculationJdn, targetJdn, cancellation),
+            targetJdn,
+        )
+    }
+
+    fun queryBatchBlocking(
+        calculationJdn: Long,
+        targetJdns: LongArray,
+        cancellation: SeerCancellation,
+    ): List<SeerRecord> = lifetime.read {
+        ensureOpen()
+        require(targetJdns.size in 1..SeerMobileWire.MAX_BATCH)
+        val stableTargets = targetJdns.copyOf()
+        val result = cancellableTransport().queryBatch(
+            calculationJdn, stableTargets.copyOf(), cancellation,
+        )
+        SeerMobileWire.decodeBatch(result, stableTargets)
+    }
+
+    private fun cancellableTransport(): SeerCancellableNativeTransport =
+        transport as? SeerCancellableNativeTransport
+            ?: throw UnsupportedOperationException("This Seer Native backend does not support cancellation")
 
     private fun ensureOpen() {
         check(!closed) { "SeerKotlinClient has been closed" }
