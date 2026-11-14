@@ -48,7 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 sdk/kotlin/tools/test_android_art_runner.py | tee "$RUNNER_TEMP/art-runner-guard-tests.txt"
-          grep -Fx 'SEER_ANDROID_ART_RUNNER_FAIL_CLOSED_TEST_PASS cases=9' "$RUNNER_TEMP/art-runner-guard-tests.txt"
+          grep -Fx 'SEER_ANDROID_ART_RUNNER_FAIL_CLOSED_TEST_PASS cases=18' "$RUNNER_TEMP/art-runner-guard-tests.txt"
       - name: Compile and run dependency-free Kotlin/JVM wire contract
         shell: bash
         run: |
