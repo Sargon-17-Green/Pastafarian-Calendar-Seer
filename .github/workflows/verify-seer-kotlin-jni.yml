@@ -157,11 +157,48 @@ jobs:
             | grep -E 'AArch64|ARM aarch64'
           readelf -h sdk/kotlin/build/android/x86_64/libseer_mobile_kotlin_jni.so \
             | grep -E 'X86-64|Advanced Micro Devices X86-64'
-      - name: Upload paired Android JNI and Native binaries
+      - name: Install Android API 35 for SDK Kotlin wrapper compile
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          if [[ ! -f "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" ]]; then
+            "$sdk" "platforms;android-35"
+          fi
+          test -f "$ANDROID_SDK_ROOT/platforms/android-35/android.jar"
+      - name: Compile Android worker-thread facade and portable SDK classes
+        shell: bash
+        run: |
+          set -euo pipefail
+          kotlinc -jvm-target 17 \
+            -classpath "$ANDROID_SDK_ROOT/platforms/android-35/android.jar" \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerMobileWire.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerKotlinClient.kt \
+            sdk/kotlin/src/main/kotlin/org/pastafarian/seer/kotlin/SeerJniTransport.kt \
+            sdk/kotlin/src/android/kotlin/org/pastafarian/seer/kotlin/android/SeerAndroid.kt \
+            -d sdk/kotlin/build/android/classes.jar
+          jar tf sdk/kotlin/build/android/classes.jar \
+            | grep -Fx 'org/pastafarian/seer/kotlin/android/SeerAndroid.class'
+      - name: Assemble deterministic AAR with both Android ABIs and verified offline Gate assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 sdk/kotlin/tools/build_aar.py \
+            --classes-jar sdk/kotlin/build/android/classes.jar \
+            --native-root sdk/kotlin/build/android \
+            --gates-root prototype/data \
+            --source-commit "$(git rev-parse HEAD)" \
+            --package-version 0.2.5 \
+            --output sdk/kotlin/build/android/seer-kotlin-android-abi1-UNRELEASED.aar \
+            --manifest-out sdk/kotlin/build/android/seer-kotlin-android-abi1-manifest.json \
+            | tee sdk/kotlin/build/android/aar-verification.txt
+          unzip -t sdk/kotlin/build/android/seer-kotlin-android-abi1-UNRELEASED.aar
+          grep -F 'SEER_KOTLIN_ANDROID_AAR_PASS' sdk/kotlin/build/android/aar-verification.txt
+      - name: Upload unreleased Android AAR and paired JNI binaries
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: seer-kotlin-android-jni-libraries-unreleased
+          name: seer-kotlin-android-aar-unreleased
           path: |
             sdk/kotlin/build/android
           if-no-files-found: warn
