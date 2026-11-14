@@ -213,11 +213,15 @@ jobs:
             -p sdk/kotlin/android-consumer-smoke \
             assembleDebug assembleRelease \
             | tee sdk/kotlin/build/android/consumer-build-output.txt
+          shopt -s nullglob
           for variant in debug release; do
-            apk="sdk/kotlin/android-consumer-smoke/build/outputs/apk/$variant/android-consumer-smoke-$variant.apk"
-            if [[ ! -f "$apk" ]]; then
-              apk="sdk/kotlin/android-consumer-smoke/build/outputs/apk/$variant/SeerKotlinAarConsumerSmoke-$variant.apk"
+            # Release artifacts may be unsigned, so avoid assuming one filename.
+            apks=(sdk/kotlin/android-consumer-smoke/build/outputs/apk/"$variant"/*.apk)
+            if [[ "${#apks[@]}" -ne 1 ]]; then
+              echo "Expected one $variant APK; found ${#apks[@]}" >&2
+              exit 1
             fi
+            apk="${apks[0]}"
             test -s "$apk"
             unzip -l "$apk" | grep -F 'lib/arm64-v8a/libseer_mobile_kotlin_jni.so'
             unzip -l "$apk" | grep -F 'lib/x86_64/libseer_mobile_kotlin_jni.so'
