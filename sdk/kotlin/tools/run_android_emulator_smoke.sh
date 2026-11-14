@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Real, bounded emulator smoke for the APK consuming the Seer Kotlin AAR.
 set -euo pipefail
-if [[ "$#" != 2 ]]; then
-  echo "usage: $0 CONSUMER_DEBUG_APK EVIDENCE_DIRECTORY" >&2
+if [[ "$#" != 3 ]]; then
+  echo "usage: $0 CONSUMER_DEBUG_APK CONSUMER_R8_RELEASE_APK EVIDENCE_DIRECTORY" >&2
   exit 2
 fi
-APK="$(realpath "$1")"
-OUT="$(realpath -m "$2")"
+DEBUG_APK="$(realpath "$1")"
+RELEASE_APK="$(realpath "$2")"
+OUT="$(realpath -m "$3")"
 mkdir -p "$OUT"
-test -s "$APK"
+test -s "$DEBUG_APK"
+test -s "$RELEASE_APK"
 : "${ANDROID_SDK_ROOT:?ANDROID_SDK_ROOT must reference CI Android SDK}"
 SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
 AVDMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
@@ -66,7 +68,7 @@ fi
   echo "Acceleration=$ACCEL"
   "$EMULATOR" -version > "$OUT/emulator-version.txt" 2>&1
   sed -n '1,3p' "$OUT/emulator-version.txt"
-  sha256sum "$APK"
+  sha256sum "$DEBUG_APK" "$RELEASE_APK"
 } > "$OUT/environment.txt"
 "$EMULATOR" -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim \
   -no-snapshot -wipe-data -gpu swiftshader_indirect \
@@ -105,33 +107,46 @@ fi
 grep -Fx '35' "$OUT/device-api.txt"
 grep -Fx 'x86_64' "$OUT/device-abi.txt"
 
-"$ADB" install -r "$APK" > "$OUT/install.log"
-"$ADB" logcat -c
-"$ADB" shell am start \
-  -n org.pastafarian.seer.kotlin.smoke/.SmokeActivity \
-  > "$OUT/activity-start.log"
-verdict=""
-for attempt in $(seq 1 90); do
-  "$ADB" logcat -d -v brief -s 'SeerKotlinSmoke:I' '*:S' \
-    > "$OUT/seer-smoke-logcat.txt" 2>&1 || true
-  if grep -F 'SEER_KOTLIN_ANDROID_SMOKE_FAIL' "$OUT/seer-smoke-logcat.txt"; then
-    echo "SEER_KOTLIN_ANDROID_EMULATOR_FAIL application reported failure" >&2
-    exit 1
+run_variant() {
+  local variant="$1"
+  local apk="$2"
+  local prefix="$OUT/$variant"
+  local log="$prefix-logcat.txt"
+  echo "SEER_ANDROID_VARIANT_STAGE=$variant"
+  # Force a clean new application install for EACH variant, so the R8 release
+  # cannot reuse the debug variant's already verified and staged Gate files.
+  "$ADB" uninstall org.pastafarian.seer.kotlin.smoke \
+    > "$prefix-uninstall.txt" 2>&1 || true
+  "$ADB" install -r "$apk" > "$prefix-install.txt"
+  "$ADB" logcat -c
+  "$ADB" shell am start \
+    -n org.pastafarian.seer.kotlin.smoke/.SmokeActivity \
+    > "$prefix-start.txt"
+
+  local verdict=""
+  for attempt in $(seq 1 90); do
+    "$ADB" logcat -d -v brief -s 'SeerKotlinSmoke:I' '*:S' \
+      > "$log" 2>&1 || true
+    if grep -F 'SEER_KOTLIN_ANDROID_SMOKE_FAIL' "$log"; then
+      echo "SEER_KOTLIN_ANDROID_VARIANT_FAIL $variant application reported failure" >&2
+      return 1
+    fi
+    if grep -F 'SEER_KOTLIN_ANDROID_SMOKE_PASS' "$log"; then
+      verdict=PASS
+      break
+    fi
+    sleep 4
+  done
+  if [[ "$verdict" != PASS ]]; then
+    echo "SEER_KOTLIN_ANDROID_VARIANT_FAIL $variant no verdict in bounded polling" >&2
+    return 1
   fi
-  if grep -F 'SEER_KOTLIN_ANDROID_SMOKE_PASS' "$OUT/seer-smoke-logcat.txt"; then
-    verdict=PASS
-    break
+  if ! grep -F 'SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS' "$log"; then
+    echo "SEER_KOTLIN_ANDROID_VARIANT_FAIL $variant missing UI-thread guard" >&2
+    return 1
   fi
-  sleep 4
-done
-if [[ "$verdict" != PASS ]]; then
-  echo "SEER_KOTLIN_ANDROID_EMULATOR_FAIL no verdict in bounded polling" >&2
-  exit 1
-fi
-# The Android facade must reject blocking Native setup on the UI thread,
-# independently of worker-thread query success.
-if ! grep -F 'SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS' "$OUT/seer-smoke-logcat.txt"; then
-  echo "SEER_KOTLIN_ANDROID_EMULATOR_FAIL no UI-thread protection sentinel" >&2
-  exit 1
-fi
-echo "SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified"
+  echo "SEER_KOTLIN_ANDROID_VARIANT_PASS variant=$variant JNI=real R8=$([[ "$variant" == release ]] && echo yes || echo no)"
+}
+run_variant debug "$DEBUG_APK"
+run_variant release "$RELEASE_APK"
+echo "SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release"
