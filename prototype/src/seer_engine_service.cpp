@@ -219,6 +219,124 @@ class SeerEngineService {
         return out;
     }
 
+    // CSP-H200: exact pair matching for one candidate. This is a native
+    // computation; no birthday event labels or statistical predictors are read.
+    void handlePair(const std::vector<std::string>& f) {
+        if (f.size() != 3) throw std::runtime_error("P expects calculation_jdn and birth_jdn");
+        const int64_t calc = std::stoll(f[1]);
+        const int64_t birth = std::stoll(f[2]);
+        if (birth >= calc) throw std::runtime_error("P requires birth_jdn < calculation_jdn");
+        const int64_t minimum = gates_.at(gates_.min_index());
+        const int64_t maximum = gates_.at(gates_.max_index());
+        if (calc <= minimum || calc > maximum)
+            throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", "pair calculation day outside gate corpus");
+        if (birth <= minimum || birth > maximum)
+            throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", "pair birth day outside gate corpus");
+        ServiceYearChain& chain = chainFor(calc);
+        const FY todayYear = chain.byTarget(calc);
+        const FY birthYear = chain.byTarget(birth);
+        bool cutletMatch = false;
+        bool monthMatch = false;
+        // Two distinct target days in the same canonical year cannot have
+        // an identical named day-within-cutlet or named day-within-month.
+        if (todayYear.num != birthYear.num) {
+            const ExecutionParams params{1, 512, 1};
+            const auto today = compute_segment(calc, calc, calc, gates_, stones_, todayYear, params);
+            const auto past = compute_segment(calc, birth, birth, gates_, stones_, birthYear, params);
+            if (today.size() != 1 || past.size() != 1)
+                throw std::runtime_error("pair date segment must contain exactly one record");
+            cutletMatch = today[0].cutletIndex == past[0].cutletIndex
+                       && today[0].dayInCutlet == past[0].dayInCutlet;
+            monthMatch = today[0].monthIndex == past[0].monthIndex
+                      && today[0].dayInMonth == past[0].dayInMonth;
+        }
+        std::cout << "{\"schema\":1,\"engine\":\"seer-v12-pair-service\",\"calculationJdn\":"
+                  << calc << ",\"birthJdn\":" << birth
+                  << ",\"cutletMatch\":" << (cutletMatch ? "true" : "false")
+                  << ",\"monthMatch\":" << (monthMatch ? "true" : "false")
+                  << "}\n";
+    }
+
+    // Batch birthday comparison at one calculation day. Reuses the calendar
+    // computation for the current day and each distinct birth-year structure.
+    void handleBirthdayGroup(const std::vector<std::string>& f) {
+        if (f.size() != 3 || f[2].empty())
+            throw std::runtime_error("B expects calculation_jdn and comma-separated birth_jdns");
+        const int64_t calc = std::stoll(f[1]);
+        const int64_t minimum = gates_.at(gates_.min_index());
+        const int64_t maximum = gates_.at(gates_.max_index());
+        if (calc <= minimum || calc > maximum)
+            throw ServiceRequestError("CALCULATION_OUT_OF_SUPPORTED_DOMAIN", "batch calculation beyond gate corpus");
+        std::vector<int64_t> births;
+        std::istringstream input(f[2]);
+        std::string value;
+        while (std::getline(input, value, ',')) {
+            size_t used = 0;
+            if (value.empty()) throw std::runtime_error("empty birthday field");
+            const int64_t birth = std::stoll(value, &used);
+            if (used != value.size()) throw std::runtime_error("noninteger birthday field");
+            if (birth >= calc) throw std::runtime_error("birth date must precede calculation day");
+            if (birth <= minimum || birth > maximum)
+                throw ServiceRequestError("TARGET_OUT_OF_SUPPORTED_DOMAIN", "batch birth beyond gate corpus");
+            births.push_back(birth);
+            if (births.size() > 125) throw std::runtime_error("B supports at most 125 births");
+        }
+        if (births.empty() || f[2].back() == ',') throw std::runtime_error("empty birthday list");
+        auto unique = births;
+        std::sort(unique.begin(), unique.end());
+        if (std::adjacent_find(unique.begin(), unique.end()) != unique.end())
+            throw std::runtime_error("duplicate birthday");
+        ServiceYearChain& chain = chainFor(calc);
+        const FY todayYear = chain.byTarget(calc);
+        const ExecutionParams params{1, 512, 1};
+        const auto today = compute_segment(calc, calc, calc, gates_, stones_, todayYear, params);
+        if (today.size() != 1) throw std::runtime_error("diagonal pair element missing");
+        struct Group {
+            FY year{};
+            int64_t first = 0;
+            int64_t last = 0;
+            std::vector<size_t> indices;
+        };
+        std::vector<Group> groups;
+        for (size_t i = 0; i < births.size(); ++i) {
+            const FY year = chain.byTarget(births[i]);
+            if (year.num == todayYear.num) continue;
+            auto it = std::find_if(groups.begin(), groups.end(), [&](const Group& g) {
+                return g.year.num == year.num;
+            });
+            if (it == groups.end()) {
+                groups.push_back(Group{year, births[i], births[i], {i}});
+            } else {
+                it->first = std::min(it->first, births[i]);
+                it->last = std::max(it->last, births[i]);
+                it->indices.push_back(i);
+            }
+        }
+        std::vector<bool> cut(births.size(), false), month(births.size(), false);
+        for (const auto& group : groups) {
+            const auto days = compute_segment(calc, group.first, group.last,
+                                              gates_, stones_, group.year, params);
+            if (days.size() != static_cast<size_t>(group.last - group.first + 1))
+                throw std::runtime_error("group native year span incomplete");
+            for (const size_t index : group.indices) {
+                const auto& past = days.at(static_cast<size_t>(births[index] - group.first));
+                cut[index] = today[0].cutletIndex == past.cutletIndex
+                          && today[0].dayInCutlet == past.dayInCutlet;
+                month[index] = today[0].monthIndex == past.monthIndex
+                            && today[0].dayInMonth == past.dayInMonth;
+            }
+        }
+        std::cout << "{\"schema\":1,\"engine\":\"seer-v12-birthday-group\",\"calculationJdn\":"
+                  << calc << ",\"records\":[";
+        for (size_t i = 0; i < births.size(); ++i) {
+            if (i) std::cout << ',';
+            std::cout << "{\"birthJdn\":" << births[i]
+                      << ",\"cutletMatch\":" << (cut[i] ? "true" : "false")
+                      << ",\"monthMatch\":" << (month[i] ? "true" : "false") << '}';
+        }
+        std::cout << "]}\n";
+    }
+
     void handleRange(const std::vector<std::string>& f) {
         if (f.size() != 4) throw std::runtime_error("R expects calc, target_start and count");
         const int64_t calc = std::stoll(f[1]);
@@ -453,7 +571,9 @@ public:
         const auto f = fields(line);
         if (f.empty() || f[0].empty()) return;
         counters_.requests++;
-        if (f[0] == "R") handleRange(f);
+        if (f[0] == "B") handleBirthdayGroup(f);
+        else if (f[0] == "P") handlePair(f);
+        else if (f[0] == "R") handleRange(f);
         else if (f[0] == "D") handleDiagonal(f);
         else if (f[0] == "Y") handleYear(f);
         else if (f[0] == "S" && f.size() == 1) handleStats();
