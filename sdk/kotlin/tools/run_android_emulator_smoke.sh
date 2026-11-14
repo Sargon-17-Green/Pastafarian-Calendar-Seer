@@ -51,7 +51,8 @@ if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=on; fi
 {
   echo "Host=$(uname -a)"
   echo "Acceleration=$ACCEL"
-  "$EMULATOR" -version | head -n 3
+  "$EMULATOR" -version > "$OUT/emulator-version.txt" 2>&1
+  sed -n '1,3p' "$OUT/emulator-version.txt"
   sha256sum "$APK"
 } > "$OUT/environment.txt"
 "$EMULATOR" -avd "$AVD_NAME" -no-window -no-audio -no-boot-anim \
