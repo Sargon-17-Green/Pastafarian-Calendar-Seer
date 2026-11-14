@@ -8,6 +8,7 @@ unique directory under /data/local/tmp is created and removed.
 Examples:
   python3 sdk/kotlin/tools/run_android_art_shell_jni.py --payload-dir DIR --abi arm64-v8a --verify-only
   python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip ARTIFACT.zip --abi arm64-v8a --serial SERIAL
+  python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip ARTIFACT.zip --abi arm64-v8a --expected-model AUTHORIZED_PRODUCT_MODEL
 
 An Android-shell ART PASS verifies JNI and typed Kotlin under the shell UID,
 not the Android Context facade or a normally installed APK.
@@ -114,9 +115,39 @@ def adb_exe(explicit: str | None) -> str:
     return next((str(p) for p in possible if p.is_file()), None) or shutil.which("adb") or (
         _ for _ in ()).throw(Blocked("ADB_NOT_FOUND"))
 
+def select_connected_device(adb: str) -> str:
+    """Fail closed unless precisely one connected, authorized ADB device exists.
+
+    The returned transport serial is used only to execute -s scoped commands
+    and is never logged, archived or checked into the repository. A caller
+    must also require an exact --expected-model match in Device.preflight.
+    """
+    try:
+        p = subprocess.run([adb, "devices", "-l"], capture_output=True,
+                           text=True, errors="replace", timeout=25)
+    except subprocess.TimeoutExpired as exc:
+        raise Blocked("ADB_DEVICE_ENUMERATION_TIMEOUT") from exc
+    if p.returncode != 0:
+        raise Blocked("ADB_DEVICE_ENUMERATION_FAILED")
+    devices = []
+    for raw in p.stdout.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("List of devices attached"):
+            continue
+        fields = line.split()
+        if len(fields) >= 2:
+            devices.append((fields[0], fields[1]))
+        else:
+            raise Blocked("UNRECOGNIZED_ADB_DEVICE_LINE")
+    if len(devices) != 1 or devices[0][1] != "device":
+        raise Blocked("EXACTLY_ONE_AUTHORIZED_CONNECTED_DEVICE_REQUIRED")
+    return devices[0][0]
+
 class Device:
-    def __init__(self, adb: str, serial: str, out: Path, report: dict):
+    def __init__(self, adb: str, serial: str, out: Path, report: dict,
+                 expected_model: str | None = None):
         self.adb, self.serial, self.out, self.report = adb, serial, out, report
+        self.expected_model = expected_model
         self.remote: str | None = None
         self.created = False
 
@@ -138,8 +169,18 @@ class Device:
     def preflight(self, abi: str):
         p = subprocess.run([self.adb, "devices"], capture_output=True, text=True,
                            errors="replace", timeout=25)
-        if not re.search(r"(?m)^" + re.escape(self.serial) + r"\s+device\s*$", p.stdout):
+        if p.returncode != 0 or not re.search(
+                r"(?m)^" + re.escape(self.serial) + r"\s+device\s*$", p.stdout):
             raise Blocked("CHOSEN_DEVICE_NOT_CONNECTED")
+        if self.expected_model is not None:
+            qemu = self.call("shell", "getprop", "ro.kernel.qemu")[1].strip()
+            if qemu == "1":
+                raise Blocked("EXPECTED_PHYSICAL_DEVICE_IS_EMULATOR")
+            model = self.call("shell", "getprop", "ro.product.model")[1].strip()
+            vendor_model = self.call("shell", "getprop", "ro.product.vendor.model")[1].strip()
+            if self.expected_model not in (model, vendor_model):
+                raise Blocked("AUTHORIZED_PRODUCT_MODEL_MISMATCH")
+            self.report["authorized_product_model_matched"] = True
         api = int(self.call("shell", "getprop", "ro.build.version.sdk")[1].strip())
         abis = self.call("shell", "getprop", "ro.product.cpu.abilist")[1].strip().split(",")
         self.report["device"] = {"api": api, "primary_abi": abis[0] if abis else ""}
@@ -214,11 +255,17 @@ def main() -> int:
     parser.add_argument("--abi", choices=tuple(MACHINES), required=True)
     parser.add_argument("--verify-only", action="store_true")
     parser.add_argument("--serial", help="Explicitly selected authorized ADB device")
+    parser.add_argument("--expected-model",
+                        help="Exact authorized physical product model; when no serial is supplied, "
+                             "selects only if exactly one ADB device is connected")
     parser.add_argument("--adb", help="Absolute or PATH-discovered ADB executable")
     parser.add_argument("--output-dir", type=Path)
     args = parser.parse_args()
-    if not args.verify_only and not args.serial:
-        parser.error("--serial required for real-device execution")
+    if not args.verify_only and not (args.serial or args.expected_model):
+        parser.error("--serial or --expected-model required for real-device execution")
+    if args.expected_model is not None and (
+            not args.expected_model.strip() or len(args.expected_model) > 100):
+        parser.error("--expected-model must contain 1..100 nonblank characters")
     try:
         files, manifest, commit = read_payload(args.payload_dir, args.artifact_zip, args.abi)
     except (Failure, OSError, ValueError, zipfile.BadZipFile) as exc:
@@ -237,7 +284,9 @@ def main() -> int:
               "app_installation": False}
     device = None
     try:
-        device = Device(adb_exe(args.adb), args.serial, out, report)
+        adb = adb_exe(args.adb)
+        serial = args.serial or select_connected_device(adb)
+        device = Device(adb, serial, out, report, expected_model=args.expected_model)
         device.preflight(args.abi)
         device.execute(files, manifest, commit, args.abi)
         report["status"] = "PASS"
