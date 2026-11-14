@@ -73,6 +73,14 @@ SeerAndroid.open(applicationContext).use { client ->
 - **Android AAR consumer APKs verified:** [run 43589890205](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43589890205) built both Debug and minified Release APKs with AGP 9.3.1 and Gradle 9.5.0, verified JNI libraries and metadata in the resulting APKs, and emitted `SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS`.
 - **Android emulator execution verified:** [run 43596448053](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43596448053), Android 35 x86_64 emulator, built and installed the debug APK consuming the packaged AAR. Android logcat recorded `I/SeerKotlinSmoke(2132): SEER_KOTLIN_ANDROID_SMOKE_PASS` at 2026-11-14T13:02:02Z; the CI script recorded `SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified`. This attests actual JNI/native loading, offline Gate verification, ordered 3-target batch, domain-error handling/recovery and cancellation/reset. The matching run's host JNI and Android APK build jobs also passed. Evidence artifact `seer-kotlin-android-aar-unreleased`, ID **14114328403**. **A passing x86_64 emulator is not physical ARM64-device acceptance.**
 
+### R8 Release runtime acceptance (separate gate)
+
+A diagnostic release APK is now **R8-minified and signed with the Gradle debug/test key only**, allowing actual emulator installation and testing. This is not a production certificate, public Android release, App Store deliverable, or acceptable SDK signing policy.
+
+The updated \`sdk/kotlin/tools/run_android_emulator_smoke.sh\` accepts both the debug and release APK and runs them **sequentially with a full uninstall between variants**. The fresh app-private storage forces Gate re-staging and digest verification for each variant; the script separately requires both the real JNI calculation/cancellation smoke and the exact Android main-thread safety exception. A final \`SEER_KOTLIN_ANDROID_EMULATOR_PASS\` now additionally identifies \`variants=debug,release\`. The workflow archives distinct \`debug-logcat.txt\` and \`release-logcat.txt\` along with install evidence.
+
+The earlier passed Android emulator runs above exercised the **Debug APK only**. They do **not** prove release/R8 runtime compatibility. The new dual-variant test must pass on its own CI run before that property is marked verified.
+
 The AAR build uses an exact 40-character Git checkout SHA for the Native source, emits SHA-256 for every package member and archives evidence. In pull-request CI, this may refer to the *test merge commit* rather than the branch tip.
 
 Local pure JVM test, without JNI or Android:
