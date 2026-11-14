@@ -5,6 +5,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.RandomAccessFile;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
 
 import org.pastafarian.seer.kotlin.SeerCancellation;
@@ -54,12 +59,69 @@ public final class SmokeActivity extends Activity {
         worker.start();
     }
 
+    /**
+     * Validates both Gate files' on-disk recovery, without using hidden or
+     * privileged Android APIs. Each file is modified *after* the previous
+     * Native context has closed, then the SDK must rewrite the exact original
+     * authenticated payload and return the unchanged canonical result.
+     */
+    private void assertGateSelfHealing(SeerRecord canonical) throws Exception {
+        final File directory = new File(
+                getApplicationContext().getNoBackupFilesDir(), "seer-kotlin");
+        final String[] files = {
+                "gates_100k_u16.bin",
+                "gates_negative_100k_u16.bin"
+        };
+        for (String filename : files) {
+            File gate = new File(directory, filename);
+            if (!gate.isFile() || gate.length() != 200_000L) {
+                throw new IllegalStateException("Staged Gate missing or wrong length: " + filename);
+            }
+            byte[] original = sha256(gate);
+            try (RandomAccessFile raf = new RandomAccessFile(gate, "rw")) {
+                raf.seek(4096L);
+                int oldByte = raf.read();
+                if (oldByte < 0) throw new IllegalStateException("Gate read failed");
+                raf.seek(4096L);
+                raf.write(oldByte ^ 0xFF); // Same size, different SHA-256.
+                raf.getFD().sync();
+            }
+            if (Arrays.equals(original, sha256(gate))) {
+                throw new IllegalStateException("Gate mutation failed: " + filename);
+            }
+            try (SeerAndroidClient reopened = SeerAndroid.INSTANCE.open(
+                    getApplicationContext(), 2, 8)) {
+                if (!Arrays.equals(original, sha256(gate))) {
+                    throw new IllegalStateException("Gate not repaired byte-exactly: " + filename);
+                }
+                if (!canonical.equals(reopened.queryBlocking(-13_334_246L, -13_334_246L))) {
+                    throw new IllegalStateException("Seer result changed after Gate repair");
+                }
+            }
+        }
+    }
+
+    private static byte[] sha256(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (FileInputStream in = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = in.read(buffer)) != -1) {
+                digest.update(buffer, 0, count);
+            }
+        }
+        return digest.digest();
+    }
+
     private void runSmoke() {
         String verdict;
-        try (SeerAndroidClient client = SeerAndroid.INSTANCE.open(
+        try {
+            SeerRecord canonical;
+            try (SeerAndroidClient client = SeerAndroid.INSTANCE.open(
                 getApplicationContext(), 2, 8)) {
             long calculation = -13_334_246L;
             SeerRecord single = client.queryBlocking(calculation, calculation);
+            canonical = single;
             long[] targets = {calculation, calculation + 1L, calculation + 2L};
             List<SeerRecord> batch = client.queryBatchBlocking(calculation, targets);
             if (single.getTargetJdn() != calculation ||
@@ -98,6 +160,9 @@ public final class SmokeActivity extends Activity {
                     throw new IllegalStateException("Native cancellation reset mismatch");
                 }
             }
+            } // Close original native context before corrupting any Gate file.
+            assertGateSelfHealing(canonical);
+            Log.i("SeerKotlinSmoke", "SEER_KOTLIN_ANDROID_GATE_RECOVERY_PASS");
             verdict = "SEER_KOTLIN_ANDROID_SMOKE_PASS";
         } catch (Throwable error) {
             verdict = "SEER_KOTLIN_ANDROID_SMOKE_FAIL: "
