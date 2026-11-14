@@ -117,10 +117,33 @@ fun main(arguments: Array<String>) {
         }
         // Even after an error, the retained C context is still usable.
         check(client.queryBlocking(negativeCalc, negativeCalc) == singles.first())
+
+        // Real Native token: the cancellation flag must propagate through
+        // JNI to the C ABI, and reset must restore a usable context.
+        client.newCancellation().use { token ->
+            token.cancel()
+            expectNativeStatus(SeerStatus.CANCELLED) {
+                client.queryBlocking(negativeCalc, negativeCalc, token)
+            }
+            expectNativeStatus(SeerStatus.CANCELLED) {
+                client.queryBatchBlocking(
+                    negativeCalc, longArrayOf(negativeCalc, negativeCalc + 1), token,
+                )
+            }
+            token.reset()
+            check(client.queryBlocking(negativeCalc, negativeCalc, token) == singles.first())
+        }
+
+        val closedToken = client.newCancellation()
+        closedToken.close()
+        check(runCatching {
+            client.queryBlocking(negativeCalc, negativeCalc, closedToken)
+        }.exceptionOrNull() is IllegalStateException)
+        check(client.queryBlocking(negativeCalc, negativeCalc) == singles.first())
         println(
             "SEER_KOTLIN_REAL_JNI_PASS abi=1 commit=$expectedCommit" +
                 " knownAnswers=${known.size} negativeBatch=${negativeBatch.size}" +
-                " exactFieldParity=true domainErrors=true lifecycle=true"
+                " exactFieldParity=true domainErrors=true cancellation=true lifecycle=true"
         )
     }
 
