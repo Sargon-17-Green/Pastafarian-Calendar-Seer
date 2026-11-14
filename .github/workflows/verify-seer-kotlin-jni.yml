@@ -230,6 +230,22 @@ jobs:
           done
           printf 'SEER_KOTLIN_ANDROID_CONSUMER_APK_PASS variants=debug,release\n' \
             | tee sdk/kotlin/build/android/consumer-sentinel.txt
+      - name: Install minimal Ubuntu emulator runtime dependency
+        shell: bash
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          # GitHub's ubuntu-24.04 image can lack libpulse.so.0; the QEMU
+          # Android emulator needs it even with -no-audio and -no-window.
+          sudo apt-get install -y --no-install-recommends libpulse0
+          qemu="$ANDROID_SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64"
+          test -x "$qemu"
+          ldd "$qemu" | tee sdk/kotlin/build/android/emulator-ldd.txt
+          if grep -F 'not found' sdk/kotlin/build/android/emulator-ldd.txt; then
+            echo "SEER_ANDROID_EMULATOR_HOST_LIBS_MISSING" >&2
+            exit 1
+          fi
+          echo "SEER_ANDROID_EMULATOR_HOST_LIBS_PASS"
       - name: Boot Android 35 x86_64 emulator and execute real Seer Kotlin JNI smoke
         shell: bash
         timeout-minutes: 25
