@@ -43,6 +43,12 @@ jobs:
           set -euo pipefail
           python3 sdk/kotlin/tools/test_aar_packager.py | tee "$RUNNER_TEMP/aar-packager-tests.txt"
           grep -F 'SEER_KOTLIN_AAR_PACKAGER_TEST_PASS' "$RUNNER_TEMP/aar-packager-tests.txt"
+      - name: Verify Android ART runner rejects missing or corrupt device results
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 sdk/kotlin/tools/test_android_art_runner.py | tee "$RUNNER_TEMP/art-runner-guard-tests.txt"
+          grep -Fx 'SEER_ANDROID_ART_RUNNER_FAIL_CLOSED_TEST_PASS cases=9' "$RUNNER_TEMP/art-runner-guard-tests.txt"
       - name: Compile and run dependency-free Kotlin/JVM wire contract
         shell: bash
         run: |
