@@ -9,7 +9,8 @@ import sys
 import tempfile
 
 BASE=Path(__file__).resolve().parent
-WORKER=BASE/'seer_h200_pair_worker_v1.py'
+WORKER=(BASE/'seer_h200_pair_worker_v1.py' if (BASE/'seer_h200_pair_worker_v1.py').is_file()
+        else BASE.parent/'scripts'/'seer_h200_pair_worker_v1.py')
 SAMPLE_SHA='75915fdb5270e12e21223aa48eaf5ebfa28305ba129498db3e4fe32c5d8cd442'
 
 
