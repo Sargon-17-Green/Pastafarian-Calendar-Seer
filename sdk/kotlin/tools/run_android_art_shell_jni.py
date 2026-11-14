@@ -34,7 +34,8 @@ FILES = ("smoke-dex.jar", "libseer_mobile.so",
          "gates_100k_u16.bin", "gates_negative_100k_u16.bin")
 PINNED = (*FILES, "source-commit.txt")
 CLASS = "org.pastafarian.seer.kotlin.SeerAndroidAppProcessSmoke"
-PASS = "SEER_ANDROID_ARM64_APP_PROCESS_JNI_PASS abi=1 source="
+PASS = "SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1 source="
+CONCURRENCY_PASS = "SEER_ANDROID_ART_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true sharedContext=true"
 MACHINES = {"arm64-v8a": 183, "x86_64": 62}
 
 class Failure(RuntimeError): pass
@@ -177,7 +178,7 @@ class Device:
         )
         rc, output = self.call("shell", command, check=False,
                                timeout=180, label="art-jni-execution")
-        if rc != 0 or (PASS + commit) not in output:
+        if rc != 0 or (PASS + commit) not in output or CONCURRENCY_PASS not in output:
             if "Permission denied" in output or "avc: denied" in output:
                 raise Blocked("ART_SHELL_EXECUTION_RESTRICTED:" + output[-700:])
             raise Failure("ART_JNI_RUNTIME_FAILED rc=" + str(rc) + ":" + output[-1400:])
