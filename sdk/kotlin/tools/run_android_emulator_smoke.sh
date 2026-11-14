@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 # Real, bounded emulator smoke for the APK consuming the Seer Kotlin AAR.
 set -euo pipefail
-if [[ "$#" != 3 ]]; then
-  echo "usage: $0 CONSUMER_DEBUG_APK CONSUMER_R8_RELEASE_APK EVIDENCE_DIRECTORY" >&2
+if [[ "$#" != 4 ]]; then
+  echo "usage: $0 DEBUG_APK R8_RELEASE_APK EVIDENCE_DIRECTORY ART_X86_64_PAYLOAD_DIRECTORY" >&2
   exit 2
 fi
 DEBUG_APK="$(realpath "$1")"
 RELEASE_APK="$(realpath "$2")"
 OUT="$(realpath -m "$3")"
+ART_PAYLOAD="$(realpath "$4")"
+test -f "$ART_PAYLOAD/smoke-dex.jar"
 mkdir -p "$OUT"
 test -s "$DEBUG_APK"
 test -s "$RELEASE_APK"
@@ -151,6 +153,17 @@ run_variant() {
   fi
   echo "SEER_KOTLIN_ANDROID_VARIANT_PASS variant=$variant JNI=real R8=$([[ "$variant" == release ]] && echo yes || echo no)"
 }
+# Before any app is installed, exercise actual Kotlin/JNI/C++ inside the
+# Android Runtime from unprivileged ADB shell. This is a separate no-install
+# validation path and does not depend on an app's Context or PackageManager.
+serial="$("$ADB" -e get-serialno | tr -d '\r')"
+python3 sdk/kotlin/tools/run_android_art_shell_jni.py \
+  --payload-dir "$ART_PAYLOAD" --abi x86_64 \
+  --adb "$ADB" --serial "$serial" \
+  --output-dir "$OUT/app-process" \
+  | tee "$OUT/app-process-verdict.txt"
+grep -F 'SEER_ANDROID_ART_JNI_DEVICE_PASS abi=x86_64 source=' \
+  "$OUT/app-process-verdict.txt"
 run_variant debug "$DEBUG_APK"
 run_variant release "$RELEASE_APK"
-echo "SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release"
+echo "SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified variants=debug,release artShell=PASS"
