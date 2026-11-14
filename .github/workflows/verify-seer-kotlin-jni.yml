@@ -281,6 +281,16 @@ jobs:
             gates_100k_u16.bin gates_negative_100k_u16.bin source-commit.txt \
             > SHA256SUMS)
           echo 'SEER_ARM64_ANDROID_NATIVE_PAYLOAD_BUILD_PASS executable=ELF_AARCH64'
+      - name: Verify ARM64 phone-test artifact without touching a device
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 sdk/kotlin/tools/run_android_arm64_native_device.py \
+            --payload-dir sdk/kotlin/build/android-arm64-physical-payload \
+            --verify-only \
+            | tee sdk/kotlin/build/android-arm64-physical-payload/offline-verification.txt
+          grep -F 'SEER_ARM64_ANDROID_NATIVE_PAYLOAD_VERIFIED source=' \
+            sdk/kotlin/build/android-arm64-physical-payload/offline-verification.txt
       - name: Upload isolated ARM64 device smoke payload (unreleased, not executable by CI host)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
