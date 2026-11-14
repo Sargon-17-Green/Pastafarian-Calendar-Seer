@@ -20,7 +20,9 @@ AVD_NAME="seer_sdk_kotlin_ci_35"
 # Explicit AVD_HOME keeps avdmanager and the emulator in the same isolated
 # directory. A Bash here-string avoids pipefail/SIGPIPE false failures when
 # avdmanager does not consume its optional custom-hardware answer.
-export ANDROID_AVD_HOME="$OUT/avds"
+# AVD image data can be several GB. Never put it in the evidence/artifact
+# directory; keep the emulator profile in ephemeral runner storage.
+export ANDROID_AVD_HOME="${RUNNER_TEMP:-/tmp}/seer-sdk-kotlin-avds"
 mkdir -p "$ANDROID_AVD_HOME"
 echo "SEER_EMULATOR_STAGE=avd_create"
 if ! "$AVDMANAGER" create avd --force --name "$AVD_NAME" \
