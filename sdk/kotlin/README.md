@@ -1,6 +1,6 @@
 # Seer Kotlin SDK — Android and JVM experimental distribution
 
-**Status:** draft, not merged or released; **verified on Android 35 x86_64 emulator; not yet tested on physical ARM64 hardware**. The canonical C++ engine remains the *only* calendar algorithm. Kotlin transports typed parameters and native results.
+**Status:** draft, not merged or released; **verified on Android 35 x86_64 emulator and physically on Android 16 ARM64 via ADB shell Native C ABI and Kotlin/JNI ART runtime; not yet tested inside a normally installed app on physical ARM64**. The canonical C++ engine remains the *only* calendar algorithm. Kotlin transports typed parameters and native results.
 
 ## Files
 
@@ -103,7 +103,28 @@ python3 sdk/kotlin/tools/run_android_arm64_native_device.py \
 
 The tool creates/deletes only its own uniquely named remote temporary directory. It performs **no APK installation**, no root operation, and no phone security-policy changes. CI exercises `--verify-only` against the freshly compiled payload; the physical run requires an explicitly chosen serial.
 
-An independent attempt to install the diagnostic Kotlin SDK APK on the physical phone was blocked by the device's install policy: `INSTALL_FAILED_USER_RESTRICTED`. Do **not** override that policy as a workaround. **This physical-device PASS validates Seer Native C ABI only. Kotlin/JNI actually running under Android on the phone remains unverified** despite passing on the x86_64 Android emulator and native Linux ARM64.
+An independent attempt to install the diagnostic Kotlin SDK APK on the physical phone was blocked by the device's install policy: `INSTALL_FAILED_USER_RESTRICTED`. Do **not** override that policy as a workaround. **This particular earlier test validated the Native C ABI only**. The following separate ART-shell test subsequently verified Kotlin/JNI on the physical phone without an APK; neither test validates the installed app lifecycle.
+
+### Real physical Android ARM64 — Kotlin → JNI → C++ with ART, no APK installation
+
+**Physical phone result: PASS.** The public [CI run 43622907044](https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43622907044) built the typed Kotlin SDK plus Kotlin standard library into Android ART DEX, packed the matching JNI/C++ Native libraries and canonical Gate files, and verified both `arm64-v8a` and `x86_64` SHA-256 manifests. The independent Android 35 x86_64 emulator then executed the no-install ART smoke *before* installing its normal diagnostic APK, and emitted `SEER_ANDROID_ART_JNI_DEVICE_PASS`. Both APK Debug and R8 Release later passed as well.
+
+The **same ARM64 payload** from CI artifact **14125131372** was then verified, transferred and run on an authorized **physical Android 16/API 36 ARM64 phone** as an unprivileged `adb shell` process. All **five** files were digest-checked again on the phone, including `smoke-dex.jar`, the JNI bridge, the canonical C++ library and both Gate files. The actual Android ART process returned code **0**, with this exact program sentinel:
+
+```text
+SEER_ANDROID_ARM64_APP_PROCESS_JNI_PASS abi=1 source=aaad95c912eb431a15aa7afccff5e8618464bd1b knownAnswers=3 negativeBatch=3 domainErrors=true cancellation=true runtime=ART noInstall=true
+```
+
+The test covered canonical single/batch parity, three negative JDNs, Native status classifications, cancellation/reset and source provenance; the temporary directory was deleted. A separate audit of the local run archive confirmed `status=PASS`, `jni_result=PASS`, `installed_apks=False` and `root=False`. The first transfer attempt lost ADB connectivity; its temporary directory was subsequently removed by a narrowly scoped cleanup run before the successful retry. Details, SHA-256 values and limitations are recorded in `evidence/android-arm64-art-jni-physical-20261114.json`, without publishing phone identifiers.
+
+Reproduction from this repository (requires a downloaded matching CI artifact, Python 3, and an explicitly chosen authorized ADB serial):
+
+```bash
+python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip seer-android-art-shell-jni-unreleased.zip --abi arm64-v8a --verify-only
+python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip seer-android-art-shell-jni-unreleased.zip --abi arm64-v8a --serial CHOSEN_ADB_SERIAL
+```
+
+**Scope limit:** ART is running under the **ADB shell UID**, not the installed application's UID. This verifies actual Kotlin/JNI execution on a physical Android ARM64 CPU but does not verify Android `Context`, private Gate-cache staging, PackageManager installation, production signing, permission handling or Activity lifecycle on that phone. Android UI-thread/Gate-cache/R8 tests were separately verified on the emulator; do not extrapolate their physical-device success.
 
 The AAR build uses an exact 40-character Git checkout SHA for the Native source, emits SHA-256 for every package member and archives evidence. In pull-request CI, this may refer to the *test merge commit* rather than the branch tip.
 
@@ -123,7 +144,7 @@ Required sentinels: `SEER_KOTLIN_WIRE_PURE_PASS` and `SEER_KOTLIN_CLIENT_PURE_PA
 
 ## Outstanding release gates
 
-1. Android 35 x86_64 emulator passed Debug/R8 JNI, Gate self-healing and UI-thread safety. Native Kotlin/JNI passed on Linux ARM64 hardware. **Physical Android ARM64 Native C ABI also passed without APK installation.** Still required: real Android ARM64 **Kotlin/JNI runtime** with an authorized install path, App integration, and device-specific profiling. An APK install attempt was blocked by the phone's policy; do not bypass it.
+1. Android 35 x86_64 emulator passed Debug/R8 JNI, Gate self-healing and UI-thread safety. Kotlin/JNI also passed on Linux ARM64 and **physically on Android ARM64 via unprivileged ART app_process without APK installation**. Still required: executing the SDK as part of the actual installed Android app (Context, private Gate cache and lifecycle), compatibility with the app's existing JNI binding, signed release acceptance and physical-device resource profiling. The phone's diagnostic APK install policy remains restrictive; do not bypass it.
 2. Restore the **private App repo's CI**, which continues to fail before jobs begin (App issue #53). Reconcile the experimental App batch viewport PR #56 and cancellation-lifetime PR #54 after full executable integration tests.
 3. Publish a versioned, pinned and signed SDK build only after Android consumer/device acceptance, compatibility and redistribution checks. AAR compilation is not an installable application or a public SDK release.
 4. Preserve Seer's Native batch optimizations in draft PRs #53 and #54 until separate correctness and performance acceptance. This Kotlin SDK branch currently builds from Seer's **main** and does not claim the prototype 19–42× Native acceleration in the app.
