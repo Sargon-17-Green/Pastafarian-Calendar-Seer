@@ -18,21 +18,28 @@ def main():
     args=p.parse_args()
     requests=[]
     for t,b in CASES:
-        requests.extend([f'P\t{t}\t{b}',f'R\t{t}\t{t}\t1',f'R\t{t}\t{b}\t1'])
-    requests.extend(['P\t123\t124','X'])
+        requests.extend([f'P\t{t}\t{b}',f'R\t{t}\t{t}\t1',f'R\t{t}\t{b}\t1',
+                         f'B\t{t}\t{b},{b-1}',f'P\t{t}\t{b-1}'])
+    requests.extend(['P\t123\t124','B\t123\t100,100','X'])
     run=subprocess.run([str(args.service.resolve())],cwd=args.data.resolve(),
         input='\n'.join(requests)+'\n',text=True,capture_output=True,timeout=300,check=True)
     actual=[json.loads(x) for x in run.stdout.splitlines()]
-    assert len(actual)==3*len(CASES)+1,(len(actual),run.stderr)
+    assert len(actual)==5*len(CASES)+2,(len(actual),run.stderr)
     for idx,(t,b) in enumerate(CASES):
-        pair,now,past=actual[idx*3:idx*3+3]
+        pair,now,past,group,neighbor=actual[idx*5:idx*5+5]
         assert pair['engine']=='seer-v12-pair-service'
         assert (pair['calculationJdn'],pair['birthJdn'])==(t,b)
         n=now['records'][0];q=past['records'][0]
         cut=n['cutletIndex']==q['cutletIndex'] and n['dayInCutlet']==q['dayInCutlet']
         mon=n['monthIndex']==q['monthIndex'] and n['dayInMonth']==q['dayInMonth']
         assert (pair['cutletMatch'],pair['monthMatch'])==(cut,mon),(t,b,pair,n,q)
+        assert group['engine']=='seer-v12-birthday-group'
+        assert group['calculationJdn']==t
+        assert [z['birthJdn'] for z in group['records']]==[b,b-1]
+        for z,p in zip(group['records'],[pair,neighbor]):
+            assert (z['cutletMatch'],z['monthMatch'])==(p['cutletMatch'],p['monthMatch'])
     assert actual[-1].get('ok') is False
-    print(f'PASS: {len(CASES)} paired native P/R comparisons, rejects reverse chronology')
+    assert actual[-2].get('ok') is False
+    print(f'PASS: {len(CASES)} native P/R comparisons, {len(CASES)} B/P group comparisons, rejects bad inputs')
 
 if __name__=='__main__':main()
