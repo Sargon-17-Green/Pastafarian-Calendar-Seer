@@ -128,4 +128,10 @@ if [[ "$verdict" != PASS ]]; then
   echo "SEER_KOTLIN_ANDROID_EMULATOR_FAIL no verdict in bounded polling" >&2
   exit 1
 fi
+# The Android facade must reject blocking Native setup on the UI thread,
+# independently of worker-thread query success.
+if ! grep -F 'SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS' "$OUT/seer-smoke-logcat.txt"; then
+  echo "SEER_KOTLIN_ANDROID_EMULATOR_FAIL no UI-thread protection sentinel" >&2
+  exit 1
+fi
 echo "SEER_KOTLIN_ANDROID_EMULATOR_PASS abi=x86_64 sdk=35 JNI=real Gates=verified"
