@@ -28,6 +28,18 @@ public final class SmokeActivity extends Activity {
         status = new TextView(this);
         status.setText("Seer Kotlin SDK: checking Native ABI");
         setContentView(status);
+        // Verify the production Android facade refuses to initialize its
+        // blocking native backend on the actual UI thread. This does not
+        // merely inspect Looper constants; it calls the real SDK entrypoint.
+        try {
+            SeerAndroid.INSTANCE.open(getApplicationContext(), 2, 8);
+            String failure = "SEER_KOTLIN_ANDROID_SMOKE_FAIL: UI-thread Native open was permitted";
+            Log.e("SeerKotlinSmoke", failure);
+            status.setText(failure);
+            return;
+        } catch (IllegalStateException expected) {
+            Log.i("SeerKotlinSmoke", "SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS");
+        }
         Thread worker = new Thread(this::runSmoke, "seer-kotlin-android-smoke");
         worker.start();
     }
