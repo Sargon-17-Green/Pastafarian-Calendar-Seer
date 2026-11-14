@@ -1,0 +1,43 @@
+name: CSP H200 native pair service (research preflight)
+on:
+  pull_request:
+    paths:
+      - 'prototype/src/seer_engine_service.cpp'
+      - 'prototype/scripts/seer_h200_pair_worker_v1.py'
+      - 'prototype/tests/test_seer_h200_*'
+      - '.github/workflows/verify-h200-native-pair.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install build dependencies
+        uses: ./.github/actions/native-deps
+        with:
+          profile: standard-minimal
+      - name: Test bridge protocol (no real H200 outcomes)
+        run: python3 prototype/tests/test_seer_h200_bridge_v1.py
+      - name: Build portable native Seer service
+        env:
+          SEER_RNS_BACKEND: portable
+          SEER_MARCH: x86-64
+        run: bash prototype/scripts/build_engine_service.sh
+      - name: Check pair output against legacy range output
+        run: |
+          python3 prototype/tests/test_seer_h200_native_smoke_v1.py \
+            --service prototype/build/seer_engine_service \
+            --data prototype/data
+      - name: Publish isolated test executable and gate assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: csp-h200-native-pair-linux-pilot
+          path: |
+            prototype/build/seer_engine_service
+            prototype/data/gates_100k_u16.bin
+            prototype/data/gates_negative_100k_u16.bin
+          retention-days: 1
+          if-no-files-found: error
