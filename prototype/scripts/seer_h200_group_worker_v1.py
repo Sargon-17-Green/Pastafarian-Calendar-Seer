@@ -77,8 +77,12 @@ def main():
     ap.add_argument('--task',required=True,type=Path)
     ap.add_argument('--events',required=True,type=Path)
     ap.add_argument('--completion',required=True,type=Path)
-    ap.add_argument('--service',type=Path,default=Path(os.environ.get('SEER_H200_SERVICE_EXE','prototype/build/seer_engine_service')))
-    ap.add_argument('--service-cwd',type=Path,default=Path(os.environ.get('SEER_H200_GATE_DATA_DIR','prototype/data')))
+    repo_root=Path(__file__).resolve().parents[1]
+    exe_name='seer_engine_service.exe' if os.name=='nt' else 'seer_engine_service'
+    default_service=repo_root/'build'/exe_name
+    default_data=repo_root/'data'
+    ap.add_argument('--service',type=Path,default=Path(os.environ.get('SEER_H200_SERVICE_EXE',str(default_service))))
+    ap.add_argument('--service-cwd',type=Path,default=Path(os.environ.get('SEER_H200_GATE_DATA_DIR',str(default_data))))
     args=ap.parse_args()
     try:
         run_group(load_task(args.task),args.service,args.service_cwd,args.events,args.completion)
