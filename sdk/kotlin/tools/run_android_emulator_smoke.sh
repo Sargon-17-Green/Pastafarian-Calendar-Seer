@@ -47,7 +47,20 @@ if ! grep -Fx "$AVD_NAME" "$OUT/avd-list.txt"; then
 fi
 
 ACCEL=off
-if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=on; fi
+# Hosted CI runners may expose /dev/kvm but not grant the runner user
+# permission to access it. Enable KVM on this disposable runner only:
+# full software x86 emulation can otherwise take longer than the smoke gate.
+if [[ -c /dev/kvm ]]; then
+  if [[ ! -r /dev/kvm || ! -w /dev/kvm ]]; then
+    sudo chmod a+rw /dev/kvm
+  fi
+  if [[ -r /dev/kvm && -w /dev/kvm ]]; then ACCEL=on; fi
+fi
+if [[ "$ACCEL" == off ]]; then
+  echo "SEER_EMULATOR_KVM_UNAVAILABLE software fallback" >&2
+else
+  echo "SEER_EMULATOR_KVM_ENABLED"
+fi
 {
   echo "Host=$(uname -a)"
   echo "Acceleration=$ACCEL"
