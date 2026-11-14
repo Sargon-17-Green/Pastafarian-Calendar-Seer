@@ -82,6 +82,7 @@ jobs:
             "$PWD/prototype/data/canonical_saved_sum_vectors.tsv" \
             "$(git rev-parse HEAD)" | tee sdk/kotlin/build/integration-output.txt
           grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' sdk/kotlin/build/integration-output.txt
+          grep -Fx 'SEER_KOTLIN_REAL_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true' sdk/kotlin/build/integration-output.txt
       - name: Publish architecture-neutral Kotlin integration JAR for ARM64 hardware
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -172,6 +173,8 @@ jobs:
             "$(git rev-parse HEAD)" \
             | tee sdk/kotlin/build/arm64-jni/integration-output.txt
           grep -F 'SEER_KOTLIN_REAL_JNI_PASS abi=1' \
+            sdk/kotlin/build/arm64-jni/integration-output.txt
+          grep -Fx 'SEER_KOTLIN_REAL_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true' \
             sdk/kotlin/build/arm64-jni/integration-output.txt
           echo 'SEER_KOTLIN_ARM64_HARDWARE_JNI_PASS native=aarch64 kotlinJVM=true canonicalGates=true' \
             | tee sdk/kotlin/build/arm64-jni/arm64-verdict.txt
