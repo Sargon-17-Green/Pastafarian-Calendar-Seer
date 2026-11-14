@@ -1,0 +1,55 @@
+{
+  "schema": "seer-mobile-physical-evidence-v1",
+  "date_utc": "2026-11-14",
+  "platform": {
+    "os": "Android",
+    "api": 36,
+    "cpu_abi": "arm64-v8a",
+    "hardware": "physical",
+    "identifying_device_values_redacted": true
+  },
+  "source": {
+    "repository": "Sargon-17-Green/Pastafarian-Calendar-Seer",
+    "ci_run": 43612593919,
+    "ci_artifact_id": 14120203445,
+    "git_test_merge_commit": "0f67cfde9d57c76a321331c602cf6bda7cb22f76",
+    "ci_url": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43612593919"
+  },
+  "test": {
+    "method": "unprivileged adb shell, no APK installation",
+    "binary": "seer_arm64_device_smoke",
+    "linkage": "canonical libseer_mobile.so",
+    "exit_code": 0,
+    "cli_observed_sentinel": "SEER_ARM64_ANDROID_NATIVE_PHYSICAL_STATUS=PASS",
+    "native_log_stage": "SEER_ARM64_NATIVE_STAGE=TEST_PASS JNI=not-tested native=arm64-android knownAnswers=3 batch=3 domainErrors=True cancellation=True",
+    "checks": [
+      "source commit and backend provenance",
+      "three saved canonical year-boundary records",
+      "single-vs-batch exact field parity",
+      "three negative JDNs",
+      "calculation and target out-of-domain statuses",
+      "post-error recovery",
+      "native cancellation and reset"
+    ],
+    "phone_sha256_verified_for_all_four_files": true,
+    "remote_temporary_directory_removed": true,
+    "existing_app_untouched": true
+  },
+  "sha256": {
+    "seer_arm64_device_smoke": "a3e9f5673579d153a1037b3eef12d41473e7210afa09d08d000ae8e6faa2df8e",
+    "libseer_mobile_so": "e0b4941ec9f3beb0320ee4a1b2794f09fa32817019e4532a3b51d2e356fd6ec1",
+    "positive_gate": "4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8",
+    "negative_gate": "40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884"
+  },
+  "limitations": [
+    "Kotlin and JNI were NOT exercised on this physical Android device",
+    "A separate diagnostic APK installation attempt was rejected by the phone with INSTALL_FAILED_USER_RESTRICTED",
+    "Linux ARM64 JNI and Android x86_64 emulator JNI are tested independently and must not be conflated with phone-side JNI",
+    "Full raw bridge log and device serial are not placed in this public repository"
+  ],
+  "reproduce": {
+    "tool": "sdk/kotlin/tools/run_android_arm64_native_device.py",
+    "command": "python3 sdk/kotlin/tools/run_android_arm64_native_device.py --artifact-zip ARTIFACT.zip --verify-only",
+    "phone_command": "python3 sdk/kotlin/tools/run_android_arm64_native_device.py --artifact-zip ARTIFACT.zip --serial CHOSEN_ADB_SERIAL"
+  }
+}
