@@ -241,12 +241,15 @@ jobs:
           "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "emulator"
           qemu="$ANDROID_SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64"
           test -x "$qemu"
-          ldd "$qemu" | tee sdk/kotlin/build/android/emulator-ldd.txt
-          if grep -F 'not found' sdk/kotlin/build/android/emulator-ldd.txt; then
-            echo "SEER_ANDROID_EMULATOR_HOST_LIBS_MISSING" >&2
-            exit 1
-          fi
-          echo "SEER_ANDROID_EMULATOR_HOST_LIBS_PASS"
+          # ldd on the QEMU executable alone is not a reliable launch gate:
+          # the emulator wrapper supplies its own bundled lib64 search paths
+          # dynamically (Qt, tracing, graphics and protobuf). Record it only
+          # as diagnostic evidence; fail on the actual emulator invocation.
+          ldd "$qemu" > sdk/kotlin/build/android/emulator-ldd.txt 2>&1 || true
+          "$ANDROID_SDK_ROOT/emulator/emulator" -version \
+            > sdk/kotlin/build/android/emulator-version-preflight.txt 2>&1
+          cat sdk/kotlin/build/android/emulator-version-preflight.txt
+          echo "SEER_ANDROID_EMULATOR_EXEC_PREFLIGHT_PASS"
       - name: Boot Android 35 x86_64 emulator and execute real Seer Kotlin JNI smoke
         shell: bash
         timeout-minutes: 25
