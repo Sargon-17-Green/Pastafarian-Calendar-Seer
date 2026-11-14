@@ -38,6 +38,16 @@ public final class SmokeActivity extends Activity {
             status.setText(failure);
             return;
         } catch (IllegalStateException expected) {
+            // A generic IllegalStateException caused by a different bug is
+            // NOT proof that the main-thread safety guard executed.
+            if (!"Blocking Seer operations must run off the Android UI thread"
+                    .equals(expected.getMessage())) {
+                String failure = "SEER_KOTLIN_ANDROID_SMOKE_FAIL: unexpected UI exception: "
+                        + expected.getMessage();
+                Log.e("SeerKotlinSmoke", failure, expected);
+                status.setText(failure);
+                return;
+            }
             Log.i("SeerKotlinSmoke", "SEER_KOTLIN_ANDROID_UI_THREAD_GUARD_PASS");
         }
         Thread worker = new Thread(this::runSmoke, "seer-kotlin-android-smoke");
