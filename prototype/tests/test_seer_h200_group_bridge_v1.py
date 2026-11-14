@@ -3,7 +3,7 @@
 import hashlib,json,os,subprocess,sys,tempfile
 from pathlib import Path
 BASE=Path(__file__).resolve().parent
-sys.path.insert(0,str(BASE))
+sys.path.insert(0,str(BASE.parent / 'scripts'))
 from seer_h200_pair_worker_v1 import canonical
 SAMPLE='75915fdb5270e12e21223aa48eaf5ebfa28305ba129498db3e4fe32c5d8cd442'
 
