@@ -37,6 +37,12 @@ jobs:
           cc -std=c11 -Wall -Wextra -Werror -Iprototype/include \
             "$RUNNER_TEMP/abi_contract.c" -o "$RUNNER_TEMP/abi_contract"
           "$RUNNER_TEMP/abi_contract"
+      - name: Verify deterministic Android AAR packaging fails closed on corruption
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 sdk/kotlin/tools/test_aar_packager.py | tee "$RUNNER_TEMP/aar-packager-tests.txt"
+          grep -F 'SEER_KOTLIN_AAR_PACKAGER_TEST_PASS' "$RUNNER_TEMP/aar-packager-tests.txt"
       - name: Compile and run dependency-free Kotlin/JVM wire contract
         shell: bash
         run: |
