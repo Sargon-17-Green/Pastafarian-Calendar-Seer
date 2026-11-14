@@ -11,6 +11,7 @@ import hashlib
 import io
 import json
 import re
+import struct
 import sys
 import zipfile
 from pathlib import Path
@@ -100,6 +101,15 @@ def main() -> None:
             payload = require_file(path)
             if not payload.startswith(b"\x7fELF"):
                 raise ValueError(f"Not an ELF native binary: {path}")
+            if len(payload) < 20 or payload[4:6] != b"\x02\x01":
+                raise ValueError(f"Native binary must be 64-bit little-endian ELF: {path}")
+            expected_machine = {"arm64-v8a": 183, "x86_64": 62}[abi]
+            actual_machine = struct.unpack_from("<H", payload, 18)[0]
+            if actual_machine != expected_machine:
+                raise ValueError(
+                    f"Native ELF machine mismatch: {path}; "
+                    f"expected {expected_machine}, got {actual_machine}"
+                )
             members[f"jni/{abi}/{library}"] = payload
 
     for gate_name, expected in GATES.items():
