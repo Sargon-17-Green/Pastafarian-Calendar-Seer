@@ -74,7 +74,7 @@ class SeerJniTransport(
             SeerKotlinJni.query(handle, calculationJdn, targetJdn, tokenHandle)
                 ?: throw SeerProtocolException("JNI cancellable query allocation failed")
         } finally {
-            SeerKotlinJni.destroyCancel(tokenHandle)
+            (cancellation as SeerJniCancellation).releaseForCall(tokenHandle)
         }
     }
 
@@ -91,7 +91,7 @@ class SeerJniTransport(
                 handle, calculationJdn, targetJdns.copyOf(), tokenHandle,
             ) ?: throw SeerProtocolException("JNI cancellable batch allocation failed")
         } finally {
-            SeerKotlinJni.destroyCancel(tokenHandle)
+            (cancellation as SeerJniCancellation).releaseForCall(tokenHandle)
         }
     }
 
@@ -130,6 +130,8 @@ internal class SeerJniCancellation(
     internal val owner: SeerJniTransport,
     private var nativeHandle: Long,
 ) : SeerCancellation {
+    private var activeCalls = 0
+
     @Synchronized
     override fun cancel() {
         SeerKotlinJni.cancel(requireHandle())
@@ -137,14 +139,26 @@ internal class SeerJniCancellation(
 
     @Synchronized
     override fun reset() {
-        SeerKotlinJni.resetCancel(requireHandle())
+        val handle = requireHandle()
+        check(activeCalls == 0) {
+            "Cannot reset Seer cancellation token while Native calls are active"
+        }
+        SeerKotlinJni.resetCancel(handle)
     }
 
     @Synchronized
     internal fun retainForCall(): Long {
         val handle = requireHandle()
         SeerKotlinJni.retainCancel(handle)
+        activeCalls += 1
         return handle
+    }
+
+    @Synchronized
+    internal fun releaseForCall(handle: Long) {
+        check(activeCalls > 0) { "Unbalanced Seer cancellation token release" }
+        SeerKotlinJni.destroyCancel(handle)
+        activeCalls -= 1
     }
 
     private fun requireHandle(): Long =
