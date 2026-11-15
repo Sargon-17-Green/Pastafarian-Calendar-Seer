@@ -70,6 +70,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Native package provenance must describe this exact checkout, not GitHub's
+          # synthetic pull-request merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Select Xcode 26.4.1
         run: |
           test -d /Applications/Xcode_26.4.1.app
@@ -80,9 +84,11 @@ jobs:
       - name: Build iOS device and simulator arm64 libraries
         env:
           BOOST_ROOT: ${{ env.HOMEBREW_PREFIX }}/opt/boost
-          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
           SEER_PACKAGE_VERSION: 0.2.5
         run: |
+          test "$(git rev-parse HEAD)" = "$SEER_BUILD_COMMIT"
+          echo "SEER_MOBILE_NATIVE_SOURCE_IDENTITY_PASS platform=ios"
           export HOMEBREW_PREFIX="$(brew --prefix)"
           export BOOST_ROOT="$(brew --prefix boost)"
           bash prototype/scripts/build_mobile_library.sh ios-arm64
@@ -110,6 +116,10 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Native package provenance must describe this exact checkout, not GitHub's
+          # synthetic pull-request merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install Boost headers
         uses: ./.github/actions/native-deps
         with:
@@ -129,9 +139,11 @@ jobs:
           "$sdk" "ndk;28.2.13676358"
       - name: Build Android arm64-v8a and x86_64 shared libraries
         env:
-          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
           SEER_PACKAGE_VERSION: 0.2.5
         run: |
+          test "$(git rev-parse HEAD)" = "$SEER_BUILD_COMMIT"
+          echo "SEER_MOBILE_NATIVE_SOURCE_IDENTITY_PASS platform=android"
           export ANDROID_NDK_HOME="$ANDROID_SDK_ROOT/ndk/28.2.13676358"
           bash prototype/scripts/build_mobile_library.sh android-arm64
           bash prototype/scripts/build_mobile_library.sh android-x86_64

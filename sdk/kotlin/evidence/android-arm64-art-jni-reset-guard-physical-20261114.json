@@ -1,0 +1,64 @@
+{
+  "schema": "seer-kotlin-art-jni-physical-reset-guard-evidence-v1",
+  "date_utc": "2026-11-14",
+  "result": "PASS",
+  "gmail_result_timestamp_utc": "2026-11-14T21:59:31Z",
+  "runtime": {
+    "platform": "physical Android handset",
+    "android_api_level": 36,
+    "abi": "arm64-v8a",
+    "implementation": "ART app_process",
+    "uid": "adb shell (unprivileged)",
+    "product_model": "2407FPN8EG",
+    "unique_ready_connected_device": true,
+    "model_match": true,
+    "adb_transport_serial_redacted": true,
+    "package_installed": false,
+    "root_used": false,
+    "device_policy_modified": false,
+    "existing_application_modified": false
+  },
+  "provenance": {
+    "repository": "Sargon-17-Green/Pastafarian-Calendar-Seer",
+    "pr": 56,
+    "ci_run": 43632452398,
+    "ci_artifact_id": 14129016259,
+    "ci_source_test_merge_commit": "a1af3c3688ec46542ef824fbbafbc208a99a5905",
+    "base85_embedded_artifact_zip_sha256": "0767f9be791d4f054b98f6b4a2de53b35116aba04a4e4e83a990f4bf7497ae39",
+    "sdk_reset_guard_commit": "8a16f123ec5bbfbd50d78dec3bc1949d83c8bc77",
+    "stable_branch_head_before_documentation": "4739b80bfe11c65ead679bc893a7ed7f49d181bf",
+    "local_runner_source_sha256": "5acb508562e13ea195b4fbb07fe2b3ccc2bb5ad4ce6faf64eb2a646aa9d1c272"
+  },
+  "payload_sha256": {
+    "smoke-dex.jar": "4bbc1e87079cba3b2a6d76749188822582aba1bf17b1614dc29d97499c352282",
+    "libseer_mobile.so": "47e81b3db2649f6c856ce64c5998f597cca516d2fb9535f354b7b352e1159eb9",
+    "libseer_mobile_kotlin_jni.so": "775d636920a2d9d553737833de9690c2d7c9f81cd0bde1c37e42d9ea3931a9f0",
+    "gates_100k_u16.bin": "4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8",
+    "gates_negative_100k_u16.bin": "40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884"
+  },
+  "verified_results": {
+    "local_artifact_zip_and_manifest": "PASS",
+    "on_device_sha256": "PASS",
+    "files_verified_on_device": 5,
+    "physical_environment_preflight": "SEER_PHYSICAL_PREFLIGHT_PASS api=36 abi=arm64-v8a model_match=true unique_device=true",
+    "native_kotlin_art_reset_guard": "SEER_PHYSICAL_JNI_RESET_GUARD_PASS",
+    "native_kotlin_art_concurrency": "SEER_PHYSICAL_JNI_CONCURRENCY_PASS",
+    "native_kotlin_art_canonical_engine": "SEER_PHYSICAL_ARM64_ART_KOTLIN_JNI_PASS source=a1af3c3688ec46542ef824fbbafbc208a99a5905",
+    "remote_temporary_cleanup": "SEER_PHYSICAL_TEMP_CLEANUP_PASS",
+    "final_result": "SEER_PHYSICAL_ARM64_PATCH_STATUS=PASS",
+    "runner_exit_code": 0,
+    "runner_reported_duration_seconds": 23
+  },
+  "incidents": [
+    "Initial retest failed closed before any device transfer because the original one-shot runner had used the product-model string as an ADB transport identifier.",
+    "Read-only ADB probe confirmed one Android API 36 arm64-v8a device; a second probe confirmed the exact expected product model and showed model and transport identifiers are different.",
+    "The corrected one-shot execution selected the single connected device, checked its model before data transfer and succeeded with full cleanup."
+  ],
+  "limitations": [
+    "This was real ART Kotlin/JNI/C++ computation under the unprivileged adb shell UID, not under a normally installed application's UID.",
+    "No installed App Context, app-private Gate stage or Activity lifecycle was exercised on the physical handset.",
+    "The exact GitHub Actions pull-request test-merge commit is used for provenance, not the branch HEAD.",
+    "Raw ADB serial and private mail identifiers are intentionally omitted from the public repository.",
+    "The private Pastafarian-Calendar-App CI and SDK integration remain separate acceptance gates."
+  ]
+}

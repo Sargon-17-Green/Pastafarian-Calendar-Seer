@@ -1,0 +1,66 @@
+{
+  "schema": "seer-physical-android-art-kotlin-jni-concurrency-v1",
+  "date_utc": "2026-11-14",
+  "result": "PASS",
+  "execution_scope": {
+    "hardware": "physical Android phone",
+    "api_level": 36,
+    "abi": "arm64-v8a",
+    "process": "app_process64",
+    "user_context": "unprivileged ADB shell",
+    "apk_installed": false,
+    "root_used": false,
+    "security_policy_altered": false,
+    "existing_app_modified": false,
+    "phone_serial_redacted": true
+  },
+  "provenance": {
+    "repo": "Sargon-17-Green/Pastafarian-Calendar-Seer",
+    "source_ci": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43627394110",
+    "ci_artifact": "seer-android-art-shell-jni-unreleased",
+    "ci_artifact_id": 14126702631,
+    "ci_test_merge_source_sha": "27c0423eb5fd28d9d42ce93267695fb6748f32dd",
+    "ci_artifact_zip_sha256": "a16b825f27724ea822e026ad5f194b4cf00e723e3fb864668b89008d31541e87",
+    "arm64_flat_payload_sha256": "e7aeb4183c768d5254788d74258c13f77d4d0c61d580edba8a12a57791f134c8"
+  },
+  "file_sha256": {
+    "smoke-dex.jar": "9853bfcc7a13483ba5de4c04660f1108ba94358c9710d741cb5e9ca7ebc5b86b",
+    "libseer_mobile.so": "e3f713c973057e223b2983c331e9a5de8a48bd019283a165edf4b7f762d68c1b",
+    "libseer_mobile_kotlin_jni.so": "775d636920a2d9d553737833de9690c2d7c9f81cd0bde1c37e42d9ea3931a9f0",
+    "gates_100k_u16.bin": "4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8",
+    "gates_negative_100k_u16.bin": "40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884"
+  },
+  "checks": {
+    "on_device_sha256_files": 5,
+    "program_exit_code": 0,
+    "known_answers": 3,
+    "negative_jdn_batch": 3,
+    "domain_error_statuses": true,
+    "cancellation_reset": true,
+    "single_batch_full_record_parity": true,
+    "concurrent_workers": 4,
+    "rounds_per_worker": 4,
+    "concurrent_native_batches": 16,
+    "concurrent_native_single_queries": 16,
+    "shared_kotlin_client": true,
+    "shared_jni_transport": true,
+    "shared_native_context": true,
+    "device_temp_directory_cleanup": "PASS"
+  },
+  "stdout_exact": [
+    "SEER_ANDROID_ART_JNI_CONCURRENCY_PASS workers=4 rounds=4 batchAndSingle=true sharedContext=true",
+    "SEER_ANDROID_APP_PROCESS_JNI_PASS abi=1 source=27c0423eb5fd28d9d42ce93267695fb6748f32dd knownAnswers=3 negativeBatch=3 domainErrors=true cancellation=true runtime=ART noInstall=true"
+  ],
+  "follow_up_archive_audit": "SEER_ART_PHYSICAL_CONCURRENCY_EVIDENCE_AUDIT_PASS",
+  "local_execution": {
+    "completed_at_utc": "2026-11-14T18:43:31Z",
+    "wall_clock_seconds": 24,
+    "archive_storage": "authorized Windows host, private Downloads (not published)"
+  },
+  "limitations": [
+    "No PackageManager APK install or test under the normal app UID",
+    "No on-phone Android Context, app-private Gate cache, application lifecycle, UI, production signing or performance p95 measurement",
+    "Observed concurrency correctness does not prove a particular speedup or that all native computations executed simultaneously",
+    "Private device serial, filesystem user path and account identities excluded from this public evidence"
+  ]
+}

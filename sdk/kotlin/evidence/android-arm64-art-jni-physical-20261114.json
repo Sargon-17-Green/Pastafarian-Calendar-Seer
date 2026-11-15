@@ -1,0 +1,65 @@
+{
+  "schema": "seer-kotlin-art-jni-physical-evidence-v1",
+  "date_utc": "2026-11-14",
+  "result": "PASS",
+  "platform": {
+    "device": "physical Android phone",
+    "api_level": 36,
+    "abi": "arm64-v8a",
+    "art_runtime": "app_process64",
+    "adb_uid": "shell (unprivileged)",
+    "device_serial_redacted": true
+  },
+  "provenance": {
+    "repository": "Sargon-17-Green/Pastafarian-Calendar-Seer",
+    "ci_run_id": 43622907044,
+    "ci_run_url": "https://github.com/Sargon-17-Green/Pastafarian-Calendar-Seer/actions/runs/43622907044",
+    "ci_artifact_id": 14125131372,
+    "ci_artifact": "seer-android-art-shell-jni-unreleased",
+    "source_test_merge_commit": "aaad95c912eb431a15aa7afccff5e8618464bd1b",
+    "artifact_zip_sha256": "161ddcdae6c54ea579a9574766fe31eb3363c6ea7403d00bd87ccd99391a3112"
+  },
+  "payload_sha256": {
+    "smoke-dex.jar": "29b1db10c45b5ff519c18eff375702b9fbc24b8479f8d30e03f5067b5a751d50",
+    "libseer_mobile.so": "545a60e31de67d3609b0bdf3e744f66bc54dfc55d1b8354d57e9227e14f7ec86",
+    "libseer_mobile_kotlin_jni.so": "775d636920a2d9d553737833de9690c2d7c9f81cd0bde1c37e42d9ea3931a9f0",
+    "gates_100k_u16.bin": "4d45f05acc6eb4dee6e53757a8c1f94da2f3de0fe4d4659b0745f15e05b147a8",
+    "gates_negative_100k_u16.bin": "40bfbd7d76209c258fb7d4739f1ef9b10ac8bb38eb4f26690c1048aee0e4f884"
+  },
+  "results": {
+    "program_exit_code": 0,
+    "verified_files_on_device": 5,
+    "stdout_sentinel": "SEER_ANDROID_ARM64_APP_PROCESS_JNI_PASS abi=1 source=aaad95c912eb431a15aa7afccff5e8618464bd1b knownAnswers=3 negativeBatch=3 domainErrors=true cancellation=true runtime=ART noInstall=true",
+    "known_answers": 3,
+    "negative_batch": 3,
+    "canonical_single_batch_parity": true,
+    "domain_errors": true,
+    "cancellation": true,
+    "native_source_provenance_verified": true,
+    "remote_temporary_directory_cleaned": true,
+    "apk_installed": false,
+    "root_used": false,
+    "security_policy_changed": false,
+    "existing_app_modified": false,
+    "finished_at_utc": "2026-11-14T18:03:16.559133+00:00",
+    "postrun_archive_audit": "SEER_ART_ARCHIVED_EVIDENCE_AUDIT_PASS"
+  },
+  "incident": {
+    "first_attempt": "ADB transport closed after creating a temporary directory; no JNI test occurred",
+    "first_attempt_cleanup": "Dedicated follow-up cleanup PASS (exact directory removed)",
+    "second_attempt": "PASS with bounded retries of idempotent ADB transfers only",
+    "second_attempt_cleanup": "PASS"
+  },
+  "limitations": [
+    "Runs Kotlin/JNI/C++ using ART app_process under ADB shell identity, not as a normally installed application UID",
+    "Does not test Android Context wrapper, app-scoped noBackupFilesDir, production signing or PackageManager lifecycle on this physical phone",
+    "Earlier diagnostic APK install returned INSTALL_FAILED_USER_RESTRICTED; no installation attempt or policy bypass performed during this smoke",
+    "Source commit is CI pull_request test-merge SHA; this evidence must not be attributed to an unbuilt branch SHA",
+    "Raw device serial and personal account data intentionally excluded from public repository"
+  ],
+  "reproduce": {
+    "source": "sdk/kotlin/tools/run_android_art_shell_jni.py",
+    "verify_only": "python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip ARTIFACT.zip --abi arm64-v8a --verify-only",
+    "run": "python3 sdk/kotlin/tools/run_android_art_shell_jni.py --artifact-zip ARTIFACT.zip --abi arm64-v8a --serial CHOSEN_ADB_SERIAL"
+  }
+}
