@@ -192,6 +192,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Package the exact PR head, not the temporary PR merge checkout.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Install canonical Boost headers
         uses: ./.github/actions/native-deps
         with:
@@ -215,11 +218,13 @@ jobs:
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358" >> "$GITHUB_ENV"
       - name: Build canonical C ABI libraries and matching SDK JNI for both architectures
         env:
-          SEER_BUILD_COMMIT: ${{ github.sha }}
+          SEER_BUILD_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
           SEER_PACKAGE_VERSION: '0.2.5'
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SEER_BUILD_COMMIT"
+          echo "SEER_KOTLIN_ANDROID_PACKAGE_SOURCE_IDENTITY_PASS"
           bash prototype/scripts/build_mobile_library.sh android-arm64
           bash prototype/scripts/build_mobile_library.sh android-x86_64
           toolchain="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
